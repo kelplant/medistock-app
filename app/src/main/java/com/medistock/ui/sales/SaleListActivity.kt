@@ -26,7 +26,7 @@ class SaleListActivity : AppCompatActivity() {
             val items = sales.map {
                 val productName = products[it.productId]?.name ?: "Unknown"
                 "Product: $productName, Qty: ${it.quantity}, Farmer: ${it.farmerName}, Date: ${java.util.Date(it.date)}"
-            }
+            }.toMutableList()
             listView.adapter = ArrayAdapter(this@SaleListActivity, android.R.layout.simple_list_item_1, items)
         }
     }

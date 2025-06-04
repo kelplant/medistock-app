@@ -1,0 +1,34 @@
+package com.medistock.ui
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.medistock.R
+import com.medistock.ui.sales.SaleListActivity
+import com.medistock.ui.product.ProductAddActivity
+import com.medistock.ui.stock.StockListActivity
+import com.medistock.ui.movement.StockMovementListActivity
+
+class HomeActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_home)
+
+        findViewById<android.view.View>(R.id.viewStockButton).setOnClickListener {
+            startActivity(Intent(this, StockListActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.sellProductButton).setOnClickListener {
+            startActivity(Intent(this, SaleListActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.manageProductButton).setOnClickListener {
+            startActivity(Intent(this, ProductAddActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.stockMovementButton).setOnClickListener {
+            startActivity(Intent(this, StockMovementListActivity::class.java))
+        }
+    }
+}

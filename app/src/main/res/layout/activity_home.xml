@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.gridlayout.widget.GridLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/gridLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    app:columnCount="2"
+    app:rowCount="2"
+    app:alignmentMode="alignMargins"
+    app:useDefaultMargins="true">
+
+    <LinearLayout
+        android:id="@+id/viewStockButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_stock" 
+            android:contentDescription="@string/view_stock" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/view_stock"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/sellProductButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_sell"
+            android:contentDescription="@string/sell_product" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sell_product"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/manageProductButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_manage"
+            android:contentDescription="@string/manage_product" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/manage_product"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/stockMovementButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_movement"
+            android:contentDescription="@string/stock_movement" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/stock_movement"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+</androidx.gridlayout.widget.GridLayout>

@@ -13,4 +13,9 @@ data class Product(
     val marginValue: Double,
     val unitVolume: Double,
     val siteId: Long
-)
+) {
+    val category: CharSequence?
+        get() {
+            TODO()
+        }
+}
