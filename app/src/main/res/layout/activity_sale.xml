@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Spinner
+        android:id="@+id/spinnerProduct"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <EditText
+        android:id="@+id/editSaleQuantity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Quantity" />
+
+    <EditText
+        android:id="@+id/editSalePrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Sale price" />
+
+    <EditText
+        android:id="@+id/editFarmerName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Farmer name" />
+
+    <Button
+        android:id="@+id/btnSaveSale"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save Sale" />
+</LinearLayout>
