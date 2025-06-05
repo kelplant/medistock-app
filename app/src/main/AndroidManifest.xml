@@ -15,6 +15,7 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ui.product.ProductListActivity" android:exported="false" />
         <activity android:name=".ui.product.ProductAddActivity" android:exported="false" />
         <activity android:name=".ui.movement.StockMovementListActivity" android:exported="false" />
         <activity android:name=".ui.stock.StockListActivity" android:exported="false" />
