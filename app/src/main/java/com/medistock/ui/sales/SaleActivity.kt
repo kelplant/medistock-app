@@ -19,7 +19,7 @@ class SaleActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sale)
 
-        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
+        db = AppDatabase.getInstance(this)
 
         val productSpinner = findViewById<Spinner>(R.id.spinnerProduct)
         val quantityInput = findViewById<EditText>(R.id.editSaleQuantity)
@@ -57,8 +57,6 @@ class SaleActivity : AppCompatActivity() {
                         )
                     )
                     db.stockMovementDao().insert(
-                        StockMovement(
-                            siteId = siteId,
                         StockMovement(
                             productId = productId,
                             type = "out",

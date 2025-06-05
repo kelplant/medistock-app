@@ -1,104 +1,64 @@
 package com.medistock.ui
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.*
-import androidx.activity.viewModels
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.medistock.R
-import com.medistock.data.entities.*
-import com.medistock.ui.adapter.ProductAdapter
-import com.medistock.ui.viewmodel.ProductViewModel
-import kotlinx.coroutines.flow.collectLatest
+import com.medistock.data.db.AppDatabase
+import com.medistock.data.entities.Product
+import com.medistock.ui.adapters.ProductAdapter
+import com.medistock.ui.product.ProductAddActivity
+import com.medistock.util.PrefsHelper
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel: ProductViewModel by viewModels()
+    private lateinit var db: AppDatabase
+    private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ProductAdapter
-    private var categories: List<Category> = emptyList()
+    private var products: List<Product> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val nameInput = findViewById<EditText>(R.id.editProductName)
-        val unitInput = findViewById<EditText>(R.id.editProductUnit)
-        val priceInput = findViewById<EditText>(R.id.editPurchasePrice)
-        val marginInput = findViewById<EditText>(R.id.editMarginValue)
-        val categorySpinner = findViewById<Spinner>(R.id.spinnerCategory)
-        val marginSpinner = findViewById<Spinner>(R.id.spinnerMarginType)
-        val addButton = findViewById<Button>(R.id.btnAddProduct)
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerProducts)
+        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
 
-        adapter = ProductAdapter(emptyList())
+        recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
 
-        marginSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("fixed", "percentage"))
-
-        viewModel.loadCategories()
-        lifecycleScope.launchWhenStarted {
-            viewModel.categories.collectLatest {
-                categories = it
-                categorySpinner.adapter = ArrayAdapter(
-                    this@MainActivity,
-                    android.R.layout.simple_spinner_item,
-                    it.map { cat -> cat.name }
-                )
-            }
+        lifecycleScope.launch {
+            val siteId = PrefsHelper.getActiveSiteId(this@MainActivity)
+            products = loadProductsForSite(siteId)
+            adapter = ProductAdapter(products)
+            recyclerView.adapter = adapter
         }
-
-        addButton.setOnClickListener {
-            val name = nameInput.text.toString().trim()
-            val unit = unitInput.text.toString().trim()
-            val price = priceInput.text.toString().toDoubleOrNull()
-            val margin = marginInput.text.toString().toDoubleOrNull()
-            val marginType = marginSpinner.selectedItem.toString()
-            val selectedCategory = categorySpinner.selectedItemPosition
-
-            if (name.isNotEmpty() && unit.isNotEmpty() && price != null && margin != null && selectedCategory >= 0) {
-                val categoryId = categories[selectedCategory].id
-                val product = Product(
-                    name = name,
-                    unit = unit,
-                    categoryId = categoryId,
-                    marginType = marginType,
-                    marginValue = margin
-                )
-                viewModel.addProductWithPrice(product, price)
-                nameInput.text.clear()
-                unitInput.text.clear()
-                priceInput.text.clear()
-                marginInput.text.clear()
-            }
-        }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.products.collectLatest { adapter.updateData(it) }
-        }
-
-        
-        val siteId = com.medistock.util.PrefsHelper.getActiveSiteId(this)
-        viewModel.loadProductsForSite(siteId)
-        
     }
-}
 
-override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-    menuInflater.inflate(R.menu.main_menu, menu)
-    return true
-}
+    private suspend fun loadProductsForSite(siteId: Long): List<Product> {
+        return db.productDao().getAll().filter { it.siteId == siteId }
+    }
 
-override fun onOptionsItemSelected(item: MenuItem): Boolean {
-    return when (item.itemId) {
-        R.id.action_switch_site -> {
-            com.medistock.util.PrefsHelper.clearActiveSite(this)
-            startActivity(Intent(this, com.medistock.ui.site.SiteSelectorActivity::class.java))
-            finish()
-            true
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menu_add_product -> {
+                startActivity(Intent(this, ProductAddActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
-        else -> super.onOptionsItemSelected(item)
     }
 }

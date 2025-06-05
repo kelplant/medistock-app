@@ -22,7 +22,7 @@ class SiteSelectorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_selector)
 
-        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
+        db = AppDatabase.getInstance(this)
 
         val siteSpinner = findViewById<Spinner>(R.id.spinnerSite)
         val btnContinue = findViewById<Button>(R.id.btnContinue)

@@ -1,6 +1,8 @@
 package com.medistock.data.db
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.medistock.data.dao.*
 import com.medistock.data.entities.*
@@ -10,17 +12,33 @@ import com.medistock.data.entities.*
         Product::class,
         Category::class,
         ProductPrice::class,
-        StockMovement::class,
         ProductSale::class,
+        StockMovement::class,
         Site::class
     ],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun categoryDao(): CategoryDao
     abstract fun productPriceDao(): ProductPriceDao
-    abstract fun stockMovementDao(): StockMovementDao
     abstract fun productSaleDao(): ProductSaleDao
+    abstract fun stockMovementDao(): StockMovementDao
     abstract fun siteDao(): SiteDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getInstance(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "medistock-db"
+                ).build().also { INSTANCE = it }
+            }
+        }
+    }
 }

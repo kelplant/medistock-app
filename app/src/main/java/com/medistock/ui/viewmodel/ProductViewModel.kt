@@ -25,7 +25,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> = _categories
 
-    fun loadProducts() {
+    private fun loadProducts() {
         viewModelScope.launch(Dispatchers.IO) {
             _products.value = db.productDao().getAll()
         }
@@ -57,11 +57,10 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
             loadProducts()
         }
     }
-}
 
     fun loadProductsForSite(siteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _products.value = db.productDao().getProductsForSite(siteId)
         }
     }
-    
+}

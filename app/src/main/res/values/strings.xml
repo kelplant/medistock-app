@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">MediStock</string>
+    <string name="error_enter_product_name">Please enter a product name</string>
+    <string name="error_select_category">Please select a category</string>
+    <string name="product_added">Product added successfully</string>
+    <string name="final_price_template">Final price: %.2f</string>
+    <string name="product_name">Product Name</string>
+    <string name="product_name_hint">Enter product name</string>
+    <string name="category">Category</string>
+    <string name="unit">Unit</string>
+    <string name="margin_type">Margin Type</string>
+    <string name="margin_value">Margin Value</string>
+    <string name="margin_value_hint">Enter the value</string>
+    <string name="save_product">Save</string>
+    <string name="view_stock">View Stock</string>
+    <string name="sell_product">Sell Product</string>
+    <string name="manage_product">Manage Product</string>
+    <string name="stock_movement">Stock Movement</string>
+</resources>

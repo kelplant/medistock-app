@@ -19,7 +19,7 @@ class StockMovementActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stock_movement)
 
-        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
+        db = AppDatabase.getInstance(this)
 
         val productSpinner = findViewById<Spinner>(R.id.spinnerProduct)
         val typeSpinner = findViewById<Spinner>(R.id.spinnerType)
