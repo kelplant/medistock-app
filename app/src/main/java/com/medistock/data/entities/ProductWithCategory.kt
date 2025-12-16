@@ -13,5 +13,7 @@ data class ProductWithCategory(
     val marginType: String,
     val marginValue: Double,
     val unitVolume: Double,
-    val siteId: Long
+    val siteId: Long,
+    val minStock: Double = 0.0,
+    val maxStock: Double = 0.0
 )

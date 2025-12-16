@@ -17,7 +17,8 @@ interface ProductDao {
 
     @Query("""
         SELECT p.id, p.name, p.unit, p.categoryId, c.name as categoryName,
-               p.marginType, p.marginValue, p.unitVolume, p.siteId
+               p.marginType, p.marginValue, p.unitVolume, p.siteId,
+               p.minStock, p.maxStock
         FROM products p
         LEFT JOIN categories c ON p.categoryId = c.id
     """)
@@ -25,7 +26,8 @@ interface ProductDao {
 
     @Query("""
         SELECT p.id, p.name, p.unit, p.categoryId, c.name as categoryName,
-               p.marginType, p.marginValue, p.unitVolume, p.siteId
+               p.marginType, p.marginValue, p.unitVolume, p.siteId,
+               p.minStock, p.maxStock
         FROM products p
         LEFT JOIN categories c ON p.categoryId = c.id
         WHERE p.siteId = :siteId
