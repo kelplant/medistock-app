@@ -20,16 +20,18 @@ class PurchaseActivity : AppCompatActivity() {
     private lateinit var spinnerProduct: Spinner
     private lateinit var editQuantity: EditText
     private lateinit var editPurchasePrice: EditText
+    private lateinit var editSellingPrice: EditText
     private lateinit var editSupplier: EditText
     private lateinit var editBatchNumber: EditText
     private lateinit var editExpiryDate: EditText
     private lateinit var btnSave: Button
-    private lateinit var textSellingPrice: TextView
+    private lateinit var textMarginInfo: TextView
 
     private var products: List<Product> = emptyList()
     private var selectedProductId: Long = 0L
     private var selectedProduct: Product? = null
     private var currentSiteId: Long = 0L
+    private var isManualSellingPrice = false // Track if user manually modified selling price
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
@@ -43,11 +45,12 @@ class PurchaseActivity : AppCompatActivity() {
         spinnerProduct = findViewById(R.id.spinnerProductPurchase)
         editQuantity = findViewById(R.id.editPurchaseQuantity)
         editPurchasePrice = findViewById(R.id.editPurchasePrice)
+        editSellingPrice = findViewById(R.id.editSellingPrice)
         editSupplier = findViewById(R.id.editSupplierName)
         editBatchNumber = findViewById(R.id.editBatchNumber)
         editExpiryDate = findViewById(R.id.editExpiryDate)
         btnSave = findViewById(R.id.btnSavePurchase)
-        textSellingPrice = findViewById(R.id.textCalculatedSellingPrice)
+        textMarginInfo = findViewById(R.id.textMarginInfo)
 
         loadProducts()
 
@@ -56,14 +59,32 @@ class PurchaseActivity : AppCompatActivity() {
                 if (position >= 0 && position < products.size) {
                     selectedProduct = products[position]
                     selectedProductId = selectedProduct?.id ?: 0L
+                    updateMarginInfo()
                     calculateSellingPrice()
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
+        // Auto-calculate selling price when purchase price changes (if not manually modified)
         editPurchasePrice.addTextChangedListener(object : android.text.TextWatcher {
-            override fun afterTextChanged(s: android.text.Editable?) = calculateSellingPrice()
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (!isManualSellingPrice) {
+                    calculateSellingPrice()
+                }
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+        })
+
+        // Track manual modifications to selling price
+        editSellingPrice.addTextChangedListener(object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) {
+                // Only set flag if user actually typed (not programmatic change)
+                if (editSellingPrice.hasFocus()) {
+                    isManualSellingPrice = true
+                }
+            }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
         })
@@ -87,22 +108,36 @@ class PurchaseActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateMarginInfo() {
+        val product = selectedProduct ?: return
+        val marginInfo = when (product.marginType) {
+            "fixed" -> "Marge: +${product.marginValue} (fixe)"
+            "percentage" -> "Marge: +${product.marginValue}%"
+            else -> "Pas de marge configurée"
+        }
+        textMarginInfo.text = marginInfo
+    }
+
     private fun calculateSellingPrice() {
         val product = selectedProduct ?: return
         val purchasePrice = editPurchasePrice.text.toString().toDoubleOrNull() ?: 0.0
 
-        val sellingPrice = when (product.marginType) {
+        val calculatedSellingPrice = when (product.marginType) {
             "fixed" -> purchasePrice + product.marginValue
             "percentage" -> purchasePrice * (1 + product.marginValue / 100)
             else -> purchasePrice
         }
 
-        textSellingPrice.text = getString(R.string.selling_price_template, sellingPrice)
+        // Only update if not manually modified
+        if (!isManualSellingPrice) {
+            editSellingPrice.setText(String.format("%.2f", calculatedSellingPrice))
+        }
     }
 
     private fun savePurchase() {
         val quantity = editQuantity.text.toString().toDoubleOrNull()
         val purchasePrice = editPurchasePrice.text.toString().toDoubleOrNull()
+        val sellingPrice = editSellingPrice.text.toString().toDoubleOrNull()
         val supplier = editSupplier.text.toString().trim()
         val batchNumber = editBatchNumber.text.toString().trim()
         val expiryDateStr = editExpiryDate.text.toString().trim()
@@ -114,6 +149,11 @@ class PurchaseActivity : AppCompatActivity() {
 
         if (purchasePrice == null || purchasePrice <= 0) {
             Toast.makeText(this, "Entrez un prix d'achat valide", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (sellingPrice == null || sellingPrice <= 0) {
+            Toast.makeText(this, "Entrez un prix de vente valide", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -134,13 +174,6 @@ class PurchaseActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             val product = selectedProduct ?: return@launch
-
-            // Calculate selling price
-            val sellingPrice = when (product.marginType) {
-                "fixed" -> purchasePrice + product.marginValue
-                "percentage" -> purchasePrice * (1 + product.marginValue / 100)
-                else -> purchasePrice
-            }
 
             // Create purchase batch
             val batch = PurchaseBatch(

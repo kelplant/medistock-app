@@ -14,6 +14,12 @@ class SaleActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
     private var products: List<Product> = emptyList()
+    private lateinit var productSpinner: Spinner
+    private lateinit var quantityInput: EditText
+    private lateinit var farmerInput: EditText
+    private lateinit var priceInput: EditText
+    private lateinit var saveButton: Button
+    private lateinit var textPriceInfo: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,11 +27,12 @@ class SaleActivity : AppCompatActivity() {
 
         db = AppDatabase.getInstance(this)
 
-        val productSpinner = findViewById<Spinner>(R.id.spinnerProduct)
-        val quantityInput = findViewById<EditText>(R.id.editSaleQuantity)
-        val farmerInput = findViewById<EditText>(R.id.editFarmerName)
-        val priceInput = findViewById<EditText>(R.id.editSalePrice)
-        val saveButton = findViewById<Button>(R.id.btnSaveSale)
+        productSpinner = findViewById(R.id.spinnerProduct)
+        quantityInput = findViewById(R.id.editSaleQuantity)
+        farmerInput = findViewById(R.id.editFarmerName)
+        priceInput = findViewById(R.id.editSalePrice)
+        saveButton = findViewById(R.id.btnSaveSale)
+        textPriceInfo = findViewById(R.id.textSalePriceInfo)
 
         lifecycleScope.launch {
             products = db.productDao().getAll()
@@ -34,6 +41,16 @@ class SaleActivity : AppCompatActivity() {
                 android.R.layout.simple_spinner_item,
                 products.map { it.name }
             )
+        }
+
+        // Auto-fill selling price when product is selected
+        productSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                if (position >= 0 && position < products.size) {
+                    loadSuggestedPrice(products[position].id)
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
         saveButton.setOnClickListener {
@@ -69,6 +86,18 @@ class SaleActivity : AppCompatActivity() {
                     )
                     finish()
                 }
+            }
+        }
+    }
+
+    private fun loadSuggestedPrice(productId: Long) {
+        lifecycleScope.launch {
+            val latestPrice = db.productPriceDao().getLatestPrice(productId)
+            if (latestPrice != null) {
+                priceInput.setText(String.format("%.2f", latestPrice.sellingPrice))
+                textPriceInfo.text = "Prix suggéré (dernier prix de vente enregistré)"
+            } else {
+                textPriceInfo.text = "Aucun prix de référence - Entrez le prix de vente"
             }
         }
     }

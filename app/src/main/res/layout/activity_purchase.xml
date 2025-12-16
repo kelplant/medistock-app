@@ -56,13 +56,39 @@
             android:inputType="numberDecimal"/>
 
         <TextView
-            android:id="@+id/textCalculatedSellingPrice"
+            android:id="@+id/textMarginInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Prix de vente calculé: 0.00"
+            android:text="Marge: calculée automatiquement"
             android:paddingTop="8dp"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="italic"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Prix de vente unitaire (modifiable)"
+            android:paddingTop="12dp"/>
+
+        <EditText
+            android:id="@+id/editSellingPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Calculé automatiquement"
+            android:inputType="numberDecimal"
             android:textColor="#1976D2"
             android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 Le prix de vente est calculé automatiquement selon la marge du produit, mais vous pouvez le modifier."
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp"
+            android:textSize="11sp"
+            android:textColor="#666666"
+            android:textStyle="italic"/>
 
         <TextView
             android:layout_width="match_parent"
