@@ -6,9 +6,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.Product
+import com.medistock.data.entities.ProductWithCategory
 
-class ProductAdapter(private val products: List<Product>) :
+class ProductAdapter(private val products: List<ProductWithCategory>) :
     RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 
     class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -24,7 +24,7 @@ class ProductAdapter(private val products: List<Product>) :
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
         val product = products[position]
         holder.textProductName.text = product.name
-        holder.textProductCategory.text = product.category
+        holder.textProductCategory.text = product.categoryName
     }
 
     override fun getItemCount(): Int = products.size
