@@ -83,14 +83,26 @@
             android:hint="@string/margin_value_hint"
             android:layout_marginBottom="16dp" />
 
-        <!-- Prix final -->
+        <!-- Info sur le calcul de la marge -->
         <TextView
-            android:id="@+id/textFinalPrice"
-            android:layout_width="wrap_content"
+            android:id="@+id/textMarginInfo"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/final_price_template"
-            android:textSize="18sp"
-            android:textStyle="bold"
+            android:text="Configuration de la marge"
+            android:textSize="14sp"
+            android:textColor="#1976D2"
+            android:textStyle="italic"
+            android:padding="12dp"
+            android:background="#E3F2FD"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 Le prix de vente sera calculé automatiquement lors de chaque achat en appliquant cette marge au prix d'achat."
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="italic"
             android:layout_marginBottom="24dp" />
 
         <!-- Bouton enregistrer -->
