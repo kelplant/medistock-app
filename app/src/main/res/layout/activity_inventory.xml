@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Inventaire physique"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Produit à compter"
+            android:paddingTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerProductInventory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown"/>
+
+        <TextView
+            android:id="@+id/textTheoreticalStock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stock théorique: 0"
+            android:paddingTop="12dp"
+            android:textSize="16sp"
+            android:textColor="#1976D2"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Quantité comptée"
+            android:paddingTop="12dp"/>
+
+        <EditText
+            android:id="@+id/editCountedQuantity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Quantité réelle comptée"
+            android:inputType="numberDecimal"/>
+
+        <TextView
+            android:id="@+id/textDiscrepancy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Écart: 0"
+            android:paddingTop="8dp"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Compté par"
+            android:paddingTop="12dp"/>
+
+        <EditText
+            android:id="@+id/editCountedBy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nom de la personne"
+            android:inputType="text"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Raison de l'écart (si applicable)"
+            android:paddingTop="12dp"/>
+
+        <EditText
+            android:id="@+id/editReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ex: Perte, vol, erreur de saisie..."
+            android:inputType="text"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notes"
+            android:paddingTop="12dp"/>
+
+        <EditText
+            android:id="@+id/editNotes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Notes supplémentaires"
+            android:inputType="textMultiLine"
+            android:lines="3"
+            android:gravity="top"/>
+
+        <Button
+            android:id="@+id/btnSaveInventory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enregistrer l'inventaire"
+            android:layout_marginTop="24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Note: Un ajustement automatique du stock sera effectué si un écart est détecté."
+            android:paddingTop="12dp"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="italic"/>
+
+    </LinearLayout>
+
+</ScrollView>

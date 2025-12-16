@@ -11,5 +11,7 @@ data class CurrentStock(
     val categoryName: String,
     val siteId: Long,
     val siteName: String,
-    val quantityOnHand: Double
+    val quantityOnHand: Double,
+    val minStock: Double = 0.0,
+    val maxStock: Double = 0.0
 )

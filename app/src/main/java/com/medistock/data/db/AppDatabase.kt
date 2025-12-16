@@ -14,9 +14,11 @@ import com.medistock.data.entities.*
         ProductPrice::class,
         ProductSale::class,
         StockMovement::class,
-        Site::class
+        Site::class,
+        PurchaseBatch::class,
+        Inventory::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,6 +28,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun productSaleDao(): ProductSaleDao
     abstract fun stockMovementDao(): StockMovementDao
     abstract fun siteDao(): SiteDao
+    abstract fun purchaseBatchDao(): PurchaseBatchDao
+    abstract fun inventoryDao(): InventoryDao
 
     companion object {
         @Volatile
@@ -37,7 +41,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "medistock-db"
-                ).build().also { INSTANCE = it }
+                )
+                .fallbackToDestructiveMigration() // Allow destructive migration for development
+                .build().also { INSTANCE = it }
             }
         }
     }

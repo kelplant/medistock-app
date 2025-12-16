@@ -34,7 +34,9 @@ interface StockMovementDao {
                 SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) -
                 SUM(CASE WHEN sm.type = 'out' THEN sm.quantity ELSE 0 END),
                 0
-            ) as quantityOnHand
+            ) as quantityOnHand,
+            p.minStock as minStock,
+            p.maxStock as maxStock
         FROM products p
         LEFT JOIN categories c ON p.categoryId = c.id
         CROSS JOIN sites s
@@ -60,7 +62,9 @@ interface StockMovementDao {
                 SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) -
                 SUM(CASE WHEN sm.type = 'out' THEN sm.quantity ELSE 0 END),
                 0
-            ) as quantityOnHand
+            ) as quantityOnHand,
+            p.minStock as minStock,
+            p.maxStock as maxStock
         FROM products p
         LEFT JOIN categories c ON p.categoryId = c.id
         CROSS JOIN sites s

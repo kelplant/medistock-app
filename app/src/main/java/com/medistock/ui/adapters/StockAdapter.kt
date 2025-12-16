@@ -30,15 +30,23 @@ class StockAdapter(private var stockItems: List<CurrentStock>) :
         holder.nameText.text = stock.productName
         holder.unitText.text = stock.unit
 
-        // Display quantity on hand
-        holder.quantityText?.text = "Stock: ${stock.quantityOnHand} ${stock.unit}"
-
-        // Color coding for stock levels
-        when {
-            stock.quantityOnHand <= 0 -> holder.quantityText?.setTextColor(Color.RED)
-            stock.quantityOnHand < 10 -> holder.quantityText?.setTextColor(Color.rgb(255, 140, 0)) // Orange
-            else -> holder.quantityText?.setTextColor(Color.rgb(0, 128, 0)) // Green
+        // Display quantity on hand with alert indicators
+        val alertIndicator = when {
+            stock.quantityOnHand <= 0 -> "⚠️ "
+            stock.minStock > 0 && stock.quantityOnHand <= stock.minStock -> "⚠️ "
+            else -> ""
         }
+        holder.quantityText?.text = "${alertIndicator}Stock: ${stock.quantityOnHand} ${stock.unit}"
+
+        // Smart color coding based on thresholds
+        val color = when {
+            stock.quantityOnHand <= 0 -> Color.RED // Out of stock
+            stock.minStock > 0 && stock.quantityOnHand <= stock.minStock -> Color.RED // Below minimum
+            stock.minStock > 0 && stock.quantityOnHand <= stock.minStock * 1.5 -> Color.rgb(255, 140, 0) // Warning (orange)
+            stock.maxStock > 0 && stock.quantityOnHand >= stock.maxStock -> Color.rgb(0, 100, 200) // Overstocked (blue)
+            else -> Color.rgb(0, 128, 0) // Good level (green)
+        }
+        holder.quantityText?.setTextColor(color)
 
         // Display category if available
         holder.categoryText?.text = stock.categoryName
