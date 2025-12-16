@@ -12,5 +12,7 @@ data class Product(
     val marginType: String,
     val marginValue: Double,
     val unitVolume: Double,
-    val siteId: Long
+    val siteId: Long,
+    val minStock: Double = 0.0, // Minimum stock threshold for alerts
+    val maxStock: Double = 0.0  // Maximum stock threshold for ordering
 )

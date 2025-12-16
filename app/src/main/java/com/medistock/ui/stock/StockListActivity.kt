@@ -5,14 +5,14 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Product
+import com.medistock.data.entities.CurrentStock
 import com.medistock.data.entities.Site
 import com.medistock.ui.adapters.StockAdapter
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +25,10 @@ class StockListActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StockAdapter
     private lateinit var db: AppDatabase
+    private lateinit var summaryText: TextView
 
     private var sites: List<Site> = emptyList()
-    private var products: List<Product> = emptyList()
+    private var currentStockItems: List<CurrentStock> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +36,8 @@ class StockListActivity : AppCompatActivity() {
 
         spinnerSites = findViewById(R.id.spinnerSites)
         recyclerView = findViewById(R.id.recyclerViewStock)
+        summaryText = findViewById(R.id.textStockSummary)
+
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = StockAdapter(emptyList())
         recyclerView.adapter = adapter
@@ -48,7 +51,10 @@ class StockListActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             sites = db.siteDao().getAll()
             withContext(Dispatchers.Main) {
-                val siteNames = sites.map { it.name }
+                // Add "All Sites" option
+                val siteNames = mutableListOf("Tous les sites")
+                siteNames.addAll(sites.map { it.name })
+
                 val spinnerAdapter = ArrayAdapter(
                     this@StockListActivity,
                     android.R.layout.simple_spinner_item,
@@ -61,8 +67,14 @@ class StockListActivity : AppCompatActivity() {
                     override fun onItemSelected(
                         parent: AdapterView<*>, view: View?, position: Int, id: Long
                     ) {
-                        val selectedSite = sites[position]
-                        loadProductsForSite(selectedSite.id)
+                        if (position == 0) {
+                            // Load all sites
+                            loadStockAllSites()
+                        } else {
+                            // Load specific site
+                            val selectedSite = sites[position - 1]
+                            loadStockForSite(selectedSite.id)
+                        }
                     }
 
                     override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -71,12 +83,31 @@ class StockListActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadProductsForSite(siteId: Long) {
+    private fun loadStockForSite(siteId: Long) {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getProductsForSite(siteId)
+            currentStockItems = db.stockMovementDao().getCurrentStockForSite(siteId)
             withContext(Dispatchers.Main) {
-                adapter.updateData(products)
+                adapter.updateData(currentStockItems)
+                updateSummary()
             }
         }
+    }
+
+    private fun loadStockAllSites() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            currentStockItems = db.stockMovementDao().getCurrentStockAllSites()
+            withContext(Dispatchers.Main) {
+                adapter.updateData(currentStockItems)
+                updateSummary()
+            }
+        }
+    }
+
+    private fun updateSummary() {
+        val totalProducts = currentStockItems.distinctBy { it.productId }.size
+        val itemsInStock = currentStockItems.count { it.quantityOnHand > 0 }
+        val outOfStock = currentStockItems.count { it.quantityOnHand <= 0 }
+
+        summaryText.text = "Produits: $totalProducts | En stock: $itemsInStock | Rupture: $outOfStock"
     }
 }

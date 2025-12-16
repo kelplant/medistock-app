@@ -8,6 +8,8 @@ import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.product.ProductAddActivity
 import com.medistock.ui.stock.StockListActivity
 import com.medistock.ui.movement.StockMovementListActivity
+import com.medistock.ui.purchase.PurchaseActivity
+import com.medistock.ui.inventory.InventoryActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -29,6 +31,14 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.stockMovementButton).setOnClickListener {
             startActivity(Intent(this, StockMovementListActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.purchaseButton).setOnClickListener {
+            startActivity(Intent(this, PurchaseActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.inventoryButton).setOnClickListener {
+            startActivity(Intent(this, InventoryActivity::class.java))
         }
     }
 }

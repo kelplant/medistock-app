@@ -20,6 +20,8 @@
         <activity android:name=".ui.movement.StockMovementListActivity" android:exported="false" />
         <activity android:name=".ui.stock.StockListActivity" android:exported="false" />
         <activity android:name=".ui.sales.SaleListActivity" android:exported="false" />
+        <activity android:name=".ui.purchase.PurchaseActivity" android:exported="false" />
+        <activity android:name=".ui.inventory.InventoryActivity" android:exported="false" />
 
     </application>
 
