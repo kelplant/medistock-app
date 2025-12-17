@@ -45,7 +45,7 @@ class StockMovementActivity : AppCompatActivity() {
 
             if (selectedProductIndex >= 0 && quantity != null) {
                 val product = products[selectedProductIndex]
-                val quantityInBaseUnit = quantity * product.unitVolume
+                val quantityInBaseUnit = quantity * (product.unitVolume ?: 1.0)
                 lifecycleScope.launch {
                     val latestPrice = db.productPriceDao().getLatestPrice(product.id).first()
                     if (latestPrice != null) {

@@ -112,8 +112,8 @@ class PurchaseActivity : AppCompatActivity() {
     private fun updateMarginInfo() {
         val product = selectedProduct ?: return
         val marginInfo = when (product.marginType) {
-            "fixed" -> "Marge: +${product.marginValue} (fixe)"
-            "percentage" -> "Marge: +${product.marginValue}%"
+            "fixed" -> "Marge: +${product.marginValue ?: 0.0} (fixe)"
+            "percentage" -> "Marge: +${product.marginValue ?: 0.0}%"
             else -> "Pas de marge configurée"
         }
         textMarginInfo.text = marginInfo
@@ -124,8 +124,8 @@ class PurchaseActivity : AppCompatActivity() {
         val purchasePrice = editPurchasePrice.text.toString().toDoubleOrNull() ?: 0.0
 
         val calculatedSellingPrice = when (product.marginType) {
-            "fixed" -> purchasePrice + product.marginValue
-            "percentage" -> purchasePrice * (1 + product.marginValue / 100)
+            "fixed" -> purchasePrice + (product.marginValue ?: 0.0)
+            "percentage" -> purchasePrice * (1 + (product.marginValue ?: 0.0) / 100)
             else -> purchasePrice
         }
 

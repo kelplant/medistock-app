@@ -42,8 +42,8 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch(Dispatchers.IO) {
             val productId = db.productDao().insert(product)
             val sellingPrice = when (product.marginType) {
-                "fixed" -> purchasePrice + product.marginValue
-                "percentage" -> purchasePrice * (1 + product.marginValue / 100)
+                "fixed" -> purchasePrice + (product.marginValue ?: 0.0)
+                "percentage" -> purchasePrice * (1 + (product.marginValue ?: 0.0) / 100)
                 else -> purchasePrice
             }
             db.productPriceDao().insert(
