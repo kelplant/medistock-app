@@ -101,5 +101,5 @@ interface StockMovementDao {
         WHERE p.id = :productId
         GROUP BY p.id
     """)
-    suspend fun getTotalStockForProduct(productId: Long): CurrentStock?
+    fun getTotalStockForProduct(productId: Long): Flow<CurrentStock?>
 }

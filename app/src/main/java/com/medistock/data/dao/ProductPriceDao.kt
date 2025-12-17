@@ -18,5 +18,5 @@ interface ProductPriceDao {
     fun getAll(): Flow<List<ProductPrice>>
 
     @Query("SELECT * FROM product_prices WHERE productId = :productId ORDER BY effectiveDate DESC LIMIT 1")
-    suspend fun getLatestPrice(productId: Long): ProductPrice?
+    fun getLatestPrice(productId: Long): Flow<ProductPrice?>
 }
