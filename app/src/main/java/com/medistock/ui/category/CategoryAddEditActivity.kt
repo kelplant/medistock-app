@@ -2,9 +2,11 @@ package com.medistock.ui.category
 
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
@@ -26,9 +28,12 @@ class CategoryAddEditActivity : AppCompatActivity() {
 
         val editName = findViewById<EditText>(R.id.editCategoryName)
         val btnSave = findViewById<Button>(R.id.btnSaveCategory)
+        val btnDelete = findViewById<Button>(R.id.btnDeleteCategory)
 
         categoryId = intent.getLongExtra("CATEGORY_ID", -1).takeIf { it != -1L }
         if (categoryId != null) {
+            supportActionBar?.title = "Modifier la catégorie"
+            btnDelete.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
                 val cat = db.categoryDao().getById(categoryId!!).first()
                 runOnUiThread {
@@ -37,6 +42,8 @@ class CategoryAddEditActivity : AppCompatActivity() {
                     }
                 }
             }
+        } else {
+            supportActionBar?.title = "Ajouter une catégorie"
         }
 
         btnSave.setOnClickListener {
@@ -52,6 +59,36 @@ class CategoryAddEditActivity : AppCompatActivity() {
                     db.categoryDao().update(Category(id = categoryId!!, name = name))
                 }
                 finish()
+            }
+        }
+
+        btnDelete.setOnClickListener {
+            confirmDelete()
+        }
+    }
+
+    private fun confirmDelete() {
+        AlertDialog.Builder(this)
+            .setTitle("Supprimer la catégorie")
+            .setMessage("Êtes-vous sûr de vouloir supprimer cette catégorie ?")
+            .setPositiveButton("Supprimer") { _, _ ->
+                deleteCategory()
+            }
+            .setNegativeButton("Annuler", null)
+            .show()
+    }
+
+    private fun deleteCategory() {
+        if (categoryId == null) return
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val category = db.categoryDao().getById(categoryId!!).first()
+            if (category != null) {
+                db.categoryDao().delete(category)
+                runOnUiThread {
+                    Toast.makeText(this@CategoryAddEditActivity, "Catégorie supprimée", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
             }
         }
     }
