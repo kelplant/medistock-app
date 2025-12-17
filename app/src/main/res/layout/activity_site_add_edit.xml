@@ -17,4 +17,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Enregistrer" />
+
+    <Button
+        android:id="@+id/btnDeleteSite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Supprimer"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"
+        android:visibility="gone"
+        android:layout_marginTop="8dp" />
 </LinearLayout>

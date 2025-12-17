@@ -1,53 +1,59 @@
 package com.medistock.ui.product
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.ArrayAdapter
-import android.widget.ListView
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Product
+import com.medistock.ui.adapters.ProductAdapter
 import com.medistock.util.PrefsHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ProductListActivity : AppCompatActivity() {
-
-    private lateinit var listView: ListView
+    private lateinit var adapter: ProductAdapter
     private lateinit var db: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Gestion des produits"
+        db = AppDatabase.getInstance(this)
 
-        listView = findViewById(R.id.listProducts)
-        db = AppDatabase.getInstance(applicationContext)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerProducts)
+        val btnAdd = findViewById<Button>(R.id.btnAddProduct)
 
-        val siteId = PrefsHelper.getActiveSiteId(this)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        adapter = ProductAdapter { product ->
+            val intent = Intent(this, ProductAddEditActivity::class.java)
+            intent.putExtra("PRODUCT_ID", product.id)
+            startActivity(intent)
+        }
+        recyclerView.adapter = adapter
 
-        lifecycleScope.launch {
-            val products = getProductsForSite(siteId)
-            val items = products.map { product ->
-                // Affiche le nom du produit et l’unité
-                "${product.name} (${product.unit})"
-            }
-            withContext(Dispatchers.Main) {
-                listView.adapter = ArrayAdapter(
-                    this@ProductListActivity,
-                    android.R.layout.simple_list_item_1,
-                    items
-                )
-            }
+        btnAdd.setOnClickListener {
+            startActivity(Intent(this, ProductAddEditActivity::class.java))
         }
     }
 
-    private suspend fun getProductsForSite(siteId: Long): List<Product> {
-        return db.productDao().getProductsForSite(siteId).first()
+    override fun onResume() {
+        super.onResume()
+        loadProducts()
+    }
+
+    private fun loadProducts() {
+        val siteId = PrefsHelper.getActiveSiteId(this)
+        CoroutineScope(Dispatchers.IO).launch {
+            val products = db.productDao().getProductsForSite(siteId).first()
+            runOnUiThread { adapter.submitList(products) }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

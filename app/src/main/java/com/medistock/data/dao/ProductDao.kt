@@ -10,8 +10,17 @@ interface ProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(product: Product): Long
 
+    @Update
+    fun update(product: Product)
+
+    @Delete
+    fun delete(product: Product)
+
     @Query("SELECT * FROM products")
     fun getAll(): Flow<List<Product>>
+
+    @Query("SELECT * FROM products WHERE id = :productId LIMIT 1")
+    fun getById(productId: Long): Flow<Product?>
 
     @Query("SELECT * FROM products WHERE siteId = :siteId")
     fun getProductsForSite(siteId: Long): Flow<List<Product>>
