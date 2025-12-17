@@ -13,7 +13,7 @@ import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.ProductWithCategory
-import com.medistock.ui.adapters.ProductAdapter
+import com.medistock.ui.adapters.ProductWithCategoryAdapter
 import com.medistock.ui.product.ProductAddActivity
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.launch
@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: ProductAdapter
+    private lateinit var adapter: ProductWithCategoryAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val siteId = PrefsHelper.getActiveSiteId(this@MainActivity)
             db.productDao().getProductsWithCategoryForSite(siteId).collect { products ->
-                adapter = ProductAdapter(products)
+                adapter = ProductWithCategoryAdapter(products)
                 recyclerView.adapter = adapter
             }
         }
