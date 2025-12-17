@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:padding="16dp"
     app:columnCount="3"
-    app:rowCount="2"
+    app:rowCount="3"
     app:alignmentMode="alignMargins"
     app:useDefaultMargins="true">
 
@@ -173,6 +173,35 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Inventaire"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:paddingTop="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/adminButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_columnWeight="1"
+        app:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:text="⚙️"
+            android:gravity="center"
+            android:textSize="48sp"
+            android:contentDescription="Administration" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Administration"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:paddingTop="8dp" />
     </LinearLayout>

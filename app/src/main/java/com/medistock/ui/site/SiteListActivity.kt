@@ -1,4 +1,4 @@
-package com.medistock.ui.category
+package com.medistock.ui.site
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,47 +9,48 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
-import com.medistock.ui.adapters.CategoryAdapter
+import com.medistock.ui.adapters.SiteAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class CategoryListActivity : AppCompatActivity() {
-    private lateinit var adapter: CategoryAdapter
+class SiteListActivity : AppCompatActivity() {
+    private lateinit var adapter: SiteAdapter
     private lateinit var db: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_category_list)
+        setContentView(R.layout.activity_site_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Gestion des sites"
         db = AppDatabase.getInstance(this)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerCategories)
-        val btnAdd = findViewById<Button>(R.id.btnAddCategory)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerSites)
+        val btnAdd = findViewById<Button>(R.id.btnAddSite)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = CategoryAdapter { category ->
-            val intent = Intent(this, CategoryAddEditActivity::class.java)
-            intent.putExtra("CATEGORY_ID", category.id)
+        adapter = SiteAdapter { site ->
+            val intent = Intent(this, SiteAddEditActivity::class.java)
+            intent.putExtra("SITE_ID", site.id)
             startActivity(intent)
         }
         recyclerView.adapter = adapter
 
         btnAdd.setOnClickListener {
-            startActivity(Intent(this, CategoryAddEditActivity::class.java))
+            startActivity(Intent(this, SiteAddEditActivity::class.java))
         }
     }
 
     override fun onResume() {
         super.onResume()
-        loadCategories()
+        loadSites()
     }
 
-    private fun loadCategories() {
+    private fun loadSites() {
         CoroutineScope(Dispatchers.IO).launch {
-            val categories = db.categoryDao().getAll().first()
-            runOnUiThread { adapter.submitList(categories) }
+            val sites = db.siteDao().getAll().first()
+            runOnUiThread { adapter.submitList(sites) }
         }
     }
 
