@@ -7,11 +7,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PurchaseBatchDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBlocking(batch: PurchaseBatch): Long
-
-    suspend fun insert(batch: PurchaseBatch): Long {
-        return insertBlocking(batch)
-    }
+    suspend fun insert(batch: PurchaseBatch): Long
 
     @Update
     fun update(batch: PurchaseBatch)

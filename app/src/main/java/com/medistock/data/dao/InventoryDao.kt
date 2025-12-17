@@ -7,11 +7,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface InventoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBlocking(inventory: Inventory): Long
-
-    suspend fun insert(inventory: Inventory): Long {
-        return insertBlocking(inventory)
-    }
+    suspend fun insert(inventory: Inventory): Long
 
     @Update
     fun update(inventory: Inventory)

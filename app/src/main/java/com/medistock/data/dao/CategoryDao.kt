@@ -8,11 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface CategoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBlocking(category: Category): Long
-
-    suspend fun insert(category: Category): Long {
-        return insertBlocking(category)
-    }
+    suspend fun insert(category: Category): Long
 
     @Update
     fun update(category: Category)
