@@ -17,7 +17,7 @@ interface InventoryDao {
     suspend fun update(inventory: Inventory)
 
     @Query("SELECT * FROM inventories WHERE id = :inventoryId")
-    suspend fun getById(inventoryId: Long): Inventory?
+    fun getById(inventoryId: Long): Flow<Inventory?>
 
     @Query("SELECT * FROM inventories WHERE productId = :productId AND siteId = :siteId ORDER BY countDate DESC")
     fun getInventoriesForProduct(productId: Long, siteId: Long): Flow<List<Inventory>>
@@ -47,7 +47,7 @@ interface InventoryDao {
         WHERE siteId = :siteId
         AND countDate >= :startDate
     """)
-    suspend fun getTotalDiscrepancy(siteId: Long, startDate: Long): Double?
+    fun getTotalDiscrepancy(siteId: Long, startDate: Long): Double?
 
     @Query("DELETE FROM inventories WHERE id = :inventoryId")
     suspend fun deleteById(inventoryId: Long)

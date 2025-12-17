@@ -17,7 +17,7 @@ interface PurchaseBatchDao {
     suspend fun update(batch: PurchaseBatch)
 
     @Query("SELECT * FROM purchase_batches WHERE id = :batchId")
-    suspend fun getById(batchId: Long): PurchaseBatch?
+    fun getById(batchId: Long): Flow<PurchaseBatch?>
 
     @Query("SELECT * FROM purchase_batches WHERE productId = :productId AND siteId = :siteId ORDER BY purchaseDate ASC")
     fun getBatchesForProduct(productId: Long, siteId: Long): Flow<List<PurchaseBatch>>
@@ -59,7 +59,7 @@ interface PurchaseBatchDao {
         AND siteId = :siteId
         AND isExhausted = 0
     """)
-    suspend fun getAveragePurchasePrice(productId: Long, siteId: Long): Double?
+    fun getAveragePurchasePrice(productId: Long, siteId: Long): Double?
 
     /**
      * Get total remaining quantity across all batches.
@@ -70,7 +70,7 @@ interface PurchaseBatchDao {
         AND siteId = :siteId
         AND isExhausted = 0
     """)
-    suspend fun getTotalRemainingQuantity(productId: Long, siteId: Long): Double?
+    fun getTotalRemainingQuantity(productId: Long, siteId: Long): Double?
 
     @Query("DELETE FROM purchase_batches WHERE id = :batchId")
     suspend fun deleteById(batchId: Long)
