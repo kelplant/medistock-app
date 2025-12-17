@@ -161,8 +161,8 @@ class ProductAddEditActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 if (product != null) {
                     editName.setText(product.name)
-                    editMarginValue.setText(product.marginValue.toString())
-                    editUnitVolume.setText(product.unitVolume.toString())
+                    editMarginValue.setText((product.marginValue ?: 0.0).toString())
+                    editUnitVolume.setText((product.unitVolume ?: 0.0).toString())
 
                     // Sélectionner la catégorie
                     val categoryIndex = categories.indexOfFirst { it.id == product.categoryId }
@@ -182,9 +182,9 @@ class ProductAddEditActivity : AppCompatActivity() {
                         spinnerMarginType.setSelection(marginTypeIndex)
                     }
 
-                    selectedCategoryId = product.categoryId
+                    selectedCategoryId = product.categoryId ?: 0L
                     selectedUnit = product.unit
-                    selectedMarginType = product.marginType
+                    selectedMarginType = product.marginType ?: "percentage"
                 }
             }
         }
