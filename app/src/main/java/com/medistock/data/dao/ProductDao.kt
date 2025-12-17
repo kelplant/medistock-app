@@ -3,17 +3,23 @@ package com.medistock.data.dao
 import androidx.room.*
 import com.medistock.data.entities.Product
 import com.medistock.data.entities.ProductWithCategory
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(product: Product): Long
+    fun insertBlocking(product: Product): Long  // Version bloquante
+
+    // Ou version avec coroutine wrapper
+    suspend fun insert(product: Product): Long {
+        return insertBlocking(product)
+    }
 
     @Query("SELECT * FROM products")
-    suspend fun getAll(): List<Product>
+    fun getAll(): Flow<List<Product>>
 
     @Query("SELECT * FROM products WHERE siteId = :siteId")
-    suspend fun getProductsForSite(siteId: Long): List<Product>
+    fun getProductsForSite(siteId: Long): Flow<List<Product>>
 
     @Query("""
         SELECT p.id, p.name, p.unit, p.categoryId, c.name as categoryName,
@@ -22,7 +28,7 @@ interface ProductDao {
         FROM products p
         LEFT JOIN categories c ON p.categoryId = c.id
     """)
-    suspend fun getAllWithCategory(): List<ProductWithCategory>
+    fun getAllWithCategory(): Flow<List<ProductWithCategory>>
 
     @Query("""
         SELECT p.id, p.name, p.unit, p.categoryId, c.name as categoryName,
@@ -32,5 +38,5 @@ interface ProductDao {
         LEFT JOIN categories c ON p.categoryId = c.id
         WHERE p.siteId = :siteId
     """)
-    suspend fun getProductsWithCategoryForSite(siteId: Long): List<ProductWithCategory>
+    fun getProductsWithCategoryForSite(siteId: Long): Flow<List<ProductWithCategory>>
 }
