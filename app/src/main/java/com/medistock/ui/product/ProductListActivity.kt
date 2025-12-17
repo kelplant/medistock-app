@@ -1,6 +1,7 @@
 package com.medistock.ui.product
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +23,7 @@ class ProductListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product_list)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         listView = findViewById(R.id.listProducts)
         db = AppDatabase.getInstance(applicationContext)
@@ -46,5 +48,15 @@ class ProductListActivity : AppCompatActivity() {
 
     private suspend fun getProductsForSite(siteId: Long): List<Product> {
         return db.productDao().getProductsForSite(siteId).first()
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }

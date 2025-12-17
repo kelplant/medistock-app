@@ -2,6 +2,7 @@ package com.medistock.ui.category
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,6 +22,7 @@ class CategoryListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_category_list)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         db = AppDatabase.getInstance(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerCategories)
@@ -44,6 +46,16 @@ class CategoryListActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val categories = db.categoryDao().getAll().first()
             runOnUiThread { adapter.submitList(categories) }
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

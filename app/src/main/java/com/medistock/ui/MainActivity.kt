@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
 
@@ -50,6 +51,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
             R.id.menu_add_product -> {
                 startActivity(Intent(this, ProductAddActivity::class.java))
                 true

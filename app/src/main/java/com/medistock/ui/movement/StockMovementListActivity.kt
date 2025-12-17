@@ -1,6 +1,7 @@
 package com.medistock.ui.movement
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +18,7 @@ class StockMovementListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stock_movement_list)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val listView = findViewById<ListView>(R.id.listStockMovements)
         val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
@@ -30,6 +32,16 @@ class StockMovementListActivity : AppCompatActivity() {
                 "Product: $productName, Type: ${it.type}, Qty: ${it.quantity}, Date: ${java.util.Date(it.date)}"
             }
             listView.adapter = ArrayAdapter(this@StockMovementListActivity, android.R.layout.simple_list_item_1, items)
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

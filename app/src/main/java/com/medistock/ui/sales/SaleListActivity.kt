@@ -1,6 +1,7 @@
 package com.medistock.ui.sales
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +17,7 @@ class SaleListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sale_list)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val listView = findViewById<ListView>(R.id.listSales)
         val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
@@ -29,6 +31,16 @@ class SaleListActivity : AppCompatActivity() {
                 "Product: $productName, Qty: ${it.quantity}, Farmer: ${it.farmerName}, Date: ${java.util.Date(it.date)}"
             }.toMutableList()
             listView.adapter = ArrayAdapter(this@SaleListActivity, android.R.layout.simple_list_item_1, items)
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }
