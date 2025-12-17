@@ -2,11 +2,16 @@ package com.medistock.data.dao
 
 import androidx.room.*
 import com.medistock.data.entities.PurchaseBatch
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PurchaseBatchDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(batch: PurchaseBatch): Long
+    fun insertBlocking(batch: PurchaseBatch): Long
+
+    suspend fun insert(batch: PurchaseBatch): Long {
+        return insertBlocking(batch)
+    }
 
     @Update
     suspend fun update(batch: PurchaseBatch)
@@ -15,7 +20,7 @@ interface PurchaseBatchDao {
     suspend fun getById(batchId: Long): PurchaseBatch?
 
     @Query("SELECT * FROM purchase_batches WHERE productId = :productId AND siteId = :siteId ORDER BY purchaseDate ASC")
-    suspend fun getBatchesForProduct(productId: Long, siteId: Long): List<PurchaseBatch>
+    fun getBatchesForProduct(productId: Long, siteId: Long): Flow<List<PurchaseBatch>>
 
     /**
      * Get available batches (not exhausted) for FIFO consumption.
@@ -29,7 +34,7 @@ interface PurchaseBatchDao {
         AND remainingQuantity > 0
         ORDER BY purchaseDate ASC
     """)
-    suspend fun getAvailableBatchesFIFO(productId: Long, siteId: Long): List<PurchaseBatch>
+    fun getAvailableBatchesFIFO(productId: Long, siteId: Long): Flow<List<PurchaseBatch>>
 
     /**
      * Get batches expiring soon (within days threshold).
@@ -43,7 +48,7 @@ interface PurchaseBatchDao {
         AND expiryDate <= :thresholdDate
         ORDER BY expiryDate ASC
     """)
-    suspend fun getBatchesExpiringSoon(productId: Long, siteId: Long, thresholdDate: Long): List<PurchaseBatch>
+    fun getBatchesExpiringSoon(productId: Long, siteId: Long, thresholdDate: Long): Flow<List<PurchaseBatch>>
 
     /**
      * Calculate average purchase price for a product.

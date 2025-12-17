@@ -3,20 +3,25 @@ package com.medistock.data.dao
 import androidx.room.*
 import com.medistock.data.entities.CurrentStock
 import com.medistock.data.entities.StockMovement
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StockMovementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(movement: StockMovement): Long
+    fun insertBlocking(movement: StockMovement): Long
+
+    suspend fun insert(movement: StockMovement): Long {
+        return insertBlocking(movement)
+    }
 
     @Query("SELECT * FROM stock_movements")
-    suspend fun getAll(): List<StockMovement>
+    fun getAll(): Flow<List<StockMovement>>
 
     @Query("SELECT * FROM stock_movements WHERE productId = :productId AND siteId = :siteId ORDER BY date DESC")
-    suspend fun getMovementsForProduct(productId: Long, siteId: Long): List<StockMovement>
+    fun getMovementsForProduct(productId: Long, siteId: Long): Flow<List<StockMovement>>
 
     @Query("SELECT * FROM stock_movements WHERE siteId = :siteId")
-    suspend fun getAllForSite(siteId: Long): List<StockMovement>
+    fun getAllForSite(siteId: Long): Flow<List<StockMovement>>
 
     /**
      * Calculate current stock for all products at a specific site.
@@ -45,7 +50,7 @@ interface StockMovementDao {
         GROUP BY p.id, s.id
         ORDER BY p.name
     """)
-    suspend fun getCurrentStockForSite(siteId: Long): List<CurrentStock>
+    fun getCurrentStockForSite(siteId: Long): Flow<List<CurrentStock>>
 
     /**
      * Calculate current stock for all products across all sites.
@@ -72,7 +77,7 @@ interface StockMovementDao {
         GROUP BY p.id, s.id
         ORDER BY s.name, p.name
     """)
-    suspend fun getCurrentStockAllSites(): List<CurrentStock>
+    fun getCurrentStockAllSites(): Flow<List<CurrentStock>>
 
     /**
      * Calculate total stock for a specific product across all sites.
