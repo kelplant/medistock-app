@@ -8,6 +8,7 @@ import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class StockMovementActivity : AppCompatActivity() {
@@ -29,7 +30,7 @@ class StockMovementActivity : AppCompatActivity() {
         typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("in", "out"))
 
         lifecycleScope.launch {
-            products = db.productDao().getAll()
+            products = db.productDao().getAll().first()
             productSpinner.adapter = ArrayAdapter(
                 this@StockMovementActivity,
                 android.R.layout.simple_spinner_item,
@@ -46,7 +47,7 @@ class StockMovementActivity : AppCompatActivity() {
                 val product = products[selectedProductIndex]
                 val quantityInBaseUnit = quantity * product.unitVolume
                 lifecycleScope.launch {
-                    val latestPrice = db.productPriceDao().getLatestPrice(product.id)
+                    val latestPrice = db.productPriceDao().getLatestPrice(product.id).first()
                     if (latestPrice != null) {
                         val siteId = com.medistock.util.PrefsHelper.getActiveSiteId(this@StockMovementActivity)
                     db.stockMovementDao().insert(

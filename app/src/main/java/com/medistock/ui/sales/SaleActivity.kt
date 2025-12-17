@@ -8,6 +8,7 @@ import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SaleActivity : AppCompatActivity() {
@@ -35,7 +36,7 @@ class SaleActivity : AppCompatActivity() {
         textPriceInfo = findViewById(R.id.textSalePriceInfo)
 
         lifecycleScope.launch {
-            products = db.productDao().getAll()
+            products = db.productDao().getAll().first()
             productSpinner.adapter = ArrayAdapter(
                 this@SaleActivity,
                 android.R.layout.simple_spinner_item,
@@ -92,7 +93,7 @@ class SaleActivity : AppCompatActivity() {
 
     private fun loadSuggestedPrice(productId: Long) {
         lifecycleScope.launch {
-            val latestPrice = db.productPriceDao().getLatestPrice(productId)
+            val latestPrice = db.productPriceDao().getLatestPrice(productId).first()
             if (latestPrice != null) {
                 priceInput.setText(String.format("%.2f", latestPrice.sellingPrice))
                 textPriceInfo.text = "Prix suggéré (dernier prix de vente enregistré)"

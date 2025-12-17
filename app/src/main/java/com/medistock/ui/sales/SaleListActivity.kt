@@ -9,6 +9,7 @@ import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.util.PrefsHelper
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SaleListActivity : AppCompatActivity() {
@@ -21,8 +22,8 @@ class SaleListActivity : AppCompatActivity() {
         val siteId = PrefsHelper.getActiveSiteId(this)
 
         lifecycleScope.launch {
-            val products = db.productDao().getProductsForSite(siteId).associateBy { it.id }
-            val sales = db.productSaleDao().getAllForSite(siteId)
+            val products = db.productDao().getProductsForSite(siteId).first().associateBy { it.id }
+            val sales = db.productSaleDao().getAllForSite(siteId).first()
             val items = sales.map {
                 val productName = products[it.productId]?.name ?: "Unknown"
                 "Product: $productName, Qty: ${it.quantity}, Farmer: ${it.farmerName}, Date: ${java.util.Date(it.date)}"

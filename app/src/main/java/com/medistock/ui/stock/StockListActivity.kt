@@ -16,6 +16,7 @@ import com.medistock.data.entities.CurrentStock
 import com.medistock.data.entities.Site
 import com.medistock.ui.adapters.StockAdapter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -49,7 +50,7 @@ class StockListActivity : AppCompatActivity() {
 
     private fun loadSites() {
         lifecycleScope.launch(Dispatchers.IO) {
-            sites = db.siteDao().getAll()
+            sites = db.siteDao().getAll().first()
             withContext(Dispatchers.Main) {
                 // Add "All Sites" option
                 val siteNames = mutableListOf("Tous les sites")
@@ -85,7 +86,7 @@ class StockListActivity : AppCompatActivity() {
 
     private fun loadStockForSite(siteId: Long) {
         lifecycleScope.launch(Dispatchers.IO) {
-            currentStockItems = db.stockMovementDao().getCurrentStockForSite(siteId)
+            currentStockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
             withContext(Dispatchers.Main) {
                 adapter.updateData(currentStockItems)
                 updateSummary()
@@ -95,7 +96,7 @@ class StockListActivity : AppCompatActivity() {
 
     private fun loadStockAllSites() {
         lifecycleScope.launch(Dispatchers.IO) {
-            currentStockItems = db.stockMovementDao().getCurrentStockAllSites()
+            currentStockItems = db.stockMovementDao().getCurrentStockAllSites().first()
             withContext(Dispatchers.Main) {
                 adapter.updateData(currentStockItems)
                 updateSummary()
