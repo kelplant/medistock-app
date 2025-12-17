@@ -15,10 +15,10 @@ interface CategoryDao {
     }
 
     @Update
-    suspend fun update(category: Category)
+    fun update(category: Category)
 
     @Delete
-    suspend fun delete(category: Category)
+    fun delete(category: Category)
 
     @Query("SELECT * FROM categories")
     fun getAll(): Flow<List<Category>>
