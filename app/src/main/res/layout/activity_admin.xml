@@ -18,15 +18,15 @@
         android:id="@+id/btnManageSites"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Gérer les sites"
+        android:text="Site Management"
         android:layout_marginBottom="16dp"
         android:padding="16dp" />
 
     <Button
-        android:id="@+id/btnManageCategories"
+        android:id="@+id/btnManageProducts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Gérer les catégories"
+        android:text="Manage Products"
         android:padding="16dp" />
 
 </LinearLayout>
