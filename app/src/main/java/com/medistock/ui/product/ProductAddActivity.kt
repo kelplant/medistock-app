@@ -26,6 +26,8 @@ class ProductAddActivity : AppCompatActivity() {
     private lateinit var spinnerUnit: Spinner
     private lateinit var spinnerMarginType: Spinner
     private lateinit var editMarginValue: EditText
+    private lateinit var editUnitVolume: EditText
+    private lateinit var textUnitVolumeLabel: TextView
     private lateinit var textMarginInfo: TextView
     private lateinit var btnSave: Button
 
@@ -34,6 +36,7 @@ class ProductAddActivity : AppCompatActivity() {
     private var selectedUnit: String = ""
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
+    private var enteredUnitVolume: Double = 0.0
     private var currentSiteId: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +51,8 @@ class ProductAddActivity : AppCompatActivity() {
         spinnerUnit = findViewById(R.id.spinnerUnit)
         spinnerMarginType = findViewById(R.id.spinnerMarginType)
         editMarginValue = findViewById(R.id.editMarginValue)
+        editUnitVolume = findViewById(R.id.editUnitVolume)
+        textUnitVolumeLabel = findViewById(R.id.textUnitVolumeLabel)
         textMarginInfo = findViewById(R.id.textMarginInfo)
         btnSave = findViewById(R.id.btnSaveProduct)
 
@@ -60,8 +65,8 @@ class ProductAddActivity : AppCompatActivity() {
             spinnerCategory.adapter = categoryAdapter
         }
 
-        // Unités exemple fixe (tu peux adapter)
-        val units = listOf("kg", "liter", "piece")
+        // Types de conditionnement : Flacon (ml) ou Boite (comprimés)
+        val units = listOf("Flacon", "Boite")
         val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerUnit.adapter = unitAdapter
@@ -101,6 +106,17 @@ class ProductAddActivity : AppCompatActivity() {
         spinnerUnit.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
                 selectedUnit = units.getOrNull(position) ?: ""
+                // Adapter le label selon le type de conditionnement
+                when (selectedUnit) {
+                    "Flacon" -> {
+                        textUnitVolumeLabel.text = "Volume par flacon (ml)"
+                        editUnitVolume.hint = "Ex: 100"
+                    }
+                    "Boite" -> {
+                        textUnitVolumeLabel.text = "Nombre de comprimés par boite"
+                        editUnitVolume.hint = "Ex: 30"
+                    }
+                }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
@@ -108,7 +124,10 @@ class ProductAddActivity : AppCompatActivity() {
         btnSave.setOnClickListener {
             val productName = editName.text.toString().trim()
             val marginText = editMarginValue.text.toString()
+            val unitVolumeText = editUnitVolume.text.toString()
+
             enteredMarginValue = marginText.toDoubleOrNull() ?: 0.0
+            enteredUnitVolume = unitVolumeText.toDoubleOrNull() ?: 0.0
 
             if (productName.isEmpty()) {
                 Toast.makeText(this, getString(R.string.error_enter_product_name), Toast.LENGTH_SHORT).show()
@@ -124,6 +143,12 @@ class ProductAddActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (enteredUnitVolume <= 0.0) {
+                val volumeLabel = if (selectedUnit == "Flacon") "le volume en ml" else "le nombre de comprimés"
+                Toast.makeText(this, "Entrez $volumeLabel", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             // Création produit
             val product = Product(
                 name = productName,
@@ -131,7 +156,7 @@ class ProductAddActivity : AppCompatActivity() {
                 unit = selectedUnit,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
-                unitVolume = 1.0, // valeur fixe ou ajouter input si nécessaire
+                unitVolume = enteredUnitVolume,
                 siteId = currentSiteId
             )
 
