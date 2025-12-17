@@ -8,12 +8,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBlocking(product: Product): Long  // Version bloquante
-
-    // Ou version avec coroutine wrapper
-    suspend fun insert(product: Product): Long {
-        return insertBlocking(product)
-    }
+    suspend fun insert(product: Product): Long
 
     @Query("SELECT * FROM products")
     fun getAll(): Flow<List<Product>>

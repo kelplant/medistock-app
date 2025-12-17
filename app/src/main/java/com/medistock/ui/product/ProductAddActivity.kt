@@ -33,7 +33,7 @@ class ProductAddActivity : AppCompatActivity() {
 
     private var categories: List<Category> = emptyList()
     private var selectedCategoryId: Long = 0L
-    private var selectedUnit: String = ""
+    private var selectedUnit: String = "Flacon"
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
     private var enteredUnitVolume: Double = 0.0
@@ -59,10 +59,21 @@ class ProductAddActivity : AppCompatActivity() {
         // Charger categories depuis DB
         lifecycleScope.launch {
             categories = db.categoryDao().getAll().first()
-            val categoryNames = categories.map { it.name }
-            val categoryAdapter = ArrayAdapter(this@ProductAddActivity, android.R.layout.simple_spinner_item, categoryNames)
-            categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerCategory.adapter = categoryAdapter
+            if (categories.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@ProductAddActivity,
+                        "Aucune catégorie disponible. Veuillez d'abord créer une catégorie.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    btnSave.isEnabled = false
+                }
+            } else {
+                val categoryNames = categories.map { it.name }
+                val categoryAdapter = ArrayAdapter(this@ProductAddActivity, android.R.layout.simple_spinner_item, categoryNames)
+                categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerCategory.adapter = categoryAdapter
+            }
         }
 
         // Types de conditionnement : Flacon (ml) ou Boite (comprimés)
@@ -138,6 +149,16 @@ class ProductAddActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (selectedUnit.isEmpty()) {
+                Toast.makeText(this, "Sélectionnez un type de conditionnement", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (currentSiteId == 0L) {
+                Toast.makeText(this, "Aucun site actif. Veuillez sélectionner un site d'abord.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
             if (enteredMarginValue <= 0.0) {
                 Toast.makeText(this, "Entrez une marge valide", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -161,10 +182,22 @@ class ProductAddActivity : AppCompatActivity() {
             )
 
             lifecycleScope.launch {
-                db.productDao().insert(product)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ProductAddActivity, getString(R.string.product_added), Toast.LENGTH_SHORT).show()
-                    finish()
+                try {
+                    withContext(Dispatchers.IO) {
+                        db.productDao().insert(product)
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@ProductAddActivity, getString(R.string.product_added), Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ProductAddActivity,
+                            "Erreur lors de l'ajout du produit: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
         }

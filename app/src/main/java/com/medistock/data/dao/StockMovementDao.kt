@@ -8,11 +8,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface StockMovementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBlocking(movement: StockMovement): Long
-
-    suspend fun insert(movement: StockMovement): Long {
-        return insertBlocking(movement)
-    }
+    suspend fun insert(movement: StockMovement): Long
 
     @Query("SELECT * FROM stock_movements")
     fun getAll(): Flow<List<StockMovement>>

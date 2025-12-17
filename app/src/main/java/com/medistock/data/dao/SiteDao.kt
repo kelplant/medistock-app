@@ -7,11 +7,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SiteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBlocking(site: Site): Long
-
-    suspend fun insert(site: Site): Long {
-        return insertBlocking(site)
-    }
+    suspend fun insert(site: Site): Long
 
     @Update
     fun update(site: Site)
