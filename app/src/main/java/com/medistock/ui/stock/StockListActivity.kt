@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.CurrentStock
+import com.medistock.data.entities.Product
 import com.medistock.data.entities.Site
 import com.medistock.ui.adapters.StockAdapter
 import kotlinx.coroutines.Dispatchers
@@ -24,13 +25,17 @@ import kotlinx.coroutines.withContext
 class StockListActivity : AppCompatActivity() {
 
     private lateinit var spinnerSites: Spinner
+    private lateinit var spinnerProducts: Spinner
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StockAdapter
     private lateinit var db: AppDatabase
     private lateinit var summaryText: TextView
 
     private var sites: List<Site> = emptyList()
+    private var products: List<Product> = emptyList()
     private var currentStockItems: List<CurrentStock> = emptyList()
+    private var selectedSitePosition: Int = 0
+    private var selectedProductPosition: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +43,7 @@ class StockListActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         spinnerSites = findViewById(R.id.spinnerSites)
+        spinnerProducts = findViewById(R.id.spinnerProducts)
         recyclerView = findViewById(R.id.recyclerViewStock)
         summaryText = findViewById(R.id.textStockSummary)
 
@@ -48,6 +54,7 @@ class StockListActivity : AppCompatActivity() {
         db = AppDatabase.getInstance(this)
 
         loadSites()
+        loadProducts()
     }
 
     private fun loadSites() {
@@ -70,14 +77,8 @@ class StockListActivity : AppCompatActivity() {
                     override fun onItemSelected(
                         parent: AdapterView<*>, view: View?, position: Int, id: Long
                     ) {
-                        if (position == 0) {
-                            // Load all sites
-                            loadStockAllSites()
-                        } else {
-                            // Load specific site
-                            val selectedSite = sites[position - 1]
-                            loadStockForSite(selectedSite.id)
-                        }
+                        selectedSitePosition = position
+                        loadStockWithFilters()
                     }
 
                     override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -86,19 +87,60 @@ class StockListActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadStockForSite(siteId: Long) {
+    private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            currentStockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
+            products = db.productDao().getAll().first()
             withContext(Dispatchers.Main) {
-                adapter.updateData(currentStockItems)
-                updateSummary()
+                // Add "All Products" option
+                val productNames = mutableListOf("Tous les produits")
+                productNames.addAll(products.map { it.name })
+
+                val spinnerAdapter = ArrayAdapter(
+                    this@StockListActivity,
+                    android.R.layout.simple_spinner_item,
+                    productNames
+                )
+                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerProducts.adapter = spinnerAdapter
+
+                spinnerProducts.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>, view: View?, position: Int, id: Long
+                    ) {
+                        selectedProductPosition = position
+                        loadStockWithFilters()
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>) {}
+                }
             }
         }
     }
 
-    private fun loadStockAllSites() {
+    private fun loadStockWithFilters() {
         lifecycleScope.launch(Dispatchers.IO) {
-            currentStockItems = db.stockMovementDao().getCurrentStockAllSites().first()
+            currentStockItems = when {
+                // All sites, all products
+                selectedSitePosition == 0 && selectedProductPosition == 0 -> {
+                    db.stockMovementDao().getCurrentStockAllSites().first()
+                }
+                // Specific site, all products
+                selectedSitePosition > 0 && selectedProductPosition == 0 -> {
+                    val selectedSite = sites[selectedSitePosition - 1]
+                    db.stockMovementDao().getCurrentStockForSite(selectedSite.id).first()
+                }
+                // All sites, specific product
+                selectedSitePosition == 0 && selectedProductPosition > 0 -> {
+                    val selectedProduct = products[selectedProductPosition - 1]
+                    db.stockMovementDao().getCurrentStockForProduct(selectedProduct.id).first()
+                }
+                // Specific site, specific product
+                else -> {
+                    val selectedSite = sites[selectedSitePosition - 1]
+                    val selectedProduct = products[selectedProductPosition - 1]
+                    db.stockMovementDao().getCurrentStockForProductAndSite(selectedProduct.id, selectedSite.id).first()
+                }
+            }
             withContext(Dispatchers.Main) {
                 adapter.updateData(currentStockItems)
                 updateSummary()
