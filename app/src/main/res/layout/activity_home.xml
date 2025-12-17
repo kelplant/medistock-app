@@ -66,33 +66,6 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/manageProductButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
-
-        <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:src="@drawable/ic_manage"
-            android:contentDescription="@string/manage_product" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/manage_product"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
-
-    <LinearLayout
         android:id="@+id/stockMovementButton"
         android:layout_width="0dp"
         android:layout_height="0dp"

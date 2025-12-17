@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
-import com.medistock.ui.category.CategoryListActivity
+import com.medistock.ui.manage.ManageProductMenuActivity
 import com.medistock.ui.site.SiteListActivity
 
 class AdminActivity : AppCompatActivity() {
@@ -20,8 +20,8 @@ class AdminActivity : AppCompatActivity() {
             startActivity(Intent(this, SiteListActivity::class.java))
         }
 
-        findViewById<android.view.View>(R.id.btnManageCategories).setOnClickListener {
-            startActivity(Intent(this, CategoryListActivity::class.java))
+        findViewById<android.view.View>(R.id.btnManageProducts).setOnClickListener {
+            startActivity(Intent(this, ManageProductMenuActivity::class.java))
         }
     }
 
