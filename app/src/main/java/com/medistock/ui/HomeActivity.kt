@@ -10,6 +10,7 @@ import com.medistock.ui.stock.StockListActivity
 import com.medistock.ui.movement.StockMovementListActivity
 import com.medistock.ui.purchase.PurchaseActivity
 import com.medistock.ui.inventory.InventoryActivity
+import com.medistock.ui.admin.AdminActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -39,6 +40,10 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.inventoryButton).setOnClickListener {
             startActivity(Intent(this, InventoryActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.adminButton).setOnClickListener {
+            startActivity(Intent(this, AdminActivity::class.java))
         }
     }
 }

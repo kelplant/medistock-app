@@ -13,6 +13,15 @@ interface SiteDao {
         return insertBlocking(site)
     }
 
+    @Update
+    fun update(site: Site)
+
+    @Delete
+    fun delete(site: Site)
+
     @Query("SELECT * FROM sites")
     fun getAll(): Flow<List<Site>>
+
+    @Query("SELECT * FROM sites WHERE id = :siteId LIMIT 1")
+    fun getById(siteId: Long): Flow<Site?>
 }
