@@ -1,6 +1,7 @@
 package com.medistock.ui.category
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -20,6 +21,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_category_add_edit)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         db = AppDatabase.getInstance(this)
 
         val editName = findViewById<EditText>(R.id.editCategoryName)
@@ -51,6 +53,16 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 }
                 finish()
             }
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }
