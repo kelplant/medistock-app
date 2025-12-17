@@ -239,7 +239,7 @@ class SaleActivity : AppCompatActivity() {
                 val currentTime = System.currentTimeMillis()
 
                 // Save each sale item and create stock movements
-                saleItemAdapter.items.forEach { item ->
+                saleItemAdapter.getItems().forEach { item ->
                     // Create product sale record
                     val productSale = ProductSale(
                         productId = item.productId,
@@ -293,9 +293,4 @@ class SaleActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-}
-
-// Extension function to get total quantity for a specific product
-fun SaleItemAdapter.getTotalQuantityForProduct(productId: Long): Double {
-    return this.items.filter { it.productId == productId }.sumOf { it.quantity }
 }
