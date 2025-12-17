@@ -14,7 +14,7 @@ interface InventoryDao {
     }
 
     @Update
-    suspend fun update(inventory: Inventory)
+    fun update(inventory: Inventory)
 
     @Query("SELECT * FROM inventories WHERE id = :inventoryId")
     fun getById(inventoryId: Long): Flow<Inventory?>
@@ -50,5 +50,5 @@ interface InventoryDao {
     fun getTotalDiscrepancy(siteId: Long, startDate: Long): Double?
 
     @Query("DELETE FROM inventories WHERE id = :inventoryId")
-    suspend fun deleteById(inventoryId: Long)
+    fun deleteById(inventoryId: Long)
 }

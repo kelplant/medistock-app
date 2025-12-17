@@ -14,7 +14,7 @@ interface PurchaseBatchDao {
     }
 
     @Update
-    suspend fun update(batch: PurchaseBatch)
+    fun update(batch: PurchaseBatch)
 
     @Query("SELECT * FROM purchase_batches WHERE id = :batchId")
     fun getById(batchId: Long): Flow<PurchaseBatch?>
@@ -73,5 +73,5 @@ interface PurchaseBatchDao {
     fun getTotalRemainingQuantity(productId: Long, siteId: Long): Double?
 
     @Query("DELETE FROM purchase_batches WHERE id = :batchId")
-    suspend fun deleteById(batchId: Long)
+    fun deleteById(batchId: Long)
 }
