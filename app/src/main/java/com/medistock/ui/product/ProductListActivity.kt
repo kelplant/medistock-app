@@ -10,6 +10,7 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Product
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -44,6 +45,6 @@ class ProductListActivity : AppCompatActivity() {
     }
 
     private suspend fun getProductsForSite(siteId: Long): List<Product> {
-        return db.productDao().getProductsForSite(siteId)
+        return db.productDao().getProductsForSite(siteId).first()
     }
 }
