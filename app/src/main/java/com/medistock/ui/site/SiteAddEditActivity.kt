@@ -32,7 +32,7 @@ class SiteAddEditActivity : AppCompatActivity() {
 
         siteId = intent.getLongExtra("SITE_ID", -1).takeIf { it != -1L }
         if (siteId != null) {
-            supportActionBar?.title = "Modifier le site"
+            supportActionBar?.title = "Edit Site"
             btnDelete.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
                 val site = db.siteDao().getById(siteId!!).first()
@@ -43,13 +43,13 @@ class SiteAddEditActivity : AppCompatActivity() {
                 }
             }
         } else {
-            supportActionBar?.title = "Ajouter un site"
+            supportActionBar?.title = "Add Site"
         }
 
         btnSave.setOnClickListener {
             val name = editName.text.toString().trim()
             if (name.isEmpty()) {
-                Toast.makeText(this, "Nom du site requis", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Site name required", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             CoroutineScope(Dispatchers.IO).launch {
@@ -69,12 +69,12 @@ class SiteAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Supprimer le site")
-            .setMessage("Êtes-vous sûr de vouloir supprimer ce site ?")
-            .setPositiveButton("Supprimer") { _, _ ->
+            .setTitle("Delete Site")
+            .setMessage("Are you sure you want to delete this site?")
+            .setPositiveButton("Delete") { _, _ ->
                 deleteSite()
             }
-            .setNegativeButton("Annuler", null)
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -86,7 +86,7 @@ class SiteAddEditActivity : AppCompatActivity() {
             if (site != null) {
                 db.siteDao().delete(site)
                 runOnUiThread {
-                    Toast.makeText(this@SiteAddEditActivity, "Site supprimé", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SiteAddEditActivity, "Site deleted", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }

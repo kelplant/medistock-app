@@ -116,7 +116,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Achat"
+            android:text="Purchase"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:paddingTop="8dp" />
     </LinearLayout>
@@ -145,7 +145,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Inventaire"
+            android:text="Inventory"
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:paddingTop="8dp" />
     </LinearLayout>

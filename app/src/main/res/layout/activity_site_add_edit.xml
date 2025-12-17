@@ -9,20 +9,20 @@
         android:id="@+id/editSiteName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nom du site"
+        android:hint="Site name"
         android:inputType="textPersonName"/>
 
     <Button
         android:id="@+id/btnSaveSite"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enregistrer" />
+        android:text="Save" />
 
     <Button
         android:id="@+id/btnDeleteSite"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Supprimer"
+        android:text="Delete"
         android:backgroundTint="#D32F2F"
         android:textColor="#FFFFFF"
         android:visibility="gone"
