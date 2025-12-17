@@ -39,11 +39,11 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Unité -->
+        <!-- Type de conditionnement -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/unit"
+            android:text="Type de conditionnement"
             android:textSize="16sp"
             android:layout_marginTop="8dp" />
 
@@ -51,6 +51,23 @@
             android:id="@+id/spinnerUnit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Volume/Quantité par unité -->
+        <TextView
+            android:id="@+id/textUnitVolumeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Volume par flacon (ml)"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
+
+        <EditText
+            android:id="@+id/editUnitVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="Ex: 100"
             android:layout_marginBottom="16dp" />
 
         <!-- Type de marge -->
