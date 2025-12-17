@@ -2,11 +2,16 @@ package com.medistock.data.dao
 
 import androidx.room.*
 import com.medistock.data.entities.Inventory
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface InventoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(inventory: Inventory): Long
+    fun insertBlocking(inventory: Inventory): Long
+
+    suspend fun insert(inventory: Inventory): Long {
+        return insertBlocking(inventory)
+    }
 
     @Update
     suspend fun update(inventory: Inventory)
@@ -15,13 +20,13 @@ interface InventoryDao {
     suspend fun getById(inventoryId: Long): Inventory?
 
     @Query("SELECT * FROM inventories WHERE productId = :productId AND siteId = :siteId ORDER BY countDate DESC")
-    suspend fun getInventoriesForProduct(productId: Long, siteId: Long): List<Inventory>
+    fun getInventoriesForProduct(productId: Long, siteId: Long): Flow<List<Inventory>>
 
     @Query("SELECT * FROM inventories WHERE siteId = :siteId ORDER BY countDate DESC")
-    suspend fun getInventoriesForSite(siteId: Long): List<Inventory>
+    fun getInventoriesForSite(siteId: Long): Flow<List<Inventory>>
 
     @Query("SELECT * FROM inventories ORDER BY countDate DESC LIMIT :limit")
-    suspend fun getRecentInventories(limit: Int = 50): List<Inventory>
+    fun getRecentInventories(limit: Int = 50): Flow<List<Inventory>>
 
     /**
      * Get inventories with discrepancies (difference != 0).
@@ -32,7 +37,7 @@ interface InventoryDao {
         AND discrepancy != 0
         ORDER BY countDate DESC
     """)
-    suspend fun getInventoriesWithDiscrepancies(siteId: Long): List<Inventory>
+    fun getInventoriesWithDiscrepancies(siteId: Long): Flow<List<Inventory>>
 
     /**
      * Get total discrepancy value for a site.
