@@ -11,6 +11,7 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.ui.adapters.CategoryAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class CategoryListActivity : AppCompatActivity() {
@@ -41,7 +42,7 @@ class CategoryListActivity : AppCompatActivity() {
 
     private fun loadCategories() {
         CoroutineScope(Dispatchers.IO).launch {
-            val categories = db.categoryDao().getAll()
+            val categories = db.categoryDao().getAll().first()
             runOnUiThread { adapter.submitList(categories) }
         }
     }

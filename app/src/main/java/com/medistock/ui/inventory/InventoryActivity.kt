@@ -9,6 +9,7 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -69,8 +70,8 @@ class InventoryActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getAll()
-            currentStockItems = db.stockMovementDao().getCurrentStockForSite(currentSiteId)
+            products = db.productDao().getAll().first()
+            currentStockItems = db.stockMovementDao().getCurrentStockForSite(currentSiteId).first()
 
             withContext(Dispatchers.Main) {
                 val productNames = products.map { "${it.name} (${it.unit})" }
@@ -144,7 +145,7 @@ class InventoryActivity : AppCompatActivity() {
             // If there's a discrepancy, create a stock adjustment movement
             if (discrepancy != 0.0) {
                 val product = products.find { it.id == selectedProductId }
-                val latestPrice = db.productPriceDao().getLatestPrice(selectedProductId)
+                val latestPrice = db.productPriceDao().getLatestPrice(selectedProductId).first()
 
                 val movement = StockMovement(
                     productId = selectedProductId,

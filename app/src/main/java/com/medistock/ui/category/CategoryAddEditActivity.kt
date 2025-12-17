@@ -10,6 +10,7 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Category
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class CategoryAddEditActivity : AppCompatActivity() {
@@ -27,7 +28,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
         categoryId = intent.getLongExtra("CATEGORY_ID", -1).takeIf { it != -1L }
         if (categoryId != null) {
             CoroutineScope(Dispatchers.IO).launch {
-                val cat = db.categoryDao().getById(categoryId!!)
+                val cat = db.categoryDao().getById(categoryId!!).first()
                 runOnUiThread {
                     if (cat != null) {
                         editName.setText(cat.name ?: "")

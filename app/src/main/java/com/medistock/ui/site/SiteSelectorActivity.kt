@@ -10,6 +10,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Site
 import com.medistock.ui.MainActivity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SiteSelectorActivity : AppCompatActivity() {
@@ -30,7 +31,7 @@ class SiteSelectorActivity : AppCompatActivity() {
         val btnAddSite = findViewById<Button>(R.id.btnAddSite)
 
         lifecycleScope.launch {
-            sites = db.siteDao().getAll()
+            sites = db.siteDao().getAll().first()
             siteSpinner.adapter = ArrayAdapter(
                 this@SiteSelectorActivity,
                 android.R.layout.simple_spinner_item,
@@ -43,7 +44,7 @@ class SiteSelectorActivity : AppCompatActivity() {
             if (siteName.isNotEmpty()) {
                 lifecycleScope.launch {
                     db.siteDao().insert(Site(name = siteName))
-                    val refreshedSites = db.siteDao().getAll()
+                    val refreshedSites = db.siteDao().getAll().first()
                     sites = refreshedSites
                     siteSpinner.adapter = ArrayAdapter(
                         this@SiteSelectorActivity,

@@ -10,6 +10,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Product
 import com.medistock.util.PrefsHelper
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class StockMovementListActivity : AppCompatActivity() {
@@ -22,8 +23,8 @@ class StockMovementListActivity : AppCompatActivity() {
         val siteId = PrefsHelper.getActiveSiteId(this)
 
         lifecycleScope.launch {
-            val products = db.productDao().getProductsForSite(siteId).associateBy { it.id }
-            val movements = db.stockMovementDao().getAllForSite(siteId)
+            val products = db.productDao().getProductsForSite(siteId).first().associateBy { it.id }
+            val movements = db.stockMovementDao().getAllForSite(siteId).first()
             val items = movements.map {
                 val productName = products[it.productId]?.name ?: "Unknown"
                 "Product: $productName, Type: ${it.type}, Qty: ${it.quantity}, Date: ${java.util.Date(it.date)}"

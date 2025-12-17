@@ -13,6 +13,7 @@ import com.medistock.data.entities.Category
 import com.medistock.data.entities.Product
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -50,7 +51,7 @@ class ProductAddActivity : AppCompatActivity() {
 
         // Charger categories depuis DB
         lifecycleScope.launch {
-            categories = db.categoryDao().getAll()
+            categories = db.categoryDao().getAll().first()
             val categoryNames = categories.map { it.name }
             val categoryAdapter = ArrayAdapter(this@ProductAddActivity, android.R.layout.simple_spinner_item, categoryNames)
             categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)

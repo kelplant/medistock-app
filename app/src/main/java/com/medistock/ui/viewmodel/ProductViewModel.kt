@@ -9,6 +9,7 @@ import com.medistock.data.entities.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ProductViewModel(application: Application) : AndroidViewModel(application) {
@@ -27,13 +28,13 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
     private fun loadProducts() {
         viewModelScope.launch(Dispatchers.IO) {
-            _products.value = db.productDao().getAll()
+            _products.value = db.productDao().getAll().first()
         }
     }
 
     fun loadCategories() {
         viewModelScope.launch(Dispatchers.IO) {
-            _categories.value = db.categoryDao().getAll()
+            _categories.value = db.categoryDao().getAll().first()
         }
     }
 
@@ -60,7 +61,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
     fun loadProductsForSite(siteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            _products.value = db.productDao().getProductsForSite(siteId)
+            _products.value = db.productDao().getProductsForSite(siteId).first()
         }
     }
 }

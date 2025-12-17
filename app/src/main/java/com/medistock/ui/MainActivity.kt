@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Product
+import com.medistock.data.entities.ProductWithCategory
 import com.medistock.ui.adapters.ProductAdapter
 import com.medistock.ui.product.ProductAddActivity
 import com.medistock.util.PrefsHelper
@@ -23,7 +23,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ProductAdapter
-    private var products: List<Product> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,14 +35,11 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val siteId = PrefsHelper.getActiveSiteId(this@MainActivity)
-            products = loadProductsForSite(siteId)
-            adapter = ProductAdapter(products)
-            recyclerView.adapter = adapter
+            db.productDao().getProductsWithCategoryForSite(siteId).collect { products ->
+                adapter = ProductAdapter(products)
+                recyclerView.adapter = adapter
+            }
         }
-    }
-
-    private suspend fun loadProductsForSite(siteId: Long): List<Product> {
-        return db.productDao().getAll().filter { it.siteId == siteId }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
