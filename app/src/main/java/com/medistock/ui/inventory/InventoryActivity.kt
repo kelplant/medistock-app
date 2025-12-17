@@ -93,7 +93,7 @@ class InventoryActivity : AppCompatActivity() {
         theoreticalQuantity = stockItem?.quantityOnHand ?: 0.0
 
         val product = products.find { it.id == selectedProductId }
-        textTheoreticalStock.text = "Stock théorique: $theoreticalQuantity ${product?.unit ?: ""}"
+        textTheoreticalStock.text = "Theoretical Stock: $theoreticalQuantity ${product?.unit ?: ""}"
         calculateDiscrepancy()
     }
 
@@ -108,7 +108,7 @@ class InventoryActivity : AppCompatActivity() {
         }
 
         val sign = if (discrepancy > 0) "+" else ""
-        textDiscrepancy.text = "Écart: $sign$discrepancy"
+        textDiscrepancy.text = "Discrepancy: $sign$discrepancy"
         textDiscrepancy.setTextColor(color)
     }
 
@@ -119,12 +119,12 @@ class InventoryActivity : AppCompatActivity() {
         val notes = editNotes.text.toString().trim()
 
         if (countedQty == null) {
-            Toast.makeText(this, "Entrez la quantité comptée", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Enter the counted quantity", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedProductId == 0L) {
-            Toast.makeText(this, "Sélectionnez un produit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -163,9 +163,9 @@ class InventoryActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                 val message = if (discrepancy == 0.0) {
-                    "Inventaire enregistré - Aucun écart"
+                    "Inventory saved - No discrepancy"
                 } else {
-                    "Inventaire enregistré - Écart: $discrepancy ajusté"
+                    "Inventory saved - Discrepancy: $discrepancy adjusted"
                 }
                 Toast.makeText(this@InventoryActivity, message, Toast.LENGTH_SHORT).show()
                 finish()

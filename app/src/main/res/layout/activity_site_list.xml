@@ -9,7 +9,7 @@
         android:id="@+id/btnAddSite"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ajouter un site"
+        android:text="Add Site"
         android:layout_marginBottom="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView

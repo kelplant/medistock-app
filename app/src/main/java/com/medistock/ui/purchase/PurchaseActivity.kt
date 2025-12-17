@@ -19,6 +19,7 @@ import java.util.*
 class PurchaseActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var spinnerSite: Spinner
     private lateinit var spinnerProduct: Spinner
     private lateinit var editQuantity: EditText
     private lateinit var editPurchasePrice: EditText
@@ -29,10 +30,11 @@ class PurchaseActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var textMarginInfo: TextView
 
+    private var sites: List<com.medistock.data.entities.Site> = emptyList()
     private var products: List<Product> = emptyList()
     private var selectedProductId: Long = 0L
     private var selectedProduct: Product? = null
-    private var currentSiteId: Long = 0L
+    private var selectedSiteId: Long = 0L
     private var isManualSellingPrice = false // Track if user manually modified selling price
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -43,8 +45,9 @@ class PurchaseActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
-        currentSiteId = PrefsHelper.getActiveSiteId(this)
+        selectedSiteId = PrefsHelper.getActiveSiteId(this)
 
+        spinnerSite = findViewById(R.id.spinnerSitePurchase)
         spinnerProduct = findViewById(R.id.spinnerProductPurchase)
         editQuantity = findViewById(R.id.editPurchaseQuantity)
         editPurchasePrice = findViewById(R.id.editPurchasePrice)
@@ -55,7 +58,17 @@ class PurchaseActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSavePurchase)
         textMarginInfo = findViewById(R.id.textMarginInfo)
 
+        loadSites()
         loadProducts()
+
+        spinnerSite.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                if (position >= 0 && position < sites.size) {
+                    selectedSiteId = sites[position].id
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
 
         spinnerProduct.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
@@ -95,6 +108,28 @@ class PurchaseActivity : AppCompatActivity() {
         btnSave.setOnClickListener { savePurchase() }
     }
 
+    private fun loadSites() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            sites = db.siteDao().getAll().first()
+            withContext(Dispatchers.Main) {
+                val siteNames = sites.map { it.name }
+                val adapter = ArrayAdapter(
+                    this@PurchaseActivity,
+                    android.R.layout.simple_spinner_item,
+                    siteNames
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerSite.adapter = adapter
+
+                // Select the current active site
+                val currentSiteIndex = sites.indexOfFirst { it.id == selectedSiteId }
+                if (currentSiteIndex >= 0) {
+                    spinnerSite.setSelection(currentSiteIndex)
+                }
+            }
+        }
+    }
+
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = db.productDao().getAll().first()
@@ -114,9 +149,9 @@ class PurchaseActivity : AppCompatActivity() {
     private fun updateMarginInfo() {
         val product = selectedProduct ?: return
         val marginInfo = when (product.marginType) {
-            "fixed" -> "Marge: +${product.marginValue ?: 0.0} (fixe)"
-            "percentage" -> "Marge: +${product.marginValue ?: 0.0}%"
-            else -> "Pas de marge configurée"
+            "fixed" -> "Margin: +${product.marginValue ?: 0.0} (fixed)"
+            "percentage" -> "Margin: +${product.marginValue ?: 0.0}%"
+            else -> "No margin configured"
         }
         textMarginInfo.text = marginInfo
     }
@@ -146,22 +181,22 @@ class PurchaseActivity : AppCompatActivity() {
         val expiryDateStr = editExpiryDate.text.toString().trim()
 
         if (quantity == null || quantity <= 0) {
-            Toast.makeText(this, "Entrez une quantité valide", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Enter a valid quantity", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (purchasePrice == null || purchasePrice <= 0) {
-            Toast.makeText(this, "Entrez un prix d'achat valide", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Enter a valid purchase price", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (sellingPrice == null || sellingPrice <= 0) {
-            Toast.makeText(this, "Entrez un prix de vente valide", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Enter a valid selling price", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedProductId == 0L) {
-            Toast.makeText(this, "Sélectionnez un produit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -170,7 +205,7 @@ class PurchaseActivity : AppCompatActivity() {
             try {
                 dateFormat.parse(expiryDateStr)?.time
             } catch (e: Exception) {
-                Toast.makeText(this, "Format de date invalide (dd/MM/yyyy)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Invalid date format (dd/MM/yyyy)", Toast.LENGTH_SHORT).show()
                 return
             }
         } else null
@@ -181,7 +216,7 @@ class PurchaseActivity : AppCompatActivity() {
             // Create purchase batch
             val batch = PurchaseBatch(
                 productId = selectedProductId,
-                siteId = currentSiteId,
+                siteId = selectedSiteId,
                 batchNumber = batchNumber.ifEmpty { "BATCH-${System.currentTimeMillis()}" },
                 purchaseDate = System.currentTimeMillis(),
                 initialQuantity = quantity,
@@ -201,7 +236,7 @@ class PurchaseActivity : AppCompatActivity() {
                 date = System.currentTimeMillis(),
                 purchasePriceAtMovement = purchasePrice,
                 sellingPriceAtMovement = sellingPrice,
-                siteId = currentSiteId
+                siteId = selectedSiteId
             )
             db.stockMovementDao().insert(movement)
 
@@ -218,7 +253,7 @@ class PurchaseActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 Toast.makeText(
                     this@PurchaseActivity,
-                    "Achat enregistré: $quantity ${product.unit}",
+                    "Purchase recorded: $quantity ${product.unit}",
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()

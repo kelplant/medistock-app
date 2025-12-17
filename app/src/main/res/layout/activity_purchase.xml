@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enregistrer un achat"
+            android:text="Record a Purchase"
             android:textSize="20sp"
             android:textStyle="bold"
             android:paddingBottom="16dp"/>
@@ -20,8 +20,20 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Produit"
+            android:text="Site"
             android:paddingTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerSitePurchase"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Product"
+            android:paddingTop="12dp"/>
 
         <Spinner
             android:id="@+id/spinnerProductPurchase"
@@ -32,7 +44,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Quantité"
+            android:text="Quantity"
             android:paddingTop="12dp"/>
 
         <EditText
@@ -45,7 +57,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Prix d'achat unitaire"
+            android:text="Unit Purchase Price"
             android:paddingTop="12dp"/>
 
         <EditText
@@ -59,7 +71,7 @@
             android:id="@+id/textMarginInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Marge: calculée automatiquement"
+            android:text="Margin: calculated automatically"
             android:paddingTop="8dp"
             android:textSize="12sp"
             android:textColor="#666666"
@@ -68,14 +80,14 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Prix de vente unitaire (modifiable)"
+            android:text="Unit Selling Price (editable)"
             android:paddingTop="12dp"/>
 
         <EditText
             android:id="@+id/editSellingPrice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Calculé automatiquement"
+            android:hint="Calculated automatically"
             android:inputType="numberDecimal"
             android:textColor="#1976D2"
             android:textStyle="bold"/>
@@ -83,7 +95,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="💡 Le prix de vente est calculé automatiquement selon la marge du produit, mais vous pouvez le modifier."
+            android:text="The selling price is calculated automatically based on the product's margin, but you can modify it."
             android:paddingTop="4dp"
             android:paddingBottom="8dp"
             android:textSize="11sp"
@@ -93,20 +105,20 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fournisseur"
+            android:text="Supplier"
             android:paddingTop="12dp"/>
 
         <EditText
             android:id="@+id/editSupplierName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nom du fournisseur"
+            android:hint="Supplier name"
             android:inputType="text"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Numéro de lot"
+            android:text="Batch Number"
             android:paddingTop="12dp"/>
 
         <EditText
@@ -119,7 +131,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Date d'expiration (optionnel)"
+            android:text="Expiry Date (optional)"
             android:paddingTop="12dp"/>
 
         <EditText
@@ -133,7 +145,7 @@
             android:id="@+id/btnSavePurchase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enregistrer l'achat"
+            android:text="Save Purchase"
             android:layout_marginTop="24dp"/>
 
     </LinearLayout>
