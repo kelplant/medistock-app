@@ -56,6 +56,14 @@ class SaleItemAdapter(
         return items.sumOf { it.getSubtotal() }
     }
 
+    fun getTotalQuantityForProduct(productId: Long): Double {
+        return items.filter { it.productId == productId }.sumOf { it.quantity }
+    }
+
+    fun getItems(): List<SaleItem> {
+        return items.toList()
+    }
+
     fun clear() {
         items.clear()
         notifyDataSetChanged()
