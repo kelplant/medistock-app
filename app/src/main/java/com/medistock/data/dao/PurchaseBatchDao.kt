@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PurchaseBatchDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(batch: PurchaseBatch): Long
+    fun insert(batch: PurchaseBatch): Long
 
     @Update
     fun update(batch: PurchaseBatch)
