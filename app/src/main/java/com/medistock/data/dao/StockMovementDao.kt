@@ -100,4 +100,59 @@ interface StockMovementDao {
         GROUP BY p.id
     """)
     fun getTotalStockForProduct(productId: Long): Flow<CurrentStock?>
+
+    /**
+     * Calculate current stock for a specific product across all sites.
+     */
+    @Query("""
+        SELECT
+            p.id as productId,
+            p.name as productName,
+            p.unit as unit,
+            COALESCE(c.name, '') as categoryName,
+            s.id as siteId,
+            s.name as siteName,
+            COALESCE(
+                SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) -
+                SUM(CASE WHEN sm.type = 'out' THEN sm.quantity ELSE 0 END),
+                0
+            ) as quantityOnHand,
+            p.minStock as minStock,
+            p.maxStock as maxStock
+        FROM products p
+        LEFT JOIN categories c ON p.categoryId = c.id
+        CROSS JOIN sites s
+        LEFT JOIN stock_movements sm ON sm.productId = p.id AND sm.siteId = s.id
+        WHERE p.id = :productId
+        GROUP BY p.id, s.id
+        ORDER BY s.name
+    """)
+    fun getCurrentStockForProduct(productId: Long): Flow<List<CurrentStock>>
+
+    /**
+     * Calculate current stock for a specific product at a specific site.
+     */
+    @Query("""
+        SELECT
+            p.id as productId,
+            p.name as productName,
+            p.unit as unit,
+            COALESCE(c.name, '') as categoryName,
+            s.id as siteId,
+            s.name as siteName,
+            COALESCE(
+                SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) -
+                SUM(CASE WHEN sm.type = 'out' THEN sm.quantity ELSE 0 END),
+                0
+            ) as quantityOnHand,
+            p.minStock as minStock,
+            p.maxStock as maxStock
+        FROM products p
+        LEFT JOIN categories c ON p.categoryId = c.id
+        CROSS JOIN sites s
+        LEFT JOIN stock_movements sm ON sm.productId = p.id AND sm.siteId = s.id
+        WHERE p.id = :productId AND s.id = :siteId
+        GROUP BY p.id, s.id
+    """)
+    fun getCurrentStockForProductAndSite(productId: Long, siteId: Long): Flow<List<CurrentStock>>
 }
