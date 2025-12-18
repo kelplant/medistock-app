@@ -61,7 +61,7 @@ class UserAddEditActivity : AppCompatActivity() {
 
         // Check if user is admin
         if (!authManager.isAdmin()) {
-            Toast.makeText(this, "Accès refusé : Administrateur uniquement", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Access denied: Administrators only", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -94,11 +94,11 @@ class UserAddEditActivity : AppCompatActivity() {
         userId = intent.getLongExtra("USER_ID", -1)
         if (userId != -1L) {
             isEditMode = true
-            supportActionBar?.title = "Modifier l'utilisateur"
+            supportActionBar?.title = "Edit User"
             loadUser()
             btnToggleActive.visibility = View.VISIBLE
         } else {
-            supportActionBar?.title = "Nouvel utilisateur"
+            supportActionBar?.title = "New User"
         }
 
         btnSaveUser.setOnClickListener { saveUser() }
@@ -152,7 +152,7 @@ class UserAddEditActivity : AppCompatActivity() {
 
                     editFullName.setText(user.fullName)
                     editUsername.setText(user.username)
-                    editPassword.hint = "Laisser vide pour ne pas changer"
+                    editPassword.hint = "Leave blank to keep unchanged"
                     checkIsAdmin.isChecked = user.isAdmin
                     checkIsActive.isChecked = user.isActive
 
@@ -174,17 +174,17 @@ class UserAddEditActivity : AppCompatActivity() {
                     updatePermissionsVisibility(user.isAdmin)
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@UserAddEditActivity, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UserAddEditActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun updateToggleButtonText() {
         if (currentUserIsActive) {
-            btnToggleActive.text = "Désactiver l'utilisateur"
+            btnToggleActive.text = "Deactivate User"
             btnToggleActive.setBackgroundColor(getColor(android.R.color.holo_orange_dark))
         } else {
-            btnToggleActive.text = "Réactiver l'utilisateur"
+            btnToggleActive.text = "Reactivate User"
             btnToggleActive.setBackgroundColor(getColor(android.R.color.holo_green_dark))
         }
     }
@@ -197,12 +197,12 @@ class UserAddEditActivity : AppCompatActivity() {
         val isActive = checkIsActive.isChecked
 
         if (fullName.isEmpty() || username.isEmpty()) {
-            Toast.makeText(this, "Veuillez remplir tous les champs obligatoires", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (!isEditMode && password.isEmpty()) {
-            Toast.makeText(this, "Le mot de passe est obligatoire pour un nouvel utilisateur", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Password is required for new users", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -231,7 +231,7 @@ class UserAddEditActivity : AppCompatActivity() {
                             savePermissions(userId, currentUser, timestamp)
 
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@UserAddEditActivity, "Utilisateur modifié", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@UserAddEditActivity, "User updated", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } else {
@@ -239,7 +239,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         val existingUser = db.userDao().getUserByUsername(username)
                         if (existingUser != null) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@UserAddEditActivity, "Ce nom d'utilisateur existe déjà", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@UserAddEditActivity, "Username already exists", Toast.LENGTH_SHORT).show()
                             }
                             return@withContext
                         }
@@ -262,14 +262,14 @@ class UserAddEditActivity : AppCompatActivity() {
                         savePermissions(newUserId, currentUser, timestamp)
 
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@UserAddEditActivity, "Utilisateur créé", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@UserAddEditActivity, "User created", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
 
                 finish()
             } catch (e: Exception) {
-                Toast.makeText(this@UserAddEditActivity, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UserAddEditActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -299,12 +299,12 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun toggleUserActiveStatus() {
-        val action = if (currentUserIsActive) "désactiver" else "réactiver"
-        val actionCapitalized = if (currentUserIsActive) "Désactiver" else "Réactiver"
+        val action = if (currentUserIsActive) "deactivate" else "reactivate"
+        val actionCapitalized = if (currentUserIsActive) "Deactivate" else "Reactivate"
 
         AlertDialog.Builder(this)
-            .setTitle("Confirmer l'action")
-            .setMessage("Voulez-vous $action cet utilisateur ?")
+            .setTitle("Confirm Action")
+            .setMessage("Do you want to $action this user?")
             .setPositiveButton(actionCapitalized) { _, _ ->
                 lifecycleScope.launch {
                     try {
@@ -324,7 +324,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         if (!shouldContinue) {
                             Toast.makeText(
                                 this@UserAddEditActivity,
-                                "Impossible de désactiver le dernier administrateur actif",
+                                "Cannot deactivate the last active administrator",
                                 Toast.LENGTH_LONG
                             ).show()
                             return@launch
@@ -346,15 +346,15 @@ class UserAddEditActivity : AppCompatActivity() {
                             checkIsActive.isChecked = newStatus
                             updateToggleButtonText()
 
-                            val message = if (newStatus) "Utilisateur réactivé" else "Utilisateur désactivé"
+                            val message = if (newStatus) "User reactivated" else "User deactivated"
                             Toast.makeText(this@UserAddEditActivity, message, Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
-                        Toast.makeText(this@UserAddEditActivity, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@UserAddEditActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-            .setNegativeButton("Annuler", null)
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

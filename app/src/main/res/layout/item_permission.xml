@@ -26,27 +26,27 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Voir"/>
+            android:text="View"/>
 
         <CheckBox
             android:id="@+id/checkCanCreate"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Créer"/>
+            android:text="Create"/>
 
         <CheckBox
             android:id="@+id/checkCanEdit"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Éditer"/>
+            android:text="Edit"/>
 
         <CheckBox
             android:id="@+id/checkCanDelete"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Suppr."/>
+            android:text="Delete"/>
     </LinearLayout>
 </LinearLayout>

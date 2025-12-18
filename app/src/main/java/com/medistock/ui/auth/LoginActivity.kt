@@ -63,7 +63,7 @@ class LoginActivity : AppCompatActivity() {
         val password = editPassword.text.toString()
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError("Veuillez remplir tous les champs")
+            showError("Please fill in all fields")
             return
         }
 
@@ -76,10 +76,10 @@ class LoginActivity : AppCompatActivity() {
                     authManager.login(user)
                     navigateToHome()
                 } else {
-                    showError("Nom d'utilisateur ou mot de passe incorrect")
+                    showError("Incorrect username or password")
                 }
             } catch (e: Exception) {
-                showError("Erreur de connexion: ${e.message}")
+                showError("Connection error: ${e.message}")
             }
         }
     }
@@ -92,7 +92,7 @@ class LoginActivity : AppCompatActivity() {
                 val adminUser = User(
                     username = "admin",
                     password = "admin", // In production, this should be hashed
-                    fullName = "Administrateur",
+                    fullName = "Administrator",
                     isAdmin = true,
                     isActive = true,
                     createdBy = "system",
