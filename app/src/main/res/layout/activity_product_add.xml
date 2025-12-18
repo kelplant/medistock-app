@@ -122,7 +122,7 @@
             android:textStyle="italic"
             android:layout_marginBottom="24dp" />
 
-        <!-- Bouton enregistrer -->
+        <!-- Save button -->
         <Button
             android:id="@+id/btnSaveProduct"
             android:layout_width="match_parent"
