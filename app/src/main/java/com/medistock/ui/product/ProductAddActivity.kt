@@ -63,7 +63,7 @@ class ProductAddActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ProductAddActivity,
-                        "Aucune catégorie disponible. Veuillez d'abord créer une catégorie.",
+                        "No categories available. Please create a category first.",
                         Toast.LENGTH_LONG
                     ).show()
                     btnSave.isEnabled = false
@@ -150,23 +150,23 @@ class ProductAddActivity : AppCompatActivity() {
             }
 
             if (selectedUnit.isEmpty()) {
-                Toast.makeText(this, "Sélectionnez un type de conditionnement", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (currentSiteId == 0L) {
-                Toast.makeText(this, "Aucun site actif. Veuillez sélectionner un site d'abord.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
             if (enteredMarginValue <= 0.0) {
-                Toast.makeText(this, "Entrez une marge valide", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Enter a valid margin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (enteredUnitVolume <= 0.0) {
-                val volumeLabel = if (selectedUnit == "Flacon") "le volume en ml" else "le nombre de comprimés"
-                Toast.makeText(this, "Entrez $volumeLabel", Toast.LENGTH_SHORT).show()
+                val volumeLabel = if (selectedUnit == "Flacon") "volume in ml" else "number of tablets"
+                Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -194,7 +194,7 @@ class ProductAddActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@ProductAddActivity,
-                            "Erreur lors de l'ajout du produit: ${e.message}",
+                            "Error adding product: ${e.message}",
                             Toast.LENGTH_LONG
                         ).show()
                     }
