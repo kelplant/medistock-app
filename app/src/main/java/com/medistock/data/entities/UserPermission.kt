@@ -11,11 +11,11 @@ import androidx.room.PrimaryKey
         ForeignKey(
             entity = User::class,
             parentColumns = ["id"],
-            childColumns = ["user_id"],
+            childColumns = ["userId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("user_id")]
+    indices = [Index("userId")]
 )
 data class UserPermission(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
