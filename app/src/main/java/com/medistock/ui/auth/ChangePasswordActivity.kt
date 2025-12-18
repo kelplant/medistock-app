@@ -106,7 +106,7 @@ class ChangePasswordActivity : AppCompatActivity() {
                 )
 
                 withContext(Dispatchers.IO) {
-                    db.userDao().update(updatedUser)
+                    db.userDao().updateUser(updatedUser)
                 }
 
                 withContext(Dispatchers.Main) {
