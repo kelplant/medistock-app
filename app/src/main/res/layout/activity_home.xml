@@ -24,10 +24,12 @@
         android:focusable="true"
         android:padding="16dp">
 
-        <ImageView
+        <TextView
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:src="@drawable/ic_stock" 
+            android:text="📊"
+            android:gravity="center"
+            android:textSize="48sp"
             android:contentDescription="@string/view_stock" />
 
         <TextView
@@ -51,10 +53,12 @@
         android:focusable="true"
         android:padding="16dp">
 
-        <ImageView
+        <TextView
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:src="@drawable/ic_sell"
+            android:text="💰"
+            android:gravity="center"
+            android:textSize="48sp"
             android:contentDescription="@string/sell_product" />
 
         <TextView
@@ -65,34 +69,7 @@
             android:paddingTop="8dp" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/stockMovementButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
-
-        <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:src="@drawable/ic_movement"
-            android:contentDescription="@string/stock_movement" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/stock_movement"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
-
-    <LinearLayout
+<LinearLayout
         android:id="@+id/purchaseButton"
         android:layout_width="0dp"
         android:layout_height="0dp"

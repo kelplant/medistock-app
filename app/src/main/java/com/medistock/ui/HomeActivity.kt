@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
 import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.stock.StockListActivity
-import com.medistock.ui.movement.StockMovementListActivity
 import com.medistock.ui.purchase.PurchaseActivity
 import com.medistock.ui.inventory.InventoryActivity
 import com.medistock.ui.admin.AdminActivity
@@ -23,10 +22,6 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.sellProductButton).setOnClickListener {
             startActivity(Intent(this, SaleListActivity::class.java))
-        }
-
-        findViewById<android.view.View>(R.id.stockMovementButton).setOnClickListener {
-            startActivity(Intent(this, StockMovementListActivity::class.java))
         }
 
         findViewById<android.view.View>(R.id.purchaseButton).setOnClickListener {
