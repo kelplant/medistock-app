@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import com.medistock.ui.adapters.SaleItemAdapter
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -24,15 +25,17 @@ class SaleActivity : AppCompatActivity() {
     private lateinit var spinnerSite: Spinner
     private lateinit var recyclerSaleItems: RecyclerView
     private lateinit var btnAddProduct: Button
-    private lateinit var editFarmerName: EditText
+    private lateinit var editCustomerName: EditText
     private lateinit var textTotalAmount: TextView
     private lateinit var btnSaveSale: Button
 
     private lateinit var saleItemAdapter: SaleItemAdapter
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
-    private var currentStock: Map<Long, Double> = emptyMap() // productId -> quantity available
+    private var currentStock: Map<Long, Double> = emptyMap()
     private var selectedSiteId: Long = 0L
+    private var editingSaleId: Long? = null
+    private var existingSale: Sale? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,11 +44,12 @@ class SaleActivity : AppCompatActivity() {
 
         db = AppDatabase.getInstance(this)
         selectedSiteId = PrefsHelper.getActiveSiteId(this)
+        editingSaleId = intent.getLongExtra("SALE_ID", -1L).takeIf { it != -1L }
 
         spinnerSite = findViewById(R.id.spinnerSiteSale)
         recyclerSaleItems = findViewById(R.id.recyclerSaleItems)
         btnAddProduct = findViewById(R.id.btnAddProduct)
-        editFarmerName = findViewById(R.id.editFarmerName)
+        editCustomerName = findViewById(R.id.editCustomerName)
         textTotalAmount = findViewById(R.id.textTotalAmount)
         btnSaveSale = findViewById(R.id.btnSaveSale)
 
@@ -76,6 +80,14 @@ class SaleActivity : AppCompatActivity() {
         btnSaveSale.setOnClickListener {
             saveSale()
         }
+
+        // If editing, load the existing sale
+        editingSaleId?.let { saleId ->
+            supportActionBar?.title = "Edit Sale"
+            loadExistingSale(saleId)
+        } ?: run {
+            supportActionBar?.title = "New Sale"
+        }
     }
 
     private fun loadSites() {
@@ -91,8 +103,9 @@ class SaleActivity : AppCompatActivity() {
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinnerSite.adapter = adapter
 
-                // Select the current active site
-                val currentSiteIndex = sites.indexOfFirst { it.id == selectedSiteId }
+                // Select the current active site or editing sale's site
+                val targetSiteId = existingSale?.siteId ?: selectedSiteId
+                val currentSiteIndex = sites.indexOfFirst { it.id == targetSiteId }
                 if (currentSiteIndex >= 0) {
                     spinnerSite.setSelection(currentSiteIndex)
                 }
@@ -110,6 +123,30 @@ class SaleActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val stockItems = db.stockMovementDao().getCurrentStockForSite(selectedSiteId).first()
             currentStock = stockItems.associate { it.productId to it.quantityOnHand }
+        }
+    }
+
+    private fun loadExistingSale(saleId: Long) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val saleWithItems = db.saleDao().getSaleWithItems(saleId).first()
+            saleWithItems?.let { swi ->
+                existingSale = swi.sale
+                withContext(Dispatchers.Main) {
+                    editCustomerName.setText(swi.sale.customerName)
+                    selectedSiteId = swi.sale.siteId
+
+                    // Load items into adapter
+                    saleItemAdapter.clear()
+                    swi.items.forEach { item ->
+                        saleItemAdapter.addItem(item)
+                    }
+                    updateTotal()
+                    updateSaveButtonState()
+
+                    // Reload sites to set the correct one
+                    loadSites()
+                }
+            }
         }
     }
 
@@ -192,11 +229,13 @@ class SaleActivity : AppCompatActivity() {
 
                 // Add item to the list
                 val saleItem = SaleItem(
+                    saleId = editingSaleId ?: 0L,
                     productId = product.id,
                     productName = product.name,
                     unit = product.unit,
                     quantity = quantity,
-                    pricePerUnit = price
+                    pricePerUnit = price,
+                    subtotal = quantity * price
                 )
                 saleItemAdapter.addItem(saleItem)
                 updateTotal()
@@ -222,9 +261,9 @@ class SaleActivity : AppCompatActivity() {
     }
 
     private fun saveSale() {
-        val farmerName = editFarmerName.text.toString().trim()
+        val customerName = editCustomerName.text.toString().trim()
 
-        if (farmerName.isEmpty()) {
+        if (customerName.isEmpty()) {
             Toast.makeText(this, "Enter customer name", Toast.LENGTH_SHORT).show()
             return
         }
@@ -237,40 +276,96 @@ class SaleActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val currentTime = System.currentTimeMillis()
+                val totalAmount = saleItemAdapter.getTotalAmount()
 
-                // Save each sale item and create stock movements
-                saleItemAdapter.getItems().forEach { item ->
-                    // Create product sale record
-                    val productSale = ProductSale(
-                        productId = item.productId,
-                        quantity = item.quantity,
-                        priceAtSale = item.pricePerUnit,
-                        farmerName = farmerName,
-                        date = currentTime,
+                if (editingSaleId != null && existingSale != null) {
+                    // Update existing sale
+                    val updatedSale = existingSale!!.copy(
+                        customerName = customerName,
+                        totalAmount = totalAmount,
                         siteId = selectedSiteId
                     )
-                    db.productSaleDao().insert(productSale)
+                    db.saleDao().update(updatedSale)
 
-                    // Create stock movement
-                    val movement = StockMovement(
-                        productId = item.productId,
-                        type = "out",
-                        quantity = item.quantity,
+                    // Delete old sale items
+                    db.saleItemDao().deleteAllForSale(editingSaleId!!)
+
+                    // Reverse old stock movements by adding back
+                    val oldItems = db.saleItemDao().getItemsForSale(editingSaleId!!).first()
+                    oldItems.forEach { oldItem ->
+                        val movement = StockMovement(
+                            productId = oldItem.productId,
+                            type = "in",
+                            quantity = oldItem.quantity,
+                            date = currentTime,
+                            siteId = selectedSiteId,
+                            purchasePriceAtMovement = 0.0,
+                            sellingPriceAtMovement = oldItem.pricePerUnit
+                        )
+                        db.stockMovementDao().insert(movement)
+                    }
+
+                    // Insert new sale items and stock movements
+                    saleItemAdapter.getItems().forEach { item ->
+                        val newItem = item.copy(saleId = editingSaleId!!)
+                        db.saleItemDao().insert(newItem)
+
+                        val movement = StockMovement(
+                            productId = item.productId,
+                            type = "out",
+                            quantity = item.quantity,
+                            date = currentTime,
+                            siteId = selectedSiteId,
+                            purchasePriceAtMovement = 0.0,
+                            sellingPriceAtMovement = item.pricePerUnit
+                        )
+                        db.stockMovementDao().insert(movement)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@SaleActivity,
+                            "Sale updated successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish()
+                    }
+                } else {
+                    // Create new sale
+                    val sale = Sale(
+                        customerName = customerName,
                         date = currentTime,
+                        totalAmount = totalAmount,
                         siteId = selectedSiteId,
-                        purchasePriceAtMovement = 0.0, // Could be improved to track actual purchase price
-                        sellingPriceAtMovement = item.pricePerUnit
+                        createdBy = "" // Can be filled with current user if needed
                     )
-                    db.stockMovementDao().insert(movement)
-                }
+                    val saleId = db.saleDao().insert(sale)
 
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@SaleActivity,
-                        "Sale completed successfully",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    finish()
+                    // Insert sale items and create stock movements
+                    saleItemAdapter.getItems().forEach { item ->
+                        val newItem = item.copy(saleId = saleId)
+                        db.saleItemDao().insert(newItem)
+
+                        val movement = StockMovement(
+                            productId = item.productId,
+                            type = "out",
+                            quantity = item.quantity,
+                            date = currentTime,
+                            siteId = selectedSiteId,
+                            purchasePriceAtMovement = 0.0,
+                            sellingPriceAtMovement = item.pricePerUnit
+                        )
+                        db.stockMovementDao().insert(movement)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@SaleActivity,
+                            "Sale completed successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish()
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

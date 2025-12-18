@@ -18,9 +18,11 @@ import com.medistock.data.entities.*
         PurchaseBatch::class,
         Inventory::class,
         User::class,
-        UserPermission::class
+        UserPermission::class,
+        Sale::class,
+        SaleItem::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +36,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun inventoryDao(): InventoryDao
     abstract fun userDao(): UserDao
     abstract fun userPermissionDao(): UserPermissionDao
+    abstract fun saleDao(): SaleDao
+    abstract fun saleItemDao(): SaleItemDao
 
     companion object {
         @Volatile
