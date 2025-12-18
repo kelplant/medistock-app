@@ -11,5 +11,7 @@ data class ProductSale(
     val priceAtSale: Double,
     val farmerName: String,
     val date: Long,
-    val siteId: Long
+    val siteId: Long,
+    val createdAt: Long = System.currentTimeMillis(),
+    val createdBy: String = ""
 )

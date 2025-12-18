@@ -15,5 +15,9 @@ data class Product(
     val unitVolume: Double?,  // Nullable
     val siteId: Long,
     val minStock: Double? = 0.0,
-    val maxStock: Double? = 0.0
+    val maxStock: Double? = 0.0,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val createdBy: String = "",
+    val updatedBy: String = ""
 )

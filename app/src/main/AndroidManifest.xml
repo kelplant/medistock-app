@@ -6,8 +6,9 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.MediStock">
 
+        <!-- Login Activity - Main Launcher -->
         <activity
-            android:name=".ui.HomeActivity"
+            android:name=".ui.auth.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -15,6 +16,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Main Activity -->
+        <activity android:name=".ui.HomeActivity" android:exported="false" />
+
+        <!-- User Management -->
+        <activity android:name=".ui.user.UserListActivity" android:exported="false" />
+        <activity android:name=".ui.user.UserAddEditActivity" android:exported="false" />
+
+        <!-- Other Activities -->
         <activity android:name=".ui.manage.ManageProductMenuActivity" android:exported="false" />
         <activity android:name=".ui.product.ProductListActivity" android:exported="false" />
         <activity android:name=".ui.product.ProductAddActivity" android:exported="false" />
