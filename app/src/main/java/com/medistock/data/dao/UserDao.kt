@@ -6,7 +6,7 @@ import com.medistock.data.entities.User
 @Dao
 interface UserDao {
     @Query("SELECT * FROM app_users ORDER BY full_name ASC")
-    suspend fun getAllUsers(): List<User>
+    fun getAllUsers(): List<User>
 
     @Query("SELECT * FROM app_users WHERE is_active = 1 ORDER BY full_name ASC")
     suspend fun getActiveUsers(): List<User>
