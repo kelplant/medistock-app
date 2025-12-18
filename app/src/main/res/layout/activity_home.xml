@@ -1,159 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.gridlayout.widget.GridLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/gridLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    app:columnCount="3"
-    app:rowCount="3"
-    app:alignmentMode="alignMargins"
-    app:useDefaultMargins="true">
+    android:fillViewport="true">
 
     <LinearLayout
-        android:id="@+id/viewStockButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
+        android:padding="8dp">
 
-        <TextView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="📊"
-            android:gravity="center"
-            android:textSize="48sp"
-            android:contentDescription="@string/view_stock" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Purchase Products -->
+        <LinearLayout
+            android:id="@+id/purchaseButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/view_stock"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-    <LinearLayout
-        android:id="@+id/sellProductButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="📦"
+                android:gravity="center"
+                android:textSize="32sp"/>
 
-        <TextView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="💰"
-            android:gravity="center"
-            android:textSize="48sp"
-            android:contentDescription="@string/sell_product" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Purchase Products"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
+
+        <!-- Sell Products -->
+        <LinearLayout
+            android:id="@+id/sellProductButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/sell_product"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-<LinearLayout
-        android:id="@+id/purchaseButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="💰"
+                android:gravity="center"
+                android:textSize="32sp"/>
 
-        <TextView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="📦"
-            android:gravity="center"
-            android:textSize="48sp"
-            android:contentDescription="Purchase" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sell Products"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
+
+        <!-- View Stock -->
+        <LinearLayout
+            android:id="@+id/viewStockButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Purchase"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-    <LinearLayout
-        android:id="@+id/inventoryButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="📊"
+                android:gravity="center"
+                android:textSize="32sp"/>
 
-        <TextView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="📋"
-            android:gravity="center"
-            android:textSize="48sp"
-            android:contentDescription="Inventory" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View Stock"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
+
+        <!-- Inventory Stock -->
+        <LinearLayout
+            android:id="@+id/inventoryButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Inventory"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-    <LinearLayout
-        android:id="@+id/adminButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_columnWeight="1"
-        app:layout_rowWeight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="16dp">
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="📋"
+                android:gravity="center"
+                android:textSize="32sp"/>
 
-        <TextView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="⚙️"
-            android:gravity="center"
-            android:textSize="48sp"
-            android:contentDescription="Administration" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Inventory Stock"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
+
+        <!-- Administration -->
+        <LinearLayout
+            android:id="@+id/adminButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Administration"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="8dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-</androidx.gridlayout.widget.GridLayout>
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="⚙️"
+                android:gravity="center"
+                android:textSize="32sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Administration"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

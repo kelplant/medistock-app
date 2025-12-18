@@ -29,23 +29,17 @@
             android:gravity="center_horizontal"
             android:layout_height="wrap_content">
 
-            <Button
+            <CheckBox
                 android:id="@+id/btnSelectAll"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:minWidth="48dp"
-                android:text="☑"
-                android:textSize="18sp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                style="?android:attr/buttonBarButtonStyle"/>
+                android:layout_height="wrap_content"
+                android:button="@android:drawable/checkbox_on_background"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="All"
-                android:textSize="11sp"
-                android:layout_marginTop="2dp"/>
+                android:textSize="11sp"/>
         </LinearLayout>
 
         <LinearLayout

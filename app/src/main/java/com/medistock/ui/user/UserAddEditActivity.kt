@@ -110,7 +110,7 @@ class UserAddEditActivity : AppCompatActivity() {
             val permView = LayoutInflater.from(this).inflate(R.layout.item_permission, permissionsContainer, false)
 
             val tvModuleName = permView.findViewById<TextView>(R.id.tvModuleName)
-            val btnSelectAll = permView.findViewById<Button>(R.id.btnSelectAll)
+            val checkSelectAll = permView.findViewById<CheckBox>(R.id.btnSelectAll)
             val checkCanView = permView.findViewById<CheckBox>(R.id.checkCanView)
             val checkCanCreate = permView.findViewById<CheckBox>(R.id.checkCanCreate)
             val checkCanEdit = permView.findViewById<CheckBox>(R.id.checkCanEdit)
@@ -120,20 +120,35 @@ class UserAddEditActivity : AppCompatActivity() {
             permissionsContainer.addView(permView)
 
             val permCheckboxes = PermissionCheckboxes(
-                checkCanView, checkCanCreate, checkCanEdit, checkCanDelete, btnSelectAll
+                checkCanView, checkCanCreate, checkCanEdit, checkCanDelete, checkSelectAll
             )
 
-            // Handle "All" button click
-            btnSelectAll.setOnClickListener {
+            // Handle "All" checkbox - when checked, check all others
+            checkSelectAll.setOnCheckedChangeListener { _, isChecked ->
+                checkCanView.isChecked = isChecked
+                checkCanCreate.isChecked = isChecked
+                checkCanEdit.isChecked = isChecked
+                checkCanDelete.isChecked = isChecked
+            }
+
+            // Update "All" checkbox state when individual checkboxes change
+            val updateAllCheckbox = {
                 val allChecked = checkCanView.isChecked && checkCanCreate.isChecked &&
                                 checkCanEdit.isChecked && checkCanDelete.isChecked
-                val newState = !allChecked
-
-                checkCanView.isChecked = newState
-                checkCanCreate.isChecked = newState
-                checkCanEdit.isChecked = newState
-                checkCanDelete.isChecked = newState
+                checkSelectAll.setOnCheckedChangeListener(null)
+                checkSelectAll.isChecked = allChecked
+                checkSelectAll.setOnCheckedChangeListener { _, isChecked ->
+                    checkCanView.isChecked = isChecked
+                    checkCanCreate.isChecked = isChecked
+                    checkCanEdit.isChecked = isChecked
+                    checkCanDelete.isChecked = isChecked
+                }
             }
+
+            checkCanView.setOnCheckedChangeListener { _, _ -> updateAllCheckbox() }
+            checkCanCreate.setOnCheckedChangeListener { _, _ -> updateAllCheckbox() }
+            checkCanEdit.setOnCheckedChangeListener { _, _ -> updateAllCheckbox() }
+            checkCanDelete.setOnCheckedChangeListener { _, _ -> updateAllCheckbox() }
 
             permissionViews[moduleKey] = permCheckboxes
         }
@@ -388,14 +403,14 @@ class UserAddEditActivity : AppCompatActivity() {
         val canCreate: CheckBox,
         val canEdit: CheckBox,
         val canDelete: CheckBox,
-        val selectAllButton: Button? = null
+        val selectAllCheckbox: CheckBox? = null
     ) {
         fun setEnabled(enabled: Boolean) {
             canView.isEnabled = enabled
             canCreate.isEnabled = enabled
             canEdit.isEnabled = enabled
             canDelete.isEnabled = enabled
-            selectAllButton?.isEnabled = enabled
+            selectAllCheckbox?.isEnabled = enabled
         }
     }
 }
