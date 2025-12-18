@@ -20,45 +20,112 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:gravity="top">
 
-        <Button
-            android:id="@+id/btnSelectAll"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="All"
-            android:textSize="12sp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginEnd="8dp"
-            style="?android:attr/buttonBarButtonStyle"/>
-
-        <CheckBox
-            android:id="@+id/checkCanView"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="View"/>
+            android:gravity="center_horizontal"
+            android:layout_height="wrap_content">
 
-        <CheckBox
-            android:id="@+id/checkCanCreate"
+            <Button
+                android:id="@+id/btnSelectAll"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:minWidth="48dp"
+                android:text="☑"
+                android:textSize="18sp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                style="?android:attr/buttonBarButtonStyle"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Create"/>
+            android:gravity="center_horizontal"
+            android:layout_height="wrap_content">
 
-        <CheckBox
-            android:id="@+id/checkCanEdit"
+            <CheckBox
+                android:id="@+id/checkCanView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@android:drawable/checkbox_on_background"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View"
+                android:textSize="11sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Edit"/>
+            android:gravity="center_horizontal"
+            android:layout_height="wrap_content">
 
-        <CheckBox
-            android:id="@+id/checkCanDelete"
+            <CheckBox
+                android:id="@+id/checkCanCreate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@android:drawable/checkbox_on_background"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create"
+                android:textSize="11sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Delete"/>
+            android:gravity="center_horizontal"
+            android:layout_height="wrap_content">
+
+            <CheckBox
+                android:id="@+id/checkCanEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@android:drawable/checkbox_on_background"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit"
+                android:textSize="11sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:layout_height="wrap_content">
+
+            <CheckBox
+                android:id="@+id/checkCanDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@android:drawable/checkbox_on_background"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:textSize="11sp"/>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
