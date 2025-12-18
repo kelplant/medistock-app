@@ -39,7 +39,9 @@ android {
 
 kapt {
     correctErrorTypes = true
-    useBuildCache = false
+    javacOptions {
+        option("-Xmaxerrs", 500)
+    }
 }
 
 dependencies {
