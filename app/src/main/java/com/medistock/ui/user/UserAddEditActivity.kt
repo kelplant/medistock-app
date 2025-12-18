@@ -110,6 +110,7 @@ class UserAddEditActivity : AppCompatActivity() {
             val permView = LayoutInflater.from(this).inflate(R.layout.item_permission, permissionsContainer, false)
 
             val tvModuleName = permView.findViewById<TextView>(R.id.tvModuleName)
+            val btnSelectAll = permView.findViewById<Button>(R.id.btnSelectAll)
             val checkCanView = permView.findViewById<CheckBox>(R.id.checkCanView)
             val checkCanCreate = permView.findViewById<CheckBox>(R.id.checkCanCreate)
             val checkCanEdit = permView.findViewById<CheckBox>(R.id.checkCanEdit)
@@ -118,9 +119,23 @@ class UserAddEditActivity : AppCompatActivity() {
             tvModuleName.text = moduleName
             permissionsContainer.addView(permView)
 
-            permissionViews[moduleKey] = PermissionCheckboxes(
-                checkCanView, checkCanCreate, checkCanEdit, checkCanDelete
+            val permCheckboxes = PermissionCheckboxes(
+                checkCanView, checkCanCreate, checkCanEdit, checkCanDelete, btnSelectAll
             )
+
+            // Handle "All" button click
+            btnSelectAll.setOnClickListener {
+                val allChecked = checkCanView.isChecked && checkCanCreate.isChecked &&
+                                checkCanEdit.isChecked && checkCanDelete.isChecked
+                val newState = !allChecked
+
+                checkCanView.isChecked = newState
+                checkCanCreate.isChecked = newState
+                checkCanEdit.isChecked = newState
+                checkCanDelete.isChecked = newState
+            }
+
+            permissionViews[moduleKey] = permCheckboxes
         }
     }
 
@@ -372,13 +387,15 @@ class UserAddEditActivity : AppCompatActivity() {
         val canView: CheckBox,
         val canCreate: CheckBox,
         val canEdit: CheckBox,
-        val canDelete: CheckBox
+        val canDelete: CheckBox,
+        val selectAllButton: Button? = null
     ) {
         fun setEnabled(enabled: Boolean) {
             canView.isEnabled = enabled
             canCreate.isEnabled = enabled
             canEdit.isEnabled = enabled
             canDelete.isEnabled = enabled
+            selectAllButton?.isEnabled = enabled
         }
     }
 }
