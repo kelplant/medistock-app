@@ -19,14 +19,14 @@ import androidx.room.PrimaryKey
 )
 data class UserPermission(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val userId: Long,
-    val module: String, // e.g., "STOCK", "SALES", "PURCHASES", "INVENTORY", "ADMIN", "PRODUCTS", "SITES", "CATEGORIES"
-    val canView: Boolean = false,
-    val canCreate: Boolean = false,
-    val canEdit: Boolean = false,
-    val canDelete: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
-    val createdBy: String = "",
-    val updatedBy: String = ""
+    @ColumnInfo(name = "user_id") val userId: Long,
+    val module: String,
+    @ColumnInfo(name = "can_view") val canView: Boolean = false,
+    @ColumnInfo(name = "can_create") val canCreate: Boolean = false,
+    @ColumnInfo(name = "can_edit") val canEdit: Boolean = false,
+    @ColumnInfo(name = "can_delete") val canDelete: Boolean = false,
+    @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "created_by") val createdBy: String = "",
+    @ColumnInfo(name = "updated_by") val updatedBy: String = ""
 )
