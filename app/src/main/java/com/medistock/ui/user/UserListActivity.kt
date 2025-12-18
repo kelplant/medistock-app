@@ -13,7 +13,9 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.ui.adapters.UserAdapter
 import com.medistock.util.AuthManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class UserListActivity : AppCompatActivity() {
     private lateinit var adapter: UserAdapter
@@ -62,7 +64,9 @@ class UserListActivity : AppCompatActivity() {
     private fun loadUsers() {
         lifecycleScope.launch {
             try {
-                val users = db.userDao().getAllUsers()
+                val users = withContext(Dispatchers.IO) {
+                    db.userDao().getAllUsers()
+                }
                 adapter.submitList(users)
             } catch (e: Exception) {
                 Toast.makeText(this@UserListActivity, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
