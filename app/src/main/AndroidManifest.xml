@@ -16,6 +16,9 @@
             </intent-filter>
         </activity>
 
+        <!-- Authentication -->
+        <activity android:name=".ui.auth.ChangePasswordActivity" android:exported="false" />
+
         <!-- Main Activity -->
         <activity android:name=".ui.HomeActivity" android:exported="false" />
 

@@ -9,7 +9,7 @@ data class Product(
     val id: Long = 0,
     val name: String,
     val unit: String,
-    val categoryId: Long?,  // Nullable pour correspondre aux queries
+    val categoryId: Long?,  // Nullable to match queries
     val marginType: String?,  // Nullable
     val marginValue: Double?,  // Nullable
     val unitVolume: Double?,  // Nullable

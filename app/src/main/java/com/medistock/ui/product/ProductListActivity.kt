@@ -24,7 +24,7 @@ class ProductListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Gestion des produits"
+        supportActionBar?.title = "Product Management"
         db = AppDatabase.getInstance(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerProducts)

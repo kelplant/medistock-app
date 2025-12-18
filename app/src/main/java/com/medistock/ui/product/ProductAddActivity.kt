@@ -56,7 +56,7 @@ class ProductAddActivity : AppCompatActivity() {
         textMarginInfo = findViewById(R.id.textMarginInfo)
         btnSave = findViewById(R.id.btnSaveProduct)
 
-        // Charger categories depuis DB
+        // Load categories from DB
         lifecycleScope.launch {
             categories = db.categoryDao().getAll().first()
             if (categories.isEmpty()) {
@@ -82,7 +82,7 @@ class ProductAddActivity : AppCompatActivity() {
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerUnit.adapter = unitAdapter
 
-        // Types de marge fixe ou pourcentage
+        // Fixed or percentage margin types
         val marginTypes = listOf("percentage", "fixed")
         val marginTypeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, marginTypes)
         marginTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -170,7 +170,7 @@ class ProductAddActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Création produit
+            // Create product
             val product = Product(
                 name = productName,
                 categoryId = selectedCategoryId,

@@ -4,7 +4,7 @@
     <string name="error_select_category">Please select a category</string>
     <string name="product_added">Product added successfully</string>
     <string name="final_price_template">Final price: %.2f</string>
-    <string name="selling_price_template">Prix de vente calculé: %.2f</string>
+    <string name="selling_price_template">Calculated selling price: %.2f</string>
     <string name="product_name">Product Name</string>
     <string name="product_name_hint">Enter product name</string>
     <string name="category">Category</string>
