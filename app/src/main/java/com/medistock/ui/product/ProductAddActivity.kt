@@ -206,9 +206,9 @@ class ProductAddActivity : AppCompatActivity() {
     private fun updateMarginInfo() {
         val marginValue = editMarginValue.text.toString().toDoubleOrNull() ?: 0.0
         val marginInfo = when (selectedMarginType) {
-            "fixed" -> "Le prix de vente sera: Prix d'achat + $marginValue"
-            "percentage" -> "Le prix de vente sera: Prix d'achat × (1 + ${marginValue}%)"
-            else -> "Configuration de la marge"
+            "fixed" -> "Selling price will be: Purchase price + $marginValue"
+            "percentage" -> "Selling price will be: Purchase price × (1 + ${marginValue}%)"
+            else -> "Margin configuration"
         }
         textMarginInfo.text = marginInfo
     }

@@ -39,11 +39,11 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Type de conditionnement -->
+        <!-- Package Type -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Type de conditionnement"
+            android:text="Package Type"
             android:textSize="16sp"
             android:layout_marginTop="8dp" />
 
@@ -53,12 +53,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Volume/Quantité par unité -->
+        <!-- Volume/Quantity per unit -->
         <TextView
             android:id="@+id/textUnitVolumeLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Volume par flacon (ml)"
+            android:text="Volume per bottle (ml)"
             android:textSize="16sp"
             android:layout_marginTop="8dp" />
 
@@ -70,7 +70,7 @@
             android:hint="Ex: 100"
             android:layout_marginBottom="16dp" />
 
-        <!-- Type de marge -->
+        <!-- Margin Type -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Valeur de la marge -->
+        <!-- Margin Value -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -100,12 +100,12 @@
             android:hint="@string/margin_value_hint"
             android:layout_marginBottom="16dp" />
 
-        <!-- Info sur le calcul de la marge -->
+        <!-- Margin calculation info -->
         <TextView
             android:id="@+id/textMarginInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Configuration de la marge"
+            android:text="Margin configuration"
             android:textSize="14sp"
             android:textColor="#1976D2"
             android:textStyle="italic"
@@ -116,25 +116,25 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="💡 Le prix de vente sera calculé automatiquement lors de chaque achat en appliquant cette marge au prix d'achat."
+            android:text="💡 The selling price will be calculated automatically for each purchase by applying this margin to the purchase price."
             android:textSize="12sp"
             android:textColor="#666666"
             android:textStyle="italic"
             android:layout_marginBottom="24dp" />
 
-        <!-- Bouton enregistrer -->
+        <!-- Save button -->
         <Button
             android:id="@+id/btnSaveProduct"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/save_product" />
 
-        <!-- Bouton supprimer (visible uniquement en mode édition) -->
+        <!-- Delete button (visible only in edit mode) -->
         <Button
             android:id="@+id/btnDeleteProduct"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Supprimer"
+            android:text="Delete"
             android:backgroundTint="#D32F2F"
             android:textColor="#FFFFFF"
             android:visibility="gone"
