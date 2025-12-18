@@ -81,7 +81,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ProductAddEditActivity,
-                        "Aucune catégorie disponible. Veuillez d'abord créer une catégorie.",
+                        "No categories available. Please create a category first.",
                         Toast.LENGTH_LONG
                     ).show()
                     btnSave.isEnabled = false
@@ -95,11 +95,11 @@ class ProductAddEditActivity : AppCompatActivity() {
                 // Si mode édition, charger le produit
                 productId = intent.getLongExtra("PRODUCT_ID", -1).takeIf { it != -1L }
                 if (productId != null) {
-                    supportActionBar?.title = "Modifier le produit"
+                    supportActionBar?.title = "Edit Product"
                     btnDelete.visibility = View.VISIBLE
                     loadProduct(productId!!)
                 } else {
-                    supportActionBar?.title = "Ajouter un produit"
+                    supportActionBar?.title = "Add Product"
                 }
             }
         }
@@ -208,23 +208,23 @@ class ProductAddEditActivity : AppCompatActivity() {
         }
 
         if (selectedUnit.isEmpty()) {
-            Toast.makeText(this, "Sélectionnez un type de conditionnement", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (currentSiteId == 0L) {
-            Toast.makeText(this, "Aucun site actif. Veuillez sélectionner un site d'abord.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
             return
         }
 
         if (enteredMarginValue <= 0.0) {
-            Toast.makeText(this, "Entrez une marge valide", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Enter a valid margin", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (enteredUnitVolume <= 0.0) {
-            val volumeLabel = if (selectedUnit == "Flacon") "le volume en ml" else "le nombre de comprimés"
-            Toast.makeText(this, "Entrez $volumeLabel", Toast.LENGTH_SHORT).show()
+            val volumeLabel = if (selectedUnit == "Flacon") "volume in ml" else "number of tablets"
+            Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -250,7 +250,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    val message = if (productId == null) getString(R.string.product_added) else "Produit modifié avec succès"
+                    val message = if (productId == null) getString(R.string.product_added) else "Product updated successfully"
                     Toast.makeText(this@ProductAddEditActivity, message, Toast.LENGTH_SHORT).show()
                     finish()
                 }
@@ -258,7 +258,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ProductAddEditActivity,
-                        "Erreur: ${e.message}",
+                        "Error: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -268,12 +268,12 @@ class ProductAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Supprimer le produit")
-            .setMessage("Êtes-vous sûr de vouloir supprimer ce produit ?")
-            .setPositiveButton("Supprimer") { _, _ ->
+            .setTitle("Delete Product")
+            .setMessage("Are you sure you want to delete this product?")
+            .setPositiveButton("Delete") { _, _ ->
                 deleteProduct()
             }
-            .setNegativeButton("Annuler", null)
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -288,7 +288,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                         db.productDao().delete(product)
                     }
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ProductAddEditActivity, "Produit supprimé", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ProductAddEditActivity, "Product deleted", Toast.LENGTH_SHORT).show()
                         finish()
                     }
                 }
@@ -296,7 +296,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ProductAddEditActivity,
-                        "Erreur lors de la suppression: ${e.message}",
+                        "Error deleting: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
