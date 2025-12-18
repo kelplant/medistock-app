@@ -33,7 +33,7 @@ class ProductAddActivity : AppCompatActivity() {
 
     private var categories: List<Category> = emptyList()
     private var selectedCategoryId: Long = 0L
-    private var selectedUnit: String = "Flacon"
+    private var selectedUnit: String = "Bottle"
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
     private var enteredUnitVolume: Double = 0.0
@@ -63,7 +63,7 @@ class ProductAddActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ProductAddActivity,
-                        "Aucune catégorie disponible. Veuillez d'abord créer une catégorie.",
+                        "No categories available. Please create a category first.",
                         Toast.LENGTH_LONG
                     ).show()
                     btnSave.isEnabled = false
@@ -76,8 +76,8 @@ class ProductAddActivity : AppCompatActivity() {
             }
         }
 
-        // Types de conditionnement : Flacon (ml) ou Boite (comprimés)
-        val units = listOf("Flacon", "Boite")
+        // Package types: Bottle (ml) or Box (tablets)
+        val units = listOf("Bottle", "Box")
         val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerUnit.adapter = unitAdapter
@@ -117,14 +117,14 @@ class ProductAddActivity : AppCompatActivity() {
         spinnerUnit.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
                 selectedUnit = units.getOrNull(position) ?: ""
-                // Adapter le label selon le type de conditionnement
+                // Adapt label based on package type
                 when (selectedUnit) {
-                    "Flacon" -> {
-                        textUnitVolumeLabel.text = "Volume par flacon (ml)"
+                    "Bottle" -> {
+                        textUnitVolumeLabel.text = "Volume per bottle (ml)"
                         editUnitVolume.hint = "Ex: 100"
                     }
-                    "Boite" -> {
-                        textUnitVolumeLabel.text = "Nombre de comprimés par boite"
+                    "Box" -> {
+                        textUnitVolumeLabel.text = "Number of tablets per box"
                         editUnitVolume.hint = "Ex: 30"
                     }
                 }
@@ -150,23 +150,23 @@ class ProductAddActivity : AppCompatActivity() {
             }
 
             if (selectedUnit.isEmpty()) {
-                Toast.makeText(this, "Sélectionnez un type de conditionnement", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (currentSiteId == 0L) {
-                Toast.makeText(this, "Aucun site actif. Veuillez sélectionner un site d'abord.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
             if (enteredMarginValue <= 0.0) {
-                Toast.makeText(this, "Entrez une marge valide", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Enter a valid margin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (enteredUnitVolume <= 0.0) {
-                val volumeLabel = if (selectedUnit == "Flacon") "le volume en ml" else "le nombre de comprimés"
-                Toast.makeText(this, "Entrez $volumeLabel", Toast.LENGTH_SHORT).show()
+                val volumeLabel = if (selectedUnit == "Bottle") "volume in ml" else "number of tablets"
+                Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -194,7 +194,7 @@ class ProductAddActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@ProductAddActivity,
-                            "Erreur lors de l'ajout du produit: ${e.message}",
+                            "Error adding product: ${e.message}",
                             Toast.LENGTH_LONG
                         ).show()
                     }

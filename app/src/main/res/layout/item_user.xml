@@ -48,7 +48,7 @@
         android:id="@+id/textUserStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Actif"
+        android:text="Active"
         android:textSize="12sp"
         android:textColor="#4CAF50"
         android:layout_marginTop="4dp"/>

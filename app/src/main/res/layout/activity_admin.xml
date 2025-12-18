@@ -42,7 +42,7 @@
         android:id="@+id/btnManageUsers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Gestion des utilisateurs"
+        android:text="User Management"
         android:padding="16dp"
         android:backgroundTint="#4CAF50" />
 

@@ -29,14 +29,14 @@ class UserListActivity : AppCompatActivity() {
 
         // Check if user is admin
         if (!authManager.isAdmin()) {
-            Toast.makeText(this, "Accès refusé : Administrateur uniquement", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Access denied: Administrators only", Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
         setContentView(R.layout.activity_user_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Gestion des utilisateurs"
+        supportActionBar?.title = "User Management"
 
         db = AppDatabase.getInstance(this)
 
@@ -69,7 +69,7 @@ class UserListActivity : AppCompatActivity() {
                 }
                 adapter.submitList(users)
             } catch (e: Exception) {
-                Toast.makeText(this@UserListActivity, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UserListActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

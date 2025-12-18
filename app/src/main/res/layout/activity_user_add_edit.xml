@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Informations de l'utilisateur"
+            android:text="User Information"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp"/>
@@ -21,7 +21,7 @@
             android:id="@+id/editFullName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nom complet"
+            android:hint="Full Name"
             android:inputType="textPersonName"
             android:layout_marginBottom="12dp"/>
 
@@ -29,7 +29,7 @@
             android:id="@+id/editUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nom d'utilisateur"
+            android:hint="Username"
             android:inputType="text"
             android:layout_marginBottom="12dp"/>
 
@@ -37,7 +37,7 @@
             android:id="@+id/editPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Mot de passe"
+            android:hint="Password"
             android:inputType="textPassword"
             android:layout_marginBottom="12dp"/>
 
@@ -45,14 +45,14 @@
             android:id="@+id/checkIsAdmin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Administrateur"
+            android:text="Administrator"
             android:layout_marginBottom="12dp"/>
 
         <CheckBox
             android:id="@+id/checkIsActive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Actif"
+            android:text="Active"
             android:checked="true"
             android:layout_marginBottom="24dp"/>
 
@@ -60,7 +60,7 @@
             android:id="@+id/tvPermissionsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Permissions par module"
+            android:text="Module Permissions"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp"/>
@@ -69,7 +69,7 @@
             android:id="@+id/tvAdminNote"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Les administrateurs ont tous les droits"
+            android:text="Administrators have all permissions"
             android:textSize="12sp"
             android:textColor="#666666"
             android:layout_marginBottom="16dp"
@@ -88,13 +88,13 @@
             android:id="@+id/btnSaveUser"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enregistrer" />
+            android:text="Save" />
 
         <Button
             android:id="@+id/btnDeleteUser"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Supprimer"
+            android:text="Delete"
             android:backgroundTint="#D32F2F"
             android:textColor="#FFFFFF"
             android:visibility="gone"

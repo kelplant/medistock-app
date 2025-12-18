@@ -32,7 +32,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
 
         categoryId = intent.getLongExtra("CATEGORY_ID", -1).takeIf { it != -1L }
         if (categoryId != null) {
-            supportActionBar?.title = "Modifier la catégorie"
+            supportActionBar?.title = "Edit Category"
             btnDelete.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
                 val cat = db.categoryDao().getById(categoryId!!).first()
@@ -43,7 +43,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 }
             }
         } else {
-            supportActionBar?.title = "Ajouter une catégorie"
+            supportActionBar?.title = "Add Category"
         }
 
         btnSave.setOnClickListener {
@@ -69,12 +69,12 @@ class CategoryAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Supprimer la catégorie")
-            .setMessage("Êtes-vous sûr de vouloir supprimer cette catégorie ?")
-            .setPositiveButton("Supprimer") { _, _ ->
+            .setTitle("Delete Category")
+            .setMessage("Are you sure you want to delete this category?")
+            .setPositiveButton("Delete") { _, _ ->
                 deleteCategory()
             }
-            .setNegativeButton("Annuler", null)
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -86,7 +86,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
             if (category != null) {
                 db.categoryDao().delete(category)
                 runOnUiThread {
-                    Toast.makeText(this@CategoryAddEditActivity, "Catégorie supprimée", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CategoryAddEditActivity, "Category deleted", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }
