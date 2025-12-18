@@ -15,6 +15,8 @@ import com.medistock.data.entities.UserPermission
 import com.medistock.ui.HomeActivity
 import com.medistock.util.AuthManager
 import com.medistock.util.Modules
+import com.medistock.util.PasswordHasher
+import com.medistock.util.PasswordMigration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,8 +50,12 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btnLogin)
         tvError = findViewById(R.id.tvError)
 
-        // Create default admin user if no users exist
+        // Create default admin user if no users exist and migrate passwords
         lifecycleScope.launch {
+            // Migrate existing plain text passwords to hashed passwords
+            PasswordMigration.migratePasswordsIfNeeded(this@LoginActivity)
+
+            // Create default admin user if needed
             createDefaultAdminIfNeeded()
         }
 
@@ -70,8 +76,16 @@ class LoginActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val user = withContext(Dispatchers.IO) {
-                    db.userDao().authenticate(username, password)
+                    val u = db.userDao().getUserForAuth(username)
+
+                    // Verify password using BCrypt
+                    if (u != null && PasswordHasher.verifyPassword(password, u.password)) {
+                        u
+                    } else {
+                        null
+                    }
                 }
+
                 if (user != null) {
                     authManager.login(user)
                     navigateToHome()
@@ -91,7 +105,7 @@ class LoginActivity : AppCompatActivity() {
                 // Create default admin user
                 val adminUser = User(
                     username = "admin",
-                    password = "admin", // In production, this should be hashed
+                    password = PasswordHasher.hashPassword("admin"),
                     fullName = "Administrator",
                     isAdmin = true,
                     isActive = true,

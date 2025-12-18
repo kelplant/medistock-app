@@ -16,8 +16,8 @@ interface UserDao {
     @Query("SELECT * FROM app_users WHERE username = :username LIMIT 1")
     fun getUserByUsername(username: String): com.medistock.data.entities.User?
 
-    @Query("SELECT * FROM app_users WHERE username = :username AND password = :password AND is_active = 1 LIMIT 1")
-    fun authenticate(username: String, password: String): com.medistock.data.entities.User?
+    @Query("SELECT * FROM app_users WHERE username = :username AND is_active = 1 LIMIT 1")
+    fun getUserForAuth(username: String): com.medistock.data.entities.User?
 
     @Insert
     fun insertUser(user: com.medistock.data.entities.User): Long

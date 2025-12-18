@@ -19,6 +19,7 @@ import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
 import com.medistock.util.AuthManager
 import com.medistock.util.Modules
+import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -249,7 +250,7 @@ class UserAddEditActivity : AppCompatActivity() {
                             val updatedUser = existingUser.copy(
                                 fullName = fullName,
                                 username = username,
-                                password = if (password.isNotEmpty()) password else existingUser.password,
+                                password = if (password.isNotEmpty()) PasswordHasher.hashPassword(password) else existingUser.password,
                                 isAdmin = isAdmin,
                                 isActive = isActive,
                                 updatedAt = timestamp,
@@ -278,7 +279,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         val newUser = User(
                             fullName = fullName,
                             username = username,
-                            password = password,
+                            password = PasswordHasher.hashPassword(password),
                             isAdmin = isAdmin,
                             isActive = isActive,
                             createdAt = timestamp,
