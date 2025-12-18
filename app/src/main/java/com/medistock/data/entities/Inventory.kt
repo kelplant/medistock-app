@@ -18,5 +18,7 @@ data class Inventory(
     val discrepancy: Double, // countedQuantity - theoreticalQuantity
     val reason: String = "", // Reason for discrepancy
     val countedBy: String = "", // Person who performed the count
-    val notes: String = ""
+    val notes: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val createdBy: String = ""
 )

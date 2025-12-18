@@ -10,5 +10,9 @@ data class ProductPrice(
     val effectiveDate: Long,
     val purchasePrice: Double,
     val sellingPrice: Double,
-    val source: String // "manual" or "calculated"
+    val source: String, // "manual" or "calculated"
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val createdBy: String = "",
+    val updatedBy: String = ""
 )

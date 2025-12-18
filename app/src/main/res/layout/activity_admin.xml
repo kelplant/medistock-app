@@ -35,6 +35,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/stock_movement"
+        android:layout_marginBottom="16dp"
         android:padding="16dp" />
+
+    <Button
+        android:id="@+id/btnManageUsers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gestion des utilisateurs"
+        android:padding="16dp"
+        android:backgroundTint="#4CAF50" />
 
 </LinearLayout>

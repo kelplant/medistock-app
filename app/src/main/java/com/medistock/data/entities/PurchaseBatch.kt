@@ -19,5 +19,9 @@ data class PurchaseBatch(
     val purchasePrice: Double, // Prix d'achat unitaire
     val supplierName: String = "",
     val expiryDate: Long? = null, // Date d'expiration pour médicaments
-    val isExhausted: Boolean = false // true when remainingQuantity <= 0
+    val isExhausted: Boolean = false, // true when remainingQuantity <= 0
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val createdBy: String = "",
+    val updatedBy: String = ""
 )

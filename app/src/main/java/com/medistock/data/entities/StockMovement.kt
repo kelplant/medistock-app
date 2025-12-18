@@ -12,5 +12,7 @@ data class StockMovement(
     val date: Long,
     val purchasePriceAtMovement: Double,
     val sellingPriceAtMovement: Double,
-    val siteId: Long
+    val siteId: Long,
+    val createdAt: Long = System.currentTimeMillis(),
+    val createdBy: String = ""
 )
