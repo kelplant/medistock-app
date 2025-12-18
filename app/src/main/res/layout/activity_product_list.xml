@@ -9,7 +9,7 @@
         android:id="@+id/btnAddProduct"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ajouter un produit"
+        android:text="ADD PRODUCT"
         android:layout_marginBottom="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView

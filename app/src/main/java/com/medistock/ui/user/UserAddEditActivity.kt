@@ -45,12 +45,12 @@ class UserAddEditActivity : AppCompatActivity() {
 
     private val modules = listOf(
         Modules.STOCK to "Stock",
-        Modules.SALES to "Ventes",
-        Modules.PURCHASES to "Achats",
-        Modules.INVENTORY to "Inventaire",
-        Modules.PRODUCTS to "Produits",
+        Modules.SALES to "Sales",
+        Modules.PURCHASES to "Purchases",
+        Modules.INVENTORY to "Inventory",
+        Modules.PRODUCTS to "Products",
         Modules.SITES to "Sites",
-        Modules.CATEGORIES to "Catégories",
+        Modules.CATEGORIES to "Categories",
         Modules.ADMIN to "Administration"
     )
 

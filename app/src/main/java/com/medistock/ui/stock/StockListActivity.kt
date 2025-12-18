@@ -62,7 +62,7 @@ class StockListActivity : AppCompatActivity() {
             sites = db.siteDao().getAll().first()
             withContext(Dispatchers.Main) {
                 // Add "All Sites" option
-                val siteNames = mutableListOf("Tous les sites")
+                val siteNames = mutableListOf("All sites")
                 siteNames.addAll(sites.map { it.name })
 
                 val spinnerAdapter = ArrayAdapter(
@@ -92,7 +92,7 @@ class StockListActivity : AppCompatActivity() {
             products = db.productDao().getAll().first()
             withContext(Dispatchers.Main) {
                 // Add "All Products" option
-                val productNames = mutableListOf("Tous les produits")
+                val productNames = mutableListOf("All products")
                 productNames.addAll(products.map { it.name })
 
                 val spinnerAdapter = ArrayAdapter(
@@ -153,7 +153,7 @@ class StockListActivity : AppCompatActivity() {
         val itemsInStock = currentStockItems.count { it.quantityOnHand > 0 }
         val outOfStock = currentStockItems.count { it.quantityOnHand <= 0 }
 
-        summaryText.text = "Produits: $totalProducts | En stock: $itemsInStock | Rupture: $outOfStock"
+        summaryText.text = "Products: $totalProducts | In stock: $itemsInStock | Out of stock: $outOfStock"
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

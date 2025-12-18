@@ -8,6 +8,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
 import com.medistock.ui.auth.LoginActivity
+import com.medistock.ui.auth.ChangePasswordActivity
 import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.stock.StockListActivity
 import com.medistock.ui.purchase.PurchaseActivity
@@ -61,8 +62,18 @@ class HomeActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        // Set user's full name in the menu
+        menu?.findItem(R.id.action_user_name)?.title = authManager.getFullName()
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_change_password -> {
+                startActivity(Intent(this, ChangePasswordActivity::class.java))
+                true
+            }
             R.id.action_logout -> {
                 showLogoutDialog()
                 true

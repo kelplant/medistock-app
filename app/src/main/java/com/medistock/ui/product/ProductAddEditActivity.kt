@@ -68,13 +68,13 @@ class ProductAddEditActivity : AppCompatActivity() {
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerUnit.adapter = unitAdapter
 
-        // Types de marge fixe ou pourcentage
+        // Fixed or percentage margin types
         val marginTypes = listOf("percentage", "fixed")
         val marginTypeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, marginTypes)
         marginTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerMarginType.adapter = marginTypeAdapter
 
-        // Charger categories depuis DB
+        // Load categories from DB
         lifecycleScope.launch {
             categories = db.categoryDao().getAll().first()
             if (categories.isEmpty()) {
@@ -92,7 +92,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinnerCategory.adapter = categoryAdapter
 
-                // Si mode édition, charger le produit
+                // If edit mode, load the product
                 productId = intent.getLongExtra("PRODUCT_ID", -1).takeIf { it != -1L }
                 if (productId != null) {
                     supportActionBar?.title = "Edit Product"
@@ -164,7 +164,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                     editMarginValue.setText((product.marginValue ?: 0.0).toString())
                     editUnitVolume.setText((product.unitVolume ?: 0.0).toString())
 
-                    // Sélectionner la catégorie
+                    // Select the category
                     val categoryIndex = categories.indexOfFirst { it.id == product.categoryId }
                     if (categoryIndex >= 0) {
                         spinnerCategory.setSelection(categoryIndex)
@@ -176,7 +176,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                         spinnerUnit.setSelection(unitIndex)
                     }
 
-                    // Sélectionner le type de marge
+                    // Select the margin type
                     val marginTypeIndex = listOf("percentage", "fixed").indexOf(product.marginType)
                     if (marginTypeIndex >= 0) {
                         spinnerMarginType.setSelection(marginTypeIndex)
@@ -228,7 +228,7 @@ class ProductAddEditActivity : AppCompatActivity() {
             return
         }
 
-        // Création/Modification produit
+        // Create/Update product
         val product = Product(
             id = productId ?: 0L,
             name = productName,
