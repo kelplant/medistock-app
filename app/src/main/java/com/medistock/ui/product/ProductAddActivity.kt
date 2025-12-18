@@ -33,7 +33,7 @@ class ProductAddActivity : AppCompatActivity() {
 
     private var categories: List<Category> = emptyList()
     private var selectedCategoryId: Long = 0L
-    private var selectedUnit: String = "Flacon"
+    private var selectedUnit: String = "Bottle"
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
     private var enteredUnitVolume: Double = 0.0
@@ -76,8 +76,8 @@ class ProductAddActivity : AppCompatActivity() {
             }
         }
 
-        // Types de conditionnement : Flacon (ml) ou Boite (comprimés)
-        val units = listOf("Flacon", "Boite")
+        // Package types: Bottle (ml) or Box (tablets)
+        val units = listOf("Bottle", "Box")
         val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerUnit.adapter = unitAdapter
@@ -117,14 +117,14 @@ class ProductAddActivity : AppCompatActivity() {
         spinnerUnit.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
                 selectedUnit = units.getOrNull(position) ?: ""
-                // Adapter le label selon le type de conditionnement
+                // Adapt label based on package type
                 when (selectedUnit) {
-                    "Flacon" -> {
-                        textUnitVolumeLabel.text = "Volume par flacon (ml)"
+                    "Bottle" -> {
+                        textUnitVolumeLabel.text = "Volume per bottle (ml)"
                         editUnitVolume.hint = "Ex: 100"
                     }
-                    "Boite" -> {
-                        textUnitVolumeLabel.text = "Nombre de comprimés par boite"
+                    "Box" -> {
+                        textUnitVolumeLabel.text = "Number of tablets per box"
                         editUnitVolume.hint = "Ex: 30"
                     }
                 }
@@ -165,7 +165,7 @@ class ProductAddActivity : AppCompatActivity() {
             }
 
             if (enteredUnitVolume <= 0.0) {
-                val volumeLabel = if (selectedUnit == "Flacon") "volume in ml" else "number of tablets"
+                val volumeLabel = if (selectedUnit == "Bottle") "volume in ml" else "number of tablets"
                 Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }

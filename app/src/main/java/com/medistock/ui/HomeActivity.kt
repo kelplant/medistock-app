@@ -73,13 +73,13 @@ class HomeActivity : AppCompatActivity() {
 
     private fun showLogoutDialog() {
         AlertDialog.Builder(this)
-            .setTitle("Déconnexion")
-            .setMessage("Voulez-vous vous déconnecter ?")
-            .setPositiveButton("Oui") { _, _ ->
+            .setTitle("Logout")
+            .setMessage("Do you want to logout?")
+            .setPositiveButton("Yes") { _, _ ->
                 authManager.logout()
                 navigateToLogin()
             }
-            .setNegativeButton("Non", null)
+            .setNegativeButton("No", null)
             .show()
     }
 
