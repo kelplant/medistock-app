@@ -19,7 +19,9 @@ import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
 import com.medistock.util.AuthManager
 import com.medistock.util.Modules
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class UserAddEditActivity : AppCompatActivity() {
 
@@ -139,7 +141,12 @@ class UserAddEditActivity : AppCompatActivity() {
     private fun loadUser() {
         lifecycleScope.launch {
             try {
-                val user = db.userDao().getUserById(userId)
+                val (user, permissions) = withContext(Dispatchers.IO) {
+                    val u = db.userDao().getUserById(userId)
+                    val p = if (u != null) db.userPermissionDao().getPermissionsForUser(userId) else emptyList()
+                    Pair(u, p)
+                }
+
                 if (user != null) {
                     currentUserIsActive = user.isActive
 
@@ -155,7 +162,6 @@ class UserAddEditActivity : AppCompatActivity() {
                     }
 
                     // Load permissions
-                    val permissions = db.userPermissionDao().getPermissionsForUser(userId)
                     permissions.forEach { permission ->
                         permissionViews[permission.module]?.apply {
                             canView.isChecked = permission.canView
@@ -205,52 +211,60 @@ class UserAddEditActivity : AppCompatActivity() {
                 val currentUser = authManager.getUsername()
                 val timestamp = System.currentTimeMillis()
 
-                if (isEditMode) {
-                    // Update existing user
-                    val existingUser = db.userDao().getUserById(userId)
-                    if (existingUser != null) {
-                        val updatedUser = existingUser.copy(
+                withContext(Dispatchers.IO) {
+                    if (isEditMode) {
+                        // Update existing user
+                        val existingUser = db.userDao().getUserById(userId)
+                        if (existingUser != null) {
+                            val updatedUser = existingUser.copy(
+                                fullName = fullName,
+                                username = username,
+                                password = if (password.isNotEmpty()) password else existingUser.password,
+                                isAdmin = isAdmin,
+                                isActive = isActive,
+                                updatedAt = timestamp,
+                                updatedBy = currentUser
+                            )
+                            db.userDao().updateUser(updatedUser)
+
+                            // Update permissions
+                            savePermissions(userId, currentUser, timestamp)
+
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@UserAddEditActivity, "Utilisateur modifié", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        // Check if username already exists
+                        val existingUser = db.userDao().getUserByUsername(username)
+                        if (existingUser != null) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@UserAddEditActivity, "Ce nom d'utilisateur existe déjà", Toast.LENGTH_SHORT).show()
+                            }
+                            return@withContext
+                        }
+
+                        // Create new user
+                        val newUser = User(
                             fullName = fullName,
                             username = username,
-                            password = if (password.isNotEmpty()) password else existingUser.password,
+                            password = password,
                             isAdmin = isAdmin,
                             isActive = isActive,
+                            createdAt = timestamp,
                             updatedAt = timestamp,
+                            createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                        db.userDao().updateUser(updatedUser)
+                        val newUserId = db.userDao().insertUser(newUser)
 
-                        // Update permissions
-                        savePermissions(userId, currentUser, timestamp)
+                        // Save permissions
+                        savePermissions(newUserId, currentUser, timestamp)
 
-                        Toast.makeText(this@UserAddEditActivity, "Utilisateur modifié", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@UserAddEditActivity, "Utilisateur créé", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                } else {
-                    // Check if username already exists
-                    val existingUser = db.userDao().getUserByUsername(username)
-                    if (existingUser != null) {
-                        Toast.makeText(this@UserAddEditActivity, "Ce nom d'utilisateur existe déjà", Toast.LENGTH_SHORT).show()
-                        return@launch
-                    }
-
-                    // Create new user
-                    val newUser = User(
-                        fullName = fullName,
-                        username = username,
-                        password = password,
-                        isAdmin = isAdmin,
-                        isActive = isActive,
-                        createdAt = timestamp,
-                        updatedAt = timestamp,
-                        createdBy = currentUser,
-                        updatedBy = currentUser
-                    )
-                    val newUserId = db.userDao().insertUser(newUser)
-
-                    // Save permissions
-                    savePermissions(newUserId, currentUser, timestamp)
-
-                    Toast.makeText(this@UserAddEditActivity, "Utilisateur créé", Toast.LENGTH_SHORT).show()
                 }
 
                 finish()
@@ -260,7 +274,7 @@ class UserAddEditActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun savePermissions(userId: Long, createdBy: String, timestamp: Long) {
+    private fun savePermissions(userId: Long, createdBy: String, timestamp: Long) {
         // Delete existing permissions
         db.userPermissionDao().deleteAllPermissionsForUser(userId)
 
@@ -294,19 +308,26 @@ class UserAddEditActivity : AppCompatActivity() {
             .setPositiveButton(actionCapitalized) { _, _ ->
                 lifecycleScope.launch {
                     try {
-                        val user = db.userDao().getUserById(userId)
+                        val (user, shouldContinue) = withContext(Dispatchers.IO) {
+                            val u = db.userDao().getUserById(userId)
 
-                        // Check if trying to deactivate the last active admin
-                        if (currentUserIsActive && user?.isAdmin == true) {
-                            val adminCount = db.userDao().countActiveAdmins()
-                            if (adminCount <= 1) {
-                                Toast.makeText(
-                                    this@UserAddEditActivity,
-                                    "Impossible de désactiver le dernier administrateur actif",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                return@launch
+                            // Check if trying to deactivate the last active admin
+                            if (currentUserIsActive && u?.isAdmin == true) {
+                                val adminCount = db.userDao().countActiveAdmins()
+                                if (adminCount <= 1) {
+                                    return@withContext Pair(u, false)
+                                }
                             }
+                            Pair(u, true)
+                        }
+
+                        if (!shouldContinue) {
+                            Toast.makeText(
+                                this@UserAddEditActivity,
+                                "Impossible de désactiver le dernier administrateur actif",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@launch
                         }
 
                         if (user != null) {
@@ -316,7 +337,10 @@ class UserAddEditActivity : AppCompatActivity() {
                                 updatedAt = System.currentTimeMillis(),
                                 updatedBy = authManager.getUsername()
                             )
-                            db.userDao().updateUser(updatedUser)
+
+                            withContext(Dispatchers.IO) {
+                                db.userDao().updateUser(updatedUser)
+                            }
 
                             currentUserIsActive = newStatus
                             checkIsActive.isChecked = newStatus
