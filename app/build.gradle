@@ -14,15 +14,6 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += [
-                        "room.schemaLocation": "$projectDir/schemas".toString(),
-                        "room.incremental": "true"
-                ]
-            }
-        }
     }
 
     buildTypes {
@@ -49,11 +40,6 @@ android {
 kapt {
     correctErrorTypes = true
     useBuildCache = false
-    arguments {
-        arg("room.schemaLocation", "$projectDir/schemas")
-        arg("room.incremental", "true")
-        arg("room.expandProjection", "true")
-    }
 }
 
 dependencies {
