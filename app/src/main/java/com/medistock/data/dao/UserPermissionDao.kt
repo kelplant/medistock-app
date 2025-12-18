@@ -5,10 +5,10 @@ import com.medistock.data.entities.UserPermission
 
 @Dao
 interface UserPermissionDao {
-    @Query("SELECT * FROM user_permissions WHERE userId = :userId")
+    @Query("SELECT * FROM user_permissions WHERE user_id = :userId")
     suspend fun getPermissionsForUser(userId: Long): List<UserPermission>
 
-    @Query("SELECT * FROM user_permissions WHERE userId = :userId AND module = :module LIMIT 1")
+    @Query("SELECT * FROM user_permissions WHERE user_id = :userId AND module = :module LIMIT 1")
     suspend fun getPermissionForModule(userId: Long, module: String): UserPermission?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -23,9 +23,9 @@ interface UserPermissionDao {
     @Delete
     suspend fun deletePermission(permission: UserPermission)
 
-    @Query("DELETE FROM user_permissions WHERE userId = :userId")
+    @Query("DELETE FROM user_permissions WHERE user_id = :userId")
     suspend fun deleteAllPermissionsForUser(userId: Long)
 
-    @Query("DELETE FROM user_permissions WHERE userId = :userId AND module = :module")
+    @Query("DELETE FROM user_permissions WHERE user_id = :userId AND module = :module")
     suspend fun deletePermissionForModule(userId: Long, module: String)
 }
