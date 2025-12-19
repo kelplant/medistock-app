@@ -3,7 +3,6 @@ package com.medistock.ui.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
@@ -15,11 +14,10 @@ class SaleItemAdapter(
 ) : RecyclerView.Adapter<SaleItemAdapter.SaleItemViewHolder>() {
 
     class SaleItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val textItemProductName: TextView = itemView.findViewById(R.id.textItemProductName)
-        val textItemQuantity: TextView = itemView.findViewById(R.id.textItemQuantity)
-        val textItemPrice: TextView = itemView.findViewById(R.id.textItemPrice)
-        val textItemSubtotal: TextView = itemView.findViewById(R.id.textItemSubtotal)
-        val btnRemoveItem: Button = itemView.findViewById(R.id.btnRemoveItem)
+        val textProductName: TextView = itemView.findViewById(R.id.textProductName)
+        val textQuantityPrice: TextView = itemView.findViewById(R.id.textQuantityPrice)
+        val textSubtotal: TextView = itemView.findViewById(R.id.textSubtotal)
+        val btnRemoveItem: View = itemView.findViewById(R.id.btnRemoveItem)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SaleItemViewHolder {
@@ -30,10 +28,9 @@ class SaleItemAdapter(
     override fun onBindViewHolder(holder: SaleItemViewHolder, position: Int) {
         val item = items[position]
 
-        holder.textItemProductName.text = item.productName
-        holder.textItemQuantity.text = "Quantity: ${item.quantity} ${item.unit}"
-        holder.textItemPrice.text = String.format("@%.2f", item.pricePerUnit)
-        holder.textItemSubtotal.text = String.format("%.2f", item.subtotal)
+        holder.textProductName.text = item.productName
+        holder.textQuantityPrice.text = "Qty: ${item.quantity} ${item.unit} x ${String.format("%.2f", item.pricePerUnit)}"
+        holder.textSubtotal.text = "Subtotal: ${String.format("%.2f", item.subtotal)}"
 
         holder.btnRemoveItem.setOnClickListener { onRemove(item) }
     }
