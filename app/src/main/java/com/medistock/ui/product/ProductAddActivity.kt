@@ -76,8 +76,8 @@ class ProductAddActivity : AppCompatActivity() {
             }
         }
 
-        // Package types: Bottle (ml) or Box (tablets)
-        val units = listOf("Bottle", "Box")
+        // Package types: Bottle (ml), Box, Tablet, ml, Units
+        val units = listOf("Bottle", "Box", "Tablet", "ml", "Units")
         val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerUnit.adapter = unitAdapter
@@ -127,6 +127,18 @@ class ProductAddActivity : AppCompatActivity() {
                         textUnitVolumeLabel.text = "Number of tablets per box"
                         editUnitVolume.hint = "Ex: 30"
                     }
+                    "Tablet" -> {
+                        textUnitVolumeLabel.text = "Quantity per unit"
+                        editUnitVolume.hint = "Ex: 1"
+                    }
+                    "ml" -> {
+                        textUnitVolumeLabel.text = "Volume per unit (ml)"
+                        editUnitVolume.hint = "Ex: 1"
+                    }
+                    "Units" -> {
+                        textUnitVolumeLabel.text = "Quantity per unit"
+                        editUnitVolume.hint = "Ex: 1"
+                    }
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -165,7 +177,14 @@ class ProductAddActivity : AppCompatActivity() {
             }
 
             if (enteredUnitVolume <= 0.0) {
-                val volumeLabel = if (selectedUnit == "Bottle") "volume in ml" else "number of tablets"
+                val volumeLabel = when (selectedUnit) {
+                    "Bottle" -> "volume in ml"
+                    "Box" -> "number of tablets"
+                    "Tablet" -> "quantity"
+                    "ml" -> "volume in ml"
+                    "Units" -> "quantity"
+                    else -> "quantity"
+                }
                 Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }

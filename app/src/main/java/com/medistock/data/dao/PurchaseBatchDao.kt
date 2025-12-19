@@ -70,4 +70,29 @@ interface PurchaseBatchDao {
 
     @Query("DELETE FROM purchase_batches WHERE id = :batchId")
     fun deleteById(batchId: Long)
+
+    /**
+     * Update remaining quantity and exhausted status for a batch.
+     */
+    @Query("""
+        UPDATE purchase_batches
+        SET remainingQuantity = :newQuantity,
+            isExhausted = CASE WHEN :newQuantity <= 0 THEN 1 ELSE 0 END,
+            updatedAt = :updatedAt
+        WHERE id = :batchId
+    """)
+    suspend fun updateRemainingQuantity(batchId: Long, newQuantity: Double, updatedAt: Long = System.currentTimeMillis())
+
+    /**
+     * Get available batches ordered by purchase date (FIFO) - non-Flow version for transactions.
+     */
+    @Query("""
+        SELECT * FROM purchase_batches
+        WHERE productId = :productId
+        AND siteId = :siteId
+        AND isExhausted = 0
+        AND remainingQuantity > 0
+        ORDER BY purchaseDate ASC
+    """)
+    suspend fun getAvailableBatchesFIFOSync(productId: Long, siteId: Long): List<PurchaseBatch>
 }

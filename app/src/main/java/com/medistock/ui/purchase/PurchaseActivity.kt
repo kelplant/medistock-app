@@ -217,7 +217,7 @@ class PurchaseActivity : AppCompatActivity() {
             val batch = PurchaseBatch(
                 productId = selectedProductId,
                 siteId = selectedSiteId,
-                batchNumber = batchNumber.ifEmpty { "BATCH-${System.currentTimeMillis()}" },
+                batchNumber = batchNumber.ifEmpty { null }, // Optional, null if not provided
                 purchaseDate = System.currentTimeMillis(),
                 initialQuantity = quantity,
                 remainingQuantity = quantity,

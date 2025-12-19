@@ -1,0 +1,29 @@
+package com.medistock.data.dao
+
+import androidx.room.*
+import com.medistock.data.entities.SaleBatchAllocation
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface SaleBatchAllocationDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(allocation: SaleBatchAllocation): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(allocations: List<SaleBatchAllocation>)
+
+    @Query("SELECT * FROM sale_batch_allocations WHERE saleItemId = :saleItemId")
+    fun getAllocationsForSaleItem(saleItemId: Long): Flow<List<SaleBatchAllocation>>
+
+    @Query("SELECT * FROM sale_batch_allocations WHERE batchId = :batchId")
+    fun getAllocationsForBatch(batchId: Long): Flow<List<SaleBatchAllocation>>
+
+    @Query("""
+        SELECT SUM(quantityAllocated) FROM sale_batch_allocations
+        WHERE batchId = :batchId
+    """)
+    suspend fun getTotalAllocatedForBatch(batchId: Long): Double?
+
+    @Query("DELETE FROM sale_batch_allocations WHERE saleItemId = :saleItemId")
+    suspend fun deleteAllForSaleItem(saleItemId: Long)
+}
