@@ -36,6 +36,7 @@ class SaleActivity : AppCompatActivity() {
     private var selectedSiteId: Long = 0L
     private var editingSaleId: Long? = null
     private var existingSale: Sale? = null
+    private var selectedCustomer: Customer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +72,13 @@ class SaleActivity : AppCompatActivity() {
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
+        // Make customer name field clickable to open customer selection
+        editCustomerName.isFocusable = false
+        editCustomerName.isClickable = true
+        editCustomerName.setOnClickListener {
+            showCustomerSelectionDialog()
         }
 
         btnAddProduct.setOnClickListener {
@@ -251,6 +259,133 @@ class SaleActivity : AppCompatActivity() {
         updateSaveButtonState()
     }
 
+    private fun showCustomerSelectionDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_customer, null)
+        val editSearch = dialogView.findViewById<EditText>(R.id.editSearchCustomer)
+        val recyclerCustomers = dialogView.findViewById<RecyclerView>(R.id.recyclerCustomers)
+        val btnAddNew = dialogView.findViewById<Button>(R.id.btnAddNewCustomer)
+
+        recyclerCustomers.layoutManager = LinearLayoutManager(this)
+        val customerAdapter = com.medistock.ui.adapters.CustomerAdapter { customer ->
+            selectedCustomer = customer
+            editCustomerName.setText(customer.name)
+            // Dismiss the dialog
+        }
+        recyclerCustomers.adapter = customerAdapter
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Select Customer")
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        // Load customers
+        lifecycleScope.launch(Dispatchers.IO) {
+            db.customerDao().getAllForSite(selectedSiteId).collect { customers ->
+                withContext(Dispatchers.Main) {
+                    customerAdapter.submitList(customers)
+                }
+            }
+        }
+
+        // Search functionality
+        editSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val query = s.toString().trim()
+                if (query.isNotEmpty()) {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        db.customerDao().search(selectedSiteId, query).collect { customers ->
+                            withContext(Dispatchers.Main) {
+                                customerAdapter.submitList(customers)
+                            }
+                        }
+                    }
+                } else {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        db.customerDao().getAllForSite(selectedSiteId).collect { customers ->
+                            withContext(Dispatchers.Main) {
+                                customerAdapter.submitList(customers)
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        // Update adapter click to dismiss dialog
+        val finalAdapter = com.medistock.ui.adapters.CustomerAdapter { customer ->
+            selectedCustomer = customer
+            editCustomerName.setText(customer.name)
+            dialog.dismiss()
+        }
+        recyclerCustomers.adapter = finalAdapter
+
+        // Reload customers with new adapter
+        lifecycleScope.launch(Dispatchers.IO) {
+            db.customerDao().getAllForSite(selectedSiteId).collect { customers ->
+                withContext(Dispatchers.Main) {
+                    finalAdapter.submitList(customers)
+                }
+            }
+        }
+
+        btnAddNew.setOnClickListener {
+            dialog.dismiss()
+            showAddCustomerDialog()
+        }
+
+        dialog.show()
+    }
+
+    private fun showAddCustomerDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_customer, null)
+        val editName = dialogView.findViewById<EditText>(R.id.editCustomerName)
+        val editPhone = dialogView.findViewById<EditText>(R.id.editCustomerPhone)
+        val editAddress = dialogView.findViewById<EditText>(R.id.editCustomerAddress)
+        val editNotes = dialogView.findViewById<EditText>(R.id.editCustomerNotes)
+
+        AlertDialog.Builder(this)
+            .setTitle("Add New Customer")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val name = editName.text.toString().trim()
+                val phone = editPhone.text.toString().trim()
+                val address = editAddress.text.toString().trim()
+                val notes = editNotes.text.toString().trim()
+
+                if (name.isEmpty()) {
+                    Toast.makeText(this, "Customer name is required", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val customer = Customer(
+                        name = name,
+                        phone = phone.ifEmpty { null },
+                        address = address.ifEmpty { null },
+                        notes = notes.ifEmpty { null },
+                        siteId = selectedSiteId
+                    )
+                    val customerId = db.customerDao().insert(customer)
+                    val savedCustomer = customer.copy(id = customerId)
+
+                    withContext(Dispatchers.Main) {
+                        selectedCustomer = savedCustomer
+                        editCustomerName.setText(name)
+                        Toast.makeText(
+                            this@SaleActivity,
+                            "Customer added successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun updateTotal() {
         val total = saleItemAdapter.getTotalAmount()
         textTotalAmount.text = "Total: ${String.format("%.2f", total)}"
@@ -282,6 +417,7 @@ class SaleActivity : AppCompatActivity() {
                     // Update existing sale
                     val updatedSale = existingSale!!.copy(
                         customerName = customerName,
+                        customerId = selectedCustomer?.id,
                         totalAmount = totalAmount,
                         siteId = selectedSiteId
                     )
@@ -336,6 +472,7 @@ class SaleActivity : AppCompatActivity() {
                     // Create new sale
                     val sale = Sale(
                         customerName = customerName,
+                        customerId = selectedCustomer?.id,
                         date = currentTime,
                         totalAmount = totalAmount,
                         siteId = selectedSiteId,

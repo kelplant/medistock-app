@@ -3,13 +3,13 @@ package com.medistock.data.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "sales")
-data class Sale(
+@Entity(tableName = "customers")
+data class Customer(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val customerName: String,
-    val customerId: Long? = null,
-    val date: Long,
-    val totalAmount: Double,
+    val name: String,
+    val phone: String? = null,
+    val address: String? = null,
+    val notes: String? = null,
     val siteId: Long,
     val createdAt: Long = System.currentTimeMillis(),
     val createdBy: String = ""
