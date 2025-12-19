@@ -38,25 +38,32 @@ class LoginActivity : AppCompatActivity() {
         authManager = AuthManager.getInstance(this)
         db = AppDatabase.getInstance(this)
 
-        // Check if already logged in
-        if (authManager.isLoggedIn()) {
-            navigateToHome()
-            return
-        }
-
         // Initialize views
         editUsername = findViewById(R.id.editUsername)
         editPassword = findViewById(R.id.editPassword)
         btnLogin = findViewById(R.id.btnLogin)
         tvError = findViewById(R.id.tvError)
 
-        // Create default admin user if no users exist and migrate passwords
+        // Disable login button during initialization
+        btnLogin.isEnabled = false
+
+        // IMPORTANT: Migrate passwords BEFORE checking login status
         lifecycleScope.launch {
             // Migrate existing plain text passwords to hashed passwords
             PasswordMigration.migratePasswordsIfNeeded(this@LoginActivity)
 
             // Create default admin user if needed
             createDefaultAdminIfNeeded()
+
+            // After migration, check if already logged in
+            withContext(Dispatchers.Main) {
+                if (authManager.isLoggedIn()) {
+                    navigateToHome()
+                } else {
+                    // Enable login button
+                    btnLogin.isEnabled = true
+                }
+            }
         }
 
         btnLogin.setOnClickListener {
