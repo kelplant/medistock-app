@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 data class User(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val username: String,
-    val password: String, // In production, this should be hashed
+    val password: String, // BCrypt hashed password
     @ColumnInfo(name = "full_name") val fullName: String,
     @ColumnInfo(name = "is_admin") val isAdmin: Boolean = false,
     @ColumnInfo(name = "is_active") val isActive: Boolean = true,

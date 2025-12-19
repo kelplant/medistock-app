@@ -60,7 +60,11 @@ dependencies {
 
     implementation "androidx.activity:activity-ktx:1.7.2"
     implementation "androidx.gridlayout:gridlayout:1.0.0"
+    implementation "androidx.preference:preference-ktx:1.2.1"
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+
+    // BCrypt for password hashing
+    implementation "at.favre.lib:bcrypt:0.10.2"
 }

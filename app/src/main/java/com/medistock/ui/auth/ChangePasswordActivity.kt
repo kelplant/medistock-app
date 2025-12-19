@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.util.AuthManager
+import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -84,7 +85,12 @@ class ChangePasswordActivity : AppCompatActivity() {
             try {
                 // Verify current password
                 val user = withContext(Dispatchers.IO) {
-                    db.userDao().authenticate(username, currentPassword)
+                    val u = db.userDao().getUserForAuth(username)
+                    if (u != null && PasswordHasher.verifyPassword(currentPassword, u.password)) {
+                        u
+                    } else {
+                        null
+                    }
                 }
 
                 if (user == null) {
@@ -98,9 +104,9 @@ class ChangePasswordActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // Update password
+                // Update password with hashed version
                 val updatedUser = user.copy(
-                    password = newPassword,
+                    password = PasswordHasher.hashPassword(newPassword),
                     updatedAt = System.currentTimeMillis(),
                     updatedBy = username
                 )
