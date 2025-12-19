@@ -81,7 +81,7 @@ interface PurchaseBatchDao {
             updatedAt = :updatedAt
         WHERE id = :batchId
     """)
-    suspend fun updateRemainingQuantity(batchId: Long, newQuantity: Double, updatedAt: Long = System.currentTimeMillis())
+    fun updateRemainingQuantity(batchId: Long, newQuantity: Double, updatedAt: Long): Int
 
     /**
      * Get available batches ordered by purchase date (FIFO) - non-Flow version for transactions.
@@ -94,5 +94,5 @@ interface PurchaseBatchDao {
         AND remainingQuantity > 0
         ORDER BY purchaseDate ASC
     """)
-    suspend fun getAvailableBatchesFIFOSync(productId: Long, siteId: Long): List<PurchaseBatch>
+    fun getAvailableBatchesFIFOSync(productId: Long, siteId: Long): List<PurchaseBatch>
 }

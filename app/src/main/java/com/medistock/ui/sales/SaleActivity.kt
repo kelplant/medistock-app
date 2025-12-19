@@ -429,7 +429,7 @@ class SaleActivity : AppCompatActivity() {
 
             // Update batch remaining quantity
             val newRemainingQty = batch.remainingQuantity - qtyToTake
-            db.purchaseBatchDao().updateRemainingQuantity(batch.id, newRemainingQty)
+            db.purchaseBatchDao().updateRemainingQuantity(batch.id, newRemainingQty, System.currentTimeMillis())
 
             remainingQty -= qtyToTake
         }
@@ -454,7 +454,7 @@ class SaleActivity : AppCompatActivity() {
             batch?.let {
                 // Add back the quantity
                 val newRemainingQty = it.remainingQuantity + allocation.quantityAllocated
-                db.purchaseBatchDao().updateRemainingQuantity(it.id, newRemainingQty)
+                db.purchaseBatchDao().updateRemainingQuantity(it.id, newRemainingQty, System.currentTimeMillis())
             }
         }
 
