@@ -287,11 +287,10 @@ class SaleActivity : AppCompatActivity() {
                     )
                     db.saleDao().update(updatedSale)
 
-                    // Delete old sale items
-                    db.saleItemDao().deleteAllForSale(editingSaleId!!)
+                    // Get old items BEFORE deleting them
+                    val oldItems = db.saleItemDao().getItemsForSale(editingSaleId!!).first()
 
                     // Reverse old stock movements by adding back
-                    val oldItems = db.saleItemDao().getItemsForSale(editingSaleId!!).first()
                     oldItems.forEach { oldItem ->
                         val movement = StockMovement(
                             productId = oldItem.productId,
@@ -304,6 +303,9 @@ class SaleActivity : AppCompatActivity() {
                         )
                         db.stockMovementDao().insert(movement)
                     }
+
+                    // Delete old sale items AFTER reversing stock
+                    db.saleItemDao().deleteAllForSale(editingSaleId!!)
 
                     // Insert new sale items and stock movements
                     saleItemAdapter.getItems().forEach { item ->
