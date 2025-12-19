@@ -395,6 +395,73 @@ class SaleActivity : AppCompatActivity() {
         btnSaveSale.isEnabled = saleItemAdapter.itemCount > 0
     }
 
+    /**
+     * Allocates sale quantity to purchase batches using FIFO (First In, First Out) based on purchase date.
+     * Returns list of batch allocations and the weighted average purchase price.
+     */
+    private suspend fun allocateBatchesFIFO(
+        productId: Long,
+        siteId: Long,
+        quantityNeeded: Double
+    ): Pair<List<SaleBatchAllocation>, Double> {
+        val batches = db.purchaseBatchDao().getAvailableBatchesFIFOSync(productId, siteId)
+        val allocations = mutableListOf<SaleBatchAllocation>()
+        var remainingQty = quantityNeeded
+        var totalCost = 0.0
+
+        for (batch in batches) {
+            if (remainingQty <= 0) break
+
+            val qtyToTake = minOf(remainingQty, batch.remainingQuantity)
+
+            // Create allocation (saleItemId will be set later)
+            allocations.add(
+                SaleBatchAllocation(
+                    saleItemId = 0, // Will be updated after sale item is created
+                    batchId = batch.id,
+                    quantityAllocated = qtyToTake,
+                    purchasePriceAtAllocation = batch.purchasePrice
+                )
+            )
+
+            // Track cost for weighted average
+            totalCost += qtyToTake * batch.purchasePrice
+
+            // Update batch remaining quantity
+            val newRemainingQty = batch.remainingQuantity - qtyToTake
+            db.purchaseBatchDao().updateRemainingQuantity(batch.id, newRemainingQty)
+
+            remainingQty -= qtyToTake
+        }
+
+        if (remainingQty > 0) {
+            throw Exception("Insufficient stock in batches. Missing: $remainingQty units")
+        }
+
+        val avgPurchasePrice = if (quantityNeeded > 0) totalCost / quantityNeeded else 0.0
+        return Pair(allocations, avgPurchasePrice)
+    }
+
+    /**
+     * Reverses batch allocations when editing/deleting a sale.
+     */
+    private suspend fun reverseBatchAllocations(saleItemId: Long) {
+        val allocations = db.saleBatchAllocationDao().getAllocationsForSaleItem(saleItemId).first()
+
+        for (allocation in allocations) {
+            // Get current batch
+            val batch = db.purchaseBatchDao().getById(allocation.batchId).first()
+            batch?.let {
+                // Add back the quantity
+                val newRemainingQty = it.remainingQuantity + allocation.quantityAllocated
+                db.purchaseBatchDao().updateRemainingQuantity(it.id, newRemainingQty)
+            }
+        }
+
+        // Delete allocations
+        db.saleBatchAllocationDao().deleteAllForSaleItem(saleItemId)
+    }
+
     private fun saveSale() {
         val customerName = editCustomerName.text.toString().trim()
 
@@ -426,8 +493,12 @@ class SaleActivity : AppCompatActivity() {
                     // Get old items BEFORE deleting them
                     val oldItems = db.saleItemDao().getItemsForSale(editingSaleId!!).first()
 
-                    // Reverse old stock movements by adding back
+                    // Reverse old batch allocations and stock movements
                     oldItems.forEach { oldItem ->
+                        // Reverse batch allocations
+                        reverseBatchAllocations(oldItem.id)
+
+                        // Reverse stock movement
                         val movement = StockMovement(
                             productId = oldItem.productId,
                             type = "in",
@@ -440,21 +511,37 @@ class SaleActivity : AppCompatActivity() {
                         db.stockMovementDao().insert(movement)
                     }
 
-                    // Delete old sale items AFTER reversing stock
+                    // Delete old sale items AFTER reversing
                     db.saleItemDao().deleteAllForSale(editingSaleId!!)
 
-                    // Insert new sale items and stock movements
+                    // Insert new sale items with FIFO batch allocation
                     saleItemAdapter.getItems().forEach { item ->
-                        val newItem = item.copy(saleId = editingSaleId!!)
-                        db.saleItemDao().insert(newItem)
+                        // Allocate batches using FIFO
+                        val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
+                            item.productId,
+                            selectedSiteId,
+                            item.quantity
+                        )
 
+                        // Insert sale item
+                        val newItem = item.copy(saleId = editingSaleId!!)
+                        val saleItemId = db.saleItemDao().insert(newItem)
+
+                        // Insert batch allocations with correct saleItemId
+                        allocations.forEach { allocation ->
+                            db.saleBatchAllocationDao().insert(
+                                allocation.copy(saleItemId = saleItemId)
+                            )
+                        }
+
+                        // Create stock movement with actual purchase price
                         val movement = StockMovement(
                             productId = item.productId,
                             type = "out",
                             quantity = item.quantity,
                             date = currentTime,
                             siteId = selectedSiteId,
-                            purchasePriceAtMovement = 0.0,
+                            purchasePriceAtMovement = avgPurchasePrice,
                             sellingPriceAtMovement = item.pricePerUnit
                         )
                         db.stockMovementDao().insert(movement)
@@ -480,18 +567,34 @@ class SaleActivity : AppCompatActivity() {
                     )
                     val saleId = db.saleDao().insert(sale)
 
-                    // Insert sale items and create stock movements
+                    // Insert sale items with FIFO batch allocation
                     saleItemAdapter.getItems().forEach { item ->
-                        val newItem = item.copy(saleId = saleId)
-                        db.saleItemDao().insert(newItem)
+                        // Allocate batches using FIFO
+                        val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
+                            item.productId,
+                            selectedSiteId,
+                            item.quantity
+                        )
 
+                        // Insert sale item
+                        val newItem = item.copy(saleId = saleId)
+                        val saleItemId = db.saleItemDao().insert(newItem)
+
+                        // Insert batch allocations with correct saleItemId
+                        allocations.forEach { allocation ->
+                            db.saleBatchAllocationDao().insert(
+                                allocation.copy(saleItemId = saleItemId)
+                            )
+                        }
+
+                        // Create stock movement with actual purchase price
                         val movement = StockMovement(
                             productId = item.productId,
                             type = "out",
                             quantity = item.quantity,
                             date = currentTime,
                             siteId = selectedSiteId,
-                            purchasePriceAtMovement = 0.0,
+                            purchasePriceAtMovement = avgPurchasePrice,
                             sellingPriceAtMovement = item.pricePerUnit
                         )
                         db.stockMovementDao().insert(movement)

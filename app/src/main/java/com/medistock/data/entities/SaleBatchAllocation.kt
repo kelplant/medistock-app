@@ -1,0 +1,37 @@
+package com.medistock.data.entities
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
+/**
+ * Tracks which purchase batches were used for each sale item.
+ * This enables true FIFO inventory management based on purchase price.
+ */
+@Entity(
+    tableName = "sale_batch_allocations",
+    foreignKeys = [
+        ForeignKey(
+            entity = SaleItem::class,
+            parentColumns = ["id"],
+            childColumns = ["saleItemId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = PurchaseBatch::class,
+            parentColumns = ["id"],
+            childColumns = ["batchId"],
+            onDelete = ForeignKey.RESTRICT
+        )
+    ],
+    indices = [Index("saleItemId"), Index("batchId")]
+)
+data class SaleBatchAllocation(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val saleItemId: Long,
+    val batchId: Long,
+    val quantityAllocated: Double, // Quantity taken from this batch
+    val purchasePriceAtAllocation: Double, // Purchase price of the batch at time of sale
+    val createdAt: Long = System.currentTimeMillis()
+)

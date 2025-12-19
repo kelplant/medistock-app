@@ -12,7 +12,7 @@ data class PurchaseBatch(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val productId: Long,
     val siteId: Long,
-    val batchNumber: String,
+    val batchNumber: String? = null, // Optional batch number (auto-generated if null)
     val purchaseDate: Long,
     val initialQuantity: Double,
     val remainingQuantity: Double,
