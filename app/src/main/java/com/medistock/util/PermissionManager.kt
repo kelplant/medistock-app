@@ -13,6 +13,7 @@ object Modules {
     const val SALES = "SALES"
     const val PURCHASES = "PURCHASES"
     const val INVENTORY = "INVENTORY"
+    const val TRANSFERS = "TRANSFERS"
     const val ADMIN = "ADMIN"
     const val PRODUCTS = "PRODUCTS"
     const val SITES = "SITES"
