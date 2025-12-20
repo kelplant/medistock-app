@@ -191,8 +191,8 @@ class ProductAddEditActivity : AppCompatActivity() {
         if (packagingType != null) {
             val levelOptions = if (packagingType.hasTwoLevels()) {
                 listOf(
-                    "Niveau 1: ${packagingType.level1Name}",
-                    "Niveau 2: ${packagingType.level2Name}"
+                    "Level 1: ${packagingType.level1Name}",
+                    "Level 2: ${packagingType.level2Name}"
                 )
             } else {
                 listOf("${packagingType.level1Name}")
@@ -217,8 +217,8 @@ class ProductAddEditActivity : AppCompatActivity() {
             val level1 = packagingType.level1Name
             val level2 = packagingType.level2Name
 
-            textConversionFactorLabel.text = "Facteur de conversion (nombre de $level2 par $level1)"
-            editConversionFactor.hint = "Ex: ${packagingType.defaultConversionFactor ?: ""}"
+            textConversionFactorLabel.text = "Conversion Factor (number of $level2 per $level1)"
+            editConversionFactor.hint = "e.g.: ${packagingType.defaultConversionFactor ?: ""}"
 
             // Pre-fill with default if available
             if (editConversionFactor.text.isNullOrEmpty() && packagingType.defaultConversionFactor != null) {
@@ -297,7 +297,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         }
 
         if (selectedPackagingTypeId == null) {
-            Toast.makeText(this, "Sélectionnez un type de conditionnement", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -315,7 +315,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         val packagingType = packagingTypes.find { it.id == selectedPackagingTypeId }
         if (packagingType != null && packagingType.hasTwoLevels()) {
             if (enteredConversionFactor == null || enteredConversionFactor!! <= 0.0) {
-                Toast.makeText(this, "Entrez un facteur de conversion valide", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Enter a valid conversion factor", Toast.LENGTH_SHORT).show()
                 return
             }
         }

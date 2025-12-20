@@ -26,7 +26,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_packaging_type_list)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Types de conditionnement"
+        supportActionBar?.title = "Packaging Types"
 
         viewModel = ViewModelProvider(this)[PackagingTypeViewModel::class.java]
 
@@ -73,22 +73,22 @@ class PackagingTypeListActivity : AppCompatActivity() {
             runOnUiThread {
                 if (isUsed) {
                     AlertDialog.Builder(this@PackagingTypeListActivity)
-                        .setTitle("Impossible de supprimer")
-                        .setMessage("Le type de conditionnement '$name' est utilisé par des produits. Désactivez-le plutôt.")
+                        .setTitle("Cannot Delete")
+                        .setMessage("Packaging type '$name' is used by products. Deactivate it instead.")
                         .setPositiveButton("OK", null)
                         .show()
                 } else {
                     AlertDialog.Builder(this@PackagingTypeListActivity)
-                        .setTitle("Confirmer la suppression")
-                        .setMessage("Voulez-vous vraiment supprimer le type de conditionnement '$name' ?")
-                        .setPositiveButton("Supprimer") { _, _ ->
+                        .setTitle("Confirm Deletion")
+                        .setMessage("Are you sure you want to delete packaging type '$name'?")
+                        .setPositiveButton("Delete") { _, _ ->
                             viewModel.getById(id) { packagingType ->
                                 packagingType?.let {
                                     viewModel.delete(it) {
                                         runOnUiThread {
                                             Toast.makeText(
                                                 this@PackagingTypeListActivity,
-                                                "Type de conditionnement supprimé",
+                                                "Packaging type deleted",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
@@ -96,7 +96,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
                                 }
                             }
                         }
-                        .setNegativeButton("Annuler", null)
+                        .setNegativeButton("Cancel", null)
                         .show()
                 }
             }
@@ -106,7 +106,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
     private fun toggleActive(id: Long, currentlyActive: Boolean) {
         val callback = {
             runOnUiThread {
-                val message = if (currentlyActive) "Désactivé" else "Activé"
+                val message = if (currentlyActive) "Deactivated" else "Activated"
                 Toast.makeText(this@PackagingTypeListActivity, message, Toast.LENGTH_SHORT).show()
             }
         }

@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Types de conditionnement"
+        android:text="Packaging Types"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginBottom="16dp" />
@@ -17,7 +17,7 @@
         android:id="@+id/btnAddPackagingType"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ajouter un type de conditionnement"
+        android:text="Add Packaging Type"
         android:layout_marginBottom="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView

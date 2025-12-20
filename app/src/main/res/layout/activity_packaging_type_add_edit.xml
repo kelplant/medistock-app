@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Informations générales"
+            android:text="General Information"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
@@ -26,7 +26,7 @@
                 android:id="@+id/editPackagingTypeName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Nom du type (ex: Boîte/Comprimés)" />
+                android:hint="Type name (e.g.: Box/Tablets)" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -39,7 +39,7 @@
                 android:id="@+id/editLevel1Name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Nom du niveau 1 (ex: Boîte, Flacon, Units)" />
+                android:hint="Level 1 name (e.g.: Box, Bottle, Units)" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -47,7 +47,7 @@
             android:id="@+id/checkboxHasTwoLevels"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ce type a 2 niveaux de conditionnement"
+            android:text="This type has 2 packaging levels"
             android:layout_marginBottom="16dp" />
 
         <LinearLayout
@@ -60,7 +60,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Niveau 2"
+                android:text="Level 2"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
@@ -74,7 +74,7 @@
                     android:id="@+id/editLevel2Name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Nom du niveau 2 (ex: Comprimés, ml)" />
+                    android:hint="Level 2 name (e.g.: Tablets, ml)" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -87,7 +87,7 @@
                     android:id="@+id/editConversionFactor"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Facteur de conversion (ex: 30 pour 30 comprimés par boîte)"
+                    android:hint="Conversion factor (e.g.: 30 for 30 tablets per box)"
                     android:inputType="numberDecimal" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -98,7 +98,7 @@
             android:id="@+id/checkboxActive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Actif"
+            android:text="Active"
             android:checked="true"
             android:layout_marginBottom="24dp" />
 
@@ -106,7 +106,7 @@
             android:id="@+id/btnSavePackagingType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enregistrer"
+            android:text="Save"
             android:backgroundTint="@android:color/holo_green_dark" />
 
     </LinearLayout>
