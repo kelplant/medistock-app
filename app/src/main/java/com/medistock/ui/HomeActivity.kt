@@ -14,6 +14,7 @@ import com.medistock.ui.stock.StockListActivity
 import com.medistock.ui.purchase.PurchaseActivity
 import com.medistock.ui.inventory.InventoryActivity
 import com.medistock.ui.admin.AdminActivity
+import com.medistock.ui.transfer.TransferListActivity
 import com.medistock.util.AuthManager
 
 class HomeActivity : AppCompatActivity() {
@@ -42,6 +43,10 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.sellProductButton).setOnClickListener {
             startActivity(Intent(this, SaleListActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.transferProductButton).setOnClickListener {
+            startActivity(Intent(this, TransferListActivity::class.java))
         }
 
         findViewById<android.view.View>(R.id.purchaseButton).setOnClickListener {
