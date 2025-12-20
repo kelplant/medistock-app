@@ -2,7 +2,6 @@ package com.medistock.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDateTime
 
 /**
  * PackagingType - Type de conditionnement administrable
@@ -37,8 +36,8 @@ data class PackagingType(
     val displayOrder: Int = 0,
 
     // Audit
-    val createdAt: LocalDateTime = LocalDateTime.now(),
-    val updatedAt: LocalDateTime = LocalDateTime.now(),
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
     val createdBy: String? = null,
     val updatedBy: String? = null
 ) {
