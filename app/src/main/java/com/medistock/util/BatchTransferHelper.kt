@@ -2,7 +2,6 @@ package com.medistock.util
 
 import com.medistock.data.dao.PurchaseBatchDao
 import com.medistock.data.entities.PurchaseBatch
-import kotlinx.coroutines.flow.first
 
 /**
  * Helper class to manage FIFO batch transfers between sites.
@@ -14,14 +13,14 @@ class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
      * Transfer quantity from source site to destination site using FIFO.
      * Returns list of batch transfers (source batch info for creating destination batches).
      */
-    suspend fun transferBatchesFIFO(
+    fun transferBatchesFIFO(
         productId: Long,
         fromSiteId: Long,
         toSiteId: Long,
         totalQuantity: Double,
         currentUser: String
     ): List<BatchTransferInfo> {
-        val batches = batchDao.getAvailableBatchesFIFO(productId, fromSiteId).first()
+        val batches = batchDao.getAvailableBatchesFIFOSync(productId, fromSiteId)
         var remainingToTransfer = totalQuantity
         val transferInfoList = mutableListOf<BatchTransferInfo>()
 
