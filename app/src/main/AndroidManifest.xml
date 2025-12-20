@@ -42,6 +42,8 @@
         <activity android:name=".ui.site.SiteAddEditActivity" android:exported="false" />
         <activity android:name=".ui.category.CategoryListActivity" android:exported="false" />
         <activity android:name=".ui.category.CategoryAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.packaging.PackagingTypeListActivity" android:exported="false" />
+        <activity android:name=".ui.packaging.PackagingTypeAddEditActivity" android:exported="false" />
 
     </application>
 

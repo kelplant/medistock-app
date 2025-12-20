@@ -13,6 +13,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Category
 import com.medistock.data.entities.Product
+import com.medistock.data.entities.PackagingType
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -24,21 +25,24 @@ class ProductAddEditActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private lateinit var editName: EditText
     private lateinit var spinnerCategory: Spinner
-    private lateinit var spinnerUnit: Spinner
+    private lateinit var spinnerPackagingType: Spinner
+    private lateinit var spinnerSelectedLevel: Spinner
     private lateinit var spinnerMarginType: Spinner
     private lateinit var editMarginValue: EditText
-    private lateinit var editUnitVolume: EditText
-    private lateinit var textUnitVolumeLabel: TextView
+    private lateinit var editConversionFactor: EditText
+    private lateinit var textConversionFactorLabel: TextView
     private lateinit var textMarginInfo: TextView
     private lateinit var btnSave: Button
     private lateinit var btnDelete: Button
 
     private var categories: List<Category> = emptyList()
+    private var packagingTypes: List<PackagingType> = emptyList()
     private var selectedCategoryId: Long = 0L
-    private var selectedUnit: String = "Bottle"
+    private var selectedPackagingTypeId: Long? = null
+    private var selectedLevel: Int = 1
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
-    private var enteredUnitVolume: Double = 0.0
+    private var enteredConversionFactor: Double? = null
     private var currentSiteId: Long = 0L
     private var productId: Long? = null
 
@@ -51,22 +55,17 @@ class ProductAddEditActivity : AppCompatActivity() {
 
         editName = findViewById(R.id.editProductName)
         spinnerCategory = findViewById(R.id.spinnerCategory)
-        spinnerUnit = findViewById(R.id.spinnerUnit)
+        spinnerPackagingType = findViewById(R.id.spinnerPackagingType)
+        spinnerSelectedLevel = findViewById(R.id.spinnerSelectedLevel)
         spinnerMarginType = findViewById(R.id.spinnerMarginType)
         editMarginValue = findViewById(R.id.editMarginValue)
-        editUnitVolume = findViewById(R.id.editUnitVolume)
-        textUnitVolumeLabel = findViewById(R.id.textUnitVolumeLabel)
+        editConversionFactor = findViewById(R.id.editConversionFactor)
+        textConversionFactorLabel = findViewById(R.id.textConversionFactorLabel)
         textMarginInfo = findViewById(R.id.textMarginInfo)
         btnSave = findViewById(R.id.btnSaveProduct)
         btnDelete = findViewById(R.id.btnDeleteProduct)
 
         currentSiteId = PrefsHelper.getActiveSiteId(this)
-
-        // Package types: Bottle (ml), Box, Tablet, ml, Units
-        val units = listOf("Bottle", "Box", "Tablet", "ml", "Units")
-        val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
-        unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerUnit.adapter = unitAdapter
 
         // Fixed or percentage margin types
         val marginTypes = listOf("percentage", "fixed")
@@ -74,9 +73,11 @@ class ProductAddEditActivity : AppCompatActivity() {
         marginTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerMarginType.adapter = marginTypeAdapter
 
-        // Load categories from DB
+        // Load categories and packaging types from DB
         lifecycleScope.launch {
             categories = db.categoryDao().getAll().first()
+            packagingTypes = db.packagingTypeDao().getAllActive().first()
+
             if (categories.isEmpty()) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -86,20 +87,32 @@ class ProductAddEditActivity : AppCompatActivity() {
                     ).show()
                     btnSave.isEnabled = false
                 }
+            } else if (packagingTypes.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@ProductAddEditActivity,
+                        "No packaging types available. Please create packaging types first.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    btnSave.isEnabled = false
+                }
             } else {
-                val categoryNames = categories.map { it.name }
-                val categoryAdapter = ArrayAdapter(this@ProductAddEditActivity, android.R.layout.simple_spinner_item, categoryNames)
-                categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                spinnerCategory.adapter = categoryAdapter
+                withContext(Dispatchers.Main) {
+                    setupCategorySpinner()
+                    setupPackagingTypeSpinner()
+                    setupSpinnerListeners()
 
-                // If edit mode, load the product
-                productId = intent.getLongExtra("PRODUCT_ID", -1).takeIf { it != -1L }
-                if (productId != null) {
-                    supportActionBar?.title = "Edit Product"
-                    btnDelete.visibility = View.VISIBLE
-                    loadProduct(productId!!)
-                } else {
-                    supportActionBar?.title = "Add Product"
+                    // If edit mode, load the product
+                    productId = intent.getLongExtra("PRODUCT_ID", -1).takeIf { it != -1L }
+                    if (productId != null) {
+                        supportActionBar?.title = "Edit Product"
+                        btnDelete.visibility = View.VISIBLE
+                        loadProduct(productId!!)
+                    } else {
+                        supportActionBar?.title = "Add Product"
+                        // Set default level
+                        updateLevelSpinner()
+                    }
                 }
             }
         }
@@ -112,6 +125,32 @@ class ProductAddEditActivity : AppCompatActivity() {
         }
 
         editMarginValue.addTextChangedListener(textWatcher)
+
+        btnSave.setOnClickListener {
+            saveProduct()
+        }
+
+        btnDelete.setOnClickListener {
+            confirmDelete()
+        }
+    }
+
+    private fun setupCategorySpinner() {
+        val categoryNames = categories.map { it.name }
+        val categoryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categoryNames)
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerCategory.adapter = categoryAdapter
+    }
+
+    private fun setupPackagingTypeSpinner() {
+        val packagingTypeNames = packagingTypes.map { it.name }
+        val packagingTypeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, packagingTypeNames)
+        packagingTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerPackagingType.adapter = packagingTypeAdapter
+    }
+
+    private fun setupSpinnerListeners() {
+        val marginTypes = listOf("percentage", "fixed")
 
         spinnerMarginType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
@@ -128,42 +167,67 @@ class ProductAddEditActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        spinnerUnit.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        spinnerPackagingType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
-                selectedUnit = units.getOrNull(position) ?: ""
-                // Adapt label based on package type
-                when (selectedUnit) {
-                    "Bottle" -> {
-                        textUnitVolumeLabel.text = "Volume per bottle (ml)"
-                        editUnitVolume.hint = "Ex: 100"
-                    }
-                    "Box" -> {
-                        textUnitVolumeLabel.text = "Number of tablets per box"
-                        editUnitVolume.hint = "Ex: 30"
-                    }
-                    "Tablet" -> {
-                        textUnitVolumeLabel.text = "Quantity per unit"
-                        editUnitVolume.hint = "Ex: 1"
-                    }
-                    "ml" -> {
-                        textUnitVolumeLabel.text = "Volume per unit (ml)"
-                        editUnitVolume.hint = "Ex: 1"
-                    }
-                    "Units" -> {
-                        textUnitVolumeLabel.text = "Quantity per unit"
-                        editUnitVolume.hint = "Ex: 1"
-                    }
-                }
+                val packagingType = packagingTypes.getOrNull(position)
+                selectedPackagingTypeId = packagingType?.id
+                updateLevelSpinner()
+                updateConversionFactorLabel()
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        btnSave.setOnClickListener {
-            saveProduct()
+        spinnerSelectedLevel.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                selectedLevel = position + 1 // Position 0 = Level 1, Position 1 = Level 2
+                updateConversionFactorLabel()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
         }
+    }
 
-        btnDelete.setOnClickListener {
-            confirmDelete()
+    private fun updateLevelSpinner() {
+        val packagingType = packagingTypes.find { it.id == selectedPackagingTypeId }
+        if (packagingType != null) {
+            val levelOptions = if (packagingType.hasTwoLevels()) {
+                listOf(
+                    "Niveau 1: ${packagingType.level1Name}",
+                    "Niveau 2: ${packagingType.level2Name}"
+                )
+            } else {
+                listOf("${packagingType.level1Name}")
+            }
+
+            val levelAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, levelOptions)
+            levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinnerSelectedLevel.adapter = levelAdapter
+
+            // Reset to level 1 by default
+            selectedLevel = 1
+            spinnerSelectedLevel.setSelection(0)
+        }
+    }
+
+    private fun updateConversionFactorLabel() {
+        val packagingType = packagingTypes.find { it.id == selectedPackagingTypeId }
+        if (packagingType != null && packagingType.hasTwoLevels()) {
+            textConversionFactorLabel.visibility = View.VISIBLE
+            editConversionFactor.visibility = View.VISIBLE
+
+            val level1 = packagingType.level1Name
+            val level2 = packagingType.level2Name
+
+            textConversionFactorLabel.text = "Facteur de conversion (nombre de $level2 par $level1)"
+            editConversionFactor.hint = "Ex: ${packagingType.defaultConversionFactor ?: ""}"
+
+            // Pre-fill with default if available
+            if (editConversionFactor.text.isNullOrEmpty() && packagingType.defaultConversionFactor != null) {
+                editConversionFactor.setText(packagingType.defaultConversionFactor.toString())
+            }
+        } else {
+            textConversionFactorLabel.visibility = View.GONE
+            editConversionFactor.visibility = View.GONE
+            enteredConversionFactor = null
         }
     }
 
@@ -174,7 +238,6 @@ class ProductAddEditActivity : AppCompatActivity() {
                 if (product != null) {
                     editName.setText(product.name)
                     editMarginValue.setText((product.marginValue ?: 0.0).toString())
-                    editUnitVolume.setText((product.unitVolume ?: 0.0).toString())
 
                     // Select the category
                     val categoryIndex = categories.indexOfFirst { it.id == product.categoryId }
@@ -182,10 +245,25 @@ class ProductAddEditActivity : AppCompatActivity() {
                         spinnerCategory.setSelection(categoryIndex)
                     }
 
-                    // Select unit
-                    val unitIndex = listOf("Bottle", "Box", "Tablet", "ml", "Units").indexOf(product.unit)
-                    if (unitIndex >= 0) {
-                        spinnerUnit.setSelection(unitIndex)
+                    // Select packaging type and level
+                    if (product.packagingTypeId != null) {
+                        val packagingTypeIndex = packagingTypes.indexOfFirst { it.id == product.packagingTypeId }
+                        if (packagingTypeIndex >= 0) {
+                            spinnerPackagingType.setSelection(packagingTypeIndex)
+                            selectedPackagingTypeId = product.packagingTypeId
+                            updateLevelSpinner()
+
+                            // Select the level
+                            if (product.selectedLevel != null) {
+                                spinnerSelectedLevel.setSelection(product.selectedLevel - 1)
+                                selectedLevel = product.selectedLevel
+                            }
+                        }
+
+                        // Set conversion factor if available
+                        if (product.conversionFactor != null) {
+                            editConversionFactor.setText(product.conversionFactor.toString())
+                        }
                     }
 
                     // Select the margin type
@@ -195,7 +273,6 @@ class ProductAddEditActivity : AppCompatActivity() {
                     }
 
                     selectedCategoryId = product.categoryId ?: 0L
-                    selectedUnit = product.unit
                     selectedMarginType = product.marginType ?: "percentage"
                 }
             }
@@ -205,10 +282,10 @@ class ProductAddEditActivity : AppCompatActivity() {
     private fun saveProduct() {
         val productName = editName.text.toString().trim()
         val marginText = editMarginValue.text.toString()
-        val unitVolumeText = editUnitVolume.text.toString()
+        val conversionFactorText = editConversionFactor.text.toString()
 
         enteredMarginValue = marginText.toDoubleOrNull() ?: 0.0
-        enteredUnitVolume = unitVolumeText.toDoubleOrNull() ?: 0.0
+        enteredConversionFactor = conversionFactorText.toDoubleOrNull()
 
         if (productName.isEmpty()) {
             Toast.makeText(this, getString(R.string.error_enter_product_name), Toast.LENGTH_SHORT).show()
@@ -219,8 +296,8 @@ class ProductAddEditActivity : AppCompatActivity() {
             return
         }
 
-        if (selectedUnit.isEmpty()) {
-            Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
+        if (selectedPackagingTypeId == null) {
+            Toast.makeText(this, "Sélectionnez un type de conditionnement", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -234,17 +311,13 @@ class ProductAddEditActivity : AppCompatActivity() {
             return
         }
 
-        if (enteredUnitVolume <= 0.0) {
-            val volumeLabel = when (selectedUnit) {
-                "Bottle" -> "volume in ml"
-                "Box" -> "number of tablets"
-                "Tablet" -> "quantity"
-                "ml" -> "volume in ml"
-                "Units" -> "quantity"
-                else -> "quantity"
+        // Validate conversion factor for 2-level packaging types
+        val packagingType = packagingTypes.find { it.id == selectedPackagingTypeId }
+        if (packagingType != null && packagingType.hasTwoLevels()) {
+            if (enteredConversionFactor == null || enteredConversionFactor!! <= 0.0) {
+                Toast.makeText(this, "Entrez un facteur de conversion valide", Toast.LENGTH_SHORT).show()
+                return
             }
-            Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
-            return
         }
 
         // Create/Update product
@@ -252,10 +325,13 @@ class ProductAddEditActivity : AppCompatActivity() {
             id = productId ?: 0L,
             name = productName,
             categoryId = selectedCategoryId,
-            unit = selectedUnit,
+            packagingTypeId = selectedPackagingTypeId,
+            selectedLevel = selectedLevel,
+            conversionFactor = enteredConversionFactor,
+            unit = null, // Using new packaging system
+            unitVolume = null, // Using new packaging system
             marginType = selectedMarginType,
             marginValue = enteredMarginValue,
-            unitVolume = enteredUnitVolume,
             siteId = currentSiteId
         )
 

@@ -39,36 +39,52 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Package Type -->
+        <!-- Packaging Type -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Package Type"
+            android:text="Type de conditionnement"
             android:textSize="16sp"
             android:layout_marginTop="8dp" />
 
         <Spinner
-            android:id="@+id/spinnerUnit"
+            android:id="@+id/spinnerPackagingType"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp" />
 
-        <!-- Volume/Quantity per unit -->
+        <!-- Selected Level -->
         <TextView
-            android:id="@+id/textUnitVolumeLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Volume per bottle (ml)"
+            android:text="Unité utilisée"
             android:textSize="16sp"
             android:layout_marginTop="8dp" />
 
+        <Spinner
+            android:id="@+id/spinnerSelectedLevel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Conversion Factor -->
+        <TextView
+            android:id="@+id/textConversionFactorLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Facteur de conversion"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+
         <EditText
-            android:id="@+id/editUnitVolume"
+            android:id="@+id/editConversionFactor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="numberDecimal"
-            android:hint="Ex: 100"
-            android:layout_marginBottom="16dp" />
+            android:hint="Ex: 30"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
         <!-- Margin Type -->
         <TextView
