@@ -51,7 +51,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="User Management"
+        android:layout_marginBottom="16dp"
         android:padding="16dp"
         android:backgroundTint="#4CAF50" />
+
+    <Button
+        android:id="@+id/btnAuditHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Audit History"
+        android:padding="16dp"
+        android:backgroundTint="#FF5722" />
 
 </LinearLayout>

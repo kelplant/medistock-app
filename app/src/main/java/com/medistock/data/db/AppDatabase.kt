@@ -23,9 +23,10 @@ import com.medistock.data.entities.*
         SaleItem::class,
         Customer::class,
         SaleBatchAllocation::class,
-        PackagingType::class
+        PackagingType::class,
+        AuditHistory::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -44,6 +45,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDao(): CustomerDao
     abstract fun saleBatchAllocationDao(): SaleBatchAllocationDao
     abstract fun packagingTypeDao(): PackagingTypeDao
+    abstract fun auditHistoryDao(): AuditHistoryDao
 
     companion object {
         @Volatile

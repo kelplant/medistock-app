@@ -41,13 +41,21 @@ class AdminActivity : AppCompatActivity() {
 
         // User management button - only visible for admins
         val btnManageUsers = findViewById<android.view.View>(R.id.btnManageUsers)
+        val btnAuditHistory = findViewById<android.view.View>(R.id.btnAuditHistory)
+
         if (authManager.isAdmin()) {
             btnManageUsers.visibility = View.VISIBLE
             btnManageUsers.setOnClickListener {
                 startActivity(Intent(this, UserListActivity::class.java))
             }
+
+            btnAuditHistory.visibility = View.VISIBLE
+            btnAuditHistory.setOnClickListener {
+                startActivity(Intent(this, AuditHistoryActivity::class.java))
+            }
         } else {
             btnManageUsers.visibility = View.GONE
+            btnAuditHistory.visibility = View.GONE
         }
     }
 
