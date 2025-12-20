@@ -58,6 +58,16 @@
                 android:text="By: User"
                 android:textSize="12sp"
                 android:paddingTop="2dp"/>
+
+            <TextView
+                android:id="@+id/textNotes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notes"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:paddingTop="4dp"
+                android:textColor="#666666"/>
         </LinearLayout>
 
         <LinearLayout

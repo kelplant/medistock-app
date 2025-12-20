@@ -14,6 +14,8 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.util.BatchTransferHelper
+import com.medistock.util.InsufficientStockException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -286,9 +288,37 @@ class TransferActivity : AppCompatActivity() {
             try {
                 val currentTime = System.currentTimeMillis()
                 val currentUser = authManager.getUsername()
+                val batchHelper = BatchTransferHelper(db.purchaseBatchDao())
 
-                // Save each transfer item and create stock movements
+                // Process each transfer item with FIFO batch management
                 transferItemAdapter.getItems().forEach { item ->
+                    // Transfer batches using FIFO
+                    val batchTransfers = try {
+                        batchHelper.transferBatchesFIFO(
+                            productId = item.productId,
+                            fromSiteId = selectedFromSiteId,
+                            toSiteId = selectedToSiteId,
+                            totalQuantity = item.quantity,
+                            currentUser = currentUser
+                        )
+                    } catch (e: InsufficientStockException) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@TransferActivity,
+                                "Insufficient stock for ${item.productName}: ${e.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        return@launch
+                    }
+
+                    // Calculate weighted average purchase price
+                    val avgPurchasePrice = batchHelper.calculateAveragePurchasePrice(batchTransfers)
+
+                    // Get current selling price
+                    val latestPrice = db.productPriceDao().getLatestPrice(item.productId).first()
+                    val sellingPrice = latestPrice?.sellingPrice ?: 0.0
+
                     // Create product transfer record
                     val productTransfer = ProductTransfer(
                         id = if (transferId > 0) transferId else 0,
@@ -297,21 +327,14 @@ class TransferActivity : AppCompatActivity() {
                         fromSiteId = selectedFromSiteId,
                         toSiteId = selectedToSiteId,
                         date = currentTime,
+                        notes = "Transferred ${batchTransfers.size} batch(es)",
                         createdAt = currentTime,
-                        createdBy = currentUser
+                        updatedAt = currentTime,
+                        createdBy = currentUser,
+                        updatedBy = currentUser
                     )
 
-                    if (transferId > 0) {
-                        // Delete old stock movements for this transfer if editing
-                        // For simplicity, we don't support editing in this version
-                    }
-
                     db.productTransferDao().insert(productTransfer)
-
-                    // Get current prices for stock movements
-                    val latestPrice = db.productPriceDao().getLatestPrice(item.productId).first()
-                    val purchasePrice = latestPrice?.purchasePrice ?: 0.0
-                    val sellingPrice = latestPrice?.sellingPrice ?: 0.0
 
                     // Create stock movement for source site (transfer out)
                     val movementOut = StockMovement(
@@ -320,7 +343,7 @@ class TransferActivity : AppCompatActivity() {
                         quantity = item.quantity,
                         date = currentTime,
                         siteId = selectedFromSiteId,
-                        purchasePriceAtMovement = purchasePrice,
+                        purchasePriceAtMovement = avgPurchasePrice,
                         sellingPriceAtMovement = sellingPrice,
                         createdAt = currentTime,
                         createdBy = currentUser
@@ -334,7 +357,7 @@ class TransferActivity : AppCompatActivity() {
                         quantity = item.quantity,
                         date = currentTime,
                         siteId = selectedToSiteId,
-                        purchasePriceAtMovement = purchasePrice,
+                        purchasePriceAtMovement = avgPurchasePrice,
                         sellingPriceAtMovement = sellingPrice,
                         createdAt = currentTime,
                         createdBy = currentUser
@@ -345,7 +368,7 @@ class TransferActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@TransferActivity,
-                        "Transfer completed successfully",
+                        "Transfer completed successfully with FIFO batch management",
                         Toast.LENGTH_SHORT
                     ).show()
                     finish()

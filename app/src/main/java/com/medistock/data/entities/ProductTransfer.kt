@@ -11,6 +11,9 @@ data class ProductTransfer(
     val fromSiteId: Long,
     val toSiteId: Long,
     val date: Long,
+    val notes: String = "", // Optional notes about the transfer
     val createdAt: Long = System.currentTimeMillis(),
-    val createdBy: String = ""
+    val updatedAt: Long = System.currentTimeMillis(),
+    val createdBy: String = "",
+    val updatedBy: String = ""
 )

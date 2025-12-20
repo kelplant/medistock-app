@@ -29,6 +29,7 @@ class TransferAdapter(
         val textRoute: TextView = view.findViewById(R.id.textRoute)
         val textDate: TextView = view.findViewById(R.id.textDate)
         val textCreatedBy: TextView = view.findViewById(R.id.textCreatedBy)
+        val textNotes: TextView = view.findViewById(R.id.textNotes)
         val btnEdit: ImageButton = view.findViewById(R.id.btnEditTransfer)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteTransfer)
     }
@@ -50,6 +51,14 @@ class TransferAdapter(
         holder.textRoute.text = "From: ${fromSite?.name ?: "Unknown"} → To: ${toSite?.name ?: "Unknown"}"
         holder.textDate.text = "Date: ${dateFormat.format(Date(transfer.date))}"
         holder.textCreatedBy.text = "By: ${transfer.createdBy.ifEmpty { "Unknown" }}"
+
+        // Show notes if available
+        if (transfer.notes.isNotEmpty()) {
+            holder.textNotes.visibility = View.VISIBLE
+            holder.textNotes.text = "Note: ${transfer.notes}"
+        } else {
+            holder.textNotes.visibility = View.GONE
+        }
 
         holder.btnEdit.setOnClickListener {
             onEditClick(transfer)
