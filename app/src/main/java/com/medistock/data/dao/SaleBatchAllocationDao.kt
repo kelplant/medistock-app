@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SaleBatchAllocationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(allocation: SaleBatchAllocation): Long
+    fun insert(allocation: SaleBatchAllocation): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(allocations: List<SaleBatchAllocation>)
+    fun insertAll(allocations: List<SaleBatchAllocation>)
 
     @Query("SELECT * FROM sale_batch_allocations WHERE saleItemId = :saleItemId")
     fun getAllocationsForSaleItem(saleItemId: Long): Flow<List<SaleBatchAllocation>>
