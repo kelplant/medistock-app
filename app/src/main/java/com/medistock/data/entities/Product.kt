@@ -8,10 +8,8 @@ data class Product(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-
-    // Ancien système de conditionnement (deprecated, gardé pour compatibilité)
-    val unit: String? = null,
-    val unitVolume: Double? = null,
+    val unit: String, // Obligatoire - rempli automatiquement depuis PackagingType
+    val unitVolume: Double, // Obligatoire - facteur de conversion
 
     // Nouveau système de conditionnement administrable
     val packagingTypeId: Long? = null,  // FK vers packaging_types
@@ -28,32 +26,4 @@ data class Product(
     val updatedAt: Long = System.currentTimeMillis(),
     val createdBy: String = "",
     val updatedBy: String = ""
-) {
-    /**
-     * Retourne vrai si le produit utilise le nouveau système de conditionnement
-     */
-    fun usesNewPackagingSystem(): Boolean = packagingTypeId != null
-
-    /**
-     * Retourne l'unité à utiliser (nouveau système ou ancien)
-     */
-    fun getEffectiveUnit(packagingType: PackagingType?): String {
-        return if (usesNewPackagingSystem() && packagingType != null && selectedLevel != null) {
-            packagingType.getLevelName(selectedLevel) ?: unit ?: "Units"
-        } else {
-            unit ?: "Units"
-        }
-    }
-
-    /**
-     * Retourne le facteur de conversion effectif
-     */
-    fun getEffectiveConversionFactor(packagingType: PackagingType?): Double {
-        return when {
-            conversionFactor != null -> conversionFactor
-            packagingType?.defaultConversionFactor != null -> packagingType.defaultConversionFactor
-            unitVolume != null -> unitVolume
-            else -> 1.0
-        }
-    }
-}
+)
