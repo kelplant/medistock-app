@@ -16,7 +16,7 @@ class AuditedUserRepository(private val context: Context) {
     private val authManager = AuthManager.getInstance(context)
 
     fun insert(user: User): Long {
-        val userId = userDao.insert(user)
+        val userId = userDao.insertUser(user)
 
         // Log the insert action (don't log password)
         auditLogger.logInsert(
@@ -37,7 +37,7 @@ class AuditedUserRepository(private val context: Context) {
     }
 
     fun update(oldUser: User, newUser: User) {
-        userDao.update(newUser)
+        userDao.updateUser(newUser)
 
         // Track changes
         val changes = mutableMapOf<String, Pair<String?, String?>>()
@@ -69,7 +69,7 @@ class AuditedUserRepository(private val context: Context) {
     }
 
     fun delete(user: User) {
-        userDao.delete(user)
+        userDao.deleteUser(user)
 
         auditLogger.logDelete(
             entityType = "User",

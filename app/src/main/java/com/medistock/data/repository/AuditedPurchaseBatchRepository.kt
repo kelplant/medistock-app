@@ -80,7 +80,7 @@ class AuditedPurchaseBatchRepository(private val context: Context) {
     }
 
     fun delete(batch: PurchaseBatch) {
-        purchaseBatchDao.delete(batch)
+        purchaseBatchDao.deleteById(batch.id)
 
         auditLogger.logDelete(
             entityType = "PurchaseBatch",
