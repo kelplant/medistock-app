@@ -170,7 +170,7 @@ class SaleActivity : AppCompatActivity() {
         val editQuantity = dialogView.findViewById<EditText>(R.id.editQuantityDialog)
         val editPrice = dialogView.findViewById<EditText>(R.id.editPriceDialog)
 
-        val productNames = products.map { "${it.name} (${it.unit ?: "Units"})" }
+        val productNames = products.map { "${it.name} (${it.unit})" }
         val productAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, productNames)
         productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerProduct.adapter = productAdapter
@@ -182,7 +182,7 @@ class SaleActivity : AppCompatActivity() {
                 if (position >= 0 && position < products.size) {
                     selectedProduct = products[position]
                     val availableQty = currentStock[selectedProduct!!.id] ?: 0.0
-                    textAvailableStock.text = "Available stock: $availableQty ${selectedProduct!!.unit ?: "Units"}"
+                    textAvailableStock.text = "Available stock: $availableQty ${selectedProduct!!.unit}"
 
                     // Load suggested price
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -240,7 +240,7 @@ class SaleActivity : AppCompatActivity() {
                     saleId = editingSaleId ?: 0L,
                     productId = product.id,
                     productName = product.name,
-                    unit = product.unit ?: "Units", // Handle nullable unit for backward compatibility
+                    unit = product.unit,
                     quantity = quantity,
                     pricePerUnit = price,
                     subtotal = quantity * price

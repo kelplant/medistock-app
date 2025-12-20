@@ -32,7 +32,7 @@ class ProductAdapter(
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
         val product = products[position]
         holder.textProductName.text = product.name
-        holder.textProductCategory.text = "${product.unit ?: "Units"} - ${product.unitVolume ?: 1.0}"
+        holder.textProductCategory.text = "${product.unit} - ${product.unitVolume}"
         holder.itemView.setOnClickListener { onClick(product) }
     }
 

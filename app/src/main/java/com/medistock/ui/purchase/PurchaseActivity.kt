@@ -134,7 +134,7 @@ class PurchaseActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = db.productDao().getAll().first()
             withContext(Dispatchers.Main) {
-                val productNames = products.map { "${it.name} (${it.unit ?: "Units"})" }
+                val productNames = products.map { "${it.name} (${it.unit})" }
                 val adapter = ArrayAdapter(
                     this@PurchaseActivity,
                     android.R.layout.simple_spinner_item,
@@ -253,7 +253,7 @@ class PurchaseActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 Toast.makeText(
                     this@PurchaseActivity,
-                    "Purchase recorded: $quantity ${product.unit ?: "Units"}",
+                    "Purchase recorded: $quantity ${product.unit}",
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()

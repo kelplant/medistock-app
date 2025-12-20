@@ -36,7 +36,7 @@ class StockMovementActivity : AppCompatActivity() {
             productSpinner.adapter = ArrayAdapter(
                 this@StockMovementActivity,
                 android.R.layout.simple_spinner_item,
-                products.map { it.name + " (" + (it.unit ?: "Units") + ")" }
+                products.map { it.name + " (" + it.unit + ")" }
             )
         }
 

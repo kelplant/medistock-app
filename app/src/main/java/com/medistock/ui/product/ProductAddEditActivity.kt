@@ -320,6 +320,10 @@ class ProductAddEditActivity : AppCompatActivity() {
             }
         }
 
+        // Populate unit and unitVolume from selected PackagingType
+        val effectiveUnit = packagingType?.getLevelName(selectedLevel) ?: "Units"
+        val effectiveUnitVolume = enteredConversionFactor ?: packagingType?.defaultConversionFactor ?: 1.0
+
         // Create/Update product
         val product = Product(
             id = productId ?: 0L,
@@ -328,8 +332,8 @@ class ProductAddEditActivity : AppCompatActivity() {
             packagingTypeId = selectedPackagingTypeId,
             selectedLevel = selectedLevel,
             conversionFactor = enteredConversionFactor,
-            unit = null, // Using new packaging system
-            unitVolume = null, // Using new packaging system
+            unit = effectiveUnit,
+            unitVolume = effectiveUnitVolume,
             marginType = selectedMarginType,
             marginValue = enteredMarginValue,
             siteId = currentSiteId
