@@ -19,14 +19,14 @@ data class ProductWithPackaging(
      * Retourne l'unité effective à afficher
      */
     fun getEffectiveUnit(): String {
-        return product.getEffectiveUnit(packagingType)
+        return product.unit
     }
 
     /**
      * Retourne le facteur de conversion effectif
      */
     fun getEffectiveConversionFactor(): Double {
-        return product.getEffectiveConversionFactor(packagingType)
+        return product.unitVolume
     }
 
     /**
@@ -49,7 +49,7 @@ data class ProductWithPackaging(
             val levelName = packagingType.getLevelName(product.selectedLevel)
             "$typeName (utilise $levelName)"
         } else {
-            product.unit ?: "Units"
+            product.unit
         }
     }
 }
