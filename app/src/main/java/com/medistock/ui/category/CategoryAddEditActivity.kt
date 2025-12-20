@@ -38,7 +38,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 val cat = db.categoryDao().getById(categoryId!!).first()
                 runOnUiThread {
                     if (cat != null) {
-                        editName.setText(cat.name ?: "")
+                        editName.setText(cat.name)
                     }
                 }
             }
