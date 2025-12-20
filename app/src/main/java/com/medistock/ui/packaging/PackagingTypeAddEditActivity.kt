@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.medistock.R
 import com.medistock.data.entities.PackagingType
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
-import java.time.LocalDateTime
 
 class PackagingTypeAddEditActivity : AppCompatActivity() {
 
@@ -152,8 +151,8 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
             defaultConversionFactor = conversionFactor,
             isActive = isActive,
             displayOrder = existingPackagingType?.displayOrder ?: 0,
-            createdAt = existingPackagingType?.createdAt ?: LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
+            createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis(),
             createdBy = existingPackagingType?.createdBy,
             updatedBy = null // TODO: Add current user
         )
