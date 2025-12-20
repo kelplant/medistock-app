@@ -28,7 +28,7 @@
                     android:id="@+id/textPackagingTypeName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nom du type"
+                    android:text="Type name"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
@@ -36,7 +36,7 @@
                     android:id="@+id/textPackagingTypeLevels"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Niveaux"
+                    android:text="Levels"
                     android:textSize="14sp"
                     android:layout_marginTop="4dp" />
 
@@ -55,7 +55,7 @@
                 android:id="@+id/textPackagingTypeStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Actif"
+                android:text="Active"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_gravity="center_vertical" />
@@ -73,7 +73,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Modifier"
+                android:text="Edit"
                 android:layout_marginEnd="4dp"
                 style="?android:attr/buttonBarButtonStyle" />
 
@@ -82,7 +82,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Désactiver"
+                android:text="Deactivate"
                 android:layout_marginEnd="4dp"
                 style="?android:attr/buttonBarButtonStyle" />
 
@@ -91,7 +91,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Supprimer"
+                android:text="Delete"
                 android:backgroundTint="@android:color/holo_red_light"
                 style="?android:attr/buttonBarButtonStyle" />
 

@@ -33,9 +33,9 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = if (packagingTypeId == null) {
-            "Ajouter un type de conditionnement"
+            "Add Packaging Type"
         } else {
-            "Modifier le type de conditionnement"
+            "Edit Packaging Type"
         }
 
         viewModel = ViewModelProvider(this)[PackagingTypeViewModel::class.java]
@@ -106,12 +106,12 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
         // Validation
         if (name.isEmpty()) {
-            Toast.makeText(this, "Veuillez entrer un nom", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please enter a name", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (level1Name.isEmpty()) {
-            Toast.makeText(this, "Veuillez entrer le nom du niveau 1", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please enter level 1 name", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -121,19 +121,19 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
         if (hasTwoLevels) {
             level2Name = editLevel2Name.text.toString().trim()
             if (level2Name.isEmpty()) {
-                Toast.makeText(this, "Veuillez entrer le nom du niveau 2", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please enter level 2 name", Toast.LENGTH_SHORT).show()
                 return
             }
 
             val conversionText = editConversionFactor.text.toString().trim()
             if (conversionText.isEmpty()) {
-                Toast.makeText(this, "Veuillez entrer le facteur de conversion", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please enter conversion factor", Toast.LENGTH_SHORT).show()
                 return
             }
 
             conversionFactor = conversionText.toDoubleOrNull()
             if (conversionFactor == null || conversionFactor <= 0) {
-                Toast.makeText(this, "Le facteur de conversion doit être un nombre positif", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Conversion factor must be a positive number", Toast.LENGTH_SHORT).show()
                 return
             }
         } else {
@@ -161,7 +161,7 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
             runOnUiThread {
                 Toast.makeText(
                     this@PackagingTypeAddEditActivity,
-                    "Type de conditionnement enregistré",
+                    "Packaging type saved",
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()

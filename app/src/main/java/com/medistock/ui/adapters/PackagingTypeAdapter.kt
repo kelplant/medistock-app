@@ -84,7 +84,7 @@ class PackagingTypeAdapter(
             // Boutons
             btnEdit.setOnClickListener { onEdit(packagingType) }
             btnDelete.setOnClickListener { onDelete(packagingType) }
-            btnToggleActive.text = if (packagingType.isActive) "Désactiver" else "Activer"
+            btnToggleActive.text = if (packagingType.isActive) "Deactivate" else "Activate"
             btnToggleActive.setOnClickListener { onToggleActive(packagingType) }
         }
     }
