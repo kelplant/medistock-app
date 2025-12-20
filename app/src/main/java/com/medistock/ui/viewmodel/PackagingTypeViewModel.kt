@@ -42,31 +42,52 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    suspend fun getById(id: Long): PackagingType? {
-        return packagingTypeDao.getByIdSync(id)
+    fun getById(id: Long, callback: (PackagingType?) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = packagingTypeDao.getByIdSync(id)
+            callback(result)
+        }
     }
 
-    suspend fun insert(packagingType: PackagingType): Long {
-        return packagingTypeDao.insert(packagingType)
+    fun insert(packagingType: PackagingType, callback: (Long) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val id = packagingTypeDao.insert(packagingType)
+            callback(id)
+        }
     }
 
-    suspend fun update(packagingType: PackagingType) {
-        packagingTypeDao.update(packagingType)
+    fun update(packagingType: PackagingType, callback: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            packagingTypeDao.update(packagingType)
+            callback()
+        }
     }
 
-    suspend fun delete(packagingType: PackagingType) {
-        packagingTypeDao.delete(packagingType)
+    fun delete(packagingType: PackagingType, callback: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            packagingTypeDao.delete(packagingType)
+            callback()
+        }
     }
 
-    suspend fun deactivate(id: Long) {
-        packagingTypeDao.deactivate(id)
+    fun deactivate(id: Long, callback: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            packagingTypeDao.deactivate(id)
+            callback()
+        }
     }
 
-    suspend fun activate(id: Long) {
-        packagingTypeDao.activate(id)
+    fun activate(id: Long, callback: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            packagingTypeDao.activate(id)
+            callback()
+        }
     }
 
-    suspend fun isUsedByProducts(packagingTypeId: Long): Boolean {
-        return packagingTypeDao.isUsedByProducts(packagingTypeId)
+    fun isUsedByProducts(packagingTypeId: Long, callback: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = packagingTypeDao.isUsedByProducts(packagingTypeId)
+            callback(result)
+        }
     }
 }

@@ -6,13 +6,9 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.medistock.R
 import com.medistock.data.entities.PackagingType
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 class PackagingTypeAddEditActivity : AppCompatActivity() {
@@ -77,9 +73,8 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
     private fun loadData() {
         packagingTypeId?.let { id ->
-            lifecycleScope.launch(Dispatchers.IO) {
-                val packagingType = viewModel.getById(id)
-                withContext(Dispatchers.Main) {
+            viewModel.getById(id) { packagingType ->
+                runOnUiThread {
                     packagingType?.let {
                         existingPackagingType = it
                         populateFields(it)
@@ -149,28 +144,22 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
         val isActive = checkboxActive.isChecked
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            val packagingType = PackagingType(
-                id = packagingTypeId ?: 0,
-                name = name,
-                level1Name = level1Name,
-                level2Name = level2Name,
-                defaultConversionFactor = conversionFactor,
-                isActive = isActive,
-                displayOrder = existingPackagingType?.displayOrder ?: 0,
-                createdAt = existingPackagingType?.createdAt ?: LocalDateTime.now(),
-                updatedAt = LocalDateTime.now(),
-                createdBy = existingPackagingType?.createdBy,
-                updatedBy = null // TODO: Add current user
-            )
+        val packagingType = PackagingType(
+            id = packagingTypeId ?: 0,
+            name = name,
+            level1Name = level1Name,
+            level2Name = level2Name,
+            defaultConversionFactor = conversionFactor,
+            isActive = isActive,
+            displayOrder = existingPackagingType?.displayOrder ?: 0,
+            createdAt = existingPackagingType?.createdAt ?: LocalDateTime.now(),
+            updatedAt = LocalDateTime.now(),
+            createdBy = existingPackagingType?.createdBy,
+            updatedBy = null // TODO: Add current user
+        )
 
-            if (packagingTypeId == null) {
-                viewModel.insert(packagingType)
-            } else {
-                viewModel.update(packagingType)
-            }
-
-            withContext(Dispatchers.Main) {
+        val callback = {
+            runOnUiThread {
                 Toast.makeText(
                     this@PackagingTypeAddEditActivity,
                     "Type de conditionnement enregistré",
@@ -178,6 +167,12 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
                 ).show()
                 finish()
             }
+        }
+
+        if (packagingTypeId == null) {
+            viewModel.insert(packagingType) { _ -> callback() }
+        } else {
+            viewModel.update(packagingType, callback)
         }
     }
 

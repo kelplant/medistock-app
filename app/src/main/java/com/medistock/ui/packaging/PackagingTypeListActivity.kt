@@ -13,9 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class PackagingTypeListActivity : AppCompatActivity() {
 
@@ -71,10 +69,8 @@ class PackagingTypeListActivity : AppCompatActivity() {
     }
 
     private fun confirmDelete(id: Long, name: String) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val isUsed = viewModel.isUsedByProducts(id)
-
-            withContext(Dispatchers.Main) {
+        viewModel.isUsedByProducts(id) { isUsed ->
+            runOnUiThread {
                 if (isUsed) {
                     AlertDialog.Builder(this@PackagingTypeListActivity)
                         .setTitle("Impossible de supprimer")
@@ -86,16 +82,16 @@ class PackagingTypeListActivity : AppCompatActivity() {
                         .setTitle("Confirmer la suppression")
                         .setMessage("Voulez-vous vraiment supprimer le type de conditionnement '$name' ?")
                         .setPositiveButton("Supprimer") { _, _ ->
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                val packagingType = viewModel.getById(id)
+                            viewModel.getById(id) { packagingType ->
                                 packagingType?.let {
-                                    viewModel.delete(it)
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            this@PackagingTypeListActivity,
-                                            "Type de conditionnement supprimé",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                    viewModel.delete(it) {
+                                        runOnUiThread {
+                                            Toast.makeText(
+                                                this@PackagingTypeListActivity,
+                                                "Type de conditionnement supprimé",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
                                     }
                                 }
                             }
@@ -108,16 +104,17 @@ class PackagingTypeListActivity : AppCompatActivity() {
     }
 
     private fun toggleActive(id: Long, currentlyActive: Boolean) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            if (currentlyActive) {
-                viewModel.deactivate(id)
-            } else {
-                viewModel.activate(id)
-            }
-            withContext(Dispatchers.Main) {
+        val callback = {
+            runOnUiThread {
                 val message = if (currentlyActive) "Désactivé" else "Activé"
                 Toast.makeText(this@PackagingTypeListActivity, message, Toast.LENGTH_SHORT).show()
             }
+        }
+
+        if (currentlyActive) {
+            viewModel.deactivate(id, callback)
+        } else {
+            viewModel.activate(id, callback)
         }
     }
 
