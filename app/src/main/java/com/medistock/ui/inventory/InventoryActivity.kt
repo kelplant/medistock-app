@@ -76,7 +76,7 @@ class InventoryActivity : AppCompatActivity() {
             currentStockItems = db.stockMovementDao().getCurrentStockForSite(currentSiteId).first()
 
             withContext(Dispatchers.Main) {
-                val productNames = products.map { "${it.name} (${it.unit})" }
+                val productNames = products.map { "${it.name} (${it.unit ?: "Units"})" }
                 val adapter = ArrayAdapter(
                     this@InventoryActivity,
                     android.R.layout.simple_spinner_item,
