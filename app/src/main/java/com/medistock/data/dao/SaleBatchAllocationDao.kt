@@ -22,8 +22,8 @@ interface SaleBatchAllocationDao {
         SELECT SUM(quantityAllocated) FROM sale_batch_allocations
         WHERE batchId = :batchId
     """)
-    suspend fun getTotalAllocatedForBatch(batchId: Long): Double?
+    fun getTotalAllocatedForBatch(batchId: Long): Double?
 
     @Query("DELETE FROM sale_batch_allocations WHERE saleItemId = :saleItemId")
-    suspend fun deleteAllForSaleItem(saleItemId: Long)
+    fun deleteAllForSaleItem(saleItemId: Long)
 }
