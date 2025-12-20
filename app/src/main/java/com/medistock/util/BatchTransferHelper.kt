@@ -42,7 +42,7 @@ class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
             val newBatch = PurchaseBatch(
                 productId = productId,
                 siteId = toSiteId,
-                batchNumber = "${batch.batchNumber}-TRANSFER",
+                batchNumber = "${batch.batchNumber ?: "Batch-${batch.id}"}-TRANSFER",
                 purchaseDate = batch.purchaseDate, // Keep original purchase date for FIFO
                 initialQuantity = quantityFromThisBatch,
                 remainingQuantity = quantityFromThisBatch,
@@ -60,7 +60,7 @@ class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
             // Track transfer info
             transferInfoList.add(
                 BatchTransferInfo(
-                    batchNumber = batch.batchNumber,
+                    batchNumber = batch.batchNumber ?: "Batch-${batch.id}",
                     quantityTransferred = quantityFromThisBatch,
                     purchasePrice = batch.purchasePrice,
                     expiryDate = batch.expiryDate
