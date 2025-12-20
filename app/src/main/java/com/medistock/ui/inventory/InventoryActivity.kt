@@ -146,7 +146,6 @@ class InventoryActivity : AppCompatActivity() {
 
             // If there's a discrepancy, create a stock adjustment movement
             if (discrepancy != 0.0) {
-                val product = products.find { it.id == selectedProductId }
                 val latestPrice = db.productPriceDao().getLatestPrice(selectedProductId).first()
 
                 val movement = StockMovement(

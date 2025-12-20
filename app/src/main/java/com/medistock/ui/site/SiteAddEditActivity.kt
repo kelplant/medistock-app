@@ -38,7 +38,7 @@ class SiteAddEditActivity : AppCompatActivity() {
                 val site = db.siteDao().getById(siteId!!).first()
                 runOnUiThread {
                     if (site != null) {
-                        editName.setText(site.name ?: "")
+                        editName.setText(site.name)
                     }
                 }
             }
