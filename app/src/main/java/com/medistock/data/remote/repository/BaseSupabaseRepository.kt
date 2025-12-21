@@ -3,17 +3,17 @@ package com.medistock.data.remote.repository
 import com.medistock.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder
 
 /**
  * Repository de base avec les opérations CRUD communes pour toutes les tables
  *
- * @param T Type du DTO
  * @param tableName Nom de la table dans Supabase
  */
-abstract class BaseSupabaseRepository<T : Any>(
-    protected val tableName: String
+abstract class BaseSupabaseRepository(
+    val tableName: String
 ) {
-    protected val supabase = SupabaseClientProvider.client
+    val supabase = SupabaseClientProvider.client
 
     /**
      * Récupère tous les enregistrements
@@ -75,7 +75,7 @@ abstract class BaseSupabaseRepository<T : Any>(
      * Récupère les enregistrements avec un filtre personnalisé
      */
     suspend inline fun <reified R> getWithFilter(
-        noinline filterBlock: suspend io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder.() -> Unit
+        noinline filterBlock: suspend PostgrestFilterBuilder.() -> Unit
     ): List<R> {
         return supabase.from(tableName).select {
             filter(filterBlock)
@@ -86,7 +86,7 @@ abstract class BaseSupabaseRepository<T : Any>(
      * Compte le nombre d'enregistrements avec un filtre optionnel
      */
     suspend fun count(
-        filterBlock: (suspend io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder.() -> Unit)? = null
+        filterBlock: (suspend PostgrestFilterBuilder.() -> Unit)? = null
     ): Long {
         val result = if (filterBlock != null) {
             supabase.from(tableName).select(Columns.raw("count")) {

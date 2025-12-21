@@ -7,7 +7,7 @@ import com.medistock.data.remote.dto.CurrentStockDto
 /**
  * Repository pour les produits
  */
-class ProductSupabaseRepository : BaseSupabaseRepository<ProductDto>("products") {
+class ProductSupabaseRepository : BaseSupabaseRepository("products") {
 
     suspend fun getAllProducts(): List<ProductDto> = getAll()
 
@@ -68,7 +68,7 @@ class ProductSupabaseRepository : BaseSupabaseRepository<ProductDto>("products")
 /**
  * Repository pour les prix des produits
  */
-class ProductPriceSupabaseRepository : BaseSupabaseRepository<ProductPriceDto>("product_prices") {
+class ProductPriceSupabaseRepository : BaseSupabaseRepository("product_prices") {
 
     suspend fun getAllPrices(): List<ProductPriceDto> = getAll()
 
@@ -116,7 +116,7 @@ class ProductPriceSupabaseRepository : BaseSupabaseRepository<ProductPriceDto>("
 /**
  * Repository pour la vue current_stock (lecture seule)
  */
-class CurrentStockRepository : BaseSupabaseRepository<CurrentStockDto>("current_stock") {
+class CurrentStockRepository : BaseSupabaseRepository("current_stock") {
 
     suspend fun getAllStock(): List<CurrentStockDto> = getAll()
 

@@ -6,7 +6,7 @@ import com.medistock.data.remote.dto.UserPermissionDto
 /**
  * Repository pour les utilisateurs
  */
-class UserSupabaseRepository : BaseSupabaseRepository<AppUserDto>("app_users") {
+class UserSupabaseRepository : BaseSupabaseRepository("app_users") {
 
     suspend fun getAllUsers(): List<AppUserDto> = getAll()
 
@@ -57,7 +57,7 @@ class UserSupabaseRepository : BaseSupabaseRepository<AppUserDto>("app_users") {
 /**
  * Repository pour les permissions utilisateur
  */
-class UserPermissionSupabaseRepository : BaseSupabaseRepository<UserPermissionDto>("user_permissions") {
+class UserPermissionSupabaseRepository : BaseSupabaseRepository("user_permissions") {
 
     suspend fun getAllPermissions(): List<UserPermissionDto> = getAll()
 

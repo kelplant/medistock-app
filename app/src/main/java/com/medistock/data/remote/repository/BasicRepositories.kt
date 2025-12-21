@@ -5,7 +5,7 @@ import com.medistock.data.remote.dto.*
 /**
  * Repository pour les sites
  */
-class SiteSupabaseRepository : BaseSupabaseRepository<SiteDto>("sites") {
+class SiteSupabaseRepository : BaseSupabaseRepository("sites") {
 
     suspend fun getAllSites(): List<SiteDto> = getAll()
 
@@ -30,7 +30,7 @@ class SiteSupabaseRepository : BaseSupabaseRepository<SiteDto>("sites") {
 /**
  * Repository pour les catégories
  */
-class CategorySupabaseRepository : BaseSupabaseRepository<CategoryDto>("categories") {
+class CategorySupabaseRepository : BaseSupabaseRepository("categories") {
 
     suspend fun getAllCategories(): List<CategoryDto> = getAll()
 
@@ -55,7 +55,7 @@ class CategorySupabaseRepository : BaseSupabaseRepository<CategoryDto>("categori
 /**
  * Repository pour les types de conditionnement
  */
-class PackagingTypeSupabaseRepository : BaseSupabaseRepository<PackagingTypeDto>("packaging_types") {
+class PackagingTypeSupabaseRepository : BaseSupabaseRepository("packaging_types") {
 
     suspend fun getAllPackagingTypes(): List<PackagingTypeDto> = getAll()
 
@@ -89,7 +89,7 @@ class PackagingTypeSupabaseRepository : BaseSupabaseRepository<PackagingTypeDto>
 /**
  * Repository pour les clients
  */
-class CustomerSupabaseRepository : BaseSupabaseRepository<CustomerDto>("customers") {
+class CustomerSupabaseRepository : BaseSupabaseRepository("customers") {
 
     suspend fun getAllCustomers(): List<CustomerDto> = getAll()
 

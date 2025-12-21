@@ -5,7 +5,7 @@ import com.medistock.data.remote.dto.*
 /**
  * Repository pour les ventes
  */
-class SaleSupabaseRepository : BaseSupabaseRepository<SaleDto>("sales") {
+class SaleSupabaseRepository : BaseSupabaseRepository("sales") {
 
     suspend fun getAllSales(): List<SaleDto> = getAll()
 
@@ -78,7 +78,7 @@ class SaleSupabaseRepository : BaseSupabaseRepository<SaleDto>("sales") {
 /**
  * Repository pour les lignes de vente
  */
-class SaleItemSupabaseRepository : BaseSupabaseRepository<SaleItemDto>("sale_items") {
+class SaleItemSupabaseRepository : BaseSupabaseRepository("sale_items") {
 
     suspend fun getAllSaleItems(): List<SaleItemDto> = getAll()
 
@@ -123,7 +123,7 @@ class SaleItemSupabaseRepository : BaseSupabaseRepository<SaleItemDto>("sale_ite
 /**
  * Repository pour les allocations FIFO des batches aux ventes
  */
-class SaleBatchAllocationSupabaseRepository : BaseSupabaseRepository<SaleBatchAllocationDto>("sale_batch_allocations") {
+class SaleBatchAllocationSupabaseRepository : BaseSupabaseRepository("sale_batch_allocations") {
 
     suspend fun getAllAllocations(): List<SaleBatchAllocationDto> = getAll()
 
@@ -165,7 +165,7 @@ class SaleBatchAllocationSupabaseRepository : BaseSupabaseRepository<SaleBatchAl
 /**
  * Repository pour les ventes produits (ancien système)
  */
-class ProductSaleSupabaseRepository : BaseSupabaseRepository<ProductSaleDto>("product_sales") {
+class ProductSaleSupabaseRepository : BaseSupabaseRepository("product_sales") {
 
     suspend fun getAllProductSales(): List<ProductSaleDto> = getAll()
 
