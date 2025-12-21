@@ -12,18 +12,21 @@ class MedistockApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Initialiser le client Supabase au démarrage de l'app
-        try {
-            SupabaseClientProvider.initialize(this)
-        } catch (e: IllegalStateException) {
-            // Les credentials Supabase ne sont pas encore configurés
-            // C'est normal si vous n'avez pas encore rempli SupabaseConfig.kt ou les préférences
-            println("⚠️ Supabase non configuré: ${e.message}")
-            println("⚠️ Veuillez configurer Supabase dans Administration > Configuration Supabase")
-        } catch (e: Exception) {
-            // Autre erreur lors de l'initialisation
-            println("❌ Erreur lors de l'initialisation Supabase: ${e.message}")
-            e.printStackTrace()
-        }
+        // IMPORTANT: L'initialisation Supabase est désactivée au démarrage
+        // pour éviter les problèmes de dépendances Ktor HttpTimeout.
+        // Supabase sera initialisé à la demande quand l'utilisateur:
+        // 1. Configure les credentials dans Administration > Configuration Supabase
+        // 2. Utilise une fonctionnalité qui nécessite Supabase
+
+        // L'app fonctionne normalement avec la base de données Room locale
+        println("✅ Application démarrée (mode local - Supabase désactivé)")
+        println("ℹ️ Pour activer Supabase: Administration > Configuration Supabase")
+
+        // NOTE: Pour réactiver l'initialisation automatique, décommentez:
+        // try {
+        //     SupabaseClientProvider.initialize(this)
+        // } catch (e: Exception) {
+        //     println("❌ Erreur Supabase: ${e.message}")
+        // }
     }
 }
