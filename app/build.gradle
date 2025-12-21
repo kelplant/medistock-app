@@ -78,8 +78,8 @@ dependencies {
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$supabase_version"
 
-    // Ktor client for Supabase (using OkHttp engine instead of Android)
-    def ktor_version = "2.3.7"
+    // Ktor client for Supabase
+    def ktor_version = "2.3.12"
     implementation "io.ktor:ktor-client-core:$ktor_version"
     implementation "io.ktor:ktor-client-okhttp:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
