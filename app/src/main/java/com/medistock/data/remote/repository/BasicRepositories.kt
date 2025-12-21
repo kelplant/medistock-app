@@ -2,6 +2,7 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.*
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 class SiteSupabaseRepository : BaseSupabaseRepository("sites") {
     suspend fun getAllSites(): List<SiteDto> = getAll()
@@ -46,7 +47,7 @@ class PackagingTypeSupabaseRepository : BaseSupabaseRepository("packaging_types"
 
     suspend fun getPackagingTypesByOrder(): List<PackagingTypeDto> {
         return supabase.from(tableName).select {
-            order("display_order")
+            order(column = "display_order", order = Order.ASCENDING)
         }.decodeList()
     }
 }

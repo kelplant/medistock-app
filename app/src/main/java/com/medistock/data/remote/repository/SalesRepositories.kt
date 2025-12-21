@@ -2,6 +2,7 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.*
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 class SaleSupabaseRepository : BaseSupabaseRepository("sales") {
     suspend fun getAllSales(): List<SaleDto> = getAll()
@@ -13,14 +14,14 @@ class SaleSupabaseRepository : BaseSupabaseRepository("sales") {
     suspend fun getSalesBySite(siteId: Long): List<SaleDto> {
         return supabase.from(tableName).select {
             filter { eq("site_id", siteId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getSalesByCustomer(customerId: Long): List<SaleDto> {
         return supabase.from(tableName).select {
             filter { eq("customer_id", customerId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -37,14 +38,14 @@ class SaleSupabaseRepository : BaseSupabaseRepository("sales") {
                     eq("site_id", siteId)
                 }
             }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun searchByCustomerName(customerName: String): List<SaleDto> {
         return supabase.from(tableName).select {
             filter { ilike("customer_name", "%$customerName%") }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -95,7 +96,7 @@ class SaleBatchAllocationSupabaseRepository : BaseSupabaseRepository("sale_batch
     suspend fun getAllocationsByBatch(batchId: Long): List<SaleBatchAllocationDto> {
         return supabase.from(tableName).select {
             filter { eq("batch_id", batchId) }
-            order("created_at", ascending = false)
+            order(column = "created_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -114,21 +115,21 @@ class ProductSaleSupabaseRepository : BaseSupabaseRepository("product_sales") {
     suspend fun getProductSalesByProduct(productId: Long): List<ProductSaleDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getProductSalesBySite(siteId: Long): List<ProductSaleDto> {
         return supabase.from(tableName).select {
             filter { eq("site_id", siteId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getProductSalesByFarmer(farmerName: String): List<ProductSaleDto> {
         return supabase.from(tableName).select {
             filter { ilike("farmer_name", "%$farmerName%") }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 }

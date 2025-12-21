@@ -4,6 +4,7 @@ import com.medistock.data.remote.dto.ProductDto
 import com.medistock.data.remote.dto.ProductPriceDto
 import com.medistock.data.remote.dto.CurrentStockDto
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 class ProductSupabaseRepository : BaseSupabaseRepository("products") {
     suspend fun getAllProducts(): List<ProductDto> = getAll()
@@ -47,7 +48,7 @@ class ProductPriceSupabaseRepository : BaseSupabaseRepository("product_prices") 
     suspend fun getPriceHistoryByProduct(productId: Long): List<ProductPriceDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
-            order("effective_date", ascending = false)
+            order(column = "effective_date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -58,7 +59,7 @@ class ProductPriceSupabaseRepository : BaseSupabaseRepository("product_prices") 
                 eq("product_id", productId)
                 lte("effective_date", now)
             }
-            order("effective_date", ascending = false)
+            order(column = "effective_date", order = Order.DESCENDING)
             limit(1)
         }.decodeList<ProductPriceDto>().firstOrNull()
     }
