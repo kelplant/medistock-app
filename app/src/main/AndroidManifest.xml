@@ -44,6 +44,7 @@
         <activity android:name=".ui.inventory.InventoryActivity" android:exported="false" />
         <activity android:name=".ui.admin.AdminActivity" android:exported="false" />
         <activity android:name=".ui.admin.AuditHistoryActivity" android:exported="false" />
+        <activity android:name=".ui.admin.SupabaseConfigActivity" android:exported="false" />
         <activity android:name=".ui.site.SiteListActivity" android:exported="false" />
         <activity android:name=".ui.site.SiteAddEditActivity" android:exported="false" />
         <activity android:name=".ui.category.CategoryListActivity" android:exported="false" />

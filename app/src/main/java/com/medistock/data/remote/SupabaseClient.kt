@@ -1,5 +1,7 @@
 package com.medistock.data.remote
 
+import android.content.Context
+import com.medistock.util.SupabasePreferences
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -15,13 +17,51 @@ import io.ktor.client.engine.android.*
  */
 object SupabaseClientProvider {
 
+    private var _client: SupabaseClient? = null
+    private var appContext: Context? = null
+
     /**
      * Instance unique du client Supabase
      */
-    val client: SupabaseClient by lazy {
-        createSupabaseClient(
-            supabaseUrl = SupabaseConfig.SUPABASE_URL,
-            supabaseKey = SupabaseConfig.SUPABASE_ANON_KEY
+    val client: SupabaseClient
+        get() = _client ?: throw IllegalStateException(
+            "Supabase client not initialized. Call initialize(context) first or configure Supabase in Administration."
+        )
+
+    /**
+     * Vérifie si le client est correctement configuré
+     * @return true si les credentials sont configurés, false sinon
+     */
+    fun isConfigured(context: Context): Boolean {
+        val prefs = SupabasePreferences(context)
+        return prefs.isConfigured()
+    }
+
+    /**
+     * Initialise le client Supabase avec les préférences sauvegardées
+     * À appeler dans Application.onCreate() ou au démarrage de l'app
+     */
+    fun initialize(context: Context) {
+        appContext = context.applicationContext
+        val prefs = SupabasePreferences(appContext!!)
+
+        val url = prefs.getSupabaseUrl()
+        val key = prefs.getSupabaseKey()
+
+        // Si pas encore configuré, utiliser les valeurs par défaut du fichier de config
+        val supabaseUrl = url.ifEmpty { SupabaseConfig.SUPABASE_URL }
+        val supabaseKey = key.ifEmpty { SupabaseConfig.SUPABASE_ANON_KEY }
+
+        if (supabaseUrl == "https://YOUR_PROJECT_ID.supabase.co" ||
+            supabaseKey == "YOUR_SUPABASE_ANON_KEY") {
+            // Ne pas throw d'erreur, juste logger
+            println("⚠️ Supabase pas encore configuré. Allez dans Administration > Configuration Supabase")
+            return
+        }
+
+        _client = createSupabaseClient(
+            supabaseUrl = supabaseUrl,
+            supabaseKey = supabaseKey
         ) {
             // Installation du module Postgrest pour les APIs REST
             install(Postgrest)
@@ -32,40 +72,19 @@ object SupabaseClientProvider {
             // Configuration du client HTTP pour Android
             httpEngine = Android.create()
         }
-    }
-
-    /**
-     * Vérifie si le client est correctement configuré
-     * @return true si les credentials sont configurés, false sinon
-     */
-    fun isConfigured(): Boolean {
-        return SupabaseConfig.SUPABASE_URL != "https://YOUR_PROJECT_ID.supabase.co" &&
-                SupabaseConfig.SUPABASE_ANON_KEY != "YOUR_SUPABASE_ANON_KEY"
-    }
-
-    /**
-     * Initialise le client Supabase
-     * À appeler dans Application.onCreate() ou au démarrage de l'app
-     */
-    fun initialize() {
-        if (!isConfigured()) {
-            throw IllegalStateException(
-                """
-                Supabase n'est pas configuré !
-                Veuillez définir SUPABASE_URL et SUPABASE_ANON_KEY dans SupabaseConfig.kt
-
-                Pour trouver vos credentials:
-                1. Allez sur https://app.supabase.com
-                2. Sélectionnez votre projet
-                3. Allez dans Settings > API
-                4. Copiez l'URL et la clé anon
-                """.trimIndent()
-            )
-        }
 
         if (SupabaseConfig.DEBUG_MODE) {
             println("✅ Supabase client initialisé avec succès")
-            println("📡 URL: ${SupabaseConfig.SUPABASE_URL}")
+            println("📡 URL: $supabaseUrl")
         }
+    }
+
+    /**
+     * Réinitialise le client avec une nouvelle configuration
+     * Utile après modification des credentials
+     */
+    fun reinitialize(context: Context) {
+        _client = null
+        initialize(context)
     }
 }
