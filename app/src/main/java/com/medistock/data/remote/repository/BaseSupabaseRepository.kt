@@ -3,7 +3,6 @@ package com.medistock.data.remote.repository
 import com.medistock.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder
 
 /**
  * Repository de base avec les opérations CRUD communes pour toutes les tables
@@ -12,25 +11,27 @@ import io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder
  * @param tableName Nom de la table dans Supabase
  */
 abstract class BaseSupabaseRepository<T : Any>(
-    private val tableName: String
+    protected val tableName: String
 ) {
     protected val supabase = SupabaseClientProvider.client
 
     /**
      * Récupère tous les enregistrements
      */
-    suspend inline fun <reified T> getAll(): List<T> {
+    suspend inline fun <reified R> getAll(): List<R> {
         return supabase.from(tableName).select().decodeList()
     }
 
     /**
      * Récupère un enregistrement par ID
      */
-    suspend inline fun <reified T> getById(id: Long): T? {
+    suspend inline fun <reified R> getById(id: Long): R? {
         return try {
             supabase.from(tableName)
                 .select {
-                    filter { eq("id", id) }
+                    filter {
+                        eq("id", id)
+                    }
                 }
                 .decodeSingleOrNull()
         } catch (e: Exception) {
@@ -41,7 +42,7 @@ abstract class BaseSupabaseRepository<T : Any>(
     /**
      * Crée un nouvel enregistrement
      */
-    suspend inline fun <reified T> create(item: T): T {
+    suspend inline fun <reified R> create(item: R): R {
         return supabase.from(tableName).insert(item) {
             select()
         }.decodeSingle()
@@ -50,9 +51,11 @@ abstract class BaseSupabaseRepository<T : Any>(
     /**
      * Met à jour un enregistrement
      */
-    suspend inline fun <reified T> update(id: Long, item: T): T {
+    suspend inline fun <reified R> update(id: Long, item: R): R {
         return supabase.from(tableName).update(item) {
-            filter { eq("id", id) }
+            filter {
+                eq("id", id)
+            }
             select()
         }.decodeSingle()
     }
@@ -62,16 +65,18 @@ abstract class BaseSupabaseRepository<T : Any>(
      */
     suspend fun delete(id: Long) {
         supabase.from(tableName).delete {
-            filter { eq("id", id) }
+            filter {
+                eq("id", id)
+            }
         }
     }
 
     /**
      * Récupère les enregistrements avec un filtre personnalisé
      */
-    suspend inline fun <reified T> getWithFilter(
-        crossinline filterBlock: PostgrestFilterBuilder.() -> Unit
-    ): List<T> {
+    suspend inline fun <reified R> getWithFilter(
+        noinline filterBlock: suspend io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder.() -> Unit
+    ): List<R> {
         return supabase.from(tableName).select {
             filter(filterBlock)
         }.decodeList()
@@ -81,7 +86,7 @@ abstract class BaseSupabaseRepository<T : Any>(
      * Compte le nombre d'enregistrements avec un filtre optionnel
      */
     suspend fun count(
-        filterBlock: (PostgrestFilterBuilder.() -> Unit)? = null
+        filterBlock: (suspend io.github.jan.supabase.postgrest.query.PostgrestFilterBuilder.() -> Unit)? = null
     ): Long {
         val result = if (filterBlock != null) {
             supabase.from(tableName).select(Columns.raw("count")) {
@@ -97,7 +102,7 @@ abstract class BaseSupabaseRepository<T : Any>(
     /**
      * Vérifie si un enregistrement existe
      */
-    suspend fun exists(id: Long): Boolean {
-        return getById<T>(id) != null
+    suspend inline fun <reified R> exists(id: Long): Boolean {
+        return getById<R>(id) != null
     }
 }
