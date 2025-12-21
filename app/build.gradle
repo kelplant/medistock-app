@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.24'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.21'
 }
 
 android {
@@ -73,18 +73,17 @@ dependencies {
     // BCrypt for password hashing
     implementation "at.favre.lib:bcrypt:0.10.2"
 
-    // Supabase
-    def supabase_version = "3.0.2"
+    // Supabase - Downgraded to 2.x for better Ktor compatibility
+    def supabase_version = "2.7.1"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$supabase_version"
 
-    // Ktor client for Supabase with BOM for version alignment
-    def ktor_version = "2.3.12"
-    implementation platform("io.ktor:ktor-bom:$ktor_version")
-    implementation "io.ktor:ktor-client-core"
-    implementation "io.ktor:ktor-client-okhttp"
-    implementation "io.ktor:ktor-client-content-negotiation"
-    implementation "io.ktor:ktor-serialization-kotlinx-json"
+    // Ktor client for Supabase - Using 2.3.7 compatible with Supabase 2.x
+    def ktor_version = "2.3.7"
+    implementation "io.ktor:ktor-client-core:$ktor_version"
+    implementation "io.ktor:ktor-client-android:$ktor_version"
+    implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
+    implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
 
     // Kotlinx Serialization
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
