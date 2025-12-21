@@ -73,13 +73,13 @@ dependencies {
     // BCrypt for password hashing
     implementation "at.favre.lib:bcrypt:0.10.2"
 
-    // Supabase - Downgraded to 2.x for better Ktor compatibility
-    def supabase_version = "2.7.1"
+    // Supabase - Using stable 2.x version (2.2.2) for better Ktor compatibility
+    def supabase_version = "2.2.2"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$supabase_version"
 
-    // Ktor client for Supabase - Using 2.3.7 compatible with Supabase 2.x
-    def ktor_version = "2.3.7"
+    // Ktor client for Supabase - Using 2.3.4 compatible with Supabase 2.2.2
+    def ktor_version = "2.3.4"
     implementation "io.ktor:ktor-client-core:$ktor_version"
     implementation "io.ktor:ktor-client-android:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
