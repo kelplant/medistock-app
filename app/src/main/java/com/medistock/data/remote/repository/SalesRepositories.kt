@@ -1,6 +1,7 @@
 package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.*
+import io.github.jan.supabase.postgrest.from
 
 class SaleSupabaseRepository : BaseSupabaseRepository("sales") {
     suspend fun getAllSales(): List<SaleDto> = getAll()

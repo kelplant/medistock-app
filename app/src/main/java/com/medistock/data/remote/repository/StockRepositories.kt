@@ -1,6 +1,7 @@
 package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.*
+import io.github.jan.supabase.postgrest.from
 
 class PurchaseBatchSupabaseRepository : BaseSupabaseRepository("purchase_batches") {
     suspend fun getAllBatches(): List<PurchaseBatchDto> = getAll()

@@ -1,6 +1,7 @@
 package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.AuditHistoryDto
+import io.github.jan.supabase.postgrest.from
 
 /**
  * Repository pour l'historique d'audit
