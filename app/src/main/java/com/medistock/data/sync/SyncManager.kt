@@ -116,13 +116,8 @@ class SyncManager(
             localSites.forEach { site ->
                 try {
                     val dto = site.toDto()
-                    if (site.id == 0L) {
-                        // Nouveau site - créer
-                        siteRepo.createSite(dto)
-                    } else {
-                        // Mettre à jour
-                        siteRepo.updateSite(site.id, dto)
-                    }
+                    // Upsert: insère si nouveau, met à jour sinon
+                    siteRepo.upsertSite(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Site: ${site.name}", e)
                 }
@@ -156,11 +151,8 @@ class SyncManager(
             localTypes.forEach { type ->
                 try {
                     val dto = type.toDto()
-                    if (type.id == 0L) {
-                        packagingTypeRepo.createPackagingType(dto)
-                    } else {
-                        packagingTypeRepo.updatePackagingType(type.id, dto)
-                    }
+                    // Upsert: insère si nouveau, met à jour sinon
+                    packagingTypeRepo.upsertPackagingType(dto)
                 } catch (e: Exception) {
                     onError?.invoke("PackagingType: ${type.name}", e)
                 }
@@ -194,11 +186,8 @@ class SyncManager(
             localCategories.forEach { category ->
                 try {
                     val dto = category.toDto()
-                    if (category.id == 0L) {
-                        categoryRepo.createCategory(dto)
-                    } else {
-                        categoryRepo.updateCategory(category.id, dto)
-                    }
+                    // Upsert: insère si nouveau, met à jour sinon
+                    categoryRepo.upsertCategory(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Category: ${category.name}", e)
                 }
@@ -232,11 +221,8 @@ class SyncManager(
             localProducts.forEach { product ->
                 try {
                     val dto = product.toDto()
-                    if (product.id == 0L) {
-                        productRepo.createProduct(dto)
-                    } else {
-                        productRepo.updateProduct(product.id, dto)
-                    }
+                    // Upsert: insère si nouveau, met à jour sinon
+                    productRepo.upsertProduct(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Product: ${product.name}", e)
                 }
@@ -270,11 +256,8 @@ class SyncManager(
             localCustomers.forEach { customer ->
                 try {
                     val dto = customer.toDto()
-                    if (customer.id == 0L) {
-                        customerRepo.createCustomer(dto)
-                    } else {
-                        customerRepo.updateCustomer(customer.id, dto)
-                    }
+                    // Upsert: insère si nouveau, met à jour sinon
+                    customerRepo.upsertCustomer(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Customer: ${customer.name}", e)
                 }
