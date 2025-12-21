@@ -47,6 +47,19 @@ class SupabaseConfigActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnTest).setOnClickListener {
             testConnection()
         }
+
+        // Add long-press on save button to clear configuration
+        findViewById<Button>(R.id.btnSave).setOnLongClickListener {
+            clearConfiguration()
+            true
+        }
+    }
+
+    private fun clearConfiguration() {
+        preferences.clearConfiguration()
+        etUrl.setText("")
+        etKey.setText("")
+        showStatus("Configuration effacée. Redémarrez l'application.", null)
     }
 
     private fun saveConfiguration() {
@@ -66,9 +79,13 @@ class SupabaseConfigActivity : AppCompatActivity() {
         preferences.saveSupabaseConfig(url, key)
 
         // Reinitialize Supabase client with new configuration
-        SupabaseClientProvider.reinitialize(this)
-
-        showStatus("Configuration enregistrée avec succès!", true)
+        try {
+            SupabaseClientProvider.reinitialize(this)
+            showStatus("Configuration enregistrée avec succès!", true)
+        } catch (e: Exception) {
+            showStatus("Configuration enregistrée mais erreur d'initialisation: ${e.message}", false)
+            e.printStackTrace()
+        }
     }
 
     private fun testConnection() {
