@@ -59,6 +59,16 @@ abstract class BaseSupabaseRepository(
     }
 
     /**
+     * Upsert (Insert or Update) - Crée si n'existe pas, met à jour sinon
+     * Utilise la clé primaire 'id' pour détecter les conflits
+     */
+    suspend inline fun <reified R : Any> upsert(item: R): R {
+        return supabase.from(tableName).upsert(item) {
+            select()
+        }.decodeSingle()
+    }
+
+    /**
      * Supprime un enregistrement
      */
     suspend fun delete(id: Long) {

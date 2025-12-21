@@ -11,6 +11,7 @@ class ProductSupabaseRepository : BaseSupabaseRepository("products") {
     suspend fun getProductById(id: Long): ProductDto? = getById(id)
     suspend fun createProduct(product: ProductDto): ProductDto = create(product)
     suspend fun updateProduct(id: Long, product: ProductDto): ProductDto = update(id, product)
+    suspend fun upsertProduct(product: ProductDto): ProductDto = upsert(product)
     suspend fun deleteProduct(id: Long) = delete(id)
 
     suspend fun getProductsBySite(siteId: Long): List<ProductDto> {
