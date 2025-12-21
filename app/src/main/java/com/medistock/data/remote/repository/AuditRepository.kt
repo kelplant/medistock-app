@@ -5,7 +5,7 @@ import com.medistock.data.remote.dto.AuditHistoryDto
 /**
  * Repository pour l'historique d'audit
  */
-class AuditHistorySupabaseRepository : BaseSupabaseRepository<AuditHistoryDto>("audit_history") {
+class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
 
     suspend fun getAllAuditHistory(): List<AuditHistoryDto> = getAll()
 

@@ -5,7 +5,7 @@ import com.medistock.data.remote.dto.*
 /**
  * Repository pour les lots d'achat (FIFO)
  */
-class PurchaseBatchSupabaseRepository : BaseSupabaseRepository<PurchaseBatchDto>("purchase_batches") {
+class PurchaseBatchSupabaseRepository : BaseSupabaseRepository("purchase_batches") {
 
     suspend fun getAllBatches(): List<PurchaseBatchDto> = getAll()
 
@@ -73,7 +73,7 @@ class PurchaseBatchSupabaseRepository : BaseSupabaseRepository<PurchaseBatchDto>
 /**
  * Repository pour les mouvements de stock
  */
-class StockMovementSupabaseRepository : BaseSupabaseRepository<StockMovementDto>("stock_movements") {
+class StockMovementSupabaseRepository : BaseSupabaseRepository("stock_movements") {
 
     suspend fun getAllMovements(): List<StockMovementDto> = getAll()
 
@@ -136,7 +136,7 @@ class StockMovementSupabaseRepository : BaseSupabaseRepository<StockMovementDto>
 /**
  * Repository pour les inventaires
  */
-class InventorySupabaseRepository : BaseSupabaseRepository<InventoryDto>("inventories") {
+class InventorySupabaseRepository : BaseSupabaseRepository("inventories") {
 
     suspend fun getAllInventories(): List<InventoryDto> = getAll()
 
@@ -197,7 +197,7 @@ class InventorySupabaseRepository : BaseSupabaseRepository<InventoryDto>("invent
 /**
  * Repository pour les transferts de produits
  */
-class ProductTransferSupabaseRepository : BaseSupabaseRepository<ProductTransferDto>("product_transfers") {
+class ProductTransferSupabaseRepository : BaseSupabaseRepository("product_transfers") {
 
     suspend fun getAllTransfers(): List<ProductTransferDto> = getAll()
 
