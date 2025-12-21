@@ -51,10 +51,10 @@ abstract class BaseSupabaseRepository(
      */
     suspend inline fun <reified R> update(id: Long, item: R): R {
         return supabase.from(tableName).update(item) {
+            select()
             filter {
                 eq("id", id)
             }
-            select()
         }.decodeSingle()
     }
 
