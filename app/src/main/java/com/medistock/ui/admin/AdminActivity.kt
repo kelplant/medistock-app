@@ -57,6 +57,11 @@ class AdminActivity : AppCompatActivity() {
             btnManageUsers.visibility = View.GONE
             btnAuditHistory.visibility = View.GONE
         }
+
+        // Supabase configuration - visible for all admins
+        findViewById<android.view.View>(R.id.btnSupabaseConfig).setOnClickListener {
+            startActivity(Intent(this, SupabaseConfigActivity::class.java))
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

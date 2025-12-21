@@ -14,12 +14,12 @@ class MedistockApplication : Application() {
 
         // Initialiser le client Supabase au démarrage de l'app
         try {
-            SupabaseClientProvider.initialize()
+            SupabaseClientProvider.initialize(this)
         } catch (e: IllegalStateException) {
             // Les credentials Supabase ne sont pas encore configurés
-            // C'est normal si vous n'avez pas encore rempli SupabaseConfig.kt
+            // C'est normal si vous n'avez pas encore rempli SupabaseConfig.kt ou les préférences
             println("⚠️ Supabase non configuré: ${e.message}")
-            println("⚠️ Veuillez configurer SUPABASE_URL et SUPABASE_ANON_KEY dans SupabaseConfig.kt")
+            println("⚠️ Veuillez configurer Supabase dans Administration > Configuration Supabase")
         } catch (e: Exception) {
             // Autre erreur lors de l'initialisation
             println("❌ Erreur lors de l'initialisation Supabase: ${e.message}")

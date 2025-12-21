@@ -61,6 +61,15 @@
         android:layout_height="wrap_content"
         android:text="Audit History"
         android:padding="16dp"
+        android:layout_marginBottom="16dp"
         android:backgroundTint="#FF5722" />
+
+    <Button
+        android:id="@+id/btnSupabaseConfig"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⚙️ Configuration Supabase"
+        android:padding="16dp"
+        android:backgroundTint="#2196F3" />
 
 </LinearLayout>
