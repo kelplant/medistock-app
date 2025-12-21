@@ -40,22 +40,22 @@ abstract class BaseSupabaseRepository(
     /**
      * Crée un nouvel enregistrement
      */
-    suspend inline fun <reified R> create(item: R): R {
-        return supabase.from(tableName).insert(item) {
-            select()
-        }.decodeSingle()
+    suspend inline fun <reified R : Any> create(item: R): R {
+        return supabase.from(tableName)
+            .insert(item)
+            .select()
+            .decodeSingle()
     }
 
     /**
      * Met à jour un enregistrement
      */
-    suspend inline fun <reified R> update(id: Long, item: R): R {
-        return supabase.from(tableName).update(item) {
-            select()
-            filter {
-                eq("id", id)
-            }
-        }.decodeSingle()
+    suspend inline fun <reified R : Any> update(id: Long, item: R): R {
+        return supabase.from(tableName)
+            .update(item)
+            .select()
+            .eq("id", id)
+            .decodeSingle()
     }
 
     /**
