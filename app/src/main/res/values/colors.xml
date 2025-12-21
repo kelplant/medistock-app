@@ -1,4 +1,29 @@
 <resources>
+    <!-- Couleurs principales - Thème médical -->
+    <color name="md_theme_primary">#0D7377</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#A8E6E3</color>
+    <color name="md_theme_onPrimaryContainer">#002022</color>
+
+    <color name="md_theme_secondary">#32E0C4</color>
+    <color name="md_theme_onSecondary">#003734</color>
+    <color name="md_theme_secondaryContainer">#1E5F5C</color>
+    <color name="md_theme_onSecondaryContainer">#B1F5EC</color>
+
+    <color name="md_theme_surface">#FAFDFD</color>
+    <color name="md_theme_onSurface">#191C1C</color>
+    <color name="md_theme_surfaceVariant">#DAE5E4</color>
+    <color name="md_theme_onSurfaceVariant">#3F4948</color>
+
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onErrorContainer">#410002</color>
+
+    <color name="md_theme_background">#FAFDFD</color>
+    <color name="md_theme_onBackground">#191C1C</color>
+
+    <!-- Legacy colors -->
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
