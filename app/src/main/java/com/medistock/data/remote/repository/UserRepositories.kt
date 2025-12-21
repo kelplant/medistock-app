@@ -2,6 +2,7 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.AppUserDto
 import com.medistock.data.remote.dto.UserPermissionDto
+import io.github.jan.supabase.postgrest.from
 
 class UserSupabaseRepository : BaseSupabaseRepository("app_users") {
     suspend fun getAllUsers(): List<AppUserDto> = getAll()
