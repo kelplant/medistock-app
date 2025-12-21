@@ -74,7 +74,7 @@ dependencies {
     implementation "at.favre.lib:bcrypt:0.10.2"
 
     // Supabase
-    def supabase_version = "2.0.0"
+    def supabase_version = "3.0.2"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$supabase_version"
 
