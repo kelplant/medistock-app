@@ -6,7 +6,6 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
-import io.ktor.client.engine.android.*
 
 /**
  * Client Supabase singleton pour Medistock
@@ -71,9 +70,6 @@ object SupabaseClientProvider {
 
                 // Installation du module Realtime pour les subscriptions
                 install(Realtime)
-
-                // Configuration du client HTTP pour Android
-                httpEngine = Android.create()
             }
 
             if (SupabaseConfig.DEBUG_MODE) {
