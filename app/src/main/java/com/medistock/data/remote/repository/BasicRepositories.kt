@@ -1,7 +1,7 @@
 package com.medistock.data.remote.repository
 
-
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.*
 
 import com.medistock.data.remote.dto.*
 
