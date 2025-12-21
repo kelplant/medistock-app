@@ -31,6 +31,8 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // Preserve parameter names for Room with Kotlin 2.0+
+        freeCompilerArgs += ["-Xjvm-default=all", "-java-parameters"]
     }
 
     buildFeatures {
@@ -40,6 +42,10 @@ android {
 
 kapt {
     correctErrorTypes = true
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        arg("room.incremental", "true")
+    }
     javacOptions {
         option("-Xmaxerrs", 500)
     }
@@ -53,8 +59,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.1"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
 
-    // Room - versions cohérentes
-    def room_version = "2.5.2"
+    // Room - upgraded to 2.6.1 for Kotlin 2.0+ compatibility
+    def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
