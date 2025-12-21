@@ -100,5 +100,61 @@
             android:visibility="gone"
             android:background="@android:color/transparent" />
 
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Synchronization Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Synchronisation des données"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Synchronisez vos données entre cet appareil et Supabase"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btnSyncLocalToRemote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📤 Envoyer les données locales vers Supabase"
+            android:layout_marginBottom="12dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <Button
+            android:id="@+id/btnSyncRemoteToLocal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📥 Recevoir les données depuis Supabase"
+            android:layout_marginBottom="12dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <Button
+            android:id="@+id/btnFullSync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔄 Synchronisation complète (bidirectionnelle)"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/tvSyncStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:background="@android:color/transparent" />
+
     </LinearLayout>
 </ScrollView>

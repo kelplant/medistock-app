@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.R
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.data.sync.SyncManager
 import com.medistock.util.SupabasePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,9 @@ class SupabaseConfigActivity : AppCompatActivity() {
     private lateinit var etUrl: TextInputEditText
     private lateinit var etKey: TextInputEditText
     private lateinit var tvStatus: TextView
+    private lateinit var tvSyncStatus: TextView
     private lateinit var preferences: SupabasePreferences
+    private lateinit var syncManager: SyncManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,10 +34,12 @@ class SupabaseConfigActivity : AppCompatActivity() {
         supportActionBar?.title = "Configuration Supabase"
 
         preferences = SupabasePreferences(this)
+        syncManager = SyncManager(this)
 
         etUrl = findViewById(R.id.etSupabaseUrl)
         etKey = findViewById(R.id.etSupabaseKey)
         tvStatus = findViewById(R.id.tvStatus)
+        tvSyncStatus = findViewById(R.id.tvSyncStatus)
 
         // Load saved values
         etUrl.setText(preferences.getSupabaseUrl())
@@ -52,6 +57,19 @@ class SupabaseConfigActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSave).setOnLongClickListener {
             clearConfiguration()
             true
+        }
+
+        // Synchronization buttons
+        findViewById<Button>(R.id.btnSyncLocalToRemote).setOnClickListener {
+            syncLocalToRemote()
+        }
+
+        findViewById<Button>(R.id.btnSyncRemoteToLocal).setOnClickListener {
+            syncRemoteToLocal()
+        }
+
+        findViewById<Button>(R.id.btnFullSync).setOnClickListener {
+            fullSync()
         }
     }
 
@@ -144,6 +162,119 @@ class SupabaseConfigActivity : AppCompatActivity() {
             null -> {
                 tvStatus.setTextColor(Color.parseColor("#FF9800"))
                 tvStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+            }
+        }
+    }
+
+    private fun syncLocalToRemote() {
+        if (!preferences.isConfigured()) {
+            showSyncStatus("Veuillez d'abord configurer Supabase", false)
+            return
+        }
+
+        disableSyncButtons(true)
+        showSyncStatus("Envoi des données vers Supabase...", null)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            syncManager.syncLocalToRemote(
+                onProgress = { progress ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showSyncStatus(progress, null)
+                    }
+                },
+                onError = { entity, error ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showSyncStatus("Erreur sur $entity: ${error.message}", false)
+                    }
+                }
+            )
+
+            withContext(Dispatchers.Main) {
+                disableSyncButtons(false)
+            }
+        }
+    }
+
+    private fun syncRemoteToLocal() {
+        if (!preferences.isConfigured()) {
+            showSyncStatus("Veuillez d'abord configurer Supabase", false)
+            return
+        }
+
+        disableSyncButtons(true)
+        showSyncStatus("Récupération des données depuis Supabase...", null)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            syncManager.syncRemoteToLocal(
+                onProgress = { progress ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showSyncStatus(progress, null)
+                    }
+                },
+                onError = { entity, error ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showSyncStatus("Erreur sur $entity: ${error.message}", false)
+                    }
+                }
+            )
+
+            withContext(Dispatchers.Main) {
+                disableSyncButtons(false)
+            }
+        }
+    }
+
+    private fun fullSync() {
+        if (!preferences.isConfigured()) {
+            showSyncStatus("Veuillez d'abord configurer Supabase", false)
+            return
+        }
+
+        disableSyncButtons(true)
+        showSyncStatus("Synchronisation complète en cours...", null)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            syncManager.fullSync(
+                onProgress = { progress ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showSyncStatus(progress, null)
+                    }
+                },
+                onError = { entity, error ->
+                    CoroutineScope(Dispatchers.Main).launch {
+                        showSyncStatus("Erreur sur $entity: ${error.message}", false)
+                    }
+                }
+            )
+
+            withContext(Dispatchers.Main) {
+                disableSyncButtons(false)
+            }
+        }
+    }
+
+    private fun disableSyncButtons(disabled: Boolean) {
+        findViewById<Button>(R.id.btnSyncLocalToRemote).isEnabled = !disabled
+        findViewById<Button>(R.id.btnSyncRemoteToLocal).isEnabled = !disabled
+        findViewById<Button>(R.id.btnFullSync).isEnabled = !disabled
+    }
+
+    private fun showSyncStatus(message: String, isSuccess: Boolean?) {
+        tvSyncStatus.text = message
+        tvSyncStatus.visibility = TextView.VISIBLE
+
+        when (isSuccess) {
+            true -> {
+                tvSyncStatus.setTextColor(Color.parseColor("#4CAF50"))
+                tvSyncStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+            }
+            false -> {
+                tvSyncStatus.setTextColor(Color.parseColor("#F44336"))
+                tvSyncStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+            }
+            null -> {
+                tvSyncStatus.setTextColor(Color.parseColor("#2196F3"))
+                tvSyncStatus.setBackgroundColor(Color.parseColor("#E3F2FD"))
             }
         }
     }

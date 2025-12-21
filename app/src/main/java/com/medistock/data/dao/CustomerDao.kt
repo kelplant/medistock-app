@@ -18,6 +18,9 @@ interface CustomerDao {
     @Query("SELECT * FROM customers WHERE id = :id")
     fun getById(id: Long): Flow<Customer?>
 
+    @Query("SELECT * FROM customers ORDER BY name ASC")
+    fun getAll(): Flow<List<Customer>>
+
     @Query("SELECT * FROM customers WHERE siteId = :siteId ORDER BY name ASC")
     fun getAllForSite(siteId: Long): Flow<List<Customer>>
 
