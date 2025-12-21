@@ -2,6 +2,7 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.*
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 class PurchaseBatchSupabaseRepository : BaseSupabaseRepository("purchase_batches") {
     suspend fun getAllBatches(): List<PurchaseBatchDto> = getAll()
@@ -13,7 +14,7 @@ class PurchaseBatchSupabaseRepository : BaseSupabaseRepository("purchase_batches
     suspend fun getBatchesByProduct(productId: Long): List<PurchaseBatchDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
-            order("purchase_date", ascending = true)
+            order(column = "purchase_date", order = Order.ASCENDING)
         }.decodeList()
     }
 
@@ -23,7 +24,7 @@ class PurchaseBatchSupabaseRepository : BaseSupabaseRepository("purchase_batches
                 eq("product_id", productId)
                 eq("is_exhausted", false)
             }
-            order("purchase_date", ascending = true)
+            order(column = "purchase_date", order = Order.ASCENDING)
         }.decodeList()
     }
 
@@ -40,7 +41,7 @@ class PurchaseBatchSupabaseRepository : BaseSupabaseRepository("purchase_batches
                 eq("is_exhausted", false)
                 lte("expiry_date", thresholdDate)
             }
-            order("expiry_date", ascending = true)
+            order(column = "expiry_date", order = Order.ASCENDING)
         }.decodeList()
     }
 
@@ -59,14 +60,14 @@ class StockMovementSupabaseRepository : BaseSupabaseRepository("stock_movements"
     suspend fun getMovementsByProduct(productId: Long): List<StockMovementDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getMovementsBySite(siteId: Long): List<StockMovementDto> {
         return supabase.from(tableName).select {
             filter { eq("site_id", siteId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -78,7 +79,7 @@ class StockMovementSupabaseRepository : BaseSupabaseRepository("stock_movements"
                     eq("site_id", siteId)
                 }
             }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -95,7 +96,7 @@ class StockMovementSupabaseRepository : BaseSupabaseRepository("stock_movements"
                     eq("site_id", siteId)
                 }
             }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 }
@@ -110,14 +111,14 @@ class InventorySupabaseRepository : BaseSupabaseRepository("inventories") {
     suspend fun getInventoriesByProduct(productId: Long): List<InventoryDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
-            order("count_date", ascending = false)
+            order(column = "count_date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getInventoriesBySite(siteId: Long): List<InventoryDto> {
         return supabase.from(tableName).select {
             filter { eq("site_id", siteId) }
-            order("count_date", ascending = false)
+            order(column = "count_date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -129,7 +130,7 @@ class InventorySupabaseRepository : BaseSupabaseRepository("inventories") {
                     eq("site_id", siteId)
                 }
             }
-            order("count_date", ascending = false)
+            order(column = "count_date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -139,7 +140,7 @@ class InventorySupabaseRepository : BaseSupabaseRepository("inventories") {
                 eq("product_id", productId)
                 eq("site_id", siteId)
             }
-            order("count_date", ascending = false)
+            order(column = "count_date", order = Order.DESCENDING)
             limit(1)
         }.decodeList<InventoryDto>().firstOrNull()
     }
@@ -155,21 +156,21 @@ class ProductTransferSupabaseRepository : BaseSupabaseRepository("product_transf
     suspend fun getTransfersFromSite(siteId: Long): List<ProductTransferDto> {
         return supabase.from(tableName).select {
             filter { eq("from_site_id", siteId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getTransfersToSite(siteId: Long): List<ProductTransferDto> {
         return supabase.from(tableName).select {
             filter { eq("to_site_id", siteId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
     suspend fun getTransfersByProduct(productId: Long): List<ProductTransferDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -179,7 +180,7 @@ class ProductTransferSupabaseRepository : BaseSupabaseRepository("product_transf
                 eq("from_site_id", fromSiteId)
                 eq("to_site_id", toSiteId)
             }
-            order("date", ascending = false)
+            order(column = "date", order = Order.DESCENDING)
         }.decodeList()
     }
 }

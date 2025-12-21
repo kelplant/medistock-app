@@ -2,6 +2,7 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.dto.AuditHistoryDto
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 /**
  * Repository pour l'historique d'audit
@@ -23,7 +24,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
                 eq("entity_type", entityType)
                 eq("entity_id", entityId)
             }
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -35,7 +36,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
             filter {
                 eq("changed_by", username)
             }
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -47,7 +48,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
             filter {
                 eq("site_id", siteId)
             }
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -59,7 +60,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
             filter {
                 eq("action_type", actionType)
             }
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -79,7 +80,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
                     eq("entity_type", entityType)
                 }
             }
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -97,7 +98,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
                 eq("entity_id", entityId)
                 eq("field_name", fieldName)
             }
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
         }.decodeList()
     }
 
@@ -106,7 +107,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
      */
     suspend fun getRecentAuditHistory(limit: Int = 50): List<AuditHistoryDto> {
         return supabase.from(tableName).select {
-            order("changed_at", ascending = false)
+            order(column = "changed_at", order = Order.DESCENDING)
             limit(limit.toLong())
         }.decodeList()
     }
