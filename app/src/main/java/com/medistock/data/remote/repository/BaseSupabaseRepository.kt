@@ -2,7 +2,6 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
 
 /**
  * Repository de base avec les opérations CRUD communes pour toutes les tables
@@ -68,40 +67,5 @@ abstract class BaseSupabaseRepository(
                 eq("id", id)
             }
         }
-    }
-
-    /**
-     * Récupère les enregistrements avec un filtre personnalisé
-     */
-    suspend inline fun <reified R> getWithFilter(
-        noinline filterBlock: suspend io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder.() -> Unit
-    ): List<R> {
-        return supabase.from(tableName).select {
-            filter(filterBlock)
-        }.decodeList()
-    }
-
-    /**
-     * Compte le nombre d'enregistrements avec un filtre optionnel
-     */
-    suspend fun count(
-        filterBlock: (suspend io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder.() -> Unit)? = null
-    ): Long {
-        val result = if (filterBlock != null) {
-            supabase.from(tableName).select(Columns.raw("count")) {
-                filter(filterBlock)
-            }
-        } else {
-            supabase.from(tableName).select(Columns.raw("count"))
-        }
-        // Parse count from response
-        return 0L // TODO: Implement count parsing
-    }
-
-    /**
-     * Vérifie si un enregistrement existe
-     */
-    suspend inline fun <reified R> exists(id: Long): Boolean {
-        return getById<R>(id) != null
     }
 }
