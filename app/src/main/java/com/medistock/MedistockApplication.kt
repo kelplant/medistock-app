@@ -13,10 +13,10 @@ class MedistockApplication : Application() {
         super.onCreate()
 
         // Initialiser le client Supabase au démarrage de l'app
-        // Version downgradée à Supabase 2.7.1 + Ktor 2.3.7 pour résoudre le problème HttpTimeout
+        // Version downgradée à Supabase 2.2.2 + Ktor 2.3.4 pour résoudre le problème HttpTimeout
         try {
             SupabaseClientProvider.initialize(this)
-            println("✅ Application démarrée avec Supabase 2.7.1")
+            println("✅ Application démarrée avec Supabase 2.2.2")
         } catch (e: IllegalStateException) {
             // Les credentials Supabase ne sont pas encore configurés
             println("⚠️ Supabase non configuré: ${e.message}")
