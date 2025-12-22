@@ -5,11 +5,9 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.util.Log
 import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.medistock.data.remote.SupabaseClientProvider
@@ -21,12 +19,13 @@ object SyncScheduler {
     private const val PERIODIC_SYNC_WORK = "auto_sync_periodic"
     private const val IMMEDIATE_SYNC_WORK = "auto_sync_immediate"
     private const val TAG = "SyncScheduler"
+    private const val SYNC_INTERVAL_SECONDS = 30L
 
     private var networkCallbackRegistered = false
 
     fun start(context: Context) {
         val appContext = context.applicationContext
-        schedulePeriodic(appContext)
+        scheduleNext(appContext)
         updateSyncMode(appContext, NetworkStatus.isOnline(appContext))
         registerNetworkCallback(appContext)
 
@@ -35,18 +34,19 @@ object SyncScheduler {
         }
     }
 
-    fun schedulePeriodic(context: Context) {
+    fun scheduleNext(context: Context) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val request = PeriodicWorkRequestBuilder<AutoSyncWorker>(15, TimeUnit.MINUTES)
+        val request = OneTimeWorkRequestBuilder<AutoSyncWorker>()
             .setConstraints(constraints)
+            .setInitialDelay(SYNC_INTERVAL_SECONDS, TimeUnit.SECONDS)
             .build()
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+        WorkManager.getInstance(context).enqueueUniqueWork(
             PERIODIC_SYNC_WORK,
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingWorkPolicy.REPLACE,
             request
         )
     }

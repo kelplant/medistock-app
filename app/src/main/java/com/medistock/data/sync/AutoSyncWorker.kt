@@ -30,6 +30,8 @@ class AutoSyncWorker(
             }
         )
 
+        SyncScheduler.scheduleNext(applicationContext)
+
         return if (hasError) Result.retry() else Result.success()
     }
 }
