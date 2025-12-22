@@ -11,6 +11,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 0) DROP FOREIGN KEYS THAT DEPEND ON CURRENT PKs
 -- --------------------------------------------------------------------------
 
+DROP VIEW IF EXISTS current_stock;
+
 ALTER TABLE IF EXISTS user_permissions DROP CONSTRAINT IF EXISTS user_permissions_user_id_fkey;
 ALTER TABLE IF EXISTS customers DROP CONSTRAINT IF EXISTS customers_site_id_fkey;
 ALTER TABLE IF EXISTS products DROP CONSTRAINT IF EXISTS products_packaging_type_id_fkey;
@@ -487,6 +489,29 @@ ALTER TABLE product_sales ADD CONSTRAINT product_sales_site_id_fkey
 
 ALTER TABLE audit_history ADD CONSTRAINT audit_history_site_id_fkey
     FOREIGN KEY (site_id) REFERENCES sites(id) ON DELETE SET NULL;
+
+-- --------------------------------------------------------------------------
+-- 3c) RECREATE CURRENT_STOCK VIEW
+-- --------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW current_stock AS
+SELECT
+    p.id as product_id,
+    p.name as product_name,
+    p.site_id,
+    s.name as site_name,
+    COALESCE(SUM(pb.remaining_quantity), 0) as current_stock,
+    p.min_stock,
+    p.max_stock,
+    CASE
+        WHEN COALESCE(SUM(pb.remaining_quantity), 0) <= p.min_stock THEN 'LOW'
+        WHEN COALESCE(SUM(pb.remaining_quantity), 0) >= p.max_stock THEN 'HIGH'
+        ELSE 'NORMAL'
+    END as stock_status
+FROM products p
+LEFT JOIN purchase_batches pb ON p.id = pb.product_id AND pb.is_exhausted = FALSE
+LEFT JOIN sites s ON p.site_id = s.id
+GROUP BY p.id, p.name, p.site_id, s.name, p.min_stock, p.max_stock;
 
 -- --------------------------------------------------------------------------
 -- 4) DEFAULTS FOR UUID PKs
