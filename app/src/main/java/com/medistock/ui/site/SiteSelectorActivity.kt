@@ -11,12 +11,14 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Site
 import com.medistock.ui.MainActivity
+import com.medistock.util.AuthManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SiteSelectorActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var selectedSite: Site
     private lateinit var sites: List<Site>
 
@@ -26,6 +28,7 @@ class SiteSelectorActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
 
         val siteSpinner = findViewById<Spinner>(R.id.spinnerSite)
         val btnContinue = findViewById<Button>(R.id.btnContinue)
@@ -45,7 +48,14 @@ class SiteSelectorActivity : AppCompatActivity() {
             val siteName = newSiteInput.text.toString().trim()
             if (siteName.isNotEmpty()) {
                 lifecycleScope.launch {
-                    db.siteDao().insert(Site(name = siteName))
+                    val currentUser = authManager.getUsername().ifBlank { "system" }
+                    db.siteDao().insert(
+                        Site(
+                            name = siteName,
+                            createdBy = currentUser,
+                            updatedBy = currentUser
+                        )
+                    )
                     val refreshedSites = db.siteDao().getAll().first()
                     sites = refreshedSites
                     siteSpinner.adapter = ArrayAdapter(

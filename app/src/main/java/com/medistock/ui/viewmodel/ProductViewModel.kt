@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import com.medistock.util.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         AppDatabase::class.java,
         "medistock-db"
     ).build()
+    private val authManager = AuthManager.getInstance(application)
 
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products: StateFlow<List<Product>> = _products
@@ -40,7 +42,16 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
     fun addProductWithPrice(product: Product, purchasePrice: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            db.productDao().insert(product)
+            val currentUser = authManager.getUsername().ifBlank { "system" }
+            val productToInsert = if (product.createdBy.isBlank() || product.updatedBy.isBlank()) {
+                product.copy(
+                    createdBy = currentUser,
+                    updatedBy = currentUser
+                )
+            } else {
+                product
+            }
+            db.productDao().insert(productToInsert)
             val sellingPrice = when (product.marginType) {
                 "fixed" -> purchasePrice + (product.marginValue ?: 0.0)
                 "percentage" -> purchasePrice * (1 + (product.marginValue ?: 0.0) / 100)
@@ -52,7 +63,9 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
                     effectiveDate = System.currentTimeMillis(),
                     purchasePrice = purchasePrice,
                     sellingPrice = sellingPrice,
-                    source = "calculated"
+                    source = "calculated",
+                    createdBy = currentUser,
+                    updatedBy = currentUser
                 )
             )
             loadProducts()

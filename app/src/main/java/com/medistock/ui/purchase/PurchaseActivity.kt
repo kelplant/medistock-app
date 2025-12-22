@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -19,6 +20,7 @@ import java.util.*
 class PurchaseActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var spinnerSite: Spinner
     private lateinit var spinnerProduct: Spinner
     private lateinit var editQuantity: EditText
@@ -45,6 +47,7 @@ class PurchaseActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
         selectedSiteId = PrefsHelper.getActiveSiteId(this)
 
         spinnerSite = findViewById(R.id.spinnerSitePurchase)
@@ -216,6 +219,7 @@ class PurchaseActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             val product = selectedProduct ?: return@launch
+            val currentUser = authManager.getUsername().ifBlank { "system" }
 
             // Create purchase batch
             val batch = PurchaseBatch(
@@ -228,7 +232,9 @@ class PurchaseActivity : AppCompatActivity() {
                 purchasePrice = purchasePrice,
                 supplierName = supplier,
                 expiryDate = expiryDate,
-                isExhausted = false
+                isExhausted = false,
+                createdBy = currentUser,
+                updatedBy = currentUser
             )
             db.purchaseBatchDao().insert(batch)
 
@@ -240,7 +246,8 @@ class PurchaseActivity : AppCompatActivity() {
                 date = System.currentTimeMillis(),
                 purchasePriceAtMovement = purchasePrice,
                 sellingPriceAtMovement = sellingPrice,
-                siteId = selectedSiteId!!
+                siteId = selectedSiteId!!,
+                createdBy = currentUser
             )
             db.stockMovementDao().insert(movement)
 
@@ -250,7 +257,9 @@ class PurchaseActivity : AppCompatActivity() {
                 effectiveDate = System.currentTimeMillis(),
                 purchasePrice = purchasePrice,
                 sellingPrice = sellingPrice,
-                source = "purchase"
+                source = "purchase",
+                createdBy = currentUser,
+                updatedBy = currentUser
             )
             db.productPriceDao().insert(priceRecord)
 

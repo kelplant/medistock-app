@@ -9,10 +9,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.medistock.R
 import com.medistock.data.entities.PackagingType
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
+import com.medistock.util.AuthManager
 
 class PackagingTypeAddEditActivity : AppCompatActivity() {
 
     private lateinit var viewModel: PackagingTypeViewModel
+    private lateinit var authManager: AuthManager
     private var packagingTypeId: String? = null
     private var existingPackagingType: PackagingType? = null
 
@@ -39,6 +41,7 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
         }
 
         viewModel = ViewModelProvider(this)[PackagingTypeViewModel::class.java]
+        authManager = AuthManager.getInstance(this)
 
         initViews()
         setupListeners()
@@ -142,6 +145,9 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
         }
 
         val isActive = checkboxActive.isChecked
+        val currentUser = authManager.getUsername().ifBlank { "system" }
+        val createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis()
+        val createdBy = existingPackagingType?.createdBy?.ifBlank { currentUser } ?: currentUser
 
         val packagingType = if (packagingTypeId == null) {
             PackagingType(
@@ -151,10 +157,10 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
                 defaultConversionFactor = conversionFactor,
                 isActive = isActive,
                 displayOrder = existingPackagingType?.displayOrder ?: 0,
-                createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis(),
+                createdAt = createdAt,
                 updatedAt = System.currentTimeMillis(),
-                createdBy = existingPackagingType?.createdBy,
-                updatedBy = null // TODO: Add current user
+                createdBy = createdBy,
+                updatedBy = currentUser
             )
         } else {
             PackagingType(
@@ -165,10 +171,10 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
                 defaultConversionFactor = conversionFactor,
                 isActive = isActive,
                 displayOrder = existingPackagingType?.displayOrder ?: 0,
-                createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis(),
+                createdAt = createdAt,
                 updatedAt = System.currentTimeMillis(),
-                createdBy = existingPackagingType?.createdBy,
-                updatedBy = null // TODO: Add current user
+                createdBy = createdBy,
+                updatedBy = currentUser
             )
         }
 

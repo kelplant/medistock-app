@@ -9,12 +9,14 @@ import androidx.room.Room
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import com.medistock.util.AuthManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class StockMovementActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private var products: List<Product> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,6 +25,7 @@ class StockMovementActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
 
         val productSpinner = findViewById<Spinner>(R.id.spinnerProduct)
         val typeSpinner = findViewById<Spinner>(R.id.spinnerType)
@@ -53,6 +56,7 @@ class StockMovementActivity : AppCompatActivity() {
                     if (latestPrice != null) {
                         val siteId = com.medistock.util.PrefsHelper.getActiveSiteId(this@StockMovementActivity)
                         if (!siteId.isNullOrBlank()) {
+                            val currentUser = authManager.getUsername().ifBlank { "system" }
                             db.stockMovementDao().insert(
                                 StockMovement(
                                     productId = product.id,
@@ -61,7 +65,8 @@ class StockMovementActivity : AppCompatActivity() {
                                     date = System.currentTimeMillis(),
                                     purchasePriceAtMovement = latestPrice.purchasePrice,
                                     sellingPriceAtMovement = latestPrice.sellingPrice,
-                                    siteId = siteId
+                                    siteId = siteId,
+                                    createdBy = currentUser
                                 )
                             )
                             finish()

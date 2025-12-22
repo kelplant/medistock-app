@@ -14,6 +14,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.SaleWithItems
 import com.medistock.ui.adapters.SaleAdapter
+import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +23,7 @@ import kotlinx.coroutines.withContext
 class SaleListActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var recyclerSales: RecyclerView
     private lateinit var fabNewSale: FloatingActionButton
     private lateinit var saleAdapter: SaleAdapter
@@ -33,6 +35,7 @@ class SaleListActivity : AppCompatActivity() {
         supportActionBar?.title = "Sales"
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
         val siteId = PrefsHelper.getActiveSiteId(this)
 
         recyclerSales = findViewById(R.id.recyclerSales)
@@ -95,6 +98,7 @@ class SaleListActivity : AppCompatActivity() {
                 db.saleDao().delete(saleWithItems.sale)
 
                 // Reverse the stock movements by adding back the quantities
+                val currentUser = authManager.getUsername().ifBlank { "system" }
                 saleWithItems.items.forEach { item ->
                     val movement = com.medistock.data.entities.StockMovement(
                         productId = item.productId,
@@ -103,7 +107,8 @@ class SaleListActivity : AppCompatActivity() {
                         date = System.currentTimeMillis(),
                         siteId = saleWithItems.sale.siteId,
                         purchasePriceAtMovement = 0.0,
-                        sellingPriceAtMovement = item.pricePerUnit
+                        sellingPriceAtMovement = item.pricePerUnit,
+                        createdBy = currentUser
                     )
                     db.stockMovementDao().insert(movement)
                 }

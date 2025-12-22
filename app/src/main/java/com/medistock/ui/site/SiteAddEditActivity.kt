@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Site
+import com.medistock.util.AuthManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -18,13 +19,16 @@ import kotlinx.coroutines.launch
 
 class SiteAddEditActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private var siteId: String? = null
+    private var existingSite: Site? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
 
         val editName = findViewById<EditText>(R.id.editSiteName)
         val btnSave = findViewById<Button>(R.id.btnSaveSite)
@@ -38,6 +42,7 @@ class SiteAddEditActivity : AppCompatActivity() {
                 val site = db.siteDao().getById(siteId!!).first()
                 runOnUiThread {
                     if (site != null) {
+                        existingSite = site
                         editName.setText(site.name)
                     }
                 }
@@ -53,10 +58,28 @@ class SiteAddEditActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             CoroutineScope(Dispatchers.IO).launch {
+                val currentUser = authManager.getUsername().ifBlank { "system" }
                 if (siteId == null) {
-                    db.siteDao().insert(Site(name = name))
+                    db.siteDao().insert(
+                        Site(
+                            name = name,
+                            createdBy = currentUser,
+                            updatedBy = currentUser
+                        )
+                    )
                 } else {
-                    db.siteDao().update(Site(id = siteId!!, name = name))
+                    val createdAt = existingSite?.createdAt ?: System.currentTimeMillis()
+                    val createdBy = existingSite?.createdBy?.ifBlank { currentUser } ?: currentUser
+                    db.siteDao().update(
+                        Site(
+                            id = siteId!!,
+                            name = name,
+                            createdAt = createdAt,
+                            updatedAt = System.currentTimeMillis(),
+                            createdBy = createdBy,
+                            updatedBy = currentUser
+                        )
+                    )
                 }
                 finish()
             }

@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -17,6 +18,7 @@ import kotlinx.coroutines.withContext
 class InventoryActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var spinnerProduct: Spinner
     private lateinit var textTheoreticalStock: TextView
     private lateinit var editCountedQuantity: EditText
@@ -38,6 +40,7 @@ class InventoryActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
         currentSiteId = PrefsHelper.getActiveSiteId(this)
 
         spinnerProduct = findViewById(R.id.spinnerProductInventory)
@@ -136,6 +139,7 @@ class InventoryActivity : AppCompatActivity() {
         val discrepancy = countedQty - theoreticalQuantity
 
         lifecycleScope.launch(Dispatchers.IO) {
+            val currentUser = authManager.getUsername().ifBlank { "system" }
             val inventory = Inventory(
                 productId = selectedProductId!!,
                 siteId = currentSiteId!!,
@@ -145,7 +149,8 @@ class InventoryActivity : AppCompatActivity() {
                 discrepancy = discrepancy,
                 reason = reason,
                 countedBy = countedBy,
-                notes = notes
+                notes = notes,
+                createdBy = currentUser
             )
             db.inventoryDao().insert(inventory)
 
@@ -160,7 +165,8 @@ class InventoryActivity : AppCompatActivity() {
                     date = System.currentTimeMillis(),
                     purchasePriceAtMovement = latestPrice?.purchasePrice ?: 0.0,
                     sellingPriceAtMovement = latestPrice?.sellingPrice ?: 0.0,
-                    siteId = currentSiteId!!
+                    siteId = currentSiteId!!,
+                    createdBy = currentUser
                 )
                 db.stockMovementDao().insert(movement)
             }

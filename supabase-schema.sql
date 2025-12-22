@@ -16,8 +16,8 @@ CREATE TABLE sites (
     name TEXT NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_sites_name ON sites(name);
@@ -28,8 +28,8 @@ CREATE TABLE categories (
     name TEXT NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_categories_name ON categories(name);
@@ -45,8 +45,8 @@ CREATE TABLE packaging_types (
     display_order INTEGER NOT NULL DEFAULT 0,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT,
-    updated_by TEXT
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_packaging_types_active ON packaging_types(is_active);
@@ -66,8 +66,8 @@ CREATE TABLE app_users (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_users_username ON app_users(username);
@@ -84,8 +84,8 @@ CREATE TABLE user_permissions (
     can_delete BOOLEAN NOT NULL DEFAULT FALSE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_user_permissions_user ON user_permissions(user_id);
@@ -103,7 +103,7 @@ CREATE TABLE customers (
     notes TEXT,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_customers_site ON customers(site_id);
@@ -139,8 +139,8 @@ CREATE TABLE products (
 
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_products_site ON products(site_id);
@@ -158,8 +158,8 @@ CREATE TABLE product_prices (
     source TEXT NOT NULL, -- "manual" or "calculated"
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_product_prices_product ON product_prices(product_id);
@@ -184,8 +184,8 @@ CREATE TABLE purchase_batches (
     is_exhausted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_purchase_batches_product ON purchase_batches(product_id);
@@ -204,7 +204,7 @@ CREATE TABLE stock_movements (
     selling_price_at_movement DOUBLE PRECISION NOT NULL,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
@@ -225,7 +225,7 @@ CREATE TABLE inventories (
     counted_by TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_inventories_product ON inventories(product_id);
@@ -243,8 +243,8 @@ CREATE TABLE product_transfers (
     notes TEXT NOT NULL DEFAULT '',
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_product_transfers_product ON product_transfers(product_id);
@@ -265,7 +265,7 @@ CREATE TABLE sales (
     total_amount DOUBLE PRECISION NOT NULL,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_sales_customer ON sales(customer_id);
@@ -310,7 +310,7 @@ CREATE TABLE product_sales (
     date BIGINT NOT NULL,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT ''
+    created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_product_sales_product ON product_sales(product_id);
@@ -354,6 +354,39 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Fonction pour définir created_by/updated_by à "system" si absent
+CREATE OR REPLACE FUNCTION set_audit_user_defaults()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.created_by IS NULL OR NEW.created_by = '' THEN
+        NEW.created_by = 'system';
+    END IF;
+
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.updated_by IS NULL OR NEW.updated_by = '' THEN
+            NEW.updated_by = NEW.created_by;
+        END IF;
+    ELSE
+        IF NEW.updated_by IS NULL OR NEW.updated_by = '' THEN
+            NEW.updated_by = 'system';
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Fonction pour définir created_by à "system" si absent
+CREATE OR REPLACE FUNCTION set_created_by_default()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.created_by IS NULL OR NEW.created_by = '' THEN
+        NEW.created_by = 'system';
+    END IF;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Appliquer le trigger sur toutes les tables avec updated_at
 CREATE TRIGGER update_sites_updated_at BEFORE UPDATE ON sites
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -381,6 +414,49 @@ CREATE TRIGGER update_purchase_batches_updated_at BEFORE UPDATE ON purchase_batc
 
 CREATE TRIGGER update_product_transfers_updated_at BEFORE UPDATE ON product_transfers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Appliquer le trigger pour created_by/updated_by
+CREATE TRIGGER set_sites_audit_defaults BEFORE INSERT OR UPDATE ON sites
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_categories_audit_defaults BEFORE INSERT OR UPDATE ON categories
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_packaging_types_audit_defaults BEFORE INSERT OR UPDATE ON packaging_types
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_app_users_audit_defaults BEFORE INSERT OR UPDATE ON app_users
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_user_permissions_audit_defaults BEFORE INSERT OR UPDATE ON user_permissions
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_products_audit_defaults BEFORE INSERT OR UPDATE ON products
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_product_prices_audit_defaults BEFORE INSERT OR UPDATE ON product_prices
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_purchase_batches_audit_defaults BEFORE INSERT OR UPDATE ON purchase_batches
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_product_transfers_audit_defaults BEFORE INSERT OR UPDATE ON product_transfers
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_customers_created_by BEFORE INSERT ON customers
+    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
+
+CREATE TRIGGER set_stock_movements_created_by BEFORE INSERT ON stock_movements
+    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
+
+CREATE TRIGGER set_inventories_created_by BEFORE INSERT ON inventories
+    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
+
+CREATE TRIGGER set_sales_created_by BEFORE INSERT ON sales
+    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
+
+CREATE TRIGGER set_product_sales_created_by BEFORE INSERT ON product_sales
+    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
 
 -- ============================================================================
 -- VUES UTILES

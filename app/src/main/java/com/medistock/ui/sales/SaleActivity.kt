@@ -13,6 +13,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
 import com.medistock.ui.adapters.SaleItemAdapter
+import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -22,6 +23,7 @@ import kotlinx.coroutines.withContext
 class SaleActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var spinnerSite: Spinner
     private lateinit var recyclerSaleItems: RecyclerView
     private lateinit var btnAddProduct: Button
@@ -44,6 +46,7 @@ class SaleActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
         selectedSiteId = PrefsHelper.getActiveSiteId(this)
         editingSaleId = intent.getStringExtra("SALE_ID")?.takeIf { it.isNotBlank() }
 
@@ -366,12 +369,14 @@ class SaleActivity : AppCompatActivity() {
                 }
 
                 lifecycleScope.launch(Dispatchers.IO) {
+                    val currentUser = authManager.getUsername().ifBlank { "system" }
                     val customer = Customer(
                         name = name,
                         phone = phone.ifEmpty { null },
                         address = address.ifEmpty { null },
                         notes = notes.ifEmpty { null },
-                        siteId = selectedSiteId ?: ""
+                        siteId = selectedSiteId ?: "",
+                        createdBy = currentUser
                     )
                     db.customerDao().insert(customer)
                     val savedCustomer = customer
@@ -488,6 +493,7 @@ class SaleActivity : AppCompatActivity() {
             try {
                 val currentTime = System.currentTimeMillis()
                 val totalAmount = saleItemAdapter.getTotalAmount()
+                val currentUser = authManager.getUsername().ifBlank { "system" }
 
                 if (editingSaleId != null && existingSale != null) {
                     // Update existing sale
@@ -515,7 +521,8 @@ class SaleActivity : AppCompatActivity() {
                             date = currentTime,
                             siteId = selectedSiteId ?: "",
                             purchasePriceAtMovement = 0.0,
-                            sellingPriceAtMovement = oldItem.pricePerUnit
+                            sellingPriceAtMovement = oldItem.pricePerUnit,
+                            createdBy = currentUser
                         )
                         db.stockMovementDao().insert(movement)
                     }
@@ -552,7 +559,8 @@ class SaleActivity : AppCompatActivity() {
                             date = currentTime,
                             siteId = selectedSiteId ?: "",
                             purchasePriceAtMovement = avgPurchasePrice,
-                            sellingPriceAtMovement = item.pricePerUnit
+                            sellingPriceAtMovement = item.pricePerUnit,
+                            createdBy = currentUser
                         )
                         db.stockMovementDao().insert(movement)
                     }
@@ -573,7 +581,7 @@ class SaleActivity : AppCompatActivity() {
                         date = currentTime,
                         totalAmount = totalAmount,
                         siteId = selectedSiteId ?: "",
-                        createdBy = "" // Can be filled with current user if needed
+                        createdBy = currentUser
                     )
                     db.saleDao().insert(sale)
                     val saleId = sale.id
@@ -607,7 +615,8 @@ class SaleActivity : AppCompatActivity() {
                             date = currentTime,
                             siteId = selectedSiteId ?: "",
                             purchasePriceAtMovement = avgPurchasePrice,
-                            sellingPriceAtMovement = item.pricePerUnit
+                            sellingPriceAtMovement = item.pricePerUnit,
+                            createdBy = currentUser
                         )
                         db.stockMovementDao().insert(movement)
                     }

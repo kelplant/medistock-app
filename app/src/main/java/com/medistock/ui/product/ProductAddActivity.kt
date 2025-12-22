@@ -12,6 +12,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Category
 import com.medistock.data.entities.Product
+import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 class ProductAddActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var editName: EditText
     private lateinit var spinnerCategory: Spinner
     private lateinit var spinnerUnit: Spinner
@@ -45,6 +47,7 @@ class ProductAddActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
 
         editName = findViewById(R.id.editProductName)
         spinnerCategory = findViewById(R.id.spinnerCategory)
@@ -190,6 +193,7 @@ class ProductAddActivity : AppCompatActivity() {
             }
 
             // Create product
+            val currentUser = authManager.getUsername().ifBlank { "system" }
             val product = Product(
                 name = productName,
                 categoryId = selectedCategoryId,
@@ -197,7 +201,9 @@ class ProductAddActivity : AppCompatActivity() {
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
                 unitVolume = enteredUnitVolume,
-                siteId = currentSiteId!!
+                siteId = currentSiteId!!,
+                createdBy = currentUser,
+                updatedBy = currentUser
             )
 
             lifecycleScope.launch {
