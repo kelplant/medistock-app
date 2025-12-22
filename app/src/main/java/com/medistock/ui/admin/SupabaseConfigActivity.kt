@@ -11,6 +11,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.medistock.R
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncManager
+import com.medistock.data.sync.SyncScheduler
 import com.medistock.util.SupabasePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,6 +100,8 @@ class SupabaseConfigActivity : AppCompatActivity() {
         // Reinitialize Supabase client with new configuration
         try {
             SupabaseClientProvider.reinitialize(this)
+            SyncScheduler.start(this)
+            SyncScheduler.triggerImmediate(this, "config-saved")
             showStatus("Configuration enregistrée avec succès!", true)
         } catch (e: Exception) {
             showStatus("Configuration enregistrée mais erreur d'initialisation: ${e.message}", false)
