@@ -8,6 +8,35 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- --------------------------------------------------------------------------
+-- 0) DROP FOREIGN KEYS THAT DEPEND ON CURRENT PKs
+-- --------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS user_permissions DROP CONSTRAINT IF EXISTS user_permissions_user_id_fkey;
+ALTER TABLE IF EXISTS customers DROP CONSTRAINT IF EXISTS customers_site_id_fkey;
+ALTER TABLE IF EXISTS products DROP CONSTRAINT IF EXISTS products_packaging_type_id_fkey;
+ALTER TABLE IF EXISTS products DROP CONSTRAINT IF EXISTS products_category_id_fkey;
+ALTER TABLE IF EXISTS products DROP CONSTRAINT IF EXISTS products_site_id_fkey;
+ALTER TABLE IF EXISTS product_prices DROP CONSTRAINT IF EXISTS product_prices_product_id_fkey;
+ALTER TABLE IF EXISTS purchase_batches DROP CONSTRAINT IF EXISTS purchase_batches_product_id_fkey;
+ALTER TABLE IF EXISTS purchase_batches DROP CONSTRAINT IF EXISTS purchase_batches_site_id_fkey;
+ALTER TABLE IF EXISTS stock_movements DROP CONSTRAINT IF EXISTS stock_movements_product_id_fkey;
+ALTER TABLE IF EXISTS stock_movements DROP CONSTRAINT IF EXISTS stock_movements_site_id_fkey;
+ALTER TABLE IF EXISTS inventories DROP CONSTRAINT IF EXISTS inventories_product_id_fkey;
+ALTER TABLE IF EXISTS inventories DROP CONSTRAINT IF EXISTS inventories_site_id_fkey;
+ALTER TABLE IF EXISTS product_transfers DROP CONSTRAINT IF EXISTS product_transfers_product_id_fkey;
+ALTER TABLE IF EXISTS product_transfers DROP CONSTRAINT IF EXISTS product_transfers_from_site_id_fkey;
+ALTER TABLE IF EXISTS product_transfers DROP CONSTRAINT IF EXISTS product_transfers_to_site_id_fkey;
+ALTER TABLE IF EXISTS sales DROP CONSTRAINT IF EXISTS sales_customer_id_fkey;
+ALTER TABLE IF EXISTS sales DROP CONSTRAINT IF EXISTS sales_site_id_fkey;
+ALTER TABLE IF EXISTS sale_items DROP CONSTRAINT IF EXISTS sale_items_sale_id_fkey;
+ALTER TABLE IF EXISTS sale_items DROP CONSTRAINT IF EXISTS sale_items_product_id_fkey;
+ALTER TABLE IF EXISTS sale_batch_allocations DROP CONSTRAINT IF EXISTS sale_batch_allocations_sale_item_id_fkey;
+ALTER TABLE IF EXISTS sale_batch_allocations DROP CONSTRAINT IF EXISTS sale_batch_allocations_batch_id_fkey;
+ALTER TABLE IF EXISTS product_sales DROP CONSTRAINT IF EXISTS product_sales_product_id_fkey;
+ALTER TABLE IF EXISTS product_sales DROP CONSTRAINT IF EXISTS product_sales_site_id_fkey;
+ALTER TABLE IF EXISTS audit_history DROP CONSTRAINT IF EXISTS audit_history_site_id_fkey;
+
+-- --------------------------------------------------------------------------
 -- 1) PRIMARY TABLES: add UUID columns and backfill
 -- --------------------------------------------------------------------------
 
