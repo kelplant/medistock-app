@@ -20,10 +20,10 @@ interface ProductDao {
     fun getAll(): Flow<List<Product>>
 
     @Query("SELECT * FROM products WHERE id = :productId LIMIT 1")
-    fun getById(productId: Long): Flow<Product?>
+    fun getById(productId: String): Flow<Product?>
 
     @Query("SELECT * FROM products WHERE siteId = :siteId")
-    fun getProductsForSite(siteId: Long): Flow<List<Product>>
+    fun getProductsForSite(siteId: String): Flow<List<Product>>
 
     @Query("""
         SELECT p.id, p.name, p.unit, p.categoryId, c.name as categoryName,
@@ -42,5 +42,5 @@ interface ProductDao {
         LEFT JOIN categories c ON p.categoryId = c.id
         WHERE p.siteId = :siteId
     """)
-    fun getProductsWithCategoryForSite(siteId: Long): Flow<List<ProductWithCategory>>
+    fun getProductsWithCategoryForSite(siteId: String): Flow<List<ProductWithCategory>>
 }

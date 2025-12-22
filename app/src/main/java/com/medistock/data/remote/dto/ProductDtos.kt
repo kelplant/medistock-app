@@ -2,23 +2,24 @@ package com.medistock.data.remote.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 /**
  * DTO pour la table products
  */
 @Serializable
 data class ProductDto(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val unit: String,
     @SerialName("unit_volume") val unitVolume: Double,
-    @SerialName("packaging_type_id") val packagingTypeId: Long? = null,
+    @SerialName("packaging_type_id") val packagingTypeId: String? = null,
     @SerialName("selected_level") val selectedLevel: Int? = null,
     @SerialName("conversion_factor") val conversionFactor: Double? = null,
-    @SerialName("category_id") val categoryId: Long? = null,
+    @SerialName("category_id") val categoryId: String? = null,
     @SerialName("margin_type") val marginType: String? = null,
     @SerialName("margin_value") val marginValue: Double? = null,
-    @SerialName("site_id") val siteId: Long,
+    @SerialName("site_id") val siteId: String,
     @SerialName("min_stock") val minStock: Double? = 0.0,
     @SerialName("max_stock") val maxStock: Double? = 0.0,
     @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
@@ -32,8 +33,8 @@ data class ProductDto(
  */
 @Serializable
 data class ProductPriceDto(
-    val id: Long = 0,
-    @SerialName("product_id") val productId: Long,
+    val id: String = UUID.randomUUID().toString(),
+    @SerialName("product_id") val productId: String,
     @SerialName("effective_date") val effectiveDate: Long,
     @SerialName("purchase_price") val purchasePrice: Double,
     @SerialName("selling_price") val sellingPrice: Double,

@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "sale_items",
@@ -24,9 +25,9 @@ import androidx.room.PrimaryKey
     indices = [Index("saleId"), Index("productId")]
 )
 data class SaleItem(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val saleId: Long,
-    val productId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val saleId: String,
+    val productId: String,
     val productName: String,
     val unit: String,
     val quantity: Double,

@@ -11,14 +11,14 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
 
     suspend fun getAllAuditHistory(): List<AuditHistoryDto> = getAll()
 
-    suspend fun getAuditHistoryById(id: Long): AuditHistoryDto? = getById(id)
+    suspend fun getAuditHistoryById(id: String): AuditHistoryDto? = getById(id)
 
     suspend fun createAuditEntry(audit: AuditHistoryDto): AuditHistoryDto = create(audit)
 
     /**
      * Récupère l'historique d'une entité spécifique
      */
-    suspend fun getAuditHistoryByEntity(entityType: String, entityId: Long): List<AuditHistoryDto> {
+    suspend fun getAuditHistoryByEntity(entityType: String, entityId: String): List<AuditHistoryDto> {
         return supabase.from(tableName).select {
             filter {
                 eq("entity_type", entityType)
@@ -43,7 +43,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
     /**
      * Récupère l'historique d'un site
      */
-    suspend fun getAuditHistoryBySite(siteId: Long): List<AuditHistoryDto> {
+    suspend fun getAuditHistoryBySite(siteId: String): List<AuditHistoryDto> {
         return supabase.from(tableName).select {
             filter {
                 eq("site_id", siteId)
@@ -89,7 +89,7 @@ class AuditHistorySupabaseRepository : BaseSupabaseRepository("audit_history") {
      */
     suspend fun getAuditHistoryByField(
         entityType: String,
-        entityId: Long,
+        entityId: String,
         fieldName: String
     ): List<AuditHistoryDto> {
         return supabase.from(tableName).select {

@@ -52,7 +52,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun loadByEntity(entityType: String, entityId: Long) {
+    fun loadByEntity(entityType: String, entityId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
@@ -74,7 +74,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun loadBySite(siteId: Long) {
+    fun loadBySite(siteId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
@@ -100,7 +100,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         entityType: String?,
         actionType: String?,
         username: String?,
-        siteId: Long?,
+        siteId: String?,
         startTime: Long?,
         endTime: Long?,
         limit: Int = 100,

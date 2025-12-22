@@ -19,5 +19,5 @@ interface SiteDao {
     fun getAll(): Flow<List<Site>>
 
     @Query("SELECT * FROM sites WHERE id = :siteId LIMIT 1")
-    fun getById(siteId: Long): Flow<Site?>
+    fun getById(siteId: String): Flow<Site?>
 }

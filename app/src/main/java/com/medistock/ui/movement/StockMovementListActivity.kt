@@ -25,6 +25,7 @@ class StockMovementListActivity : AppCompatActivity() {
         val siteId = PrefsHelper.getActiveSiteId(this)
 
         lifecycleScope.launch {
+            if (siteId.isNullOrBlank()) return@launch
             val products = db.productDao().getProductsForSite(siteId).first().associateBy { it.id }
             val movements = db.stockMovementDao().getAllForSite(siteId).first()
             val items = movements.map {

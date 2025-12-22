@@ -6,10 +6,10 @@ import io.github.jan.supabase.postgrest.from
 
 class UserSupabaseRepository : BaseSupabaseRepository("app_users") {
     suspend fun getAllUsers(): List<AppUserDto> = getAll()
-    suspend fun getUserById(id: Long): AppUserDto? = getById(id)
+    suspend fun getUserById(id: String): AppUserDto? = getById(id)
     suspend fun createUser(user: AppUserDto): AppUserDto = create(user)
-    suspend fun updateUser(id: Long, user: AppUserDto): AppUserDto = update(id, user)
-    suspend fun deleteUser(id: Long) = delete(id)
+    suspend fun updateUser(id: String, user: AppUserDto): AppUserDto = update(id, user)
+    suspend fun deleteUser(id: String) = delete(id)
 
     suspend fun getUserByUsername(username: String): AppUserDto? {
         return supabase.from(tableName).select {
@@ -39,18 +39,18 @@ class UserSupabaseRepository : BaseSupabaseRepository("app_users") {
 
 class UserPermissionSupabaseRepository : BaseSupabaseRepository("user_permissions") {
     suspend fun getAllPermissions(): List<UserPermissionDto> = getAll()
-    suspend fun getPermissionById(id: Long): UserPermissionDto? = getById(id)
+    suspend fun getPermissionById(id: String): UserPermissionDto? = getById(id)
     suspend fun createPermission(permission: UserPermissionDto): UserPermissionDto = create(permission)
-    suspend fun updatePermission(id: Long, permission: UserPermissionDto): UserPermissionDto = update(id, permission)
-    suspend fun deletePermission(id: Long) = delete(id)
+    suspend fun updatePermission(id: String, permission: UserPermissionDto): UserPermissionDto = update(id, permission)
+    suspend fun deletePermission(id: String) = delete(id)
 
-    suspend fun getPermissionsByUser(userId: Long): List<UserPermissionDto> {
+    suspend fun getPermissionsByUser(userId: String): List<UserPermissionDto> {
         return supabase.from(tableName).select {
             filter { eq("user_id", userId) }
         }.decodeList()
     }
 
-    suspend fun getPermissionByUserAndModule(userId: Long, module: String): UserPermissionDto? {
+    suspend fun getPermissionByUserAndModule(userId: String, module: String): UserPermissionDto? {
         return supabase.from(tableName).select {
             filter {
                 eq("user_id", userId)
@@ -59,7 +59,7 @@ class UserPermissionSupabaseRepository : BaseSupabaseRepository("user_permission
         }.decodeList<UserPermissionDto>().firstOrNull()
     }
 
-    suspend fun hasPermission(userId: Long, module: String, action: String): Boolean {
+    suspend fun hasPermission(userId: String, module: String, action: String): Boolean {
         val permission = getPermissionByUserAndModule(userId, module) ?: return false
 
         return when (action) {
@@ -71,7 +71,7 @@ class UserPermissionSupabaseRepository : BaseSupabaseRepository("user_permission
         }
     }
 
-    suspend fun deleteAllUserPermissions(userId: Long) {
+    suspend fun deleteAllUserPermissions(userId: String) {
         supabase.from(tableName).delete {
             filter { eq("user_id", userId) }
         }

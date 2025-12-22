@@ -38,7 +38,7 @@ class UserAddEditActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
     private lateinit var authManager: AuthManager
-    private var userId: Long = -1
+    private var userId: String? = null
     private var isEditMode = false
     private var currentUserIsActive = true
 
@@ -92,8 +92,8 @@ class UserAddEditActivity : AppCompatActivity() {
         }
 
         // Check if editing existing user
-        userId = intent.getLongExtra("USER_ID", -1)
-        if (userId != -1L) {
+        userId = intent.getStringExtra("USER_ID")?.takeIf { it.isNotBlank() }
+        if (userId != null) {
             isEditMode = true
             supportActionBar?.title = "Edit User"
             loadUser()
@@ -173,8 +173,8 @@ class UserAddEditActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val (user, permissions) = withContext(Dispatchers.IO) {
-                    val u = db.userDao().getUserById(userId)
-                    val p = if (u != null) db.userPermissionDao().getPermissionsForUser(userId) else emptyList()
+                    val u = userId?.let { db.userDao().getUserById(it) }
+                    val p = if (u != null) db.userPermissionDao().getPermissionsForUser(u.id) else emptyList()
                     Pair(u, p)
                 }
 
@@ -245,7 +245,7 @@ class UserAddEditActivity : AppCompatActivity() {
                 withContext(Dispatchers.IO) {
                     if (isEditMode) {
                         // Update existing user
-                        val existingUser = db.userDao().getUserById(userId)
+                        val existingUser = userId?.let { db.userDao().getUserById(it) }
                         if (existingUser != null) {
                             val updatedUser = existingUser.copy(
                                 fullName = fullName,
@@ -259,7 +259,7 @@ class UserAddEditActivity : AppCompatActivity() {
                             db.userDao().updateUser(updatedUser)
 
                             // Update permissions
-                            savePermissions(userId, currentUser, timestamp)
+                            savePermissions(existingUser.id, currentUser, timestamp)
 
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(this@UserAddEditActivity, "User updated", Toast.LENGTH_SHORT).show()
@@ -287,10 +287,10 @@ class UserAddEditActivity : AppCompatActivity() {
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                        val newUserId = db.userDao().insertUser(newUser)
+                        db.userDao().insertUser(newUser)
 
                         // Save permissions
-                        savePermissions(newUserId, currentUser, timestamp)
+                        savePermissions(newUser.id, currentUser, timestamp)
 
                         withContext(Dispatchers.Main) {
                             Toast.makeText(this@UserAddEditActivity, "User created", Toast.LENGTH_SHORT).show()
@@ -305,7 +305,7 @@ class UserAddEditActivity : AppCompatActivity() {
         }
     }
 
-    private fun savePermissions(userId: Long, createdBy: String, timestamp: Long) {
+    private fun savePermissions(userId: String, createdBy: String, timestamp: Long) {
         // Delete existing permissions
         db.userPermissionDao().deleteAllPermissionsForUser(userId)
 
@@ -340,10 +340,13 @@ class UserAddEditActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     try {
                         val (user, shouldContinue) = withContext(Dispatchers.IO) {
-                            val u = db.userDao().getUserById(userId)
+                            val u = userId?.let { db.userDao().getUserById(it) }
+                            if (u == null) {
+                                return@withContext Pair(null, false)
+                            }
 
                             // Check if trying to deactivate the last active admin
-                            if (currentUserIsActive && u?.isAdmin == true) {
+                            if (currentUserIsActive && u.isAdmin) {
                                 val adminCount = db.userDao().countActiveAdmins()
                                 if (adminCount <= 1) {
                                     return@withContext Pair(u, false)

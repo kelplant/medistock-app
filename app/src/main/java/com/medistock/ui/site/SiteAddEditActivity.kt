@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class SiteAddEditActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
-    private var siteId: Long? = null
+    private var siteId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +30,7 @@ class SiteAddEditActivity : AppCompatActivity() {
         val btnSave = findViewById<Button>(R.id.btnSaveSite)
         val btnDelete = findViewById<Button>(R.id.btnDeleteSite)
 
-        siteId = intent.getLongExtra("SITE_ID", -1).takeIf { it != -1L }
+        siteId = intent.getStringExtra("SITE_ID")?.takeIf { it.isNotBlank() }
         if (siteId != null) {
             supportActionBar?.title = "Edit Site"
             btnDelete.visibility = View.VISIBLE

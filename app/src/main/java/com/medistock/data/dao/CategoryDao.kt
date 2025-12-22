@@ -20,5 +20,5 @@ interface CategoryDao {
     fun getAll(): Flow<List<Category>>
 
     @Query("SELECT * FROM categories WHERE id = :categoryId LIMIT 1")
-    fun getById(categoryId: Long): Flow<Category?>
+    fun getById(categoryId: String): Flow<Category?>
 }

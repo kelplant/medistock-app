@@ -13,17 +13,17 @@ interface SaleBatchAllocationDao {
     fun insertAll(allocations: List<SaleBatchAllocation>)
 
     @Query("SELECT * FROM sale_batch_allocations WHERE saleItemId = :saleItemId")
-    fun getAllocationsForSaleItem(saleItemId: Long): Flow<List<SaleBatchAllocation>>
+    fun getAllocationsForSaleItem(saleItemId: String): Flow<List<SaleBatchAllocation>>
 
     @Query("SELECT * FROM sale_batch_allocations WHERE batchId = :batchId")
-    fun getAllocationsForBatch(batchId: Long): Flow<List<SaleBatchAllocation>>
+    fun getAllocationsForBatch(batchId: String): Flow<List<SaleBatchAllocation>>
 
     @Query("""
         SELECT SUM(quantityAllocated) FROM sale_batch_allocations
         WHERE batchId = :batchId
     """)
-    fun getTotalAllocatedForBatch(batchId: Long): Double?
+    fun getTotalAllocatedForBatch(batchId: String): Double?
 
     @Query("DELETE FROM sale_batch_allocations WHERE saleItemId = :saleItemId")
-    fun deleteAllForSaleItem(saleItemId: Long)
+    fun deleteAllForSaleItem(saleItemId: String)
 }

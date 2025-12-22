@@ -34,10 +34,10 @@ class TransferActivity : AppCompatActivity() {
     private lateinit var transferItemAdapter: TransferItemAdapter
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
-    private var currentStock: Map<Long, Double> = emptyMap() // productId -> quantity available
-    private var selectedFromSiteId: Long = 0L
-    private var selectedToSiteId: Long = 0L
-    private var transferId: Long = 0L // 0 for new transfer, > 0 for editing
+    private var currentStock: Map<String, Double> = emptyMap() // productId -> quantity available
+    private var selectedFromSiteId: String? = null
+    private var selectedToSiteId: String? = null
+    private var transferId: String? = null // null for new transfer, value for editing
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +49,8 @@ class TransferActivity : AppCompatActivity() {
         selectedFromSiteId = PrefsHelper.getActiveSiteId(this)
 
         // Check if editing existing transfer
-        transferId = intent.getLongExtra("TRANSFER_ID", 0L)
-        supportActionBar?.title = if (transferId > 0) "Edit Transfer" else "New Transfer"
+        transferId = intent.getStringExtra("TRANSFER_ID")?.takeIf { it.isNotBlank() }
+        supportActionBar?.title = if (transferId != null) "Edit Transfer" else "New Transfer"
 
         spinnerFromSite = findViewById(R.id.spinnerFromSite)
         spinnerToSite = findViewById(R.id.spinnerToSite)
@@ -101,7 +101,7 @@ class TransferActivity : AppCompatActivity() {
             saveTransfer()
         }
 
-        if (transferId > 0) {
+        if (transferId != null) {
             loadTransferForEdit()
         }
     }
@@ -154,14 +154,16 @@ class TransferActivity : AppCompatActivity() {
 
     private fun loadStockForSite() {
         lifecycleScope.launch(Dispatchers.IO) {
-            val stockItems = db.stockMovementDao().getCurrentStockForSite(selectedFromSiteId).first()
+            val siteId = selectedFromSiteId ?: return@launch
+            val stockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
             currentStock = stockItems.associate { it.productId to it.quantityOnHand }
         }
     }
 
     private fun loadTransferForEdit() {
         lifecycleScope.launch(Dispatchers.IO) {
-            val transfer = db.productTransferDao().getById(transferId).first()
+            val transferIdValue = transferId ?: return@launch
+            val transfer = db.productTransferDao().getById(transferIdValue).first()
             if (transfer != null) {
                 withContext(Dispatchers.Main) {
                     // Set sites
@@ -274,7 +276,7 @@ class TransferActivity : AppCompatActivity() {
     }
 
     private fun saveTransfer() {
-        if (selectedFromSiteId == selectedToSiteId) {
+        if (selectedFromSiteId == null || selectedToSiteId == null || selectedFromSiteId == selectedToSiteId) {
             Toast.makeText(this, "Source and destination sites must be different", Toast.LENGTH_SHORT).show()
             return
         }
@@ -296,8 +298,8 @@ class TransferActivity : AppCompatActivity() {
                     val batchTransfers = try {
                         batchHelper.transferBatchesFIFO(
                             productId = item.productId,
-                            fromSiteId = selectedFromSiteId,
-                            toSiteId = selectedToSiteId,
+                            fromSiteId = selectedFromSiteId!!,
+                            toSiteId = selectedToSiteId!!,
                             totalQuantity = item.quantity,
                             currentUser = currentUser
                         )
@@ -320,19 +322,34 @@ class TransferActivity : AppCompatActivity() {
                     val sellingPrice = latestPrice?.sellingPrice ?: 0.0
 
                     // Create product transfer record
-                    val productTransfer = ProductTransfer(
-                        id = if (transferId > 0) transferId else 0,
-                        productId = item.productId,
-                        quantity = item.quantity,
-                        fromSiteId = selectedFromSiteId,
-                        toSiteId = selectedToSiteId,
-                        date = currentTime,
-                        notes = "Transferred ${batchTransfers.size} batch(es)",
-                        createdAt = currentTime,
-                        updatedAt = currentTime,
-                        createdBy = currentUser,
-                        updatedBy = currentUser
-                    )
+                    val productTransfer = if (transferId == null) {
+                        ProductTransfer(
+                            productId = item.productId,
+                            quantity = item.quantity,
+                            fromSiteId = selectedFromSiteId!!,
+                            toSiteId = selectedToSiteId!!,
+                            date = currentTime,
+                            notes = "Transferred ${batchTransfers.size} batch(es)",
+                            createdAt = currentTime,
+                            updatedAt = currentTime,
+                            createdBy = currentUser,
+                            updatedBy = currentUser
+                        )
+                    } else {
+                        ProductTransfer(
+                            id = transferId!!,
+                            productId = item.productId,
+                            quantity = item.quantity,
+                            fromSiteId = selectedFromSiteId!!,
+                            toSiteId = selectedToSiteId!!,
+                            date = currentTime,
+                            notes = "Transferred ${batchTransfers.size} batch(es)",
+                            createdAt = currentTime,
+                            updatedAt = currentTime,
+                            createdBy = currentUser,
+                            updatedBy = currentUser
+                        )
+                    }
 
                     db.productTransferDao().insert(productTransfer)
 
@@ -342,7 +359,7 @@ class TransferActivity : AppCompatActivity() {
                         type = "out",
                         quantity = item.quantity,
                         date = currentTime,
-                        siteId = selectedFromSiteId,
+                        siteId = selectedFromSiteId!!,
                         purchasePriceAtMovement = avgPurchasePrice,
                         sellingPriceAtMovement = sellingPrice,
                         createdAt = currentTime,
@@ -356,7 +373,7 @@ class TransferActivity : AppCompatActivity() {
                         type = "in",
                         quantity = item.quantity,
                         date = currentTime,
-                        siteId = selectedToSiteId,
+                        siteId = selectedToSiteId!!,
                         purchasePriceAtMovement = avgPurchasePrice,
                         sellingPriceAtMovement = sellingPrice,
                         createdAt = currentTime,

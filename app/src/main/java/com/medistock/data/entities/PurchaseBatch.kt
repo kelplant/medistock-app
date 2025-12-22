@@ -2,6 +2,7 @@ package com.medistock.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 /**
  * Represents a purchase batch for FIFO (First In, First Out) inventory management.
@@ -9,9 +10,9 @@ import androidx.room.PrimaryKey
  */
 @Entity(tableName = "purchase_batches")
 data class PurchaseBatch(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val productId: Long,
-    val siteId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val productId: String,
+    val siteId: String,
     val batchNumber: String? = null, // Optional batch number (auto-generated if null)
     val purchaseDate: Long,
     val initialQuantity: Double,

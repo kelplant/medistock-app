@@ -8,25 +8,25 @@ import io.github.jan.supabase.postgrest.query.Order
 
 class ProductSupabaseRepository : BaseSupabaseRepository("products") {
     suspend fun getAllProducts(): List<ProductDto> = getAll()
-    suspend fun getProductById(id: Long): ProductDto? = getById(id)
+    suspend fun getProductById(id: String): ProductDto? = getById(id)
     suspend fun createProduct(product: ProductDto): ProductDto = create(product)
-    suspend fun updateProduct(id: Long, product: ProductDto): ProductDto = update(id, product)
+    suspend fun updateProduct(id: String, product: ProductDto): ProductDto = update(id, product)
     suspend fun upsertProduct(product: ProductDto): ProductDto = upsert(product)
-    suspend fun deleteProduct(id: Long) = delete(id)
+    suspend fun deleteProduct(id: String) = delete(id)
 
-    suspend fun getProductsBySite(siteId: Long): List<ProductDto> {
+    suspend fun getProductsBySite(siteId: String): List<ProductDto> {
         return supabase.from(tableName).select {
             filter { eq("site_id", siteId) }
         }.decodeList()
     }
 
-    suspend fun getProductsByCategory(categoryId: Long): List<ProductDto> {
+    suspend fun getProductsByCategory(categoryId: String): List<ProductDto> {
         return supabase.from(tableName).select {
             filter { eq("category_id", categoryId) }
         }.decodeList()
     }
 
-    suspend fun getProductsByPackagingType(packagingTypeId: Long): List<ProductDto> {
+    suspend fun getProductsByPackagingType(packagingTypeId: String): List<ProductDto> {
         return supabase.from(tableName).select {
             filter { eq("packaging_type_id", packagingTypeId) }
         }.decodeList()
@@ -41,19 +41,19 @@ class ProductSupabaseRepository : BaseSupabaseRepository("products") {
 
 class ProductPriceSupabaseRepository : BaseSupabaseRepository("product_prices") {
     suspend fun getAllPrices(): List<ProductPriceDto> = getAll()
-    suspend fun getPriceById(id: Long): ProductPriceDto? = getById(id)
+    suspend fun getPriceById(id: String): ProductPriceDto? = getById(id)
     suspend fun createPrice(price: ProductPriceDto): ProductPriceDto = create(price)
-    suspend fun updatePrice(id: Long, price: ProductPriceDto): ProductPriceDto = update(id, price)
-    suspend fun deletePrice(id: Long) = delete(id)
+    suspend fun updatePrice(id: String, price: ProductPriceDto): ProductPriceDto = update(id, price)
+    suspend fun deletePrice(id: String) = delete(id)
 
-    suspend fun getPriceHistoryByProduct(productId: Long): List<ProductPriceDto> {
+    suspend fun getPriceHistoryByProduct(productId: String): List<ProductPriceDto> {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
             order(column = "effective_date", order = Order.DESCENDING)
         }.decodeList()
     }
 
-    suspend fun getCurrentPrice(productId: Long): ProductPriceDto? {
+    suspend fun getCurrentPrice(productId: String): ProductPriceDto? {
         val now = System.currentTimeMillis()
         return supabase.from(tableName).select {
             filter {
@@ -75,19 +75,19 @@ class ProductPriceSupabaseRepository : BaseSupabaseRepository("product_prices") 
 class CurrentStockRepository : BaseSupabaseRepository("current_stock") {
     suspend fun getAllStock(): List<CurrentStockDto> = getAll()
 
-    suspend fun getStockByProduct(productId: Long): CurrentStockDto? {
+    suspend fun getStockByProduct(productId: String): CurrentStockDto? {
         return supabase.from(tableName).select {
             filter { eq("product_id", productId) }
         }.decodeList<CurrentStockDto>().firstOrNull()
     }
 
-    suspend fun getStockBySite(siteId: Long): List<CurrentStockDto> {
+    suspend fun getStockBySite(siteId: String): List<CurrentStockDto> {
         return supabase.from(tableName).select {
             filter { eq("site_id", siteId) }
         }.decodeList()
     }
 
-    suspend fun getLowStockProducts(siteId: Long? = null): List<CurrentStockDto> {
+    suspend fun getLowStockProducts(siteId: String? = null): List<CurrentStockDto> {
         return supabase.from(tableName).select {
             filter {
                 eq("stock_status", "LOW")
@@ -98,7 +98,7 @@ class CurrentStockRepository : BaseSupabaseRepository("current_stock") {
         }.decodeList()
     }
 
-    suspend fun getHighStockProducts(siteId: Long? = null): List<CurrentStockDto> {
+    suspend fun getHighStockProducts(siteId: String? = null): List<CurrentStockDto> {
         return supabase.from(tableName).select {
             filter {
                 eq("stock_status", "HIGH")

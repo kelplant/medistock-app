@@ -150,28 +150,28 @@ DROP POLICY IF EXISTS "Allow all operations on products" ON products;
 CREATE POLICY "Users can view products from their site"
   ON products FOR SELECT
   USING (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   );
 
 CREATE POLICY "Users can create products for their site"
   ON products FOR INSERT
   WITH CHECK (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   );
 
 CREATE POLICY "Users can update products from their site"
   ON products FOR UPDATE
   USING (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   )
   WITH CHECK (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   );
 
 CREATE POLICY "Users can delete products from their site"
   ON products FOR DELETE
   USING (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   );
 */
 
@@ -183,13 +183,13 @@ DROP POLICY IF EXISTS "Allow all operations on sales" ON sales;
 CREATE POLICY "Users can view sales from their site"
   ON sales FOR SELECT
   USING (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   );
 
 CREATE POLICY "Users can create sales for their site"
   ON sales FOR INSERT
   WITH CHECK (
-    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::bigint
+    site_id = (current_setting('request.jwt.claims', true)::json->>'site_id')::uuid
   );
 */
 
@@ -212,7 +212,7 @@ CREATE POLICY "Admins have full access to all tables"
 
 -- Fonction pour vérifier si un utilisateur a une permission spécifique
 CREATE OR REPLACE FUNCTION has_permission(
-  p_user_id BIGINT,
+  p_user_id UUID,
   p_module TEXT,
   p_action TEXT -- 'view', 'create', 'edit', 'delete'
 )

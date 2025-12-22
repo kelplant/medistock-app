@@ -2,13 +2,14 @@ package com.medistock.data.remote.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 /**
  * DTO pour la table sites
  */
 @Serializable
 data class SiteDto(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
     @SerialName("updated_at") val updatedAt: Long = System.currentTimeMillis(),
@@ -21,7 +22,7 @@ data class SiteDto(
  */
 @Serializable
 data class CategoryDto(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
     @SerialName("updated_at") val updatedAt: Long = System.currentTimeMillis(),
@@ -34,7 +35,7 @@ data class CategoryDto(
  */
 @Serializable
 data class PackagingTypeDto(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     @SerialName("level1_name") val level1Name: String,
     @SerialName("level2_name") val level2Name: String? = null,
@@ -52,7 +53,7 @@ data class PackagingTypeDto(
  */
 @Serializable
 data class AppUserDto(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val username: String,
     val password: String,
     @SerialName("full_name") val fullName: String,
@@ -69,8 +70,8 @@ data class AppUserDto(
  */
 @Serializable
 data class UserPermissionDto(
-    val id: Long = 0,
-    @SerialName("user_id") val userId: Long,
+    val id: String = UUID.randomUUID().toString(),
+    @SerialName("user_id") val userId: String,
     val module: String,
     @SerialName("can_view") val canView: Boolean = false,
     @SerialName("can_create") val canCreate: Boolean = false,
@@ -87,12 +88,12 @@ data class UserPermissionDto(
  */
 @Serializable
 data class CustomerDto(
-    val id: Long = 0,
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val phone: String? = null,
     val address: String? = null,
     val notes: String? = null,
-    @SerialName("site_id") val siteId: Long,
+    @SerialName("site_id") val siteId: String,
     @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
     @SerialName("created_by") val createdBy: String = ""
 )

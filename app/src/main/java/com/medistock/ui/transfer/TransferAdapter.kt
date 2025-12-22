@@ -15,8 +15,8 @@ import java.util.*
 
 class TransferAdapter(
     private val transfers: List<ProductTransfer>,
-    private val products: Map<Long, Product>,
-    private val sites: Map<Long, Site>,
+    private val products: Map<String, Product>,
+    private val sites: Map<String, Site>,
     private val onEditClick: (ProductTransfer) -> Unit,
     private val onDeleteClick: (ProductTransfer) -> Unit
 ) : RecyclerView.Adapter<TransferAdapter.ViewHolder>() {

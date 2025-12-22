@@ -33,7 +33,7 @@ class AuthManager(context: Context) {
      */
     fun login(user: User) {
         prefs.edit().apply {
-            putLong(KEY_USER_ID, user.id)
+            putString(KEY_USER_ID, user.id)
             putString(KEY_USERNAME, user.username)
             putString(KEY_FULL_NAME, user.fullName)
             putBoolean(KEY_IS_ADMIN, user.isAdmin)
@@ -59,8 +59,8 @@ class AuthManager(context: Context) {
     /**
      * Get current user ID
      */
-    fun getUserId(): Long {
-        return prefs.getLong(KEY_USER_ID, -1)
+    fun getUserId(): String? {
+        return prefs.getString(KEY_USER_ID, null)
     }
 
     /**

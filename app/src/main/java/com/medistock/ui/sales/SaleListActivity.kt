@@ -60,7 +60,8 @@ class SaleListActivity : AppCompatActivity() {
         loadSales(siteId)
     }
 
-    private fun loadSales(siteId: Long) {
+    private fun loadSales(siteId: String?) {
+        if (siteId.isNullOrBlank()) return
         lifecycleScope.launch(Dispatchers.IO) {
             db.saleDao().getAllWithItemsForSite(siteId).collect { sales ->
                 withContext(Dispatchers.Main) {

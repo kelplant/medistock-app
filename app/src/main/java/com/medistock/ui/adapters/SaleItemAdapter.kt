@@ -52,7 +52,7 @@ class SaleItemAdapter(
 
     fun getItems(): List<SaleItem> = items
 
-    fun getTotalQuantityForProduct(productId: Long): Double {
+    fun getTotalQuantityForProduct(productId: String): Double {
         return items.filter { it.productId == productId }.sumOf { it.quantity }
     }
 

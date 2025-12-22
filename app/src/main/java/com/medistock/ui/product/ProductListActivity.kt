@@ -50,6 +50,7 @@ class ProductListActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         val siteId = PrefsHelper.getActiveSiteId(this)
+        if (siteId.isNullOrBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
             val products = db.productDao().getProductsForSite(siteId).first()
             runOnUiThread { adapter.submitList(products) }

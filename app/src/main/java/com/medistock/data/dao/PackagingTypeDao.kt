@@ -14,10 +14,10 @@ interface PackagingTypeDao {
     fun getAll(): Flow<List<PackagingType>>
 
     @Query("SELECT * FROM packaging_types WHERE id = :id")
-    fun getById(id: Long): Flow<PackagingType?>
+    fun getById(id: String): Flow<PackagingType?>
 
     @Query("SELECT * FROM packaging_types WHERE id = :id")
-    fun getByIdSync(id: Long): PackagingType?
+    fun getByIdSync(id: String): PackagingType?
 
     @Query("SELECT * FROM packaging_types WHERE name = :name LIMIT 1")
     fun getByName(name: String): PackagingType?
@@ -32,14 +32,14 @@ interface PackagingTypeDao {
     fun delete(packagingType: PackagingType)
 
     @Query("UPDATE packaging_types SET isActive = 0 WHERE id = :id")
-    fun deactivate(id: Long)
+    fun deactivate(id: String)
 
     @Query("UPDATE packaging_types SET isActive = 1 WHERE id = :id")
-    fun activate(id: Long)
+    fun activate(id: String)
 
     @Query("SELECT COUNT(*) FROM packaging_types WHERE isActive = 1")
     fun getActiveCount(): Int
 
     @Query("SELECT EXISTS(SELECT 1 FROM products WHERE packagingTypeId = :packagingTypeId LIMIT 1)")
-    fun isUsedByProducts(packagingTypeId: Long): Boolean
+    fun isUsedByProducts(packagingTypeId: String): Boolean
 }

@@ -5,11 +5,11 @@ package com.medistock.data.entities
  * Calculated from stock movements (entries and exits).
  */
 data class CurrentStock(
-    val productId: Long,
+    val productId: String,
     val productName: String,
     val unit: String,
     val categoryName: String,
-    val siteId: Long,
+    val siteId: String,
     val siteName: String,
     val quantityOnHand: Double,
     val minStock: Double = 0.0,

@@ -119,7 +119,7 @@ class LoginActivity : AppCompatActivity() {
                     createdBy = "system",
                     updatedBy = "system"
                 )
-                val userId = db.userDao().insertUser(adminUser)
+                db.userDao().insertUser(adminUser)
 
                 // Give admin all permissions (though admin check bypasses this)
                 val modules = listOf(
@@ -129,7 +129,7 @@ class LoginActivity : AppCompatActivity() {
                 )
                 val permissions = modules.map { module ->
                     UserPermission(
-                        userId = userId,
+                        userId = adminUser.id,
                         module = module,
                         canView = true,
                         canCreate = true,

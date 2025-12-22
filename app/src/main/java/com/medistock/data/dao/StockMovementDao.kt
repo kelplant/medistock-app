@@ -14,10 +14,10 @@ interface StockMovementDao {
     fun getAll(): Flow<List<StockMovement>>
 
     @Query("SELECT * FROM stock_movements WHERE productId = :productId AND siteId = :siteId ORDER BY date DESC")
-    fun getMovementsForProduct(productId: Long, siteId: Long): Flow<List<StockMovement>>
+    fun getMovementsForProduct(productId: String, siteId: String): Flow<List<StockMovement>>
 
     @Query("SELECT * FROM stock_movements WHERE siteId = :siteId")
-    fun getAllForSite(siteId: Long): Flow<List<StockMovement>>
+    fun getAllForSite(siteId: String): Flow<List<StockMovement>>
 
     /**
      * Calculate current stock for all products at a specific site.
@@ -46,7 +46,7 @@ interface StockMovementDao {
         GROUP BY p.id, s.id
         ORDER BY p.name
     """)
-    fun getCurrentStockForSite(siteId: Long): Flow<List<CurrentStock>>
+    fun getCurrentStockForSite(siteId: String): Flow<List<CurrentStock>>
 
     /**
      * Calculate current stock for all products across all sites.
@@ -84,7 +84,7 @@ interface StockMovementDao {
             p.name as productName,
             p.unit as unit,
             COALESCE(c.name, '') as categoryName,
-            0 as siteId,
+            'total' as siteId,
             'Total' as siteName,
             COALESCE(
                 SUM(CASE WHEN sm.type = 'in' THEN sm.quantity ELSE 0 END) -
@@ -99,7 +99,7 @@ interface StockMovementDao {
         WHERE p.id = :productId
         GROUP BY p.id
     """)
-    fun getTotalStockForProduct(productId: Long): Flow<CurrentStock?>
+    fun getTotalStockForProduct(productId: String): Flow<CurrentStock?>
 
     /**
      * Calculate current stock for a specific product across all sites.
@@ -127,7 +127,7 @@ interface StockMovementDao {
         GROUP BY p.id, s.id
         ORDER BY s.name
     """)
-    fun getCurrentStockForProduct(productId: Long): Flow<List<CurrentStock>>
+    fun getCurrentStockForProduct(productId: String): Flow<List<CurrentStock>>
 
     /**
      * Calculate current stock for a specific product at a specific site.
@@ -154,5 +154,5 @@ interface StockMovementDao {
         WHERE p.id = :productId AND s.id = :siteId
         GROUP BY p.id, s.id
     """)
-    fun getCurrentStockForProductAndSite(productId: Long, siteId: Long): Flow<List<CurrentStock>>
+    fun getCurrentStockForProductAndSite(productId: String, siteId: String): Flow<List<CurrentStock>>
 }

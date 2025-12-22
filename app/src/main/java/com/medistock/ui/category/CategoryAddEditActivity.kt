@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class CategoryAddEditActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
-    private var categoryId: Long? = null
+    private var categoryId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +30,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
         val btnSave = findViewById<Button>(R.id.btnSaveCategory)
         val btnDelete = findViewById<Button>(R.id.btnDeleteCategory)
 
-        categoryId = intent.getLongExtra("CATEGORY_ID", -1).takeIf { it != -1L }
+        categoryId = intent.getStringExtra("CATEGORY_ID")?.takeIf { it.isNotBlank() }
         if (categoryId != null) {
             supportActionBar?.title = "Edit Category"
             btnDelete.visibility = View.VISIBLE

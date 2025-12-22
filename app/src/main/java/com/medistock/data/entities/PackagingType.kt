@@ -2,6 +2,7 @@ package com.medistock.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 /**
  * PackagingType - Type de conditionnement administrable
@@ -13,8 +14,8 @@ import androidx.room.PrimaryKey
  */
 @Entity(tableName = "packaging_types")
 data class PackagingType(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
 
     // Nom du type de conditionnement (ex: "Boîte/Comprimés", "Flacon/ml", "Units")
     val name: String,

@@ -2,6 +2,7 @@ package com.medistock.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 /**
  * Represents a physical inventory count.
@@ -9,9 +10,9 @@ import androidx.room.PrimaryKey
  */
 @Entity(tableName = "inventories")
 data class Inventory(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val productId: Long,
-    val siteId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val productId: String,
+    val siteId: String,
     val countDate: Long,
     val countedQuantity: Double,
     val theoreticalQuantity: Double,

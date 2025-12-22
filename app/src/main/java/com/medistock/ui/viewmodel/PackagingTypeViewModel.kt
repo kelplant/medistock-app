@@ -42,17 +42,17 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun getById(id: Long, callback: (PackagingType?) -> Unit) {
+    fun getById(id: String, callback: (PackagingType?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = packagingTypeDao.getByIdSync(id)
             callback(result)
         }
     }
 
-    fun insert(packagingType: PackagingType, callback: (Long) -> Unit) {
+    fun insert(packagingType: PackagingType, callback: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            val id = packagingTypeDao.insert(packagingType)
-            callback(id)
+            packagingTypeDao.insert(packagingType)
+            callback(packagingType.id)
         }
     }
 
@@ -70,21 +70,21 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun deactivate(id: Long, callback: () -> Unit) {
+    fun deactivate(id: String, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             packagingTypeDao.deactivate(id)
             callback()
         }
     }
 
-    fun activate(id: Long, callback: () -> Unit) {
+    fun activate(id: String, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             packagingTypeDao.activate(id)
             callback()
         }
     }
 
-    fun isUsedByProducts(packagingTypeId: Long, callback: (Boolean) -> Unit) {
+    fun isUsedByProducts(packagingTypeId: String, callback: (Boolean) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = packagingTypeDao.isUsedByProducts(packagingTypeId)
             callback(result)
