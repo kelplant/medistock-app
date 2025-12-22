@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Category
+import com.medistock.util.AuthManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -18,13 +19,16 @@ import kotlinx.coroutines.launch
 
 class CategoryAddEditActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private var categoryId: String? = null
+    private var existingCategory: Category? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_category_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
 
         val editName = findViewById<EditText>(R.id.editCategoryName)
         val btnSave = findViewById<Button>(R.id.btnSaveCategory)
@@ -38,6 +42,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 val cat = db.categoryDao().getById(categoryId!!).first()
                 runOnUiThread {
                     if (cat != null) {
+                        existingCategory = cat
                         editName.setText(cat.name)
                     }
                 }
@@ -53,10 +58,28 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             CoroutineScope(Dispatchers.IO).launch {
+                val currentUser = authManager.getUsername().ifBlank { "system" }
                 if (categoryId == null) {
-                    db.categoryDao().insert(Category(name = name))
+                    db.categoryDao().insert(
+                        Category(
+                            name = name,
+                            createdBy = currentUser,
+                            updatedBy = currentUser
+                        )
+                    )
                 } else {
-                    db.categoryDao().update(Category(id = categoryId!!, name = name))
+                    val createdAt = existingCategory?.createdAt ?: System.currentTimeMillis()
+                    val createdBy = existingCategory?.createdBy?.ifBlank { currentUser } ?: currentUser
+                    db.categoryDao().update(
+                        Category(
+                            id = categoryId!!,
+                            name = name,
+                            createdAt = createdAt,
+                            updatedAt = System.currentTimeMillis(),
+                            createdBy = createdBy,
+                            updatedBy = currentUser
+                        )
+                    )
                 }
                 finish()
             }

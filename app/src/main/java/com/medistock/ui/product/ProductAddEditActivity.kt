@@ -14,6 +14,7 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Category
 import com.medistock.data.entities.Product
 import com.medistock.data.entities.PackagingType
+import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -23,6 +24,7 @@ import kotlinx.coroutines.withContext
 class ProductAddEditActivity : AppCompatActivity() {
 
     private lateinit var db: AppDatabase
+    private lateinit var authManager: AuthManager
     private lateinit var editName: EditText
     private lateinit var spinnerCategory: Spinner
     private lateinit var spinnerPackagingType: Spinner
@@ -45,6 +47,7 @@ class ProductAddEditActivity : AppCompatActivity() {
     private var enteredConversionFactor: Double? = null
     private var currentSiteId: String? = null
     private var productId: String? = null
+    private var existingProduct: Product? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +55,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         db = AppDatabase.getInstance(this)
+        authManager = AuthManager.getInstance(this)
 
         editName = findViewById(R.id.editProductName)
         spinnerCategory = findViewById(R.id.spinnerCategory)
@@ -236,6 +240,7 @@ class ProductAddEditActivity : AppCompatActivity() {
             val product = db.productDao().getById(id).first()
             withContext(Dispatchers.Main) {
                 if (product != null) {
+                    existingProduct = product
                     editName.setText(product.name)
                     editMarginValue.setText((product.marginValue ?: 0.0).toString())
 
@@ -323,6 +328,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         // Populate unit and unitVolume from selected PackagingType
         val effectiveUnit = packagingType?.getLevelName(selectedLevel) ?: "Units"
         val effectiveUnitVolume = enteredConversionFactor ?: packagingType?.defaultConversionFactor ?: 1.0
+        val currentUser = authManager.getUsername().ifBlank { "system" }
 
         // Create/Update product
         val product = if (productId == null) {
@@ -336,9 +342,13 @@ class ProductAddEditActivity : AppCompatActivity() {
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
-                siteId = currentSiteId!!
+                siteId = currentSiteId!!,
+                createdBy = currentUser,
+                updatedBy = currentUser
             )
         } else {
+            val createdAt = existingProduct?.createdAt ?: System.currentTimeMillis()
+            val createdBy = existingProduct?.createdBy?.ifBlank { currentUser } ?: currentUser
             Product(
                 id = productId!!,
                 name = productName,
@@ -350,7 +360,11 @@ class ProductAddEditActivity : AppCompatActivity() {
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
-                siteId = currentSiteId!!
+                siteId = currentSiteId!!,
+                createdAt = createdAt,
+                updatedAt = System.currentTimeMillis(),
+                createdBy = createdBy,
+                updatedBy = currentUser
             )
         }
 
