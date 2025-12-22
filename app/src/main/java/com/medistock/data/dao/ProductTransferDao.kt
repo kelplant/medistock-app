@@ -19,11 +19,11 @@ interface ProductTransferDao {
     fun getAll(): Flow<List<ProductTransfer>>
 
     @Query("SELECT * FROM product_transfers WHERE fromSiteId = :siteId OR toSiteId = :siteId ORDER BY date DESC")
-    fun getTransfersForSite(siteId: Long): Flow<List<ProductTransfer>>
+    fun getTransfersForSite(siteId: String): Flow<List<ProductTransfer>>
 
     @Query("SELECT * FROM product_transfers WHERE id = :id")
-    fun getById(id: Long): Flow<ProductTransfer?>
+    fun getById(id: String): Flow<ProductTransfer?>
 
     @Query("SELECT * FROM product_transfers WHERE productId = :productId ORDER BY date DESC")
-    fun getTransfersForProduct(productId: Long): Flow<List<ProductTransfer>>
+    fun getTransfersForProduct(productId: String): Flow<List<ProductTransfer>>
 }

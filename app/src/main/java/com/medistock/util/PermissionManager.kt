@@ -35,7 +35,8 @@ class PermissionManager(
     suspend fun canView(module: String): Boolean {
         if (authManager.isAdmin()) return true
         return withContext(Dispatchers.IO) {
-            val permission = userPermissionDao.getPermissionForModule(authManager.getUserId(), module)
+            val userId = authManager.getUserId() ?: return@withContext false
+            val permission = userPermissionDao.getPermissionForModule(userId, module)
             permission?.canView ?: false
         }
     }
@@ -46,7 +47,8 @@ class PermissionManager(
     suspend fun canCreate(module: String): Boolean {
         if (authManager.isAdmin()) return true
         return withContext(Dispatchers.IO) {
-            val permission = userPermissionDao.getPermissionForModule(authManager.getUserId(), module)
+            val userId = authManager.getUserId() ?: return@withContext false
+            val permission = userPermissionDao.getPermissionForModule(userId, module)
             permission?.canCreate ?: false
         }
     }
@@ -57,7 +59,8 @@ class PermissionManager(
     suspend fun canEdit(module: String): Boolean {
         if (authManager.isAdmin()) return true
         return withContext(Dispatchers.IO) {
-            val permission = userPermissionDao.getPermissionForModule(authManager.getUserId(), module)
+            val userId = authManager.getUserId() ?: return@withContext false
+            val permission = userPermissionDao.getPermissionForModule(userId, module)
             permission?.canEdit ?: false
         }
     }
@@ -68,7 +71,8 @@ class PermissionManager(
     suspend fun canDelete(module: String): Boolean {
         if (authManager.isAdmin()) return true
         return withContext(Dispatchers.IO) {
-            val permission = userPermissionDao.getPermissionForModule(authManager.getUserId(), module)
+            val userId = authManager.getUserId() ?: return@withContext false
+            val permission = userPermissionDao.getPermissionForModule(userId, module)
             permission?.canDelete ?: false
         }
     }
@@ -78,7 +82,8 @@ class PermissionManager(
      */
     suspend fun getUserPermissions(): List<UserPermission> {
         return withContext(Dispatchers.IO) {
-            userPermissionDao.getPermissionsForUser(authManager.getUserId())
+            val userId = authManager.getUserId() ?: return@withContext emptyList()
+            userPermissionDao.getPermissionsForUser(userId)
         }
     }
 }

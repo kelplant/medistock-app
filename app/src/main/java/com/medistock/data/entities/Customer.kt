@@ -2,15 +2,16 @@ package com.medistock.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(tableName = "customers")
 data class Customer(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val name: String,
     val phone: String? = null,
     val address: String? = null,
     val notes: String? = null,
-    val siteId: Long,
+    val siteId: String,
     val createdAt: Long = System.currentTimeMillis(),
     val createdBy: String = ""
 )

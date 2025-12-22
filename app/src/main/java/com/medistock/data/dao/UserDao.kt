@@ -11,7 +11,7 @@ interface UserDao {
     fun getActiveUsers(): List<com.medistock.data.entities.User>
 
     @Query("SELECT * FROM app_users WHERE id = :userId")
-    fun getUserById(userId: Long): com.medistock.data.entities.User?
+    fun getUserById(userId: String): com.medistock.data.entities.User?
 
     @Query("SELECT * FROM app_users WHERE username = :username LIMIT 1")
     fun getUserByUsername(username: String): com.medistock.data.entities.User?
@@ -29,7 +29,7 @@ interface UserDao {
     fun deleteUser(user: com.medistock.data.entities.User)
 
     @Query("UPDATE app_users SET is_active = 0, updated_at = :timestamp, updated_by = :updatedBy WHERE id = :userId")
-    fun deactivateUser(userId: Long, timestamp: Long, updatedBy: String)
+    fun deactivateUser(userId: String, timestamp: Long, updatedBy: String)
 
     @Query("SELECT COUNT(*) FROM app_users WHERE is_admin = 1 AND is_active = 1")
     fun countActiveAdmins(): Int

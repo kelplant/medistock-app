@@ -17,19 +17,19 @@ interface SaleDao {
     fun delete(sale: Sale)
 
     @Query("SELECT * FROM sales WHERE id = :id")
-    fun getById(id: Long): Flow<Sale?>
+    fun getById(id: String): Flow<Sale?>
 
     @Query("SELECT * FROM sales WHERE siteId = :siteId ORDER BY date DESC")
-    fun getAllForSite(siteId: Long): Flow<List<Sale>>
+    fun getAllForSite(siteId: String): Flow<List<Sale>>
 
     @Transaction
     @Query("SELECT * FROM sales WHERE id = :id")
-    fun getSaleWithItems(id: Long): Flow<SaleWithItems?>
+    fun getSaleWithItems(id: String): Flow<SaleWithItems?>
 
     @Transaction
     @Query("SELECT * FROM sales WHERE siteId = :siteId ORDER BY date DESC")
-    fun getAllWithItemsForSite(siteId: Long): Flow<List<SaleWithItems>>
+    fun getAllWithItemsForSite(siteId: String): Flow<List<SaleWithItems>>
 
     @Query("DELETE FROM sales WHERE id = :id")
-    fun deleteById(id: Long)
+    fun deleteById(id: String)
 }

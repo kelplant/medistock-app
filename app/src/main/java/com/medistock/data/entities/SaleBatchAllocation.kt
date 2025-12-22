@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 /**
  * Tracks which purchase batches were used for each sale item.
@@ -28,9 +29,9 @@ import androidx.room.PrimaryKey
     indices = [Index("saleItemId"), Index("batchId")]
 )
 data class SaleBatchAllocation(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val saleItemId: Long,
-    val batchId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val saleItemId: String,
+    val batchId: String,
     val quantityAllocated: Double, // Quantity taken from this batch
     val purchasePriceAtAllocation: Double, // Purchase price of the batch at time of sale
     val createdAt: Long = System.currentTimeMillis()

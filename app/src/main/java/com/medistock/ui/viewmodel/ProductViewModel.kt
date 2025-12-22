@@ -40,7 +40,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
     fun addProductWithPrice(product: Product, purchasePrice: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            val productId = db.productDao().insert(product)
+            db.productDao().insert(product)
             val sellingPrice = when (product.marginType) {
                 "fixed" -> purchasePrice + (product.marginValue ?: 0.0)
                 "percentage" -> purchasePrice * (1 + (product.marginValue ?: 0.0) / 100)
@@ -48,7 +48,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
             }
             db.productPriceDao().insert(
                 ProductPrice(
-                    productId = productId,
+                    productId = product.id,
                     effectiveDate = System.currentTimeMillis(),
                     purchasePrice = purchasePrice,
                     sellingPrice = sellingPrice,
@@ -59,7 +59,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun loadProductsForSite(siteId: Long) {
+    fun loadProductsForSite(siteId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _products.value = db.productDao().getProductsForSite(siteId).first()
         }

@@ -23,7 +23,7 @@ abstract class BaseSupabaseRepository(
     /**
      * Récupère un enregistrement par ID
      */
-    suspend inline fun <reified R> getById(id: Long): R? {
+    suspend inline fun <reified R> getById(id: String): R? {
         return try {
             supabase.from(tableName)
                 .select {
@@ -49,7 +49,7 @@ abstract class BaseSupabaseRepository(
     /**
      * Met à jour un enregistrement
      */
-    suspend inline fun <reified R : Any> update(id: Long, item: R): R {
+    suspend inline fun <reified R : Any> update(id: String, item: R): R {
         return supabase.from(tableName).update(item) {
             select()
             filter {
@@ -71,7 +71,7 @@ abstract class BaseSupabaseRepository(
     /**
      * Supprime un enregistrement
      */
-    suspend fun delete(id: Long) {
+    suspend fun delete(id: String) {
         supabase.from(tableName).delete {
             filter {
                 eq("id", id)

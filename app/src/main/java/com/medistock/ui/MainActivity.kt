@@ -36,9 +36,11 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val siteId = PrefsHelper.getActiveSiteId(this@MainActivity)
-            db.productDao().getProductsWithCategoryForSite(siteId).collect { products ->
-                adapter = ProductWithCategoryAdapter(products)
-                recyclerView.adapter = adapter
+            if (!siteId.isNullOrBlank()) {
+                db.productDao().getProductsWithCategoryForSite(siteId).collect { products ->
+                    adapter = ProductWithCategoryAdapter(products)
+                    recyclerView.adapter = adapter
+                }
             }
         }
     }

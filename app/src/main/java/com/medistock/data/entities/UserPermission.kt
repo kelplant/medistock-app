@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "user_permissions",
@@ -19,8 +20,8 @@ import androidx.room.PrimaryKey
     indices = [Index("user_id")]
 )
 data class UserPermission(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    @ColumnInfo(name = "user_id") val userId: Long,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @ColumnInfo(name = "user_id") val userId: String,
     val module: String,
     @ColumnInfo(name = "can_view") val canView: Boolean = false,
     @ColumnInfo(name = "can_create") val canCreate: Boolean = false,

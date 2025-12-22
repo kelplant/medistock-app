@@ -16,13 +16,13 @@ interface AuditHistoryDao {
     fun getByEntityType(entityType: String): Flow<List<AuditHistory>>
 
     @Query("SELECT * FROM audit_history WHERE entity_type = :entityType AND entity_id = :entityId ORDER BY changed_at DESC")
-    fun getByEntity(entityType: String, entityId: Long): Flow<List<AuditHistory>>
+    fun getByEntity(entityType: String, entityId: String): Flow<List<AuditHistory>>
 
     @Query("SELECT * FROM audit_history WHERE changed_by = :username ORDER BY changed_at DESC")
     fun getByUser(username: String): Flow<List<AuditHistory>>
 
     @Query("SELECT * FROM audit_history WHERE site_id = :siteId ORDER BY changed_at DESC")
-    fun getBySite(siteId: Long): Flow<List<AuditHistory>>
+    fun getBySite(siteId: String): Flow<List<AuditHistory>>
 
     @Query("SELECT * FROM audit_history WHERE changed_at >= :startTime AND changed_at <= :endTime ORDER BY changed_at DESC")
     fun getByDateRange(startTime: Long, endTime: Long): Flow<List<AuditHistory>>
@@ -42,7 +42,7 @@ interface AuditHistoryDao {
         entityType: String?,
         actionType: String?,
         username: String?,
-        siteId: Long?,
+        siteId: String?,
         startTime: Long?,
         endTime: Long?,
         limit: Int = 100,

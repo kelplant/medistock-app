@@ -13,7 +13,7 @@ import com.medistock.ui.viewmodel.PackagingTypeViewModel
 class PackagingTypeAddEditActivity : AppCompatActivity() {
 
     private lateinit var viewModel: PackagingTypeViewModel
-    private var packagingTypeId: Long? = null
+    private var packagingTypeId: String? = null
     private var existingPackagingType: PackagingType? = null
 
     private lateinit var editName: EditText
@@ -29,7 +29,7 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_packaging_type_add_edit)
 
-        packagingTypeId = intent.getLongExtra("PACKAGING_TYPE_ID", -1).takeIf { it != -1L }
+        packagingTypeId = intent.getStringExtra("PACKAGING_TYPE_ID")?.takeIf { it.isNotBlank() }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = if (packagingTypeId == null) {
@@ -143,19 +143,34 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
         val isActive = checkboxActive.isChecked
 
-        val packagingType = PackagingType(
-            id = packagingTypeId ?: 0,
-            name = name,
-            level1Name = level1Name,
-            level2Name = level2Name,
-            defaultConversionFactor = conversionFactor,
-            isActive = isActive,
-            displayOrder = existingPackagingType?.displayOrder ?: 0,
-            createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis(),
-            createdBy = existingPackagingType?.createdBy,
-            updatedBy = null // TODO: Add current user
-        )
+        val packagingType = if (packagingTypeId == null) {
+            PackagingType(
+                name = name,
+                level1Name = level1Name,
+                level2Name = level2Name,
+                defaultConversionFactor = conversionFactor,
+                isActive = isActive,
+                displayOrder = existingPackagingType?.displayOrder ?: 0,
+                createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+                createdBy = existingPackagingType?.createdBy,
+                updatedBy = null // TODO: Add current user
+            )
+        } else {
+            PackagingType(
+                id = packagingTypeId!!,
+                name = name,
+                level1Name = level1Name,
+                level2Name = level2Name,
+                defaultConversionFactor = conversionFactor,
+                isActive = isActive,
+                displayOrder = existingPackagingType?.displayOrder ?: 0,
+                createdAt = existingPackagingType?.createdAt ?: System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+                createdBy = existingPackagingType?.createdBy,
+                updatedBy = null // TODO: Add current user
+            )
+        }
 
         val callback = {
             runOnUiThread {

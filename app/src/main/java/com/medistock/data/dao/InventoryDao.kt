@@ -13,13 +13,13 @@ interface InventoryDao {
     fun update(inventory: Inventory)
 
     @Query("SELECT * FROM inventories WHERE id = :inventoryId")
-    fun getById(inventoryId: Long): Flow<Inventory?>
+    fun getById(inventoryId: String): Flow<Inventory?>
 
     @Query("SELECT * FROM inventories WHERE productId = :productId AND siteId = :siteId ORDER BY countDate DESC")
-    fun getInventoriesForProduct(productId: Long, siteId: Long): Flow<List<Inventory>>
+    fun getInventoriesForProduct(productId: String, siteId: String): Flow<List<Inventory>>
 
     @Query("SELECT * FROM inventories WHERE siteId = :siteId ORDER BY countDate DESC")
-    fun getInventoriesForSite(siteId: Long): Flow<List<Inventory>>
+    fun getInventoriesForSite(siteId: String): Flow<List<Inventory>>
 
     @Query("SELECT * FROM inventories ORDER BY countDate DESC LIMIT :limit")
     fun getRecentInventories(limit: Int = 50): Flow<List<Inventory>>
@@ -33,7 +33,7 @@ interface InventoryDao {
         AND discrepancy != 0
         ORDER BY countDate DESC
     """)
-    fun getInventoriesWithDiscrepancies(siteId: Long): Flow<List<Inventory>>
+    fun getInventoriesWithDiscrepancies(siteId: String): Flow<List<Inventory>>
 
     /**
      * Get total discrepancy value for a site.
@@ -43,8 +43,8 @@ interface InventoryDao {
         WHERE siteId = :siteId
         AND countDate >= :startDate
     """)
-    fun getTotalDiscrepancy(siteId: Long, startDate: Long): Double?
+    fun getTotalDiscrepancy(siteId: String, startDate: Long): Double?
 
     @Query("DELETE FROM inventories WHERE id = :inventoryId")
-    fun deleteById(inventoryId: Long)
+    fun deleteById(inventoryId: String)
 }

@@ -52,18 +52,20 @@ class StockMovementActivity : AppCompatActivity() {
                     val latestPrice = db.productPriceDao().getLatestPrice(product.id).first()
                     if (latestPrice != null) {
                         val siteId = com.medistock.util.PrefsHelper.getActiveSiteId(this@StockMovementActivity)
-                    db.stockMovementDao().insert(
-                            StockMovement(
-                                productId = product.id,
-                                type = type,
-                                quantity = quantityInBaseUnit,
-                                date = System.currentTimeMillis(),
-                                purchasePriceAtMovement = latestPrice.purchasePrice,
-                                sellingPriceAtMovement = latestPrice.sellingPrice,
-                            siteId = siteId
+                        if (!siteId.isNullOrBlank()) {
+                            db.stockMovementDao().insert(
+                                StockMovement(
+                                    productId = product.id,
+                                    type = type,
+                                    quantity = quantityInBaseUnit,
+                                    date = System.currentTimeMillis(),
+                                    purchasePriceAtMovement = latestPrice.purchasePrice,
+                                    sellingPriceAtMovement = latestPrice.sellingPrice,
+                                    siteId = siteId
+                                )
                             )
-                        )
-                        finish()
+                            finish()
+                        }
                     }
                 }
             }

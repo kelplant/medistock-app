@@ -3,17 +3,18 @@ package com.medistock.data.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 /**
  * Audit history entity that tracks all data changes and entries in the system
  */
 @Entity(tableName = "audit_history")
 data class AuditHistory(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
 
     // Entity information
     @ColumnInfo(name = "entity_type") val entityType: String, // e.g., "Product", "Sale", "User"
-    @ColumnInfo(name = "entity_id") val entityId: Long, // ID of the affected entity
+    @ColumnInfo(name = "entity_id") val entityId: String, // ID of the affected entity
 
     // Action information
     @ColumnInfo(name = "action_type") val actionType: String, // "INSERT", "UPDATE", "DELETE"
@@ -28,6 +29,6 @@ data class AuditHistory(
     @ColumnInfo(name = "changed_at") val changedAt: Long = System.currentTimeMillis(),
 
     // Additional context
-    @ColumnInfo(name = "site_id") val siteId: Long? = null, // Site context if applicable
+    @ColumnInfo(name = "site_id") val siteId: String? = null, // Site context if applicable
     @ColumnInfo(name = "description") val description: String? = null // Optional description
 )

@@ -32,9 +32,9 @@ class PurchaseActivity : AppCompatActivity() {
 
     private var sites: List<com.medistock.data.entities.Site> = emptyList()
     private var products: List<Product> = emptyList()
-    private var selectedProductId: Long = 0L
+    private var selectedProductId: String? = null
     private var selectedProduct: Product? = null
-    private var selectedSiteId: Long = 0L
+    private var selectedSiteId: String? = null
     private var isManualSellingPrice = false // Track if user manually modified selling price
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -74,7 +74,7 @@ class PurchaseActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
                 if (position >= 0 && position < products.size) {
                     selectedProduct = products[position]
-                    selectedProductId = selectedProduct?.id ?: 0L
+                    selectedProductId = selectedProduct?.id
                     updateMarginInfo()
                     calculateSellingPrice()
                 }
@@ -195,8 +195,12 @@ class PurchaseActivity : AppCompatActivity() {
             return
         }
 
-        if (selectedProductId == 0L) {
+        if (selectedProductId == null) {
             Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (selectedSiteId.isNullOrBlank()) {
+            Toast.makeText(this, "Select a site", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -215,8 +219,8 @@ class PurchaseActivity : AppCompatActivity() {
 
             // Create purchase batch
             val batch = PurchaseBatch(
-                productId = selectedProductId,
-                siteId = selectedSiteId,
+                productId = selectedProductId!!,
+                siteId = selectedSiteId!!,
                 batchNumber = batchNumber.ifEmpty { null }, // Optional, null if not provided
                 purchaseDate = System.currentTimeMillis(),
                 initialQuantity = quantity,
@@ -230,19 +234,19 @@ class PurchaseActivity : AppCompatActivity() {
 
             // Create stock movement (entry)
             val movement = StockMovement(
-                productId = selectedProductId,
+                productId = selectedProductId!!,
                 type = "in",
                 quantity = quantity,
                 date = System.currentTimeMillis(),
                 purchasePriceAtMovement = purchasePrice,
                 sellingPriceAtMovement = sellingPrice,
-                siteId = selectedSiteId
+                siteId = selectedSiteId!!
             )
             db.stockMovementDao().insert(movement)
 
             // Update product price record
             val priceRecord = ProductPrice(
-                productId = selectedProductId,
+                productId = selectedProductId!!,
                 effectiveDate = System.currentTimeMillis(),
                 purchasePrice = purchasePrice,
                 sellingPrice = sellingPrice,

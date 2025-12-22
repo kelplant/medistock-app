@@ -18,12 +18,13 @@ class AuditedProductRepository(private val context: Context) {
 
     fun getAll(): Flow<List<Product>> = productDao.getAll()
 
-    fun getById(productId: Long): Flow<Product?> = productDao.getById(productId)
+    fun getById(productId: String): Flow<Product?> = productDao.getById(productId)
 
-    fun getProductsForSite(siteId: Long): Flow<List<Product>> = productDao.getProductsForSite(siteId)
+    fun getProductsForSite(siteId: String): Flow<List<Product>> = productDao.getProductsForSite(siteId)
 
-    fun insert(product: Product): Long {
-        val productId = productDao.insert(product)
+    fun insert(product: Product): String {
+        productDao.insert(product)
+        val productId = product.id
 
         // Log the insert action
         auditLogger.logInsert(

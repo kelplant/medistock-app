@@ -15,8 +15,9 @@ class AuditedPurchaseBatchRepository(private val context: Context) {
     private val auditLogger = AuditLogger.getInstance(context)
     private val authManager = AuthManager.getInstance(context)
 
-    fun insert(batch: PurchaseBatch): Long {
-        val batchId = purchaseBatchDao.insert(batch)
+    fun insert(batch: PurchaseBatch): String {
+        purchaseBatchDao.insert(batch)
+        val batchId = batch.id
 
         // Log the insert action
         auditLogger.logInsert(

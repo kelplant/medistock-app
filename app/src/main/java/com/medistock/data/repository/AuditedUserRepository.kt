@@ -15,8 +15,9 @@ class AuditedUserRepository(private val context: Context) {
     private val auditLogger = AuditLogger.getInstance(context)
     private val authManager = AuthManager.getInstance(context)
 
-    fun insert(user: User): Long {
-        val userId = userDao.insertUser(user)
+    fun insert(user: User): String {
+        userDao.insertUser(user)
+        val userId = user.id
 
         // Log the insert action (don't log password)
         auditLogger.logInsert(

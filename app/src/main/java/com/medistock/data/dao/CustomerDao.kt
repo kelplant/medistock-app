@@ -16,20 +16,20 @@ interface CustomerDao {
     fun delete(customer: Customer)
 
     @Query("SELECT * FROM customers WHERE id = :id")
-    fun getById(id: Long): Flow<Customer?>
+    fun getById(id: String): Flow<Customer?>
 
     @Query("SELECT * FROM customers ORDER BY name ASC")
     fun getAll(): Flow<List<Customer>>
 
     @Query("SELECT * FROM customers WHERE siteId = :siteId ORDER BY name ASC")
-    fun getAllForSite(siteId: Long): Flow<List<Customer>>
+    fun getAllForSite(siteId: String): Flow<List<Customer>>
 
     @Query("SELECT * FROM customers WHERE siteId = :siteId AND name LIKE '%' || :query || '%' ORDER BY name ASC")
-    fun searchByName(siteId: Long, query: String): Flow<List<Customer>>
+    fun searchByName(siteId: String, query: String): Flow<List<Customer>>
 
     @Query("SELECT * FROM customers WHERE siteId = :siteId AND (name LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%') ORDER BY name ASC")
-    fun search(siteId: Long, query: String): Flow<List<Customer>>
+    fun search(siteId: String, query: String): Flow<List<Customer>>
 
     @Query("DELETE FROM customers WHERE id = :id")
-    fun deleteById(id: Long)
+    fun deleteById(id: String)
 }

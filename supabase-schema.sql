@@ -12,7 +12,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Sites (pharmacies, dépôts, etc.)
 CREATE TABLE sites (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
@@ -24,7 +24,7 @@ CREATE INDEX idx_sites_name ON sites(name);
 
 -- Catégories de produits
 CREATE TABLE categories (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
@@ -36,7 +36,7 @@ CREATE INDEX idx_categories_name ON categories(name);
 
 -- Types de conditionnement (Boîte/Comprimés, Flacon/ml, etc.)
 CREATE TABLE packaging_types (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     level1_name TEXT NOT NULL,
     level2_name TEXT,
@@ -58,7 +58,7 @@ CREATE INDEX idx_packaging_types_order ON packaging_types(display_order);
 
 -- Utilisateurs de l'application
 CREATE TABLE app_users (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL, -- BCrypt hash
     full_name TEXT NOT NULL,
@@ -75,8 +75,8 @@ CREATE INDEX idx_users_active ON app_users(is_active);
 
 -- Permissions par utilisateur et module
 CREATE TABLE user_permissions (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     module TEXT NOT NULL,
     can_view BOOLEAN NOT NULL DEFAULT FALSE,
     can_create BOOLEAN NOT NULL DEFAULT FALSE,
@@ -96,12 +96,12 @@ CREATE INDEX idx_user_permissions_module ON user_permissions(module);
 -- ============================================================================
 
 CREATE TABLE customers (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     phone TEXT,
     address TEXT,
     notes TEXT,
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT ''
 );
@@ -115,23 +115,23 @@ CREATE INDEX idx_customers_name ON customers(name);
 
 -- Produits (médicaments)
 CREATE TABLE products (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     unit TEXT NOT NULL,
     unit_volume DOUBLE PRECISION NOT NULL,
 
     -- Système de conditionnement
-    packaging_type_id BIGINT REFERENCES packaging_types(id) ON DELETE SET NULL,
+    packaging_type_id UUID REFERENCES packaging_types(id) ON DELETE SET NULL,
     selected_level INTEGER,
     conversion_factor DOUBLE PRECISION,
 
-    category_id BIGINT REFERENCES categories(id) ON DELETE SET NULL,
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
 
     -- Marge
     margin_type TEXT,
     margin_value DOUBLE PRECISION,
 
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
 
     -- Stock min/max
     min_stock DOUBLE PRECISION DEFAULT 0.0,
@@ -150,8 +150,8 @@ CREATE INDEX idx_products_name ON products(name);
 
 -- Historique des prix des produits
 CREATE TABLE product_prices (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     effective_date BIGINT NOT NULL,
     purchase_price DOUBLE PRECISION NOT NULL,
     selling_price DOUBLE PRECISION NOT NULL,
@@ -171,9 +171,9 @@ CREATE INDEX idx_product_prices_date ON product_prices(effective_date);
 
 -- Lots d'achat (FIFO inventory management)
 CREATE TABLE purchase_batches (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     batch_number TEXT,
     purchase_date BIGINT NOT NULL,
     initial_quantity DOUBLE PRECISION NOT NULL,
@@ -195,14 +195,14 @@ CREATE INDEX idx_purchase_batches_date ON purchase_batches(purchase_date);
 
 -- Mouvements de stock
 CREATE TABLE stock_movements (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     type TEXT NOT NULL, -- "IN" or "OUT"
     quantity DOUBLE PRECISION NOT NULL,
     date BIGINT NOT NULL,
     purchase_price_at_movement DOUBLE PRECISION NOT NULL,
     selling_price_at_movement DOUBLE PRECISION NOT NULL,
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT ''
 );
@@ -214,9 +214,9 @@ CREATE INDEX idx_stock_movements_date ON stock_movements(date);
 
 -- Inventaires physiques
 CREATE TABLE inventories (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     count_date BIGINT NOT NULL,
     counted_quantity DOUBLE PRECISION NOT NULL,
     theoretical_quantity DOUBLE PRECISION NOT NULL,
@@ -234,11 +234,11 @@ CREATE INDEX idx_inventories_date ON inventories(count_date);
 
 -- Transferts de produits entre sites
 CREATE TABLE product_transfers (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     quantity DOUBLE PRECISION NOT NULL,
-    from_site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
-    to_site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    from_site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    to_site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     date BIGINT NOT NULL,
     notes TEXT NOT NULL DEFAULT '',
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
@@ -258,12 +258,12 @@ CREATE INDEX idx_product_transfers_date ON product_transfers(date);
 
 -- En-têtes de ventes
 CREATE TABLE sales (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_name TEXT NOT NULL,
-    customer_id BIGINT REFERENCES customers(id) ON DELETE SET NULL,
+    customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
     date BIGINT NOT NULL,
     total_amount DOUBLE PRECISION NOT NULL,
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT ''
 );
@@ -274,9 +274,9 @@ CREATE INDEX idx_sales_date ON sales(date);
 
 -- Lignes de vente (détails)
 CREATE TABLE sale_items (
-    id BIGSERIAL PRIMARY KEY,
-    sale_id BIGINT NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sale_id UUID NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     product_name TEXT NOT NULL,
     unit TEXT NOT NULL,
     quantity DOUBLE PRECISION NOT NULL,
@@ -289,9 +289,9 @@ CREATE INDEX idx_sale_items_product ON sale_items(product_id);
 
 -- Allocations FIFO des lots aux ventes
 CREATE TABLE sale_batch_allocations (
-    id BIGSERIAL PRIMARY KEY,
-    sale_item_id BIGINT NOT NULL REFERENCES sale_items(id) ON DELETE CASCADE,
-    batch_id BIGINT NOT NULL REFERENCES purchase_batches(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sale_item_id UUID NOT NULL REFERENCES sale_items(id) ON DELETE CASCADE,
+    batch_id UUID NOT NULL REFERENCES purchase_batches(id) ON DELETE RESTRICT,
     quantity_allocated DOUBLE PRECISION NOT NULL,
     purchase_price_at_allocation DOUBLE PRECISION NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000
@@ -302,13 +302,13 @@ CREATE INDEX idx_sale_batch_allocations_batch ON sale_batch_allocations(batch_id
 
 -- Ventes produits (ancien système - potentiellement obsolète)
 CREATE TABLE product_sales (
-    id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     quantity DOUBLE PRECISION NOT NULL,
     price_at_sale DOUBLE PRECISION NOT NULL,
     farmer_name TEXT NOT NULL,
     date BIGINT NOT NULL,
-    site_id BIGINT NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT ''
 );
@@ -323,16 +323,16 @@ CREATE INDEX idx_product_sales_date ON product_sales(date);
 
 -- Historique d'audit (toutes les modifications)
 CREATE TABLE audit_history (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     entity_type TEXT NOT NULL,
-    entity_id BIGINT NOT NULL,
+    entity_id UUID NOT NULL,
     action_type TEXT NOT NULL, -- "INSERT", "UPDATE", "DELETE"
     field_name TEXT,
     old_value TEXT,
     new_value TEXT,
     changed_by TEXT NOT NULL,
     changed_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    site_id BIGINT REFERENCES sites(id) ON DELETE SET NULL,
+    site_id UUID REFERENCES sites(id) ON DELETE SET NULL,
     description TEXT
 );
 

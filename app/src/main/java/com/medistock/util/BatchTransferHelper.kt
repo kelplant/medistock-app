@@ -14,9 +14,9 @@ class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
      * Returns list of batch transfers (source batch info for creating destination batches).
      */
     fun transferBatchesFIFO(
-        productId: Long,
-        fromSiteId: Long,
-        toSiteId: Long,
+        productId: String,
+        fromSiteId: String,
+        toSiteId: String,
         totalQuantity: Double,
         currentUser: String
     ): List<BatchTransferInfo> {

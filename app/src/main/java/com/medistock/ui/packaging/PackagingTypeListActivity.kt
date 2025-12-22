@@ -68,7 +68,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
         }
     }
 
-    private fun confirmDelete(id: Long, name: String) {
+    private fun confirmDelete(id: String, name: String) {
         viewModel.isUsedByProducts(id) { isUsed ->
             runOnUiThread {
                 if (isUsed) {
@@ -103,7 +103,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleActive(id: Long, currentlyActive: Boolean) {
+    private fun toggleActive(id: String, currentlyActive: Boolean) {
         val callback = {
             runOnUiThread {
                 val message = if (currentlyActive) "Deactivated" else "Activated"

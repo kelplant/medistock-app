@@ -15,8 +15,9 @@ class AuditedSaleRepository(private val context: Context) {
     private val auditLogger = AuditLogger.getInstance(context)
     private val authManager = AuthManager.getInstance(context)
 
-    fun insert(sale: Sale): Long {
-        val saleId = saleDao.insert(sale)
+    fun insert(sale: Sale): String {
+        saleDao.insert(sale)
+        val saleId = sale.id
 
         // Log the insert action
         auditLogger.logInsert(

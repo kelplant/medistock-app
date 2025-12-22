@@ -35,10 +35,10 @@ class AuditLogger(context: Context) {
      */
     fun logInsert(
         entityType: String,
-        entityId: Long,
+        entityId: String,
         newValues: Map<String, String>,
         username: String,
-        siteId: Long? = null,
+        siteId: String? = null,
         description: String? = null
     ) {
         executor.execute {
@@ -63,10 +63,10 @@ class AuditLogger(context: Context) {
      */
     fun logUpdate(
         entityType: String,
-        entityId: Long,
+        entityId: String,
         changes: Map<String, Pair<String?, String?>>, // Map of fieldName to (oldValue, newValue)
         username: String,
-        siteId: Long? = null,
+        siteId: String? = null,
         description: String? = null
     ) {
         executor.execute {
@@ -94,10 +94,10 @@ class AuditLogger(context: Context) {
      */
     fun logDelete(
         entityType: String,
-        entityId: Long,
+        entityId: String,
         oldValues: Map<String, String>,
         username: String,
-        siteId: Long? = null,
+        siteId: String? = null,
         description: String? = null
     ) {
         executor.execute {
@@ -122,11 +122,11 @@ class AuditLogger(context: Context) {
      */
     fun logAction(
         entityType: String,
-        entityId: Long,
+        entityId: String,
         actionType: String,
         description: String,
         username: String,
-        siteId: Long? = null
+        siteId: String? = null
     ) {
         executor.execute {
             val auditEntry = AuditHistory(

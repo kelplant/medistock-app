@@ -37,14 +37,14 @@ class ProductAddEditActivity : AppCompatActivity() {
 
     private var categories: List<Category> = emptyList()
     private var packagingTypes: List<PackagingType> = emptyList()
-    private var selectedCategoryId: Long = 0L
-    private var selectedPackagingTypeId: Long? = null
+    private var selectedCategoryId: String? = null
+    private var selectedPackagingTypeId: String? = null
     private var selectedLevel: Int = 1
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
     private var enteredConversionFactor: Double? = null
-    private var currentSiteId: Long = 0L
-    private var productId: Long? = null
+    private var currentSiteId: String? = null
+    private var productId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,7 +103,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                     setupSpinnerListeners()
 
                     // If edit mode, load the product
-                    productId = intent.getLongExtra("PRODUCT_ID", -1).takeIf { it != -1L }
+                    productId = intent.getStringExtra("PRODUCT_ID")?.takeIf { it.isNotBlank() }
                     if (productId != null) {
                         supportActionBar?.title = "Edit Product"
                         btnDelete.visibility = View.VISIBLE
@@ -162,7 +162,7 @@ class ProductAddEditActivity : AppCompatActivity() {
 
         spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
-                selectedCategoryId = categories.getOrNull(position)?.id ?: 0L
+                selectedCategoryId = categories.getOrNull(position)?.id
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
@@ -231,7 +231,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadProduct(id: Long) {
+    private fun loadProduct(id: String) {
         lifecycleScope.launch {
             val product = db.productDao().getById(id).first()
             withContext(Dispatchers.Main) {
@@ -272,7 +272,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                         spinnerMarginType.setSelection(marginTypeIndex)
                     }
 
-                    selectedCategoryId = product.categoryId ?: 0L
+                    selectedCategoryId = product.categoryId
                     selectedMarginType = product.marginType ?: "percentage"
                 }
             }
@@ -291,7 +291,7 @@ class ProductAddEditActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.error_enter_product_name), Toast.LENGTH_SHORT).show()
             return
         }
-        if (selectedCategoryId == 0L) {
+        if (selectedCategoryId == null) {
             Toast.makeText(this, getString(R.string.error_select_category), Toast.LENGTH_SHORT).show()
             return
         }
@@ -301,7 +301,7 @@ class ProductAddEditActivity : AppCompatActivity() {
             return
         }
 
-        if (currentSiteId == 0L) {
+        if (currentSiteId.isNullOrBlank()) {
             Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
             return
         }
@@ -325,19 +325,34 @@ class ProductAddEditActivity : AppCompatActivity() {
         val effectiveUnitVolume = enteredConversionFactor ?: packagingType?.defaultConversionFactor ?: 1.0
 
         // Create/Update product
-        val product = Product(
-            id = productId ?: 0L,
-            name = productName,
-            categoryId = selectedCategoryId,
-            packagingTypeId = selectedPackagingTypeId,
-            selectedLevel = selectedLevel,
-            conversionFactor = enteredConversionFactor,
-            unit = effectiveUnit,
-            unitVolume = effectiveUnitVolume,
-            marginType = selectedMarginType,
-            marginValue = enteredMarginValue,
-            siteId = currentSiteId
-        )
+        val product = if (productId == null) {
+            Product(
+                name = productName,
+                categoryId = selectedCategoryId,
+                packagingTypeId = selectedPackagingTypeId,
+                selectedLevel = selectedLevel,
+                conversionFactor = enteredConversionFactor,
+                unit = effectiveUnit,
+                unitVolume = effectiveUnitVolume,
+                marginType = selectedMarginType,
+                marginValue = enteredMarginValue,
+                siteId = currentSiteId!!
+            )
+        } else {
+            Product(
+                id = productId!!,
+                name = productName,
+                categoryId = selectedCategoryId,
+                packagingTypeId = selectedPackagingTypeId,
+                selectedLevel = selectedLevel,
+                conversionFactor = enteredConversionFactor,
+                unit = effectiveUnit,
+                unitVolume = effectiveUnitVolume,
+                marginType = selectedMarginType,
+                marginValue = enteredMarginValue,
+                siteId = currentSiteId!!
+            )
+        }
 
         lifecycleScope.launch {
             try {

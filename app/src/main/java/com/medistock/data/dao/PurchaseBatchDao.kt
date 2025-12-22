@@ -13,10 +13,10 @@ interface PurchaseBatchDao {
     fun update(batch: PurchaseBatch)
 
     @Query("SELECT * FROM purchase_batches WHERE id = :batchId")
-    fun getById(batchId: Long): Flow<PurchaseBatch?>
+    fun getById(batchId: String): Flow<PurchaseBatch?>
 
     @Query("SELECT * FROM purchase_batches WHERE productId = :productId AND siteId = :siteId ORDER BY purchaseDate ASC")
-    fun getBatchesForProduct(productId: Long, siteId: Long): Flow<List<PurchaseBatch>>
+    fun getBatchesForProduct(productId: String, siteId: String): Flow<List<PurchaseBatch>>
 
     /**
      * Get available batches (not exhausted) for FIFO consumption.
@@ -30,7 +30,7 @@ interface PurchaseBatchDao {
         AND remainingQuantity > 0
         ORDER BY purchaseDate ASC
     """)
-    fun getAvailableBatchesFIFO(productId: Long, siteId: Long): Flow<List<PurchaseBatch>>
+    fun getAvailableBatchesFIFO(productId: String, siteId: String): Flow<List<PurchaseBatch>>
 
     /**
      * Get batches expiring soon (within days threshold).
@@ -44,7 +44,7 @@ interface PurchaseBatchDao {
         AND expiryDate <= :thresholdDate
         ORDER BY expiryDate ASC
     """)
-    fun getBatchesExpiringSoon(productId: Long, siteId: Long, thresholdDate: Long): Flow<List<PurchaseBatch>>
+    fun getBatchesExpiringSoon(productId: String, siteId: String, thresholdDate: Long): Flow<List<PurchaseBatch>>
 
     /**
      * Calculate average purchase price for a product.
@@ -55,7 +55,7 @@ interface PurchaseBatchDao {
         AND siteId = :siteId
         AND isExhausted = 0
     """)
-    fun getAveragePurchasePrice(productId: Long, siteId: Long): Double?
+    fun getAveragePurchasePrice(productId: String, siteId: String): Double?
 
     /**
      * Get total remaining quantity across all batches.
@@ -66,10 +66,10 @@ interface PurchaseBatchDao {
         AND siteId = :siteId
         AND isExhausted = 0
     """)
-    fun getTotalRemainingQuantity(productId: Long, siteId: Long): Double?
+    fun getTotalRemainingQuantity(productId: String, siteId: String): Double?
 
     @Query("DELETE FROM purchase_batches WHERE id = :batchId")
-    fun deleteById(batchId: Long)
+    fun deleteById(batchId: String)
 
     /**
      * Update remaining quantity and exhausted status for a batch.
@@ -81,7 +81,7 @@ interface PurchaseBatchDao {
             updatedAt = :updatedAt
         WHERE id = :batchId
     """)
-    fun updateRemainingQuantity(batchId: Long, newQuantity: Double, updatedAt: Long): Int
+    fun updateRemainingQuantity(batchId: String, newQuantity: Double, updatedAt: Long): Int
 
     /**
      * Get available batches ordered by purchase date (FIFO) - non-Flow version for transactions.
@@ -94,5 +94,5 @@ interface PurchaseBatchDao {
         AND remainingQuantity > 0
         ORDER BY purchaseDate ASC
     """)
-    fun getAvailableBatchesFIFOSync(productId: Long, siteId: Long): List<PurchaseBatch>
+    fun getAvailableBatchesFIFOSync(productId: String, siteId: String): List<PurchaseBatch>
 }

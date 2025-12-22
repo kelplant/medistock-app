@@ -6,16 +6,16 @@ object PrefsHelper {
     private const val PREF_NAME = "medistock_prefs"
     private const val KEY_ACTIVE_SITE_ID = "active_site_id"
 
-    fun saveActiveSiteId(context: Context, siteId: Long) {
+    fun saveActiveSiteId(context: Context, siteId: String) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putLong(KEY_ACTIVE_SITE_ID, siteId)
+            .putString(KEY_ACTIVE_SITE_ID, siteId)
             .apply()
     }
 
-    fun getActiveSiteId(context: Context): Long {
+    fun getActiveSiteId(context: Context): String? {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            .getLong(KEY_ACTIVE_SITE_ID, -1L)
+            .getString(KEY_ACTIVE_SITE_ID, null)
     }
 
     fun clearActiveSite(context: Context) {

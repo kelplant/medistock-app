@@ -28,9 +28,9 @@ class InventoryActivity : AppCompatActivity() {
 
     private var products: List<Product> = emptyList()
     private var currentStockItems: List<CurrentStock> = emptyList()
-    private var selectedProductId: Long = 0L
+    private var selectedProductId: String? = null
     private var theoreticalQuantity: Double = 0.0
-    private var currentSiteId: Long = 0L
+    private var currentSiteId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +73,8 @@ class InventoryActivity : AppCompatActivity() {
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = db.productDao().getAll().first()
-            currentStockItems = db.stockMovementDao().getCurrentStockForSite(currentSiteId).first()
+            val siteId = currentSiteId ?: return@launch
+            currentStockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
 
             withContext(Dispatchers.Main) {
                 val productNames = products.map { "${it.name} (${it.unit})" }
@@ -123,8 +124,12 @@ class InventoryActivity : AppCompatActivity() {
             return
         }
 
-        if (selectedProductId == 0L) {
+        if (selectedProductId == null) {
             Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (currentSiteId.isNullOrBlank()) {
+            Toast.makeText(this, "Select a site", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -132,8 +137,8 @@ class InventoryActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             val inventory = Inventory(
-                productId = selectedProductId,
-                siteId = currentSiteId,
+                productId = selectedProductId!!,
+                siteId = currentSiteId!!,
                 countDate = System.currentTimeMillis(),
                 countedQuantity = countedQty,
                 theoreticalQuantity = theoreticalQuantity,
@@ -146,16 +151,16 @@ class InventoryActivity : AppCompatActivity() {
 
             // If there's a discrepancy, create a stock adjustment movement
             if (discrepancy != 0.0) {
-                val latestPrice = db.productPriceDao().getLatestPrice(selectedProductId).first()
+                val latestPrice = db.productPriceDao().getLatestPrice(selectedProductId!!).first()
 
                 val movement = StockMovement(
-                    productId = selectedProductId,
+                    productId = selectedProductId!!,
                     type = if (discrepancy > 0) "in" else "out",
                     quantity = Math.abs(discrepancy),
                     date = System.currentTimeMillis(),
                     purchasePriceAtMovement = latestPrice?.purchasePrice ?: 0.0,
                     sellingPriceAtMovement = latestPrice?.sellingPrice ?: 0.0,
-                    siteId = currentSiteId
+                    siteId = currentSiteId!!
                 )
                 db.stockMovementDao().insert(movement)
             }

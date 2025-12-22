@@ -32,12 +32,12 @@ class ProductAddActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
 
     private var categories: List<Category> = emptyList()
-    private var selectedCategoryId: Long = 0L
+    private var selectedCategoryId: String? = null
     private var selectedUnit: String = "Bottle"
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
     private var enteredUnitVolume: Double = 0.0
-    private var currentSiteId: Long = 0L
+    private var currentSiteId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,7 +109,7 @@ class ProductAddActivity : AppCompatActivity() {
 
         spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
-                selectedCategoryId = categories.getOrNull(position)?.id ?: 0L
+                selectedCategoryId = categories.getOrNull(position)?.id
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
@@ -156,7 +156,7 @@ class ProductAddActivity : AppCompatActivity() {
                 Toast.makeText(this, getString(R.string.error_enter_product_name), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (selectedCategoryId == 0L) {
+            if (selectedCategoryId == null) {
                 Toast.makeText(this, getString(R.string.error_select_category), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -166,7 +166,7 @@ class ProductAddActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (currentSiteId == 0L) {
+            if (currentSiteId.isNullOrBlank()) {
                 Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
@@ -197,7 +197,7 @@ class ProductAddActivity : AppCompatActivity() {
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
                 unitVolume = enteredUnitVolume,
-                siteId = currentSiteId
+                siteId = currentSiteId!!
             )
 
             lifecycleScope.launch {
