@@ -50,6 +50,7 @@ Les scripts SQL sont regroupés dans le dossier `supabase/` :
 - `app/src/main/java/com/medistock` : code Android (UI, data, sync).
 - `app/src/main/res` : ressources (layouts, strings, styles).
 - `supabase/` : scripts SQL de base de données.
+- `documentation/` : guides Supabase, audit et packaging.
 
 ## Notes
 
