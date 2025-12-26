@@ -13,6 +13,12 @@ class SupabasePreferences(context: Context) {
         private const val KEY_URL = "supabase_url"
         private const val KEY_API_KEY = "supabase_key"
         private const val KEY_CONFIGURED = "is_configured"
+        private const val KEY_SYNC_MODE = "sync_mode"
+    }
+
+    enum class SyncMode {
+        REALTIME,
+        LOCAL
     }
 
     fun saveSupabaseConfig(url: String, apiKey: String) {
@@ -35,6 +41,17 @@ class SupabasePreferences(context: Context) {
         return preferences.getBoolean(KEY_CONFIGURED, false) &&
                 getSupabaseUrl().isNotEmpty() &&
                 getSupabaseKey().isNotEmpty()
+    }
+
+    fun setSyncMode(mode: SyncMode) {
+        preferences.edit()
+            .putString(KEY_SYNC_MODE, mode.name)
+            .apply()
+    }
+
+    fun getSyncMode(): SyncMode {
+        val stored = preferences.getString(KEY_SYNC_MODE, SyncMode.LOCAL.name) ?: SyncMode.LOCAL.name
+        return runCatching { SyncMode.valueOf(stored) }.getOrDefault(SyncMode.LOCAL)
     }
 
     fun clearConfiguration() {

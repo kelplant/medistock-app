@@ -6,6 +6,7 @@ import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.remote.repository.*
 import com.medistock.data.sync.SyncMapper.toDto
 import com.medistock.data.sync.SyncMapper.toEntity
+import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -39,6 +40,11 @@ class SyncManager(
         try {
             if (!SupabaseClientProvider.isConfigured(context)) {
                 onError?.invoke("Supabase", Exception("Supabase n'est pas configuré"))
+                return@withContext
+            }
+
+            if (!NetworkStatus.isOnline(context)) {
+                onError?.invoke("Connexion", Exception("Connexion indisponible. Mode local actif."))
                 return@withContext
             }
 
@@ -79,6 +85,11 @@ class SyncManager(
         try {
             if (!SupabaseClientProvider.isConfigured(context)) {
                 onError?.invoke("Supabase", Exception("Supabase n'est pas configuré"))
+                return@withContext
+            }
+
+            if (!NetworkStatus.isOnline(context)) {
+                onError?.invoke("Connexion", Exception("Connexion indisponible. Mode local actif."))
                 return@withContext
             }
 
