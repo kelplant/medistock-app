@@ -37,18 +37,19 @@ L’APK debug se trouve dans `app/build/outputs/apk/debug/`.
 
 ## Scripts Supabase
 
-Les scripts SQL sont disponibles à la racine :
+Les scripts SQL sont regroupés dans le dossier `supabase/` :
 
-- `supabase-schema.sql` : schéma complet (tables, triggers).
-- `supabase-rls-policies.sql` : politiques RLS.
-- `supabase-uuid-migration.sql` : migration UUID.
-- `supabase-created-updated-by-migration.sql` : backfill et defaults `created_by`/`updated_by`.
+- `supabase/init.sql` : schéma complet (tables, triggers).
+- `supabase/rls-policies.sql` : politiques RLS.
+- `supabase/migration/2025122601_uuid_migration.sql` : migration UUID.
+- `supabase/migration/2025122602_created_updated_by.sql` : backfill et defaults `created_by`/`updated_by`.
+- `supabase/migration/2025122603_audit_triggers.sql` : triggers d’audit avec déduplication.
 
 ## Structure du projet
 
 - `app/src/main/java/com/medistock` : code Android (UI, data, sync).
 - `app/src/main/res` : ressources (layouts, strings, styles).
-- `supabase-*.sql` : scripts SQL de base de données.
+- `supabase/` : scripts SQL de base de données.
 
 ## Notes
 

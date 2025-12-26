@@ -3,7 +3,7 @@
 ## ✅ Ce qui a été implémenté
 
 ### 1. **Configuration de la base de données PostgreSQL**
-   - ✅ Schéma complet de 17 tables (`supabase-schema.sql`)
+   - ✅ Schéma complet de 17 tables (`supabase/init.sql`)
    - ✅ Foreign keys et contraintes
    - ✅ Indexes pour les performances
    - ✅ Triggers auto-update pour les timestamps
@@ -11,7 +11,7 @@
    - ✅ Données initiales (1 site, 4 catégories, 3 types conditionnement, 1 admin)
 
 ### 2. **Politiques de sécurité (RLS)**
-   - ✅ Row Level Security activé sur toutes les tables (`supabase-rls-policies.sql`)
+   - ✅ Row Level Security activé sur toutes les tables (`supabase/rls-policies.sql`)
    - ✅ Politiques permissives pour le développement
    - ✅ Exemples de politiques restrictives pour la production
    - ✅ Fonction helper pour vérification des permissions
@@ -86,8 +86,13 @@ medistock-app/
 │               ├── StockRepositories.kt
 │               ├── SalesRepositories.kt
 │               └── AuditRepository.kt
-├── supabase-schema.sql
-├── supabase-rls-policies.sql
+├── supabase/
+│   ├── init.sql
+│   ├── rls-policies.sql
+│   └── migration/
+│       ├── 2025122601_uuid_migration.sql
+│       ├── 2025122602_created_updated_by.sql
+│       └── 2025122603_audit_triggers.sql
 ├── SUPABASE-SETUP-GUIDE.md
 ├── SUPABASE-INTEGRATION-GUIDE.md
 └── SUPABASE-README.md (ce fichier)
@@ -100,11 +105,11 @@ medistock-app/
 ### **ÉTAPE 1 : Appliquer les scripts SQL dans Supabase** ⚠️
 
 1. Allez sur votre **Dashboard Supabase** → **SQL Editor**
-2. **Exécutez `supabase-schema.sql`** (si pas déjà fait)
+2. **Exécutez `supabase/init.sql`** (si pas déjà fait)
    - Crée les 17 tables
    - Crée les indexes et triggers
    - Insère les données initiales
-3. **Exécutez `supabase-rls-policies.sql`**
+3. **Exécutez `supabase/rls-policies.sql`**
    - Active RLS sur toutes les tables
    - Configure les politiques de sécurité
 
@@ -290,7 +295,7 @@ Pour votre usage (50 produits, 10 sites, activité normale) :
 ➡️ Vérifiez que vous avez modifié `SupabaseConfig.kt` avec vos vraies credentials
 
 ### **Erreur : "Row Level Security policy violation"**
-➡️ Vérifiez que vous avez exécuté `supabase-rls-policies.sql`
+➡️ Vérifiez que vous avez exécuté `supabase/rls-policies.sql`
 
 ### **Erreur réseau / timeout**
 ➡️ Vérifiez votre connexion Internet et les permissions Android
@@ -314,8 +319,8 @@ Pour votre usage (50 produits, 10 sites, activité normale) :
 
 Avant de commencer à utiliser Supabase :
 
-- [ ] Exécuter `supabase-schema.sql` dans Supabase SQL Editor
-- [ ] Exécuter `supabase-rls-policies.sql` dans Supabase SQL Editor
+- [ ] Exécuter `supabase/init.sql` dans Supabase SQL Editor
+- [ ] Exécuter `supabase/rls-policies.sql` dans Supabase SQL Editor
 - [ ] Configurer `SupabaseConfig.kt` avec vos credentials
 - [ ] Ajouter `SupabaseClientProvider.initialize()` au démarrage
 - [ ] Tester la connexion avec un repository
