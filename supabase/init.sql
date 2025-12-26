@@ -341,16 +341,23 @@ CREATE INDEX idx_audit_history_user ON audit_history(changed_by);
 CREATE INDEX idx_audit_history_date ON audit_history(changed_at);
 CREATE INDEX idx_audit_history_site ON audit_history(site_id);
 
--- Fonction générique pour journaliser toutes les opérations (INSERT/UPDATE/DELETE)
-CREATE OR REPLACE FUNCTION log_audit_history_trigger(site_column TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION log_audit_history_trigger()
 RETURNS TRIGGER AS $$
 DECLARE
+    site_column TEXT;
     site_value UUID;
     change_user TEXT;
     target_id UUID;
     new_value TEXT;
     old_value TEXT;
 BEGIN
+    -- Récupère l'argument facultatif passé par le trigger (nom de colonne site)
+    IF TG_NARGS > 0 THEN
+        site_column := TG_ARGV[0];
+    ELSE
+        site_column := NULL;
+    END IF;
+
     change_user := COALESCE(
         current_setting('request.jwt.claim.email', true),
         current_setting('request.jwt.claim.sub', true),

@@ -2,15 +2,22 @@
 -- Apply via Supabase SQL editor or CLI
 
 -- Ensure function exists/updated
-CREATE OR REPLACE FUNCTION log_audit_history_trigger(site_column TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION log_audit_history_trigger()
 RETURNS TRIGGER AS $$
 DECLARE
+    site_column TEXT;
     site_value UUID;
     change_user TEXT;
     target_id UUID;
     new_value TEXT;
     old_value TEXT;
 BEGIN
+    IF TG_NARGS > 0 THEN
+        site_column := TG_ARGV[0];
+    ELSE
+        site_column := NULL;
+    END IF;
+
     change_user := COALESCE(
         current_setting('request.jwt.claim.email', true),
         current_setting('request.jwt.claim.sub', true),
