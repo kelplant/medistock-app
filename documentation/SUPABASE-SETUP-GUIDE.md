@@ -15,7 +15,7 @@
 
 1. Allez sur **Dashboard Supabase** → **SQL Editor**
 2. Cliquez sur **"New query"**
-3. Copiez tout le contenu du fichier `supabase-rls-policies.sql`
+3. Copiez tout le contenu du fichier `supabase/rls-policies.sql`
 4. Collez et cliquez sur **"RUN"**
 
 **Note** : Les politiques RLS actuelles sont **permissives** (accès total) pour faciliter le développement. Vous pourrez les restreindre plus tard pour la production.

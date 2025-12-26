@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.medistock.data.dao.*
 import com.medistock.data.entities.*
+import com.medistock.data.dao.*
 
 @Database(
     entities = [
@@ -61,6 +61,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "medistock-db"
                 )
                 .fallbackToDestructiveMigration() // Allow destructive migration for development
+                .addCallback(AuditTriggerInitializer.createCallback())
                 .build().also { INSTANCE = it }
             }
         }
