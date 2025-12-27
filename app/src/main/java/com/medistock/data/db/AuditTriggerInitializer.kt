@@ -201,32 +201,32 @@ object AuditTriggerInitializer {
                 "id",
                 "username",
                 "password",
-                "fullName",
-                "isAdmin",
-                "isActive",
-                "createdAt",
-                "updatedAt",
-                "createdBy",
-                "updatedBy"
+                "full_name",
+                "is_admin",
+                "is_active",
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by"
             ),
-            userColumns = listOf("updatedBy", "createdBy")
+            userColumns = listOf("updated_by", "created_by")
         ),
         TableConfig(
             tableName = "user_permissions",
             columns = listOf(
                 "id",
-                "userId",
+                "user_id",
                 "module",
-                "canView",
-                "canCreate",
-                "canEdit",
-                "canDelete",
-                "createdAt",
-                "updatedAt",
-                "createdBy",
-                "updatedBy"
+                "can_view",
+                "can_create",
+                "can_edit",
+                "can_delete",
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by"
             ),
-            userColumns = listOf("updatedBy", "createdBy")
+            userColumns = listOf("updated_by", "created_by")
         ),
         TableConfig(
             tableName = "customers",
