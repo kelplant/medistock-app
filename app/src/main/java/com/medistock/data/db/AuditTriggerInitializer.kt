@@ -201,32 +201,32 @@ object AuditTriggerInitializer {
                 "id",
                 "username",
                 "password",
-                "fullName",
-                "isAdmin",
-                "isActive",
-                "createdAt",
-                "updatedAt",
-                "createdBy",
-                "updatedBy"
+                "full_name",
+                "is_admin",
+                "is_active",
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by"
             ),
-            userColumns = listOf("updatedBy", "createdBy")
+            userColumns = listOf("updated_by", "created_by")
         ),
         TableConfig(
             tableName = "user_permissions",
             columns = listOf(
                 "id",
-                "userId",
+                "user_id",
                 "module",
-                "canView",
-                "canCreate",
-                "canEdit",
-                "canDelete",
-                "createdAt",
-                "updatedAt",
-                "createdBy",
-                "updatedBy"
+                "can_view",
+                "can_create",
+                "can_edit",
+                "can_delete",
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by"
             ),
-            userColumns = listOf("updatedBy", "createdBy")
+            userColumns = listOf("updated_by", "created_by")
         ),
         TableConfig(
             tableName = "customers",
@@ -281,6 +281,7 @@ object AuditTriggerInitializer {
 
     private fun createTriggers(db: SupportSQLiteDatabase) {
         tableConfigs.forEach { config ->
+            dropExistingTriggers(db, config.tableName)
             db.execSQL(buildInsertTrigger(config))
             db.execSQL(buildUpdateTrigger(config))
             db.execSQL(buildDeleteTrigger(config))
@@ -292,8 +293,9 @@ object AuditTriggerInitializer {
             CREATE TRIGGER IF NOT EXISTS audit_${config.tableName}_insert
             AFTER INSERT ON ${config.tableName}
             BEGIN
-                INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
+                INSERT INTO audit_history (id, entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
                 VALUES (
+                    ${buildUuidExpr()},
                     '${config.tableName}',
                     CAST(NEW."${config.idColumn}" AS TEXT),
                     'INSERT',
@@ -314,8 +316,9 @@ object AuditTriggerInitializer {
             CREATE TRIGGER IF NOT EXISTS audit_${config.tableName}_update
             AFTER UPDATE ON ${config.tableName}
             BEGIN
-                INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
+                INSERT INTO audit_history (id, entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
                 VALUES (
+                    ${buildUuidExpr()},
                     '${config.tableName}',
                     CAST(NEW."${config.idColumn}" AS TEXT),
                     'UPDATE',
@@ -336,8 +339,9 @@ object AuditTriggerInitializer {
             CREATE TRIGGER IF NOT EXISTS audit_${config.tableName}_delete
             AFTER DELETE ON ${config.tableName}
             BEGIN
-                INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
+                INSERT INTO audit_history (id, entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
                 VALUES (
+                    ${buildUuidExpr()},
                     '${config.tableName}',
                     CAST(OLD."${config.idColumn}" AS TEXT),
                     'DELETE',
@@ -367,5 +371,15 @@ object AuditTriggerInitializer {
 
     private fun buildSiteExpr(alias: String, siteIdColumn: String?): String {
         return if (siteIdColumn != null) "$alias.\"$siteIdColumn\"" else "NULL"
+    }
+
+    private fun buildUuidExpr(): String {
+        return "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))"
+    }
+
+    private fun dropExistingTriggers(db: SupportSQLiteDatabase, tableName: String) {
+        db.execSQL("DROP TRIGGER IF EXISTS audit_${tableName}_insert")
+        db.execSQL("DROP TRIGGER IF EXISTS audit_${tableName}_update")
+        db.execSQL("DROP TRIGGER IF EXISTS audit_${tableName}_delete")
     }
 }
