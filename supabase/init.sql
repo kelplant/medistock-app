@@ -358,6 +358,11 @@ BEGIN
         site_column := NULL;
     END IF;
 
+    -- Normalise les valeurs vides/NULL explicites passées par le trigger helper
+    IF site_column IS NULL OR site_column = '' OR lower(site_column) = 'null' THEN
+        site_column := NULL;
+    END IF;
+
     change_user := COALESCE(
         current_setting('request.jwt.claim.email', true),
         current_setting('request.jwt.claim.sub', true),
