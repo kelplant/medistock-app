@@ -201,32 +201,32 @@ object AuditTriggerInitializer {
                 "id",
                 "username",
                 "password",
-                "fullName",
-                "isAdmin",
-                "isActive",
-                "createdAt",
-                "updatedAt",
-                "createdBy",
-                "updatedBy"
+                "full_name",
+                "is_admin",
+                "is_active",
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by"
             ),
-            userColumns = listOf("updatedBy", "createdBy")
+            userColumns = listOf("updated_by", "created_by")
         ),
         TableConfig(
             tableName = "user_permissions",
             columns = listOf(
                 "id",
-                "userId",
+                "user_id",
                 "module",
-                "canView",
-                "canCreate",
-                "canEdit",
-                "canDelete",
-                "createdAt",
-                "updatedAt",
-                "createdBy",
-                "updatedBy"
+                "can_view",
+                "can_create",
+                "can_edit",
+                "can_delete",
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by"
             ),
-            userColumns = listOf("updatedBy", "createdBy")
+            userColumns = listOf("updated_by", "created_by")
         ),
         TableConfig(
             tableName = "customers",
@@ -281,6 +281,7 @@ object AuditTriggerInitializer {
 
     private fun createTriggers(db: SupportSQLiteDatabase) {
         tableConfigs.forEach { config ->
+            dropExistingTriggers(db, config.tableName)
             db.execSQL(buildInsertTrigger(config))
             db.execSQL(buildUpdateTrigger(config))
             db.execSQL(buildDeleteTrigger(config))
@@ -367,5 +368,11 @@ object AuditTriggerInitializer {
 
     private fun buildSiteExpr(alias: String, siteIdColumn: String?): String {
         return if (siteIdColumn != null) "$alias.\"$siteIdColumn\"" else "NULL"
+    }
+
+    private fun dropExistingTriggers(db: SupportSQLiteDatabase, tableName: String) {
+        db.execSQL("DROP TRIGGER IF EXISTS audit_${tableName}_insert")
+        db.execSQL("DROP TRIGGER IF EXISTS audit_${tableName}_update")
+        db.execSQL("DROP TRIGGER IF EXISTS audit_${tableName}_delete")
     }
 }
