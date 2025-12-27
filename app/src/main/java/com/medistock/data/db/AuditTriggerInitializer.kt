@@ -293,8 +293,9 @@ object AuditTriggerInitializer {
             CREATE TRIGGER IF NOT EXISTS audit_${config.tableName}_insert
             AFTER INSERT ON ${config.tableName}
             BEGIN
-                INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
+                INSERT INTO audit_history (id, entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
                 VALUES (
+                    ${buildUuidExpr()},
                     '${config.tableName}',
                     CAST(NEW."${config.idColumn}" AS TEXT),
                     'INSERT',
@@ -315,8 +316,9 @@ object AuditTriggerInitializer {
             CREATE TRIGGER IF NOT EXISTS audit_${config.tableName}_update
             AFTER UPDATE ON ${config.tableName}
             BEGIN
-                INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
+                INSERT INTO audit_history (id, entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
                 VALUES (
+                    ${buildUuidExpr()},
                     '${config.tableName}',
                     CAST(NEW."${config.idColumn}" AS TEXT),
                     'UPDATE',
@@ -337,8 +339,9 @@ object AuditTriggerInitializer {
             CREATE TRIGGER IF NOT EXISTS audit_${config.tableName}_delete
             AFTER DELETE ON ${config.tableName}
             BEGIN
-                INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
+                INSERT INTO audit_history (id, entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
                 VALUES (
+                    ${buildUuidExpr()},
                     '${config.tableName}',
                     CAST(OLD."${config.idColumn}" AS TEXT),
                     'DELETE',
@@ -368,6 +371,10 @@ object AuditTriggerInitializer {
 
     private fun buildSiteExpr(alias: String, siteIdColumn: String?): String {
         return if (siteIdColumn != null) "$alias.\"$siteIdColumn\"" else "NULL"
+    }
+
+    private fun buildUuidExpr(): String {
+        return "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))"
     }
 
     private fun dropExistingTriggers(db: SupportSQLiteDatabase, tableName: String) {
