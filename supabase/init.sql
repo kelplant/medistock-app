@@ -350,11 +350,18 @@ DECLARE
     target_id UUID;
     new_value TEXT;
     old_value TEXT;
+    new_value_payload TEXT;
+    old_value_payload TEXT;
 BEGIN
     -- Récupère l'argument facultatif passé par le trigger (nom de colonne site)
     IF TG_NARGS > 0 THEN
         site_column := TG_ARGV[0];
     ELSE
+        site_column := NULL;
+    END IF;
+
+    -- Normalise les valeurs vides/NULL explicites passées par le trigger helper
+    IF site_column IS NULL OR site_column = '' OR lower(site_column) = 'null' THEN
         site_column := NULL;
     END IF;
 
@@ -379,14 +386,14 @@ BEGIN
 
     -- Préparer les valeurs JSON pour la déduplication et l'insertion
     IF TG_OP = 'INSERT' THEN
-        old_value := NULL;
-        new_value := to_jsonb(NEW)::text;
+        old_value_payload := NULL;
+        new_value_payload := to_jsonb(NEW)::text;
     ELSIF TG_OP = 'UPDATE' THEN
-        old_value := to_jsonb(OLD)::text;
-        new_value := to_jsonb(NEW)::text;
+        old_value_payload := to_jsonb(OLD)::text;
+        new_value_payload := to_jsonb(NEW)::text;
     ELSE -- DELETE
-        old_value := to_jsonb(OLD)::text;
-        new_value := NULL;
+        old_value_payload := to_jsonb(OLD)::text;
+        new_value_payload := NULL;
     END IF;
 
     -- Éviter les doublons si l'app a déjà écrit dans audit_history pour cette opération
@@ -397,12 +404,12 @@ BEGIN
           AND ah.entity_id = target_id
           AND ah.action_type = TG_OP
           AND (
-              (ah.old_value IS NOT DISTINCT FROM old_value)
-              OR ah.old_value IS NULL AND old_value IS NULL
+              (ah.old_value IS NOT DISTINCT FROM old_value_payload)
+              OR ah.old_value IS NULL AND old_value_payload IS NULL
           )
           AND (
-              (ah.new_value IS NOT DISTINCT FROM new_value)
-              OR ah.new_value IS NULL AND new_value IS NULL
+              (ah.new_value IS NOT DISTINCT FROM new_value_payload)
+              OR ah.new_value IS NULL AND new_value_payload IS NULL
           )
     ) THEN
         IF TG_OP = 'DELETE' THEN
@@ -414,15 +421,15 @@ BEGIN
 
     IF TG_OP = 'INSERT' THEN
         INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
-        VALUES (TG_TABLE_NAME, target_id, 'INSERT', 'ALL_FIELDS', NULL, new_value, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
+        VALUES (TG_TABLE_NAME, target_id, 'INSERT', 'ALL_FIELDS', NULL, new_value_payload, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
         RETURN NEW;
     ELSIF TG_OP = 'UPDATE' THEN
         INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
-        VALUES (TG_TABLE_NAME, target_id, 'UPDATE', 'ALL_FIELDS', old_value, new_value, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
+        VALUES (TG_TABLE_NAME, target_id, 'UPDATE', 'ALL_FIELDS', old_value_payload, new_value_payload, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
         RETURN NEW;
     ELSIF TG_OP = 'DELETE' THEN
         INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
-        VALUES (TG_TABLE_NAME, target_id, 'DELETE', 'ALL_FIELDS', old_value, NULL, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
+        VALUES (TG_TABLE_NAME, target_id, 'DELETE', 'ALL_FIELDS', old_value_payload, NULL, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
         RETURN OLD;
     END IF;
     RETURN NULL;
