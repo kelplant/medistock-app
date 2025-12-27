@@ -1,6 +1,3 @@
--- Handle null/empty site column arguments in audit trigger
--- Ensures audit triggers don't attempt to format a "null" column name
-
 CREATE OR REPLACE FUNCTION log_audit_history_trigger()
 RETURNS TRIGGER AS $$
 DECLARE
