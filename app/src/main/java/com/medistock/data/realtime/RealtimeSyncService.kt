@@ -115,8 +115,10 @@ object RealtimeSyncService {
 
         currentScope.launch {
             flow.collect { action ->
-                runCatching { handler(action) }.onFailure {
-                    Log.e(TAG, "Error handling realtime change for $table", it)
+                try {
+                    handler(action)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error handling realtime change for $table", e)
                 }
             }
         }
