@@ -23,11 +23,11 @@ class SyncManager(
     private val scope = CoroutineScope(Dispatchers.IO)
 
     // Repositories Supabase
-    private val productRepo = ProductSupabaseRepository()
-    private val categoryRepo = CategorySupabaseRepository()
-    private val siteRepo = SiteSupabaseRepository()
-    private val customerRepo = CustomerSupabaseRepository()
-    private val packagingTypeRepo = PackagingTypeSupabaseRepository()
+    private val productRepo by lazy { ProductSupabaseRepository() }
+    private val categoryRepo by lazy { CategorySupabaseRepository() }
+    private val siteRepo by lazy { SiteSupabaseRepository() }
+    private val customerRepo by lazy { CustomerSupabaseRepository() }
+    private val packagingTypeRepo by lazy { PackagingTypeSupabaseRepository() }
 
     /**
      * Synchronise toutes les données de Room vers Supabase
