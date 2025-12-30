@@ -14,6 +14,7 @@ class SupabasePreferences(context: Context) {
         private const val KEY_API_KEY = "supabase_key"
         private const val KEY_CONFIGURED = "is_configured"
         private const val KEY_SYNC_MODE = "sync_mode"
+        private const val KEY_ENABLE_REALTIME = "enable_realtime"
     }
 
     enum class SyncMode {
@@ -52,6 +53,16 @@ class SupabasePreferences(context: Context) {
     fun getSyncMode(): SyncMode {
         val stored = preferences.getString(KEY_SYNC_MODE, SyncMode.LOCAL.name) ?: SyncMode.LOCAL.name
         return runCatching { SyncMode.valueOf(stored) }.getOrDefault(SyncMode.LOCAL)
+    }
+
+    fun setRealtimeEnabled(enabled: Boolean) {
+        preferences.edit()
+            .putBoolean(KEY_ENABLE_REALTIME, enabled)
+            .apply()
+    }
+
+    fun isRealtimeEnabled(): Boolean {
+        return preferences.getBoolean(KEY_ENABLE_REALTIME, true)
     }
 
     fun clearConfiguration() {
