@@ -647,9 +647,9 @@ INSERT INTO packaging_types (name, level1_name, level2_name, default_conversion_
     ('Units', 'Units', NULL, NULL, 'system');
 
 -- Créer un utilisateur admin par défaut (password: admin123)
--- Hash BCrypt de "admin123": $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+-- Hash BCrypt de "admin": $2a$12$hNbp4sTlxIZe8pxNbi3uuOtBxZ3K7iiKolTTCDOidr3zalaWNbVUG
 INSERT INTO app_users (username, password, full_name, is_admin, is_active, created_by) VALUES
-    ('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Administrateur', TRUE, TRUE, 'system');
+    ('admin', '$2a$12$hNbp4sTlxIZe8pxNbi3uuOtBxZ3K7iiKolTTCDOidr3zalaWNbVUG', 'Administrateur', TRUE, TRUE, 'system');
 
 -- ============================================================================
 -- FIN DU SCHÉMA
