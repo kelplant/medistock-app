@@ -14,9 +14,11 @@ import com.medistock.util.SupabasePreferences
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.RealtimeChannel
+import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.decodeOldRecordOrNull
 import io.github.jan.supabase.realtime.decodeRecordOrNull
 import io.github.jan.supabase.realtime.postgresChangeFlow
+import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -97,8 +99,10 @@ object RealtimeSyncService {
         if (realtime != null && channels.isNotEmpty()) {
             CoroutineScope(Dispatchers.IO).launch {
                 channels.forEach { channel ->
-                    runCatching { realtime.removeChannel(channel) }.onFailure {
-                        Log.e(TAG, "Error removing realtime channel ${channel.topic}", it)
+                    try {
+                        realtime.removeChannel(channel)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error removing realtime channel ${channel.topic}", e)
                     }
                 }
             }
