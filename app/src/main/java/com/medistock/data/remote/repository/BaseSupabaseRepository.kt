@@ -2,6 +2,11 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.postgrest.from
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Repository de base avec les opérations CRUD communes pour toutes les tables
@@ -63,7 +68,8 @@ abstract class BaseSupabaseRepository(
      * Utilise la clé primaire 'id' pour détecter les conflits
      */
     suspend inline fun <reified R : Any> upsert(item: R): R {
-        return supabase.from(tableName).upsert(item) {
+        val payload = withClientId(item)
+        return supabase.from(tableName).upsert(payload) {
             select()
         }.decodeSingle()
     }
@@ -77,5 +83,18 @@ abstract class BaseSupabaseRepository(
                 eq("id", id)
             }
         }
+    }
+
+    private inline fun <reified R : Any> withClientId(item: R): Any {
+        val currentClientId = SupabaseClientProvider.getClientId() ?: return item
+        val element = runCatching { Json.encodeToJsonElement(item) }.getOrNull()
+        val baseObject = element?.jsonObject ?: return item
+
+        return JsonObject(
+            buildMap {
+                baseObject.forEach { (key, value) -> put(key, value) }
+                put("client_id", Json.encodeToJsonElement(currentClientId))
+            }
+        )
     }
 }
