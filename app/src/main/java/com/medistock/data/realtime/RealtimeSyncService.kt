@@ -51,8 +51,10 @@ object RealtimeSyncService {
             return
         }
 
-        val realtime = runCatching { SupabaseClientProvider.client.realtime }.getOrElse {
-            Log.e(TAG, "Supabase client not available: ${it.message}", it)
+        val realtime = try {
+            SupabaseClientProvider.client.realtime
+        } catch (e: Exception) {
+            Log.e(TAG, "Supabase client not available: ${e.message}", e)
             return
         }
 
@@ -87,7 +89,11 @@ object RealtimeSyncService {
         scope?.cancel()
         scope = null
 
-        val realtime = runCatching { SupabaseClientProvider.client.realtime }.getOrNull()
+        val realtime = try {
+            SupabaseClientProvider.client.realtime
+        } catch (e: Exception) {
+            null
+        }
         if (realtime != null && channels.isNotEmpty()) {
             CoroutineScope(Dispatchers.IO).launch {
                 channels.forEach { channel ->
