@@ -1,7 +1,7 @@
 package com.medistock.data.sync
 
 import com.medistock.data.remote.SupabaseClientProvider
-import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.realtime.PostgresAction
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
@@ -20,7 +20,7 @@ object RealtimeSyncService {
     /**
      * Indique si l'événement doit être appliqué localement.
      */
-    fun shouldProcess(change: Realtime): Boolean {
+    fun shouldProcess(change: PostgresAction): Boolean {
         val remoteClientId = extractClientId(change)
         val currentClientId = localClientId
 
@@ -32,11 +32,12 @@ object RealtimeSyncService {
         return true
     }
 
-    private fun extractClientId(change: Realtime): String? {
+    private fun extractClientId(change: PostgresAction): String? {
         val record = when (change) {
-            is Realtime.Insert -> change.record
-            is Realtime.Update -> change.record
-            is Realtime.Delete -> change.oldRecord
+            is PostgresAction.Insert -> change.record
+            is PostgresAction.Update -> change.record
+            is PostgresAction.Select -> change.record
+            is PostgresAction.Delete -> change.oldRecord
         }
 
         return record["client_id"]?.jsonPrimitive?.contentOrNull
