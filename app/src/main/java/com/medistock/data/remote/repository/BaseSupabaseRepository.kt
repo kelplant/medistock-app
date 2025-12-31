@@ -87,7 +87,8 @@ abstract class BaseSupabaseRepository(
         }
     }
 
-    private inline fun <reified R : Any> withClientId(item: R): Any {
+    @PublishedApi
+    internal inline fun <reified R : Any> withClientId(item: R): Any {
         val currentClientId = SupabaseClientProvider.getClientId() ?: return item
         val element = runCatching { Json.encodeToJsonElement(item) }.getOrNull()
         val baseObject = element?.jsonObject ?: return item
