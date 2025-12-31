@@ -18,6 +18,7 @@ object SupabaseClientProvider {
 
     private var _client: SupabaseClient? = null
     private var appContext: Context? = null
+    private var clientId: String? = null
 
     /**
      * Instance unique du client Supabase
@@ -44,6 +45,7 @@ object SupabaseClientProvider {
         try {
             appContext = context.applicationContext
             val prefs = SupabasePreferences(appContext!!)
+            clientId = prefs.getOrCreateClientId()
 
             val url = prefs.getSupabaseUrl()
             val key = prefs.getSupabaseKey()
@@ -81,6 +83,16 @@ object SupabaseClientProvider {
             e.printStackTrace()
             // Ne pas re-throw l'exception pour éviter que l'app crash au démarrage
         }
+    }
+
+    /**
+     * Identifiant unique du client local utilisé pour différencier les événements Realtime
+     */
+    fun getClientId(): String? {
+        if (clientId == null && appContext != null) {
+            clientId = SupabasePreferences(appContext!!).getOrCreateClientId()
+        }
+        return clientId
     }
 
     /**
