@@ -33,6 +33,11 @@ object SyncScheduler {
 
         if (SupabaseClientProvider.isConfigured(appContext) && NetworkStatus.isOnline(appContext)) {
             triggerImmediate(appContext, "app-start")
+            if (RealtimeSyncService.isRealtimeEnabled(appContext)) {
+                RealtimeSyncService.start(appContext)
+            } else {
+                RealtimeSyncService.stop()
+            }
         }
     }
 
@@ -85,13 +90,15 @@ object SyncScheduler {
                     if (SupabaseClientProvider.isConfigured(context)) {
                         SupabaseClientProvider.reinitialize(context)
                         triggerImmediate(context, "network-available")
-                        com.medistock.data.realtime.RealtimeSyncService.start(context)
+                        if (RealtimeSyncService.isRealtimeEnabled(context)) {
+                            RealtimeSyncService.start(context)
+                        }
                     }
                 }
 
                 override fun onLost(network: Network) {
                     updateSyncMode(context, false)
-                    com.medistock.data.realtime.RealtimeSyncService.stop()
+                    RealtimeSyncService.stop()
                 }
             }
         )
