@@ -10,6 +10,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.util.NetworkStatus
@@ -83,6 +84,7 @@ object SyncScheduler {
                     updateSyncMode(context, true)
                     if (SupabaseClientProvider.isConfigured(context)) {
                         SupabaseClientProvider.reinitialize(context)
+                        RealtimeSyncService.start(context)
                         triggerImmediate(context, "network-available")
                         RealtimeSyncService.start(context)
                     }
@@ -102,7 +104,7 @@ object SyncScheduler {
     private fun updateSyncMode(context: Context, isOnline: Boolean) {
         val preferences = SupabasePreferences(context)
         val configured = SupabaseClientProvider.isConfigured(context)
-        val mode = if (configured && isOnline) {
+        val mode = if (configured && isOnline && preferences.isRealtimeEnabled()) {
             SupabasePreferences.SyncMode.REALTIME
         } else {
             SupabasePreferences.SyncMode.LOCAL

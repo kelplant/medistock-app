@@ -31,6 +31,7 @@ class ProductAddEditActivity : AppCompatActivity() {
     private lateinit var spinnerSelectedLevel: Spinner
     private lateinit var spinnerMarginType: Spinner
     private lateinit var editMarginValue: EditText
+    private lateinit var editDescription: EditText
     private lateinit var editConversionFactor: EditText
     private lateinit var textConversionFactorLabel: TextView
     private lateinit var textMarginInfo: TextView
@@ -63,6 +64,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         spinnerSelectedLevel = findViewById(R.id.spinnerSelectedLevel)
         spinnerMarginType = findViewById(R.id.spinnerMarginType)
         editMarginValue = findViewById(R.id.editMarginValue)
+        editDescription = findViewById(R.id.editProductDescription)
         editConversionFactor = findViewById(R.id.editConversionFactor)
         textConversionFactorLabel = findViewById(R.id.textConversionFactorLabel)
         textMarginInfo = findViewById(R.id.textMarginInfo)
@@ -243,6 +245,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                     existingProduct = product
                     editName.setText(product.name)
                     editMarginValue.setText((product.marginValue ?: 0.0).toString())
+                    editDescription.setText(product.description.orEmpty())
 
                     // Select the category
                     val categoryIndex = categories.indexOfFirst { it.id == product.categoryId }
@@ -286,6 +289,7 @@ class ProductAddEditActivity : AppCompatActivity() {
 
     private fun saveProduct() {
         val productName = editName.text.toString().trim()
+        val descriptionText = editDescription.text.toString().trim().ifBlank { null }
         val marginText = editMarginValue.text.toString()
         val conversionFactorText = editConversionFactor.text.toString()
 
@@ -342,6 +346,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
+                description = descriptionText,
                 siteId = currentSiteId!!,
                 createdBy = currentUser,
                 updatedBy = currentUser
@@ -360,6 +365,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
+                description = descriptionText,
                 siteId = currentSiteId!!,
                 createdAt = createdAt,
                 updatedAt = System.currentTimeMillis(),
