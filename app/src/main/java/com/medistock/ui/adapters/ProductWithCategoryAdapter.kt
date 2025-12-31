@@ -14,6 +14,7 @@ class ProductWithCategoryAdapter(private val products: List<ProductWithCategory>
     class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textProductName: TextView = itemView.findViewById(R.id.textProductName)
         val textProductCategory: TextView = itemView.findViewById(R.id.textProductCategory)
+        val textProductDescription: TextView = itemView.findViewById(R.id.textProductDescription)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
@@ -25,6 +26,7 @@ class ProductWithCategoryAdapter(private val products: List<ProductWithCategory>
         val product = products[position]
         holder.textProductName.text = product.name
         holder.textProductCategory.text = product.categoryName
+        holder.textProductDescription.text = product.description.orEmpty()
     }
 
     override fun getItemCount(): Int = products.size

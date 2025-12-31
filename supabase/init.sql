@@ -130,6 +130,7 @@ CREATE TABLE products (
     -- Marge
     margin_type TEXT,
     margin_value DOUBLE PRECISION,
+    description TEXT,
 
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
 
@@ -611,6 +612,7 @@ CREATE OR REPLACE VIEW current_stock AS
 SELECT
     p.id as product_id,
     p.name as product_name,
+    p.description,
     p.site_id,
     s.name as site_name,
     COALESCE(SUM(pb.remaining_quantity), 0) as current_stock,
@@ -624,7 +626,7 @@ SELECT
 FROM products p
 LEFT JOIN purchase_batches pb ON p.id = pb.product_id AND pb.is_exhausted = FALSE
 LEFT JOIN sites s ON p.site_id = s.id
-GROUP BY p.id, p.name, p.site_id, s.name, p.min_stock, p.max_stock;
+GROUP BY p.id, p.name, p.description, p.site_id, s.name, p.min_stock, p.max_stock;
 
 -- ============================================================================
 -- DONNÉES INITIALES (EXEMPLES)
