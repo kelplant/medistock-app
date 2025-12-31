@@ -19,6 +19,7 @@ data class ProductDto(
     @SerialName("category_id") val categoryId: String? = null,
     @SerialName("margin_type") val marginType: String? = null,
     @SerialName("margin_value") val marginValue: Double? = null,
+    val description: String? = null,
     @SerialName("site_id") val siteId: String,
     @SerialName("min_stock") val minStock: Double? = 0.0,
     @SerialName("max_stock") val maxStock: Double? = 0.0,
