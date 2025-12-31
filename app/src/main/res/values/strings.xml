@@ -7,6 +7,8 @@
     <string name="selling_price_template">Calculated selling price: %.2f</string>
     <string name="product_name">Product Name</string>
     <string name="product_name_hint">Enter product name</string>
+    <string name="product_description">Description</string>
+    <string name="product_description_hint">Optional details (form, dosage, etc.)</string>
     <string name="category">Category</string>
     <string name="unit">Unit</string>
     <string name="margin_type">Margin Type</string>
