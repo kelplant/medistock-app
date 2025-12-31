@@ -1,8 +1,6 @@
-package com.medistock.data.realtime
+package com.medistock.data.sync
 
-import android.content.Context
 import com.medistock.data.remote.SupabaseClientProvider
-import com.medistock.util.SupabasePreferences
 import io.github.jan.supabase.realtime.PostgresAction
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -18,11 +16,6 @@ object RealtimeSyncService {
 
     private val localClientId: String?
         get() = SupabaseClientProvider.getClientId()
-
-    fun isRealtimeEnabled(context: Context): Boolean {
-        val prefs = SupabasePreferences(context)
-        return prefs.getSyncMode() == SupabasePreferences.SyncMode.REALTIME
-    }
 
     /**
      * Indique si l'événement doit être appliqué localement.

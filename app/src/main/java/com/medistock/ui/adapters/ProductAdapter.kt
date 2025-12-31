@@ -22,6 +22,7 @@ class ProductAdapter(
     class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textProductName: TextView = itemView.findViewById(R.id.textProductName)
         val textProductCategory: TextView = itemView.findViewById(R.id.textProductCategory)
+        val textProductDescription: TextView = itemView.findViewById(R.id.textProductDescription)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
@@ -33,6 +34,7 @@ class ProductAdapter(
         val product = products[position]
         holder.textProductName.text = product.name
         holder.textProductCategory.text = "${product.unit} - ${product.unitVolume}"
+        holder.textProductDescription.text = product.description.orEmpty()
         holder.itemView.setOnClickListener { onClick(product) }
     }
 
