@@ -2,6 +2,7 @@ package com.medistock.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.util.UUID
 
 class SupabasePreferences(context: Context) {
 
@@ -14,7 +15,7 @@ class SupabasePreferences(context: Context) {
         private const val KEY_API_KEY = "supabase_key"
         private const val KEY_CONFIGURED = "is_configured"
         private const val KEY_SYNC_MODE = "sync_mode"
-        private const val KEY_ENABLE_REALTIME = "enable_realtime"
+        private const val KEY_CLIENT_ID = "client_id"
     }
 
     enum class SyncMode {
@@ -55,14 +56,17 @@ class SupabasePreferences(context: Context) {
         return runCatching { SyncMode.valueOf(stored) }.getOrDefault(SyncMode.LOCAL)
     }
 
-    fun setRealtimeEnabled(enabled: Boolean) {
-        preferences.edit()
-            .putBoolean(KEY_ENABLE_REALTIME, enabled)
-            .apply()
-    }
+    fun getOrCreateClientId(): String {
+        val existing = preferences.getString(KEY_CLIENT_ID, null)
+        if (!existing.isNullOrBlank()) {
+            return existing
+        }
 
-    fun isRealtimeEnabled(): Boolean {
-        return preferences.getBoolean(KEY_ENABLE_REALTIME, true)
+        val newId = UUID.randomUUID().toString()
+        preferences.edit()
+            .putString(KEY_CLIENT_ID, newId)
+            .apply()
+        return newId
     }
 
     fun clearConfiguration() {
