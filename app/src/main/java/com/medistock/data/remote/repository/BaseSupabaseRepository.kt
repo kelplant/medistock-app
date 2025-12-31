@@ -46,7 +46,8 @@ abstract class BaseSupabaseRepository(
      * Crée un nouvel enregistrement
      */
     suspend inline fun <reified R : Any> create(item: R): R {
-        return supabase.from(tableName).insert(item) {
+        val payload = withClientId(item)
+        return supabase.from(tableName).insert(payload) {
             select()
         }.decodeSingle()
     }
@@ -55,7 +56,8 @@ abstract class BaseSupabaseRepository(
      * Met à jour un enregistrement
      */
     suspend inline fun <reified R : Any> update(id: String, item: R): R {
-        return supabase.from(tableName).update(item) {
+        val payload = withClientId(item)
+        return supabase.from(tableName).update(payload) {
             select()
             filter {
                 eq("id", id)
