@@ -11,6 +11,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.util.NetworkStatus
 import com.medistock.util.SupabasePreferences
 import java.util.concurrent.TimeUnit
@@ -83,11 +84,13 @@ object SyncScheduler {
                     if (SupabaseClientProvider.isConfigured(context)) {
                         SupabaseClientProvider.reinitialize(context)
                         triggerImmediate(context, "network-available")
+                        RealtimeSyncService.start(context)
                     }
                 }
 
                 override fun onLost(network: Network) {
                     updateSyncMode(context, false)
+                    RealtimeSyncService.stop()
                 }
             }
         )
