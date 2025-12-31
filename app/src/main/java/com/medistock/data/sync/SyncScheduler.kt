@@ -3,7 +3,9 @@ package com.medistock.data.sync
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -12,7 +14,6 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.data.remote.SupabaseClientProvider
-import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.util.NetworkStatus
 import com.medistock.util.SupabasePreferences
 import java.util.concurrent.TimeUnit
@@ -29,7 +30,11 @@ object SyncScheduler {
         val appContext = context.applicationContext
         scheduleNext(appContext)
         updateSyncMode(appContext, NetworkStatus.isOnline(appContext))
-        registerNetworkCallback(appContext)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            registerNetworkCallback(appContext)
+        } else {
+            Log.w(TAG, "Skipping network callback registration: API < 24")
+        }
 
         if (SupabaseClientProvider.isConfigured(appContext) && NetworkStatus.isOnline(appContext)) {
             triggerImmediate(appContext, "app-start")
@@ -75,6 +80,7 @@ object SyncScheduler {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun registerNetworkCallback(context: Context) {
         if (networkCallbackRegistered) {
             return
@@ -111,7 +117,7 @@ object SyncScheduler {
     private fun updateSyncMode(context: Context, isOnline: Boolean) {
         val preferences = SupabasePreferences(context)
         val configured = SupabaseClientProvider.isConfigured(context)
-        val mode = if (configured && isOnline && preferences.isRealtimeEnabled()) {
+        val mode = if (configured && isOnline) {
             SupabasePreferences.SyncMode.REALTIME
         } else {
             SupabasePreferences.SyncMode.LOCAL
