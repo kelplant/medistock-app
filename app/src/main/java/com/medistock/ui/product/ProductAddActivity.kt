@@ -28,6 +28,7 @@ class ProductAddActivity : AppCompatActivity() {
     private lateinit var spinnerUnit: Spinner
     private lateinit var spinnerMarginType: Spinner
     private lateinit var editMarginValue: EditText
+    private lateinit var editDescription: EditText
     private lateinit var editUnitVolume: EditText
     private lateinit var textUnitVolumeLabel: TextView
     private lateinit var textMarginInfo: TextView
@@ -54,6 +55,7 @@ class ProductAddActivity : AppCompatActivity() {
         spinnerUnit = findViewById(R.id.spinnerUnit)
         spinnerMarginType = findViewById(R.id.spinnerMarginType)
         editMarginValue = findViewById(R.id.editMarginValue)
+        editDescription = findViewById(R.id.editProductDescription)
         editUnitVolume = findViewById(R.id.editUnitVolume)
         textUnitVolumeLabel = findViewById(R.id.textUnitVolumeLabel)
         textMarginInfo = findViewById(R.id.textMarginInfo)
@@ -149,6 +151,7 @@ class ProductAddActivity : AppCompatActivity() {
 
         btnSave.setOnClickListener {
             val productName = editName.text.toString().trim()
+            val descriptionText = editDescription.text.toString().trim().ifBlank { null }
             val marginText = editMarginValue.text.toString()
             val unitVolumeText = editUnitVolume.text.toString()
 
@@ -200,6 +203,7 @@ class ProductAddActivity : AppCompatActivity() {
                 unit = selectedUnit,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
+                description = descriptionText,
                 unitVolume = enteredUnitVolume,
                 siteId = currentSiteId!!,
                 createdBy = currentUser,

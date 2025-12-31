@@ -20,6 +20,7 @@ data class Product(
     val categoryId: String?,  // Nullable to match queries
     val marginType: String?,  // Nullable
     val marginValue: Double?,  // Nullable
+    val description: String? = null,
     val siteId: String,
     val minStock: Double? = 0.0,
     val maxStock: Double? = 0.0,

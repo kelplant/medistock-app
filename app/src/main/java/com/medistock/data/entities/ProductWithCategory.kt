@@ -9,6 +9,7 @@ data class ProductWithCategory(
     val marginType: String?,
     val marginValue: Double?,
     val unitVolume: Double?,
+    val description: String?,
     val siteId: String,
     val minStock: Double?,
     val maxStock: Double?
