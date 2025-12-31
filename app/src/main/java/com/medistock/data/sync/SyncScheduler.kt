@@ -84,18 +84,18 @@ object SyncScheduler {
                     updateSyncMode(context, true)
                     if (SupabaseClientProvider.isConfigured(context)) {
                         SupabaseClientProvider.reinitialize(context)
-                        RealtimeSyncService.start(context)
                         triggerImmediate(context, "network-available")
-                        RealtimeSyncService.start(context)
+                        com.medistock.data.realtime.RealtimeSyncService.start(context)
                     }
                 }
 
                 override fun onLost(network: Network) {
                     updateSyncMode(context, false)
-                    RealtimeSyncService.stop()
+                    com.medistock.data.realtime.RealtimeSyncService.stop()
                 }
             }
         )
+
 
         networkCallbackRegistered = true
         Log.d(TAG, "Network callback registered for auto sync")
