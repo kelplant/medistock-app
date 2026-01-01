@@ -8,14 +8,21 @@ import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
+import io.github.jan.supabase.realtime.realtime
 import org.conscrypt.Conscrypt
 import java.security.Security
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Classe Application pour Medistock
  * Cette classe s'exécute une seule fois au démarrage de l'application
  */
 class MedistockApplication : Application() {
+
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -29,7 +36,10 @@ class MedistockApplication : Application() {
         // Version downgradée à Supabase 2.2.2 + Ktor 2.3.4 pour résoudre le problème HttpTimeout
         try {
             SupabaseClientProvider.initialize(this)
-            runCatching { SupabaseClientProvider.client.realtime.connect() }
+            appScope.launch {
+                runCatching { SupabaseClientProvider.client.realtime.connect() }
+                    .onFailure { println("⚠️ Realtime connect failed at startup: ${it.message}") }
+            }
             println("✅ Application démarrée avec Supabase 2.2.2")
             SyncScheduler.start(this)
         } catch (e: IllegalStateException) {
