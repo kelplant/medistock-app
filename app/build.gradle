@@ -42,6 +42,7 @@ android {
 
 kapt {
     correctErrorTypes = true
+    suppressWarnings = true
     arguments {
         arg("room.schemaLocation", "$projectDir/schemas")
         arg("room.incremental", "true")
