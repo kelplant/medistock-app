@@ -64,6 +64,13 @@ object SupabaseClientProvider {
                 return
             }
 
+            // Si déjà initialisé et même configuration, ne rien faire
+            _client?.let { existing ->
+                if (existing.supabaseUrl == supabaseUrl) {
+                    return
+                }
+            }
+
             _client = createSupabaseClient(
                 supabaseUrl = supabaseUrl,
                 supabaseKey = supabaseKey
