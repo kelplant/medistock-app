@@ -1,13 +1,14 @@
 package com.medistock.ui.admin
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.R
@@ -25,8 +26,8 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import io.github.jan.supabase.realtime.Realtime
-import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.realtime
 
 class SupabaseConfigActivity : AppCompatActivity() {
 
@@ -155,18 +156,18 @@ class SupabaseConfigActivity : AppCompatActivity() {
             try {
                 // Save temporarily to test
                 val tempPrefs = getSharedPreferences("temp_supabase_test", Context.MODE_PRIVATE)
-                tempPrefs.edit()
-                    .putString("url", url)
-                    .putString("key", key)
-                    .apply()
+                tempPrefs.edit {
+                    putString("url", url)
+                    putString("key", key)
+                }
 
                 // Try to create a client and make a simple query
-                val testClient = io.github.jan.supabase.createSupabaseClient(
+                io.github.jan.supabase.createSupabaseClient(
                     supabaseUrl = url,
                     supabaseKey = key
                 ) {
                     install(io.github.jan.supabase.postgrest.Postgrest)
-                }
+                }.close()
 
                 // Simple test - just check if we can connect
                 withContext(Dispatchers.Main) {
@@ -240,16 +241,16 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         when (isSuccess) {
             true -> {
-                tvStatus.setTextColor(Color.parseColor("#4CAF50"))
-                tvStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                tvStatus.setTextColor("#4CAF50".toColorInt())
+                tvStatus.setBackgroundColor("#E8F5E9".toColorInt())
             }
             false -> {
-                tvStatus.setTextColor(Color.parseColor("#F44336"))
-                tvStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                tvStatus.setTextColor("#F44336".toColorInt())
+                tvStatus.setBackgroundColor("#FFEBEE".toColorInt())
             }
             null -> {
-                tvStatus.setTextColor(Color.parseColor("#FF9800"))
-                tvStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+                tvStatus.setTextColor("#FF9800".toColorInt())
+                tvStatus.setBackgroundColor("#FFF3E0".toColorInt())
             }
         }
     }
@@ -260,16 +261,16 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         when (isSuccess) {
             true -> {
-                tvRealtimeStatus.setTextColor(Color.parseColor("#4CAF50"))
-                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                tvRealtimeStatus.setTextColor("#4CAF50".toColorInt())
+                tvRealtimeStatus.setBackgroundColor("#E8F5E9".toColorInt())
             }
             false -> {
-                tvRealtimeStatus.setTextColor(Color.parseColor("#F44336"))
-                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                tvRealtimeStatus.setTextColor("#F44336".toColorInt())
+                tvRealtimeStatus.setBackgroundColor("#FFEBEE".toColorInt())
             }
             null -> {
-                tvRealtimeStatus.setTextColor(Color.parseColor("#FF9800"))
-                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+                tvRealtimeStatus.setTextColor("#FF9800".toColorInt())
+                tvRealtimeStatus.setBackgroundColor("#FFF3E0".toColorInt())
             }
         }
     }
@@ -288,6 +289,23 @@ class SupabaseConfigActivity : AppCompatActivity() {
         }
 
         realtimeStatusJob = lifecycleScope.launch {
+            try {
+                val connected = withTimeoutOrNull(5000) {
+                    client.realtime.connect()
+                    client.realtime.status.firstOrNull { status ->
+                        status == Realtime.Status.CONNECTED
+                    }
+                }
+                if (connected == null) {
+                    updateRealtimeStatus("Realtime inaccessible (timeout)", false)
+                    return@launch
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Impossible de connecter Realtime: ${e.message}", e)
+                updateRealtimeStatus("Realtime indisponible: ${e.message}", false)
+                return@launch
+            }
+
             client.realtime.status.collectLatest { status ->
                 val (message, success) = when (status) {
                     Realtime.Status.CONNECTED -> "Realtime connecté" to true
@@ -401,16 +419,16 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         when (isSuccess) {
             true -> {
-                tvSyncStatus.setTextColor(Color.parseColor("#4CAF50"))
-                tvSyncStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                tvSyncStatus.setTextColor("#4CAF50".toColorInt())
+                tvSyncStatus.setBackgroundColor("#E8F5E9".toColorInt())
             }
             false -> {
-                tvSyncStatus.setTextColor(Color.parseColor("#F44336"))
-                tvSyncStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                tvSyncStatus.setTextColor("#F44336".toColorInt())
+                tvSyncStatus.setBackgroundColor("#FFEBEE".toColorInt())
             }
             null -> {
-                tvSyncStatus.setTextColor(Color.parseColor("#2196F3"))
-                tvSyncStatus.setBackgroundColor(Color.parseColor("#E3F2FD"))
+                tvSyncStatus.setTextColor("#2196F3".toColorInt())
+                tvSyncStatus.setBackgroundColor("#E3F2FD".toColorInt())
             }
         }
     }
