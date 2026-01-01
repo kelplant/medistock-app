@@ -1,13 +1,14 @@
 package com.medistock.ui.admin
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.R
@@ -25,8 +26,9 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import io.github.jan.supabase.realtime.Realtime
-import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.realtime
+import com.google.android.material.snackbar.Snackbar
 
 class SupabaseConfigActivity : AppCompatActivity() {
 
@@ -35,10 +37,12 @@ class SupabaseConfigActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var tvSyncStatus: TextView
     private lateinit var tvRealtimeStatus: TextView
+    private lateinit var tvRealtimeIndicator: TextView
     private lateinit var btnTestRealtime: Button
     private lateinit var preferences: SupabasePreferences
     private lateinit var syncManager: SyncManager
     private var realtimeStatusJob: Job? = null
+    private var lastRealtimeStatus: Realtime.Status? = null
 
     companion object {
         private const val TAG = "SupabaseConfig"
@@ -59,6 +63,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         tvSyncStatus = findViewById(R.id.tvSyncStatus)
         tvRealtimeStatus = findViewById(R.id.tvRealtimeStatus)
+        tvRealtimeIndicator = findViewById(R.id.tvRealtimeIndicator)
         btnTestRealtime = findViewById(R.id.btnTestRealtime)
 
         if (preferences.isConfigured()) {
@@ -155,18 +160,18 @@ class SupabaseConfigActivity : AppCompatActivity() {
             try {
                 // Save temporarily to test
                 val tempPrefs = getSharedPreferences("temp_supabase_test", Context.MODE_PRIVATE)
-                tempPrefs.edit()
-                    .putString("url", url)
-                    .putString("key", key)
-                    .apply()
+                tempPrefs.edit {
+                    putString("url", url)
+                    putString("key", key)
+                }
 
                 // Try to create a client and make a simple query
-                val testClient = io.github.jan.supabase.createSupabaseClient(
+                io.github.jan.supabase.createSupabaseClient(
                     supabaseUrl = url,
                     supabaseKey = key
                 ) {
                     install(io.github.jan.supabase.postgrest.Postgrest)
-                }
+                }.close()
 
                 // Simple test - just check if we can connect
                 withContext(Dispatchers.Main) {
@@ -191,18 +196,23 @@ class SupabaseConfigActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val client = SupabaseClientProvider.client
+                // Reset any previous session to avoid stale state
+                runCatching { client.realtime.disconnect() }
                 client.realtime.connect()
 
                 val connected = withTimeoutOrNull(5000) {
                     client.realtime.status.firstOrNull { status ->
-                        status == Realtime.Status.CONNECTED
-                    }
+                        status == Realtime.Status.CONNECTED || status == Realtime.Status.DISCONNECTED
+                    } == Realtime.Status.CONNECTED
                 }
 
-                if (connected == null) {
-                    Log.e(TAG, "Canal Realtime fermé ou en échec de connexion")
+                if (connected != true) {
+                    Log.e(TAG, "Canal Realtime fermé ou en échec de connexion: ${client.realtime.status.value}")
                     withContext(Dispatchers.Main) {
-                        updateRealtimeStatus("✗ Realtime inaccessible (timeout)", false)
+                        updateRealtimeStatus(
+                            "✗ Realtime inaccessible: statut ${client.realtime.status.value}",
+                            false
+                        )
                     }
                     return@launch
                 }
@@ -240,16 +250,16 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         when (isSuccess) {
             true -> {
-                tvStatus.setTextColor(Color.parseColor("#4CAF50"))
-                tvStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                tvStatus.setTextColor("#4CAF50".toColorInt())
+                tvStatus.setBackgroundColor("#E8F5E9".toColorInt())
             }
             false -> {
-                tvStatus.setTextColor(Color.parseColor("#F44336"))
-                tvStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                tvStatus.setTextColor("#F44336".toColorInt())
+                tvStatus.setBackgroundColor("#FFEBEE".toColorInt())
             }
             null -> {
-                tvStatus.setTextColor(Color.parseColor("#FF9800"))
-                tvStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+                tvStatus.setTextColor("#FF9800".toColorInt())
+                tvStatus.setBackgroundColor("#FFF3E0".toColorInt())
             }
         }
     }
@@ -260,16 +270,16 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         when (isSuccess) {
             true -> {
-                tvRealtimeStatus.setTextColor(Color.parseColor("#4CAF50"))
-                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                tvRealtimeStatus.setTextColor("#4CAF50".toColorInt())
+                tvRealtimeStatus.setBackgroundColor("#E8F5E9".toColorInt())
             }
             false -> {
-                tvRealtimeStatus.setTextColor(Color.parseColor("#F44336"))
-                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                tvRealtimeStatus.setTextColor("#F44336".toColorInt())
+                tvRealtimeStatus.setBackgroundColor("#FFEBEE".toColorInt())
             }
             null -> {
-                tvRealtimeStatus.setTextColor(Color.parseColor("#FF9800"))
-                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+                tvRealtimeStatus.setTextColor("#FF9800".toColorInt())
+                tvRealtimeStatus.setBackgroundColor("#FFF3E0".toColorInt())
             }
         }
     }
@@ -279,6 +289,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         if (!preferences.isConfigured()) {
             updateRealtimeStatus("Realtime non configuré", false)
+            updateRealtimeIndicator(null)
             return
         }
 
@@ -288,7 +299,31 @@ class SupabaseConfigActivity : AppCompatActivity() {
         }
 
         realtimeStatusJob = lifecycleScope.launch {
+            try {
+                val connected = withTimeoutOrNull(5000) {
+                    // Always start from a clean state before observing
+                    runCatching { client.realtime.disconnect() }
+                    client.realtime.connect()
+                    client.realtime.status.firstOrNull { status ->
+                        status == Realtime.Status.CONNECTED
+                    }
+                }
+                if (connected == null) {
+                    updateRealtimeStatus("Realtime inaccessible (timeout)", false)
+                    updateRealtimeIndicator(Realtime.Status.DISCONNECTED)
+                    return@launch
+                } else {
+                    updateRealtimeIndicator(Realtime.Status.CONNECTED)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Impossible de connecter Realtime: ${e.message}", e)
+                updateRealtimeStatus("Realtime indisponible: ${e.message}", false)
+                updateRealtimeIndicator(Realtime.Status.DISCONNECTED)
+                return@launch
+            }
+
             client.realtime.status.collectLatest { status ->
+                handleRealtimeStatusChange(status)
                 val (message, success) = when (status) {
                     Realtime.Status.CONNECTED -> "Realtime connecté" to true
                     Realtime.Status.CONNECTING -> "Connexion Realtime..." to null
@@ -298,6 +333,39 @@ class SupabaseConfigActivity : AppCompatActivity() {
                     }
                 }
                 updateRealtimeStatus(message, success)
+            }
+        }
+    }
+
+    private fun handleRealtimeStatusChange(status: Realtime.Status) {
+        if (status != lastRealtimeStatus && lastRealtimeStatus != null) {
+            val snackbarMessage = if (status == Realtime.Status.CONNECTED) {
+                "Realtime connecté"
+            } else {
+                "Realtime déconnecté"
+            }
+            Snackbar.make(findViewById(android.R.id.content), snackbarMessage, Snackbar.LENGTH_SHORT).show()
+        }
+        lastRealtimeStatus = status
+        updateRealtimeIndicator(status)
+    }
+
+    private fun updateRealtimeIndicator(status: Realtime.Status?) {
+        when (status) {
+            Realtime.Status.CONNECTED -> {
+                tvRealtimeIndicator.text = "Realtime connecté"
+                tvRealtimeIndicator.setBackgroundColor("#4CAF50".toColorInt())
+                tvRealtimeIndicator.setTextColor("#FFFFFF".toColorInt())
+            }
+            Realtime.Status.CONNECTING -> {
+                tvRealtimeIndicator.text = "Connexion..."
+                tvRealtimeIndicator.setBackgroundColor("#FFC107".toColorInt())
+                tvRealtimeIndicator.setTextColor("#000000".toColorInt())
+            }
+            Realtime.Status.DISCONNECTED, null -> {
+                tvRealtimeIndicator.text = "Realtime déconnecté"
+                tvRealtimeIndicator.setBackgroundColor("#F44336".toColorInt())
+                tvRealtimeIndicator.setTextColor("#FFFFFF".toColorInt())
             }
         }
     }
@@ -401,16 +469,16 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         when (isSuccess) {
             true -> {
-                tvSyncStatus.setTextColor(Color.parseColor("#4CAF50"))
-                tvSyncStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                tvSyncStatus.setTextColor("#4CAF50".toColorInt())
+                tvSyncStatus.setBackgroundColor("#E8F5E9".toColorInt())
             }
             false -> {
-                tvSyncStatus.setTextColor(Color.parseColor("#F44336"))
-                tvSyncStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                tvSyncStatus.setTextColor("#F44336".toColorInt())
+                tvSyncStatus.setBackgroundColor("#FFEBEE".toColorInt())
             }
             null -> {
-                tvSyncStatus.setTextColor(Color.parseColor("#2196F3"))
-                tvSyncStatus.setBackgroundColor(Color.parseColor("#E3F2FD"))
+                tvSyncStatus.setTextColor("#2196F3".toColorInt())
+                tvSyncStatus.setBackgroundColor("#E3F2FD".toColorInt())
             }
         }
     }
