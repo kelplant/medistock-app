@@ -3,13 +3,16 @@ package com.medistock.data.sync
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.util.NetworkStatus
 import com.medistock.util.SupabasePreferences
@@ -27,10 +30,19 @@ object SyncScheduler {
         val appContext = context.applicationContext
         scheduleNext(appContext)
         updateSyncMode(appContext, NetworkStatus.isOnline(appContext))
-        registerNetworkCallback(appContext)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            registerNetworkCallback(appContext)
+        } else {
+            Log.w(TAG, "Skipping network callback registration: API < 24")
+        }
 
         if (SupabaseClientProvider.isConfigured(appContext) && NetworkStatus.isOnline(appContext)) {
             triggerImmediate(appContext, "app-start")
+            if (RealtimeSyncService.isRealtimeEnabled(appContext)) {
+                RealtimeSyncService.start(appContext)
+            } else {
+                RealtimeSyncService.stop()
+            }
         }
     }
 
@@ -68,6 +80,7 @@ object SyncScheduler {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun registerNetworkCallback(context: Context) {
         if (networkCallbackRegistered) {
             return
@@ -83,14 +96,19 @@ object SyncScheduler {
                     if (SupabaseClientProvider.isConfigured(context)) {
                         SupabaseClientProvider.reinitialize(context)
                         triggerImmediate(context, "network-available")
+                        if (RealtimeSyncService.isRealtimeEnabled(context)) {
+                            RealtimeSyncService.start(context)
+                        }
                     }
                 }
 
                 override fun onLost(network: Network) {
                     updateSyncMode(context, false)
+                    RealtimeSyncService.stop()
                 }
             }
         )
+
 
         networkCallbackRegistered = true
         Log.d(TAG, "Network callback registered for auto sync")

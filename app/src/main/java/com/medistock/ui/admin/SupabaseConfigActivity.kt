@@ -25,7 +25,6 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import io.github.jan.supabase.realtime.Realtime
-import io.github.jan.supabase.realtime.realtime
 
 class SupabaseConfigActivity : AppCompatActivity() {
 
