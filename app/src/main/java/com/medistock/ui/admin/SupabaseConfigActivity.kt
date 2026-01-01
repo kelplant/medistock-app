@@ -289,6 +289,23 @@ class SupabaseConfigActivity : AppCompatActivity() {
         }
 
         realtimeStatusJob = lifecycleScope.launch {
+            try {
+                val connected = withTimeoutOrNull(5000) {
+                    client.realtime.connect()
+                    client.realtime.status.firstOrNull { status ->
+                        status == Realtime.Status.CONNECTED
+                    }
+                }
+                if (connected == null) {
+                    updateRealtimeStatus("Realtime inaccessible (timeout)", false)
+                    return@launch
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Impossible de connecter Realtime: ${e.message}", e)
+                updateRealtimeStatus("Realtime indisponible: ${e.message}", false)
+                return@launch
+            }
+
             client.realtime.status.collectLatest { status ->
                 val (message, success) = when (status) {
                     Realtime.Status.CONNECTED -> "Realtime connecté" to true
