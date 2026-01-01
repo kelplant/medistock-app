@@ -6,6 +6,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.ktor.client.engine.okhttp.OkHttp
 
 /**
  * Client Supabase singleton pour Medistock
@@ -63,10 +64,18 @@ object SupabaseClientProvider {
                 return
             }
 
+            // Si déjà initialisé et même configuration, ne rien faire
+            _client?.let { existing ->
+                if (existing.supabaseUrl == supabaseUrl) {
+                    return
+                }
+            }
+
             _client = createSupabaseClient(
                 supabaseUrl = supabaseUrl,
                 supabaseKey = supabaseKey
             ) {
+                httpEngine = OkHttp.create()
                 // Installation du module Postgrest pour les APIs REST
                 install(Postgrest)
 
