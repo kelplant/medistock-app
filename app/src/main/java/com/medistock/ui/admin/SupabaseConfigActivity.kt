@@ -3,10 +3,12 @@ package com.medistock.ui.admin
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.R
 import com.medistock.data.remote.SupabaseClientProvider
@@ -15,8 +17,15 @@ import com.medistock.data.sync.SyncScheduler
 import com.medistock.util.SupabasePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
+import io.github.jan.supabase.realtime.RealtimeStatus
+import io.github.jan.supabase.realtime.realtime
 
 class SupabaseConfigActivity : AppCompatActivity() {
 
@@ -24,8 +33,15 @@ class SupabaseConfigActivity : AppCompatActivity() {
     private lateinit var etKey: TextInputEditText
     private lateinit var tvStatus: TextView
     private lateinit var tvSyncStatus: TextView
+    private lateinit var tvRealtimeStatus: TextView
+    private lateinit var btnTestRealtime: Button
     private lateinit var preferences: SupabasePreferences
     private lateinit var syncManager: SyncManager
+    private var realtimeStatusJob: Job? = null
+
+    companion object {
+        private const val TAG = "SupabaseConfig"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,10 +57,17 @@ class SupabaseConfigActivity : AppCompatActivity() {
         etKey = findViewById(R.id.etSupabaseKey)
         tvStatus = findViewById(R.id.tvStatus)
         tvSyncStatus = findViewById(R.id.tvSyncStatus)
+        tvRealtimeStatus = findViewById(R.id.tvRealtimeStatus)
+        btnTestRealtime = findViewById(R.id.btnTestRealtime)
+
+        if (preferences.isConfigured()) {
+            SupabaseClientProvider.initialize(this)
+        }
 
         // Load saved values
         etUrl.setText(preferences.getSupabaseUrl())
         etKey.setText(preferences.getSupabaseKey())
+        observeRealtimeStatus()
 
         findViewById<Button>(R.id.btnSave).setOnClickListener {
             saveConfiguration()
@@ -52,6 +75,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnTest).setOnClickListener {
             testConnection()
+        }
+
+        btnTestRealtime.setOnClickListener {
+            testRealtime()
         }
 
         // Add long-press on save button to clear configuration
@@ -79,6 +106,8 @@ class SupabaseConfigActivity : AppCompatActivity() {
         etUrl.setText("")
         etKey.setText("")
         showStatus("Configuration effacée. Redémarrez l'application.", null)
+        updateRealtimeStatus("Realtime non configuré", false)
+        realtimeStatusJob?.cancel()
     }
 
     private fun saveConfiguration() {
@@ -103,6 +132,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
             SyncScheduler.start(this)
             SyncScheduler.triggerImmediate(this, "config-saved")
             showStatus("Configuration enregistrée avec succès!", true)
+            observeRealtimeStatus()
         } catch (e: Exception) {
             showStatus("Configuration enregistrée mais erreur d'initialisation: ${e.message}", false)
             e.printStackTrace()
@@ -149,6 +179,60 @@ class SupabaseConfigActivity : AppCompatActivity() {
         }
     }
 
+    private fun testRealtime() {
+        if (!preferences.isConfigured()) {
+            showStatus("Veuillez d'abord configurer Supabase", false)
+            return
+        }
+
+        updateRealtimeStatus("Test Realtime en cours...", null)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val client = SupabaseClientProvider.client
+                client.realtime.connect()
+
+                val connected = withTimeoutOrNull(5000) {
+                    client.realtime.status.firstOrNull { status ->
+                        status == RealtimeStatus.CONNECTED
+                    }
+                }
+
+                if (connected == null) {
+                    Log.e(TAG, "Canal Realtime fermé ou en échec de connexion")
+                    withContext(Dispatchers.Main) {
+                        updateRealtimeStatus("✗ Realtime inaccessible (timeout)", false)
+                    }
+                    return@launch
+                }
+
+                val channel = client.realtime.channel("healthcheck-${System.currentTimeMillis()}")
+                try {
+                    withTimeout(4000) {
+                        channel.subscribe()
+                    }
+                    withContext(Dispatchers.Main) {
+                        updateRealtimeStatus("✓ Realtime connecté et réactif", true)
+                    }
+                } finally {
+                    channel.unsubscribe()
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "Erreur Realtime inconnue"
+                if (errorMessage.contains("token", ignoreCase = true) ||
+                    errorMessage.contains("jwt", ignoreCase = true)
+                ) {
+                    Log.e(TAG, "Token Realtime invalide ou expiré: $errorMessage")
+                } else {
+                    Log.e(TAG, "Erreur Realtime (canal fermé ?): $errorMessage")
+                }
+                withContext(Dispatchers.Main) {
+                    updateRealtimeStatus("✗ Realtime indisponible: $errorMessage", false)
+                }
+            }
+        }
+    }
+
     private fun showStatus(message: String, isSuccess: Boolean?) {
         tvStatus.text = message
         tvStatus.visibility = TextView.VISIBLE
@@ -165,6 +249,54 @@ class SupabaseConfigActivity : AppCompatActivity() {
             null -> {
                 tvStatus.setTextColor(Color.parseColor("#FF9800"))
                 tvStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+            }
+        }
+    }
+
+    private fun updateRealtimeStatus(message: String, isSuccess: Boolean?) {
+        tvRealtimeStatus.text = message
+        tvRealtimeStatus.visibility = TextView.VISIBLE
+
+        when (isSuccess) {
+            true -> {
+                tvRealtimeStatus.setTextColor(Color.parseColor("#4CAF50"))
+                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#E8F5E9"))
+            }
+            false -> {
+                tvRealtimeStatus.setTextColor(Color.parseColor("#F44336"))
+                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#FFEBEE"))
+            }
+            null -> {
+                tvRealtimeStatus.setTextColor(Color.parseColor("#FF9800"))
+                tvRealtimeStatus.setBackgroundColor(Color.parseColor("#FFF3E0"))
+            }
+        }
+    }
+
+    private fun observeRealtimeStatus() {
+        realtimeStatusJob?.cancel()
+
+        if (!preferences.isConfigured()) {
+            updateRealtimeStatus("Realtime non configuré", false)
+            return
+        }
+
+        val client = runCatching { SupabaseClientProvider.client }.getOrElse {
+            updateRealtimeStatus("Client Supabase non initialisé", false)
+            return
+        }
+
+        realtimeStatusJob = lifecycleScope.launch {
+            client.realtime.status.collectLatest { status ->
+                val (message, success) = when (status) {
+                    RealtimeStatus.CONNECTED -> "Realtime connecté" to true
+                    RealtimeStatus.CONNECTING -> "Connexion Realtime..." to null
+                    else -> {
+                        Log.w(TAG, "Etat Realtime: $status")
+                        "Realtime déconnecté" to false
+                    }
+                }
+                updateRealtimeStatus(message, success)
             }
         }
     }
@@ -290,5 +422,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onDestroy() {
+        realtimeStatusJob?.cancel()
+        super.onDestroy()
     }
 }

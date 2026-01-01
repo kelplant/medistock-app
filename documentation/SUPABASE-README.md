@@ -300,6 +300,11 @@ Pour votre usage (50 produits, 10 sites, activité normale) :
 ### **Erreur réseau / timeout**
 ➡️ Vérifiez votre connexion Internet et les permissions Android
 
+### **Erreurs Realtime (canal fermé, token invalide)**
+➡️ Regénérez la clé **anon/public** dans **Settings → API** puis mettez à jour l'app (un token expiré provoque une coupure Realtime).  
+➡️ Vérifiez que vos tables sont bien dans la publication `supabase_realtime` (SQL Editor → `ALTER PUBLICATION supabase_realtime ADD TABLE votre_table;`).  
+➡️ Consultez les logs Android (`SupabaseConfig`) pour identifier si le canal est fermé ou si le token est refusé.
+
 ### **Données non synchronisées**
 ➡️ Vérifiez que les tables existent dans Supabase
 ➡️ Vérifiez que RLS est bien configuré
