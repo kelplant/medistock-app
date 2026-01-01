@@ -118,7 +118,7 @@ object UserProfileMenu {
     }
 
     private fun applyStatus(badge: TextView, status: Realtime.Status) {
-        val background = (badge.background as? GradientDrawable)?.mutate()
+        val background = (badge.background?.mutate() as? GradientDrawable)
         when (status) {
             Realtime.Status.CONNECTED -> {
                 background?.setStroke(3, "#4CAF50".toColorInt())
