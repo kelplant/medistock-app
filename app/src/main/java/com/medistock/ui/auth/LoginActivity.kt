@@ -13,6 +13,7 @@ import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
 import com.medistock.ui.HomeActivity
+import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.util.AuthManager
 import com.medistock.util.Modules
 import com.medistock.util.PasswordHasher
@@ -27,6 +28,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var editPassword: TextInputEditText
     private lateinit var btnLogin: Button
     private lateinit var tvError: TextView
+    private lateinit var btnSupabaseConfig: Button
     private lateinit var authManager: AuthManager
     private lateinit var db: AppDatabase
 
@@ -43,6 +45,7 @@ class LoginActivity : AppCompatActivity() {
         editPassword = findViewById(R.id.editPassword)
         btnLogin = findViewById(R.id.btnLogin)
         tvError = findViewById(R.id.tvError)
+        btnSupabaseConfig = findViewById(R.id.btnSupabaseConfig)
 
         // Disable login button during initialization
         btnLogin.isEnabled = false
@@ -68,6 +71,12 @@ class LoginActivity : AppCompatActivity() {
 
         btnLogin.setOnClickListener {
             login()
+        }
+
+        btnSupabaseConfig.setOnClickListener {
+            val intent = Intent(this, SupabaseConfigActivity::class.java)
+            intent.putExtra(SupabaseConfigActivity.EXTRA_HIDE_KEY, true)
+            startActivity(intent)
         }
     }
 

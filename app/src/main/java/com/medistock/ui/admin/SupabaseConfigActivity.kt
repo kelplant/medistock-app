@@ -31,6 +31,10 @@ import io.github.jan.supabase.realtime.realtime
 import com.google.android.material.snackbar.Snackbar
 
 class SupabaseConfigActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_HIDE_KEY = "hide_key"
+        private const val TAG = "SupabaseConfig"
+    }
 
     private lateinit var etUrl: TextInputEditText
     private lateinit var etKey: TextInputEditText
@@ -43,10 +47,6 @@ class SupabaseConfigActivity : AppCompatActivity() {
     private lateinit var syncManager: SyncManager
     private var realtimeStatusJob: Job? = null
     private var lastRealtimeStatus: Realtime.Status? = null
-
-    companion object {
-        private const val TAG = "SupabaseConfig"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,9 +70,15 @@ class SupabaseConfigActivity : AppCompatActivity() {
             SupabaseClientProvider.initialize(this)
         }
 
+        val hideKey = intent.getBooleanExtra(EXTRA_HIDE_KEY, false)
+
         // Load saved values
         etUrl.setText(preferences.getSupabaseUrl())
-        etKey.setText(preferences.getSupabaseKey())
+        if (hideKey) {
+            etKey.setText("")
+        } else {
+            etKey.setText(preferences.getSupabaseKey())
+        }
         observeRealtimeStatus()
 
         findViewById<Button>(R.id.btnSave).setOnClickListener {

@@ -10,6 +10,7 @@ import com.medistock.ui.stock.StockListActivity
 import com.medistock.ui.purchase.PurchaseActivity
 import com.medistock.ui.inventory.InventoryActivity
 import com.medistock.ui.admin.AdminActivity
+import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.ui.transfer.TransferListActivity
 import com.medistock.util.AuthManager
 
@@ -55,6 +56,12 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.adminButton).setOnClickListener {
             startActivity(Intent(this, AdminActivity::class.java))
+        }
+
+        findViewById<android.view.View>(R.id.supabaseConfigButton).setOnClickListener {
+            val intent = Intent(this, SupabaseConfigActivity::class.java)
+            intent.putExtra(SupabaseConfigActivity.EXTRA_HIDE_KEY, true)
+            startActivity(intent)
         }
     }
 

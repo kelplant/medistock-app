@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
+import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
 import org.conscrypt.Conscrypt
 import java.security.Security
@@ -28,6 +29,7 @@ class MedistockApplication : Application() {
         // Version downgradée à Supabase 2.2.2 + Ktor 2.3.4 pour résoudre le problème HttpTimeout
         try {
             SupabaseClientProvider.initialize(this)
+            runCatching { SupabaseClientProvider.client.realtime.connect() }
             println("✅ Application démarrée avec Supabase 2.2.2")
             SyncScheduler.start(this)
         } catch (e: IllegalStateException) {
@@ -44,7 +46,7 @@ class MedistockApplication : Application() {
 
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                if (activity is AppCompatActivity) {
+                if (activity is AppCompatActivity && activity !is LoginActivity) {
                     UserProfileMenu.attach(activity)
                 }
             }
