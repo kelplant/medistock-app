@@ -12,6 +12,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
+import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.HomeActivity
 import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.util.AuthManager
@@ -22,6 +23,7 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
