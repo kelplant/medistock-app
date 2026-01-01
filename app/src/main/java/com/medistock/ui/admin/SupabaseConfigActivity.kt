@@ -24,8 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
-import io.github.jan.supabase.realtime.RealtimeStatus
-import io.github.jan.supabase.realtime.realtime
+import io.github.jan.supabase.realtime.Realtime
 
 class SupabaseConfigActivity : AppCompatActivity() {
 
@@ -194,7 +193,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
                 val connected = withTimeoutOrNull(5000) {
                     client.realtime.status.firstOrNull { status ->
-                        status == RealtimeStatus.CONNECTED
+                        status == Realtime.Status.CONNECTED
                     }
                 }
 
@@ -209,7 +208,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
                 val channel = client.realtime.channel("healthcheck-${System.currentTimeMillis()}")
                 try {
                     withTimeout(4000) {
-                        channel.subscribe()
+                        channel.subscribe(blockUntilSubscribed = true)
                     }
                     withContext(Dispatchers.Main) {
                         updateRealtimeStatus("✓ Realtime connecté et réactif", true)
@@ -289,8 +288,8 @@ class SupabaseConfigActivity : AppCompatActivity() {
         realtimeStatusJob = lifecycleScope.launch {
             client.realtime.status.collectLatest { status ->
                 val (message, success) = when (status) {
-                    RealtimeStatus.CONNECTED -> "Realtime connecté" to true
-                    RealtimeStatus.CONNECTING -> "Connexion Realtime..." to null
+                    Realtime.Status.CONNECTED -> "Realtime connecté" to true
+                    Realtime.Status.CONNECTING -> "Connexion Realtime..." to null
                     else -> {
                         Log.w(TAG, "Etat Realtime: $status")
                         "Realtime déconnecté" to false
