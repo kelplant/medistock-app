@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.realtime
+import com.google.android.material.snackbar.Snackbar
 
 class SupabaseConfigActivity : AppCompatActivity() {
 
@@ -36,10 +37,12 @@ class SupabaseConfigActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var tvSyncStatus: TextView
     private lateinit var tvRealtimeStatus: TextView
+    private lateinit var tvRealtimeIndicator: TextView
     private lateinit var btnTestRealtime: Button
     private lateinit var preferences: SupabasePreferences
     private lateinit var syncManager: SyncManager
     private var realtimeStatusJob: Job? = null
+    private var lastRealtimeStatus: Realtime.Status? = null
 
     companion object {
         private const val TAG = "SupabaseConfig"
@@ -60,6 +63,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         tvSyncStatus = findViewById(R.id.tvSyncStatus)
         tvRealtimeStatus = findViewById(R.id.tvRealtimeStatus)
+        tvRealtimeIndicator = findViewById(R.id.tvRealtimeIndicator)
         btnTestRealtime = findViewById(R.id.btnTestRealtime)
 
         if (preferences.isConfigured()) {
@@ -285,6 +289,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
 
         if (!preferences.isConfigured()) {
             updateRealtimeStatus("Realtime non configuré", false)
+            updateRealtimeIndicator(null)
             return
         }
 
@@ -305,15 +310,20 @@ class SupabaseConfigActivity : AppCompatActivity() {
                 }
                 if (connected == null) {
                     updateRealtimeStatus("Realtime inaccessible (timeout)", false)
+                    updateRealtimeIndicator(Realtime.Status.DISCONNECTED)
                     return@launch
+                } else {
+                    updateRealtimeIndicator(Realtime.Status.CONNECTED)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Impossible de connecter Realtime: ${e.message}", e)
                 updateRealtimeStatus("Realtime indisponible: ${e.message}", false)
+                updateRealtimeIndicator(Realtime.Status.DISCONNECTED)
                 return@launch
             }
 
             client.realtime.status.collectLatest { status ->
+                handleRealtimeStatusChange(status)
                 val (message, success) = when (status) {
                     Realtime.Status.CONNECTED -> "Realtime connecté" to true
                     Realtime.Status.CONNECTING -> "Connexion Realtime..." to null
@@ -323,6 +333,39 @@ class SupabaseConfigActivity : AppCompatActivity() {
                     }
                 }
                 updateRealtimeStatus(message, success)
+            }
+        }
+    }
+
+    private fun handleRealtimeStatusChange(status: Realtime.Status) {
+        if (status != lastRealtimeStatus && lastRealtimeStatus != null) {
+            val snackbarMessage = if (status == Realtime.Status.CONNECTED) {
+                "Realtime connecté"
+            } else {
+                "Realtime déconnecté"
+            }
+            Snackbar.make(findViewById(android.R.id.content), snackbarMessage, Snackbar.LENGTH_SHORT).show()
+        }
+        lastRealtimeStatus = status
+        updateRealtimeIndicator(status)
+    }
+
+    private fun updateRealtimeIndicator(status: Realtime.Status?) {
+        when (status) {
+            Realtime.Status.CONNECTED -> {
+                tvRealtimeIndicator.text = "Realtime connecté"
+                tvRealtimeIndicator.setBackgroundColor("#4CAF50".toColorInt())
+                tvRealtimeIndicator.setTextColor("#FFFFFF".toColorInt())
+            }
+            Realtime.Status.CONNECTING -> {
+                tvRealtimeIndicator.text = "Connexion..."
+                tvRealtimeIndicator.setBackgroundColor("#FFC107".toColorInt())
+                tvRealtimeIndicator.setTextColor("#000000".toColorInt())
+            }
+            Realtime.Status.DISCONNECTED, null -> {
+                tvRealtimeIndicator.text = "Realtime déconnecté"
+                tvRealtimeIndicator.setBackgroundColor("#F44336".toColorInt())
+                tvRealtimeIndicator.setTextColor("#FFFFFF".toColorInt())
             }
         }
     }
