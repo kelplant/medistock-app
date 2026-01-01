@@ -89,9 +89,14 @@ dependencies {
     def ktor_version = "2.3.4"
     implementation "io.ktor:ktor-client-core:$ktor_version"
     implementation "io.ktor:ktor-client-android:$ktor_version"
+    implementation "io.ktor:ktor-client-okhttp:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
+    implementation "io.ktor:ktor-client-websockets:$ktor_version"
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
 
     // Kotlinx Serialization
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
+
+    // TLS provider to ensure modern roots (e.g., Let's Encrypt) on older devices
+    implementation "org.conscrypt:conscrypt-android:2.5.2"
 }
