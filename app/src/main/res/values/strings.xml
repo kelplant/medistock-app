@@ -19,4 +19,7 @@
     <string name="sell_product">Sell Product</string>
     <string name="manage_product">Manage Products</string>
     <string name="stock_movement">Stock Movement</string>
+    <string name="change_password">Change Password</string>
+    <string name="logout">Logout</string>
+    <string name="logout_confirmation">Do you want to logout?</string>
 </resources>
