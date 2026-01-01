@@ -2,18 +2,15 @@ package com.medistock.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
 import com.medistock.ui.auth.LoginActivity
-import com.medistock.ui.auth.ChangePasswordActivity
 import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.stock.StockListActivity
 import com.medistock.ui.purchase.PurchaseActivity
 import com.medistock.ui.inventory.InventoryActivity
 import com.medistock.ui.admin.AdminActivity
+import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.ui.transfer.TransferListActivity
 import com.medistock.util.AuthManager
 
@@ -60,43 +57,12 @@ class HomeActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.adminButton).setOnClickListener {
             startActivity(Intent(this, AdminActivity::class.java))
         }
-    }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.home_menu, menu)
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        // Set user's full name in the menu
-        menu?.findItem(R.id.action_user_name)?.title = authManager.getFullName()
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_change_password -> {
-                startActivity(Intent(this, ChangePasswordActivity::class.java))
-                true
-            }
-            R.id.action_logout -> {
-                showLogoutDialog()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+        findViewById<android.view.View>(R.id.supabaseConfigButton).setOnClickListener {
+            val intent = Intent(this, SupabaseConfigActivity::class.java)
+            intent.putExtra(SupabaseConfigActivity.EXTRA_HIDE_KEY, true)
+            startActivity(intent)
         }
-    }
-
-    private fun showLogoutDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Logout")
-            .setMessage("Do you want to logout?")
-            .setPositiveButton("Yes") { _, _ ->
-                authManager.logout()
-                navigateToLogin()
-            }
-            .setNegativeButton("No", null)
-            .show()
     }
 
     private fun navigateToLogin() {
