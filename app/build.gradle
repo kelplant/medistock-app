@@ -96,4 +96,7 @@ dependencies {
 
     // Kotlinx Serialization
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
+
+    // TLS provider to ensure modern roots (e.g., Let's Encrypt) on older devices
+    implementation "org.conscrypt:conscrypt-android:2.5.2"
 }
