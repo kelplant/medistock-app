@@ -20,6 +20,7 @@ import com.medistock.ui.auth.ChangePasswordActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.util.AuthManager
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -80,7 +81,7 @@ object UserProfileMenu {
                             applyStatus(badge, Realtime.Status.DISCONNECTED)
                             return@repeatOnLifecycle
                         }
-                        statusFlow.collectLatest { status ->
+                        statusFlow.collectLatest { status: Realtime.Status ->
                             applyStatus(badge, status)
                         }
                     }
