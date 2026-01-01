@@ -81,6 +81,8 @@ object UserProfileMenu {
                             applyStatus(badge, Realtime.Status.DISCONNECTED)
                             return@repeatOnLifecycle
                         }
+                        applyStatus(badge, Realtime.Status.CONNECTING)
+                        runCatching { SupabaseClientProvider.client.realtime.connect() }
                         statusFlow.collectLatest { status: Realtime.Status ->
                             applyStatus(badge, status)
                         }
