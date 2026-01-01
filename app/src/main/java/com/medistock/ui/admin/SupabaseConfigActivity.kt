@@ -192,18 +192,23 @@ class SupabaseConfigActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val client = SupabaseClientProvider.client
+                // Reset any previous session to avoid stale state
+                runCatching { client.realtime.disconnect() }
                 client.realtime.connect()
 
                 val connected = withTimeoutOrNull(5000) {
                     client.realtime.status.firstOrNull { status ->
-                        status == Realtime.Status.CONNECTED
-                    }
+                        status == Realtime.Status.CONNECTED || status == Realtime.Status.DISCONNECTED
+                    } == Realtime.Status.CONNECTED
                 }
 
-                if (connected == null) {
-                    Log.e(TAG, "Canal Realtime fermé ou en échec de connexion")
+                if (connected != true) {
+                    Log.e(TAG, "Canal Realtime fermé ou en échec de connexion: ${client.realtime.status.value}")
                     withContext(Dispatchers.Main) {
-                        updateRealtimeStatus("✗ Realtime inaccessible (timeout)", false)
+                        updateRealtimeStatus(
+                            "✗ Realtime inaccessible: statut ${client.realtime.status.value}",
+                            false
+                        )
                     }
                     return@launch
                 }
@@ -291,6 +296,8 @@ class SupabaseConfigActivity : AppCompatActivity() {
         realtimeStatusJob = lifecycleScope.launch {
             try {
                 val connected = withTimeoutOrNull(5000) {
+                    // Always start from a clean state before observing
+                    runCatching { client.realtime.disconnect() }
                     client.realtime.connect()
                     client.realtime.status.firstOrNull { status ->
                         status == Realtime.Status.CONNECTED
