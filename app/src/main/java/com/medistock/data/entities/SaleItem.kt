@@ -32,5 +32,7 @@ data class SaleItem(
     val unit: String,
     val quantity: Double,
     val pricePerUnit: Double,
-    val subtotal: Double
+    val subtotal: Double,
+    val createdAt: Long = System.currentTimeMillis(),
+    val createdBy: String = ""
 )

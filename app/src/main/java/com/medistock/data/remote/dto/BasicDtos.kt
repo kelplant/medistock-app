@@ -95,5 +95,7 @@ data class CustomerDto(
     val notes: String? = null,
     @SerialName("site_id") val siteId: String,
     @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
-    @SerialName("created_by") val createdBy: String = ""
+    @SerialName("updated_at") val updatedAt: Long = System.currentTimeMillis(),
+    @SerialName("created_by") val createdBy: String = "",
+    @SerialName("updated_by") val updatedBy: String = ""
 )

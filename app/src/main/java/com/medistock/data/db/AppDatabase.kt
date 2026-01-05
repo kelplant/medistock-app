@@ -12,7 +12,6 @@ import com.medistock.data.dao.*
         Product::class,
         Category::class,
         ProductPrice::class,
-        ProductSale::class,
         StockMovement::class,
         Site::class,
         PurchaseBatch::class,
@@ -27,14 +26,13 @@ import com.medistock.data.dao.*
         AuditHistory::class,
         ProductTransfer::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun categoryDao(): CategoryDao
     abstract fun productPriceDao(): ProductPriceDao
-    abstract fun productSaleDao(): ProductSaleDao
     abstract fun stockMovementDao(): StockMovementDao
     abstract fun siteDao(): SiteDao
     abstract fun purchaseBatchDao(): PurchaseBatchDao

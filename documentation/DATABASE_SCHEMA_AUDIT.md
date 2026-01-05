@@ -1,7 +1,8 @@
 # Audit du Schéma de Base de Données MediStock
 
 **Date de l'audit**: 2026-01-05
-**Version de la base**: 11
+**Dernière mise à jour**: 2026-01-05
+**Version de la base Android Room**: 12
 **Base de données**: PostgreSQL (Supabase) + Room (Android SQLite)
 
 ---
@@ -10,9 +11,8 @@
 
 1. [Vue d'ensemble](#vue-densemble)
 2. [Documentation des Tables](#documentation-des-tables)
-3. [Analyse des Problèmes Identifiés](#analyse-des-problèmes-identifiés)
-4. [Tables et Champs Obsolètes](#tables-et-champs-obsolètes)
-5. [Recommandations](#recommandations)
+3. [Vues SQL](#vues-sql)
+4. [Historique des Modifications](#historique-des-modifications)
 
 ---
 
@@ -22,9 +22,9 @@
 - **Backend**: Supabase (PostgreSQL)
 - **Mobile**: Android Room (SQLite local)
 - **Synchronisation**: Supabase Realtime API
-- **Gestion de stock**: Système FIFO (First In, First Out)
+- **Gestion de stock**: Système FIFO (First In, First Out) via `purchase_batches`
 
-### Liste des Tables (17 tables)
+### Liste des Tables (16 tables)
 
 | # | Table | Description | Statut |
 |---|-------|-------------|--------|
@@ -37,14 +37,13 @@
 | 7 | `products` | Produits/médicaments | ✅ Actif |
 | 8 | `product_prices` | Historique des prix | ✅ Actif |
 | 9 | `purchase_batches` | Lots d'achat (FIFO) | ✅ Actif |
-| 10 | `stock_movements` | Mouvements de stock | ⚠️ Redondant |
+| 10 | `stock_movements` | Mouvements de stock (historique) | ✅ Actif |
 | 11 | `inventories` | Inventaires physiques | ✅ Actif |
 | 12 | `product_transfers` | Transferts entre sites | ✅ Actif |
 | 13 | `sales` | En-têtes de ventes | ✅ Actif |
 | 14 | `sale_items` | Lignes de vente | ✅ Actif |
 | 15 | `sale_batch_allocations` | Allocations FIFO | ✅ Actif |
-| 16 | `product_sales` | Ventes produits (ancien) | ❌ Obsolète |
-| 17 | `audit_history` | Historique d'audit | ✅ Actif |
+| 16 | `audit_history` | Historique d'audit | ✅ Actif |
 
 ---
 
@@ -66,7 +65,7 @@
 **Index**: `idx_sites_name` sur `name`
 
 **Relations**:
-- Référencé par: `products`, `customers`, `purchase_batches`, `stock_movements`, `inventories`, `product_transfers`, `sales`, `product_sales`, `audit_history`
+- Référencé par: `products`, `customers`, `purchase_batches`, `stock_movements`, `inventories`, `product_transfers`, `sales`, `audit_history`
 
 ---
 
@@ -176,13 +175,13 @@
 | `notes` | TEXT | Oui | Notes additionnelles |
 | `site_id` | UUID | Non | FK vers `sites` |
 | `created_at` | BIGINT | Non | Timestamp de création |
+| `updated_at` | BIGINT | Non | Timestamp de mise à jour |
 | `created_by` | TEXT | Non | Utilisateur créateur |
+| `updated_by` | TEXT | Non | Dernier modificateur |
 
 **Index**: `idx_customers_site`, `idx_customers_name`
 
 **Clé étrangère**: `site_id` → `sites(id)` ON DELETE RESTRICT
-
-**Remarque**: ⚠️ Pas de champ `updated_at`/`updated_by` contrairement aux autres tables.
 
 ---
 
@@ -194,7 +193,7 @@
 |---------|------|----------|-------------|
 | `id` | UUID | Non | Identifiant unique (PK) |
 | `name` | TEXT | Non | Nom du produit |
-| `unit` | TEXT | Non | Unité de base (auto-rempli) |
+| `unit` | TEXT | Non | Unité de base |
 | `unit_volume` | DOUBLE | Non | Facteur de conversion |
 | `packaging_type_id` | UUID | Oui | FK vers `packaging_types` |
 | `selected_level` | INTEGER | Oui | Niveau d'unité (1 ou 2) |
@@ -245,7 +244,7 @@
 
 ### 9. `purchase_batches` - Lots d'Achat (FIFO)
 
-**Description**: Gestion des lots d'achat pour le suivi FIFO du stock et des coûts.
+**Description**: Gestion des lots d'achat pour le suivi FIFO du stock et des coûts. **Source de vérité pour le stock actuel**.
 
 | Colonne | Type | Nullable | Description |
 |---------|------|----------|-------------|
@@ -271,13 +270,13 @@
 - `product_id` → `products(id)` ON DELETE RESTRICT
 - `site_id` → `sites(id)` ON DELETE RESTRICT
 
-**Usage**: Le stock actuel est calculé via `SUM(remaining_quantity)` des lots non épuisés.
+**Usage**: Le stock actuel est calculé via `SUM(remaining_quantity)` des lots non épuisés. C'est la **source de vérité** pour le stock.
 
 ---
 
-### 10. `stock_movements` - Mouvements de Stock ⚠️
+### 10. `stock_movements` - Mouvements de Stock
 
-**Description**: Enregistrement des entrées/sorties de stock.
+**Description**: Enregistrement des entrées/sorties de stock pour l'historique et le reporting.
 
 | Colonne | Type | Nullable | Description |
 |---------|------|----------|-------------|
@@ -294,7 +293,7 @@
 
 **Index**: `idx_stock_movements_product`, `idx_stock_movements_site`, `idx_stock_movements_type`, `idx_stock_movements_date`
 
-**Statut**: ⚠️ **PARTIELLEMENT REDONDANT** - Voir section [Problèmes Identifiés](#analyse-des-problèmes-identifiés)
+**Note**: Cette table sert principalement à l'historique des mouvements. Le stock réel est calculé via `purchase_batches`.
 
 ---
 
@@ -360,7 +359,7 @@
 
 **Index**: `idx_sales_customer`, `idx_sales_site`, `idx_sales_date`
 
-**Remarque**: Le champ `customer_name` est dénormalisé pour garder l'historique même si le client est modifié.
+**Note**: Le champ `customer_name` est dénormalisé pour garder l'historique même si le client est modifié.
 
 ---
 
@@ -378,14 +377,14 @@
 | `quantity` | DOUBLE | Non | Quantité vendue |
 | `price_per_unit` | DOUBLE | Non | Prix unitaire |
 | `subtotal` | DOUBLE | Non | Sous-total |
+| `created_at` | BIGINT | Non | Timestamp de création |
+| `created_by` | TEXT | Non | Utilisateur créateur |
 
 **Index**: `idx_sale_items_sale`, `idx_sale_items_product`
 
 **Clés étrangères**:
 - `sale_id` → `sales(id)` ON DELETE CASCADE
 - `product_id` → `products(id)` ON DELETE RESTRICT
-
-**Remarque**: Pas de champs d'audit (`created_at`, `created_by`) contrairement aux autres tables.
 
 ---
 
@@ -401,6 +400,7 @@
 | `quantity_allocated` | DOUBLE | Non | Quantité allouée |
 | `purchase_price_at_allocation` | DOUBLE | Non | Prix d'achat au moment |
 | `created_at` | BIGINT | Non | Timestamp de création |
+| `created_by` | TEXT | Non | Utilisateur créateur |
 
 **Index**: `idx_sale_batch_allocations_sale_item`, `idx_sale_batch_allocations_batch`
 
@@ -408,27 +408,7 @@
 
 ---
 
-### 16. `product_sales` - Ventes Produits (ANCIEN) ❌
-
-**Description**: Ancien système de ventes simplifié, remplacé par `sales` + `sale_items`.
-
-| Colonne | Type | Nullable | Description |
-|---------|------|----------|-------------|
-| `id` | UUID | Non | Identifiant unique (PK) |
-| `product_id` | UUID | Non | FK vers `products` |
-| `quantity` | DOUBLE | Non | Quantité vendue |
-| `price_at_sale` | DOUBLE | Non | Prix de vente |
-| `farmer_name` | TEXT | Non | ⚠️ Nom du "fermier" |
-| `date` | BIGINT | Non | Date de vente |
-| `site_id` | UUID | Non | FK vers `sites` |
-| `created_at` | BIGINT | Non | Timestamp de création |
-| `created_by` | TEXT | Non | Utilisateur créateur |
-
-**Statut**: ❌ **OBSOLÈTE** - Voir section [Tables Obsolètes](#tables-et-champs-obsolètes)
-
----
-
-### 17. `audit_history` - Historique d'Audit
+### 16. `audit_history` - Historique d'Audit
 
 **Description**: Journalisation automatique de toutes les modifications sur les tables métier.
 
@@ -450,173 +430,43 @@
 
 ---
 
-## Analyse des Problèmes Identifiés
+## Vues SQL
 
-### Problème 1: Double Système de Calcul du Stock ⚠️ CRITIQUE
+### `current_stock` - Stock Actuel
 
-**Situation actuelle**:
-Le stock peut être calculé de **deux manières différentes** dans le code:
+Vue calculant le stock actuel par produit et site à partir des `purchase_batches`.
 
-1. **Via `purchase_batches`** (nouveau système FIFO):
-   ```sql
-   SELECT SUM(remaining_quantity) FROM purchase_batches
-   WHERE product_id = ? AND site_id = ? AND is_exhausted = FALSE
-   ```
-   - Utilisé dans: `PurchaseBatchDao.getTotalRemainingQuantity()`
-   - Utilisé dans la vue SQL `current_stock`
-
-2. **Via `stock_movements`** (ancien système):
-   ```sql
-   SELECT SUM(CASE WHEN type = 'in' THEN quantity ELSE 0 END) -
-          SUM(CASE WHEN type = 'out' THEN quantity ELSE 0 END)
-   FROM stock_movements WHERE product_id = ? AND site_id = ?
-   ```
-   - Utilisé dans: `StockMovementDao.getCurrentStockForSite()`
-
-**Impact**:
-- Risque d'incohérence entre les deux calculs
-- Le code crée des `StockMovement` ET met à jour les `PurchaseBatch` en parallèle
-- Duplication des données de stock
-
-**Fichiers concernés**:
-- `app/src/main/java/com/medistock/ui/purchase/PurchaseActivity.kt`
-- `app/src/main/java/com/medistock/ui/sales/SaleActivity.kt`
-- `app/src/main/java/com/medistock/ui/transfer/TransferActivity.kt`
-- `app/src/main/java/com/medistock/ui/inventory/InventoryActivity.kt`
-
----
-
-### Problème 2: Table `product_sales` Obsolète ❌
-
-**Situation**:
-La table `product_sales` est l'ancien système de ventes avec:
-- Un seul produit par vente
-- Un champ `farmer_name` (contexte agricole initial)
-- Pas de lien avec les lots (pas de FIFO)
-
-**Nouveau système** (`sales` + `sale_items` + `sale_batch_allocations`):
-- Ventes multi-produits
-- Clients gérés via `customers`
-- Traçabilité FIFO complète
-
-**État du code**:
-- `ProductSaleDao` existe encore avec des méthodes
-- `ProductSaleSupabaseRepository` existe encore
-- Le code ne semble plus créer de `ProductSale` dans les flux principaux
-
----
-
-### Problème 3: Incohérences dans les Champs d'Audit
-
-| Table | created_at | updated_at | created_by | updated_by |
-|-------|------------|------------|------------|------------|
-| `customers` | ✅ | ❌ | ✅ | ❌ |
-| `sale_items` | ❌ | ❌ | ❌ | ❌ |
-| `stock_movements` | ✅ | ❌ | ✅ | ❌ |
-| `inventories` | ✅ | ❌ | ✅ | ❌ |
-| `sales` | ✅ | ❌ | ✅ | ❌ |
-| `sale_batch_allocations` | ✅ | ❌ | ❌ | ❌ |
-
-**Impact**: Traçabilité incomplète des modifications.
-
----
-
-### Problème 4: Champs Potentiellement Redondants dans `products`
-
-| Champ | Description | Statut |
-|-------|-------------|--------|
-| `unit` | Unité de base | ⚠️ Peut être dérivé de `packaging_types.level1_name` ou `level2_name` |
-| `unit_volume` | Facteur de conversion | ⚠️ Doublon avec `conversion_factor` |
-| `conversion_factor` | Facteur spécifique | OK si différent de `unit_volume` |
-
-Le commentaire dans le code indique:
-```kotlin
-val unit: String, // Obligatoire - rempli automatiquement depuis PackagingType
-val unitVolume: Double, // Obligatoire - facteur de conversion
+```sql
+SELECT
+    p.id as product_id,
+    p.name as product_name,
+    p.description,
+    p.site_id,
+    s.name as site_name,
+    COALESCE(SUM(pb.remaining_quantity), 0) as current_stock,
+    p.min_stock,
+    p.max_stock,
+    CASE
+        WHEN COALESCE(SUM(pb.remaining_quantity), 0) <= p.min_stock THEN 'LOW'
+        WHEN COALESCE(SUM(pb.remaining_quantity), 0) >= p.max_stock THEN 'HIGH'
+        ELSE 'NORMAL'
+    END as stock_status
+FROM products p
+LEFT JOIN purchase_batches pb ON p.id = pb.product_id AND pb.is_exhausted = FALSE
+LEFT JOIN sites s ON p.site_id = s.id
+GROUP BY p.id, p.name, p.description, p.site_id, s.name, p.min_stock, p.max_stock;
 ```
 
-Si `unit` est rempli automatiquement, pourquoi le stocker?
+### `transaction_flat_view` - Vue Plate des Transactions
 
----
+Vue consolidée de toutes les transactions (achats, ventes, transferts, corrections) pour le reporting (ex: Looker Studio).
 
-## Tables et Champs Obsolètes
-
-### Tables à Supprimer
-
-#### 1. `product_sales` ❌ OBSOLÈTE
-
-**Raison**: Remplacé par le système `sales` + `sale_items` + `sale_batch_allocations`
-
-**Actions requises**:
-1. Vérifier qu'aucun code actif n'utilise cette table
-2. Migrer les données historiques si nécessaire vers `sales`/`sale_items`
-3. Supprimer:
-   - Entité: `ProductSale.kt`
-   - DAO: `ProductSaleDao.kt`
-   - Repository: `ProductSaleSupabaseRepository`
-   - DTO: Dans `SalesDtos.kt`
-4. Supprimer la table SQL et les triggers associés
-
-#### 2. `stock_movements` ⚠️ À ÉVALUER
-
-**Raison**: Redondant avec `purchase_batches` pour le calcul du stock
-
-**Options**:
-- **Option A**: Garder comme journal de traçabilité (audit trail) mais ne plus l'utiliser pour le calcul du stock
-- **Option B**: Supprimer si `audit_history` suffit pour la traçabilité
-
-**Recommandation**: Option A - garder pour compatibilité historique et reporting
-
----
-
-### Champs à Évaluer
-
-#### Dans `products`:
-
-| Champ | Recommandation |
-|-------|----------------|
-| `unit` | Évaluer si peut être supprimé (dérivé de `packaging_types`) |
-| `unit_volume` | Clarifier la différence avec `conversion_factor` |
-
-#### Dans `sales`:
-
-| Champ | Recommandation |
-|-------|----------------|
-| `customer_name` | Garder (dénormalisation intentionnelle pour historique) |
-
----
-
-## Recommandations
-
-### Priorité Haute
-
-1. **Unifier le calcul du stock**
-   - Décider d'une source unique: `purchase_batches.remaining_quantity`
-   - Modifier `StockMovementDao` pour ne plus calculer le stock
-   - Garder `stock_movements` uniquement pour le reporting/audit
-
-2. **Supprimer `product_sales`**
-   - Migration des données historiques
-   - Suppression du code
-   - Suppression de la table
-
-### Priorité Moyenne
-
-3. **Harmoniser les champs d'audit**
-   - Ajouter `updated_at`/`updated_by` aux tables manquantes
-   - Ajouter `created_at`/`created_by` à `sale_items`
-
-4. **Clarifier les champs de `products`**
-   - Documenter clairement la différence entre `unit`, `unit_volume`, et `conversion_factor`
-   - Ou simplifier si certains sont redondants
-
-### Priorité Basse
-
-5. **Optimiser les index**
-   - Revoir les index composites pour les requêtes fréquentes
-
-6. **Nettoyer la vue `transaction_flat_view`**
-   - Retirer la section `product_sales` une fois la table supprimée
+Inclut les types de transaction:
+- `PURCHASE` - Achats (depuis `purchase_batches`)
+- `SALE` - Ventes (depuis `sale_items` + `sales`)
+- `TRANSFER_OUT` - Transferts sortants
+- `TRANSFER_IN` - Transferts entrants
+- `INVENTORY_ADJUST` - Corrections d'inventaire
 
 ---
 
@@ -647,10 +497,6 @@ Si `unit` est rempli automatiquement, pourquoi le stocker?
        ├────│product_transfers│     │      customers          │
        │    └─────────────────┘     └─────────────────────────┘
        │
-       │    ┌─────────────────┐
-       ├────│  product_sales  │ ❌ OBSOLÈTE
-       │    └─────────────────┘
-       │
        │    ┌─────────────────┐     ┌─────────────────────────┐
        └────│  audit_history  │     │      app_users          │
             └─────────────────┘     └────────────┬────────────┘
@@ -662,19 +508,68 @@ Si `unit` est rempli automatiquement, pourquoi le stocker?
 
 ---
 
-## Conclusion
+## Historique des Modifications
 
-Le schéma de base de données MediStock est globalement bien structuré avec un système FIFO moderne. Cependant, il conserve des traces d'une évolution progressive qui a laissé:
+### 2026-01-05 - Nettoyage du Schéma (Migration `2026010501_schema_cleanup.sql`)
 
-1. **Une table obsolète** (`product_sales`) qui devrait être supprimée
-2. **Une redondance** dans le calcul du stock (via `purchase_batches` ET `stock_movements`)
-3. **Des incohérences** dans les champs d'audit entre les tables
+**Changements effectués:**
 
-Les recommandations prioritaires sont:
-- Unifier le calcul du stock sur `purchase_batches`
-- Supprimer `product_sales` après migration des données
-- Harmoniser les champs d'audit
+1. **Table `product_sales` supprimée**
+   - Ancienne table de ventes simplifiée, remplacée par `sales` + `sale_items` + `sale_batch_allocations`
+   - Suppression de l'entité Kotlin, du DAO, du repository et du DTO
+
+2. **Champs d'audit ajoutés:**
+   - `customers`: Ajout de `updated_at`, `updated_by`
+   - `sale_items`: Ajout de `created_at`, `created_by`
+   - `sale_batch_allocations`: Ajout de `created_by`
+
+3. **Triggers créés:**
+   - `update_customers_updated_at` - Mise à jour automatique de `updated_at`
+   - `set_customers_audit_defaults` - Gestion de `created_by`/`updated_by`
+   - `set_sale_items_created_by` - Gestion de `created_by`
+   - `set_sale_batch_allocations_created_by` - Gestion de `created_by`
+
+4. **Version Room Android:** Incrémentée à 12
+
+**Fichiers modifiés:**
+- `supabase/init.sql` - Schéma initial mis à jour
+- `supabase/migration/2026010501_schema_cleanup.sql` - Migration créée
+- `app/src/main/java/com/medistock/data/db/AppDatabase.kt`
+- `app/src/main/java/com/medistock/data/entities/*.kt`
+- `app/src/main/java/com/medistock/data/remote/dto/*.kt`
 
 ---
 
-*Document généré automatiquement - Audit du schéma MediStock*
+## Notes Techniques
+
+### Calcul du Stock
+
+Le stock actuel est calculé **exclusivement** via la table `purchase_batches`:
+
+```kotlin
+// Méthode recommandée
+fun getTotalRemainingQuantity(productId: String, siteId: String): Double? {
+    return purchaseBatchDao.getTotalRemainingQuantity(productId, siteId)
+}
+```
+
+La table `stock_movements` est conservée pour:
+- L'historique des mouvements
+- Le reporting
+- La traçabilité
+
+### Timestamps
+
+Tous les timestamps sont stockés en **millisecondes Unix** (BIGINT).
+
+```kotlin
+val createdAt: Long = System.currentTimeMillis()
+```
+
+### Identifiants
+
+Tous les identifiants sont des **UUID v4** générés côté client.
+
+---
+
+*Document généré et maintenu par l'équipe de développement MediStock*

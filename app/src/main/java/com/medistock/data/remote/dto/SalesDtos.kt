@@ -31,7 +31,9 @@ data class SaleItemDto(
     val unit: String,
     val quantity: Double,
     @SerialName("price_per_unit") val pricePerUnit: Double,
-    val subtotal: Double
+    val subtotal: Double,
+    @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
+    @SerialName("created_by") val createdBy: String = ""
 )
 
 /**
@@ -44,21 +46,7 @@ data class SaleBatchAllocationDto(
     @SerialName("batch_id") val batchId: String,
     @SerialName("quantity_allocated") val quantityAllocated: Double,
     @SerialName("purchase_price_at_allocation") val purchasePriceAtAllocation: Double,
-    @SerialName("created_at") val createdAt: Long = System.currentTimeMillis()
-)
-
-/**
- * DTO pour la table product_sales (ancien système)
- */
-@Serializable
-data class ProductSaleDto(
-    val id: String = UUID.randomUUID().toString(),
-    @SerialName("product_id") val productId: String,
-    val quantity: Double,
-    @SerialName("price_at_sale") val priceAtSale: Double,
-    @SerialName("farmer_name") val farmerName: String,
-    val date: Long,
-    @SerialName("site_id") val siteId: String,
     @SerialName("created_at") val createdAt: Long = System.currentTimeMillis(),
     @SerialName("created_by") val createdBy: String = ""
 )
+

@@ -34,5 +34,6 @@ data class SaleBatchAllocation(
     val batchId: String,
     val quantityAllocated: Double, // Quantity taken from this batch
     val purchasePriceAtAllocation: Double, // Purchase price of the batch at time of sale
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val createdBy: String = ""
 )
