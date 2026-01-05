@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@android:color/white">
+    android:background="@color/md_theme_surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -38,81 +39,107 @@
                 android:background="#F44336" />
         </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MediStock"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"
-            android:textColor="@android:color/black"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Login"
-            android:textSize="22sp"
-            android:layout_marginBottom="20dp"
-            android:textColor="@color/md_theme_onBackground"/>
-
-        <com.google.android.material.textfield.TextInputLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Username"
-                android:inputType="text"
-                android:textColor="@color/md_theme_onBackground"
-                android:textColorHint="@color/md_theme_onSurfaceVariant"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:textColor="@color/md_theme_onBackground"
-                android:textColorHint="@color/md_theme_onSurfaceVariant"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <Button
-            android:id="@+id/btnLogin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Login"
-            android:textSize="16sp"
-            android:padding="12dp"
-            android:backgroundTint="@color/md_theme_primary"
-            android:textColor="@android:color/white"/>
-
-        <Button
-            android:id="@+id/btnSupabaseConfig"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Configurer Supabase"
-            android:textSize="16sp"
-            android:padding="12dp"
             android:layout_marginTop="12dp"
-            android:backgroundTint="@color/md_theme_secondary"
-            android:textColor="@color/md_theme_onSecondary"/>
+            app:cardCornerRadius="12dp"
+            app:cardBackgroundColor="@color/md_theme_primaryContainer"
+            app:cardElevation="4dp"
+            app:cardUseCompatPadding="true">
 
-        <TextView
-            android:id="@+id/tvError"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="#D32F2F"
-            android:visibility="gone"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MediStock"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"
+                    android:textColor="@color/md_theme_onPrimaryContainer"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connexion"
+                    android:textSize="18sp"
+                    android:layout_marginBottom="16dp"
+                    android:textColor="@color/md_theme_onPrimaryContainer"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:hint="Nom d'utilisateur"
+                    app:boxStrokeColor="@color/md_theme_primary"
+                    app:boxBackgroundColor="@color/md_theme_primaryContainer"
+                    app:boxStrokeWidth="1dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/md_theme_onPrimaryContainer"
+                        android:textColorHint="@color/md_theme_onSurfaceVariant"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:hint="Mot de passe"
+                    app:boxStrokeColor="@color/md_theme_primary"
+                    app:boxBackgroundColor="@color/md_theme_primaryContainer"
+                    app:boxStrokeWidth="1dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/md_theme_onPrimaryContainer"
+                        android:textColorHint="@color/md_theme_onSurfaceVariant"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/btnLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Se connecter"
+                    android:textSize="16sp"
+                    android:padding="12dp"
+                    android:backgroundTint="@color/md_theme_primary"
+                    android:textColor="@android:color/white"/>
+
+                <Button
+                    android:id="@+id/btnSupabaseConfig"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Configurer Supabase"
+                    android:textSize="16sp"
+                    android:padding="12dp"
+                    android:layout_marginTop="12dp"
+                    android:backgroundTint="@color/md_theme_secondary"
+                    android:textColor="@color/md_theme_onSecondary"/>
+
+                <TextView
+                    android:id="@+id/tvError"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:textColor="#D32F2F"
+                    android:visibility="gone"/>
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </ScrollView>
