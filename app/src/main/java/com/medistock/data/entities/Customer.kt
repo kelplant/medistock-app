@@ -13,5 +13,7 @@ data class Customer(
     val notes: String? = null,
     val siteId: String,
     val createdAt: Long = System.currentTimeMillis(),
-    val createdBy: String = ""
+    val updatedAt: Long = System.currentTimeMillis(),
+    val createdBy: String = "",
+    val updatedBy: String = ""
 )

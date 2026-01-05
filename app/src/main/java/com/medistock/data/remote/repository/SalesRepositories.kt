@@ -107,29 +107,3 @@ class SaleBatchAllocationSupabaseRepository : BaseSupabaseRepository("sale_batch
     }
 }
 
-class ProductSaleSupabaseRepository : BaseSupabaseRepository("product_sales") {
-    suspend fun getAllProductSales(): List<ProductSaleDto> = getAll()
-    suspend fun getProductSaleById(id: String): ProductSaleDto? = getById(id)
-    suspend fun createProductSale(productSale: ProductSaleDto): ProductSaleDto = create(productSale)
-
-    suspend fun getProductSalesByProduct(productId: String): List<ProductSaleDto> {
-        return supabase.from(tableName).select {
-            filter { eq("product_id", productId) }
-            order(column = "date", order = Order.DESCENDING)
-        }.decodeList()
-    }
-
-    suspend fun getProductSalesBySite(siteId: String): List<ProductSaleDto> {
-        return supabase.from(tableName).select {
-            filter { eq("site_id", siteId) }
-            order(column = "date", order = Order.DESCENDING)
-        }.decodeList()
-    }
-
-    suspend fun getProductSalesByFarmer(farmerName: String): List<ProductSaleDto> {
-        return supabase.from(tableName).select {
-            filter { ilike("farmer_name", "%$farmerName%") }
-            order(column = "date", order = Order.DESCENDING)
-        }.decodeList()
-    }
-}

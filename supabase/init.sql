@@ -103,7 +103,9 @@ CREATE TABLE customers (
     notes TEXT,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT 'system'
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    created_by TEXT NOT NULL DEFAULT 'system',
+    updated_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_customers_site ON customers(site_id);
@@ -282,7 +284,9 @@ CREATE TABLE sale_items (
     unit TEXT NOT NULL,
     quantity DOUBLE PRECISION NOT NULL,
     price_per_unit DOUBLE PRECISION NOT NULL,
-    subtotal DOUBLE PRECISION NOT NULL
+    subtotal DOUBLE PRECISION NOT NULL,
+    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    created_by TEXT NOT NULL DEFAULT 'system'
 );
 
 CREATE INDEX idx_sale_items_sale ON sale_items(sale_id);
@@ -295,28 +299,12 @@ CREATE TABLE sale_batch_allocations (
     batch_id UUID NOT NULL REFERENCES purchase_batches(id) ON DELETE RESTRICT,
     quantity_allocated DOUBLE PRECISION NOT NULL,
     purchase_price_at_allocation DOUBLE PRECISION NOT NULL,
-    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000
-);
-
-CREATE INDEX idx_sale_batch_allocations_sale_item ON sale_batch_allocations(sale_item_id);
-CREATE INDEX idx_sale_batch_allocations_batch ON sale_batch_allocations(batch_id);
-
--- Ventes produits (ancien système - potentiellement obsolète)
-CREATE TABLE product_sales (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    quantity DOUBLE PRECISION NOT NULL,
-    price_at_sale DOUBLE PRECISION NOT NULL,
-    farmer_name TEXT NOT NULL,
-    date BIGINT NOT NULL,
-    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system'
 );
 
-CREATE INDEX idx_product_sales_product ON product_sales(product_id);
-CREATE INDEX idx_product_sales_site ON product_sales(site_id);
-CREATE INDEX idx_product_sales_date ON product_sales(date);
+CREATE INDEX idx_sale_batch_allocations_sale_item ON sale_batch_allocations(sale_item_id);
+CREATE INDEX idx_sale_batch_allocations_batch ON sale_batch_allocations(batch_id);
 
 -- ============================================================================
 -- 7. AUDIT & HISTORIQUE
@@ -483,9 +471,6 @@ CREATE TRIGGER audit_sale_items_trigger AFTER INSERT OR UPDATE OR DELETE ON sale
 CREATE TRIGGER audit_sale_batch_allocations_trigger AFTER INSERT OR UPDATE OR DELETE ON sale_batch_allocations
     FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
 
-CREATE TRIGGER audit_product_sales_trigger AFTER INSERT OR UPDATE OR DELETE ON product_sales
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
 -- ============================================================================
 -- TRIGGERS POUR UPDATE TIMESTAMPS
 -- ============================================================================
@@ -560,6 +545,9 @@ CREATE TRIGGER update_purchase_batches_updated_at BEFORE UPDATE ON purchase_batc
 CREATE TRIGGER update_product_transfers_updated_at BEFORE UPDATE ON product_transfers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Appliquer le trigger pour created_by/updated_by
 CREATE TRIGGER set_sites_audit_defaults BEFORE INSERT OR UPDATE ON sites
     FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
@@ -588,8 +576,8 @@ CREATE TRIGGER set_purchase_batches_audit_defaults BEFORE INSERT OR UPDATE ON pu
 CREATE TRIGGER set_product_transfers_audit_defaults BEFORE INSERT OR UPDATE ON product_transfers
     FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
 
-CREATE TRIGGER set_customers_created_by BEFORE INSERT ON customers
-    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
+CREATE TRIGGER set_customers_audit_defaults BEFORE INSERT OR UPDATE ON customers
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
 
 CREATE TRIGGER set_stock_movements_created_by BEFORE INSERT ON stock_movements
     FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
@@ -600,7 +588,10 @@ CREATE TRIGGER set_inventories_created_by BEFORE INSERT ON inventories
 CREATE TRIGGER set_sales_created_by BEFORE INSERT ON sales
     FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
 
-CREATE TRIGGER set_product_sales_created_by BEFORE INSERT ON product_sales
+CREATE TRIGGER set_sale_items_created_by BEFORE INSERT ON sale_items
+    FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
+
+CREATE TRIGGER set_sale_batch_allocations_created_by BEFORE INSERT ON sale_batch_allocations
     FOR EACH ROW EXECUTE FUNCTION set_created_by_default();
 
 -- ============================================================================
@@ -831,6 +822,6 @@ INSERT INTO app_users (username, password, full_name, is_admin, is_active, creat
 DO $$
 BEGIN
     RAISE NOTICE 'Medistock database schema created successfully!';
-    RAISE NOTICE 'Total tables: 17';
+    RAISE NOTICE 'Total tables: 16';
     RAISE NOTICE 'Default admin user: admin / admin123';
 END $$;
