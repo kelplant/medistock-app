@@ -53,7 +53,7 @@
             android:text="Login"
             android:textSize="22sp"
             android:layout_marginBottom="20dp"
-            android:textColor="@android:color/black"/>
+            android:textColor="@color/md_theme_onBackground"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -65,7 +65,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Username"
-                android:inputType="text"/>
+                android:inputType="text"
+                android:textColor="@color/md_theme_onBackground"
+                android:textColorHint="@color/md_theme_onSurfaceVariant"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -78,7 +80,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Password"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="@color/md_theme_onBackground"
+                android:textColorHint="@color/md_theme_onSurfaceVariant"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
@@ -87,7 +91,9 @@
             android:layout_height="wrap_content"
             android:text="Login"
             android:textSize="16sp"
-            android:padding="12dp"/>
+            android:padding="12dp"
+            android:backgroundTint="@color/md_theme_primary"
+            android:textColor="@android:color/white"/>
 
         <Button
             android:id="@+id/btnSupabaseConfig"
@@ -96,7 +102,9 @@
             android:text="Configurer Supabase"
             android:textSize="16sp"
             android:padding="12dp"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/md_theme_secondary"
+            android:textColor="@color/md_theme_onSecondary"/>
 
         <TextView
             android:id="@+id/tvError"
