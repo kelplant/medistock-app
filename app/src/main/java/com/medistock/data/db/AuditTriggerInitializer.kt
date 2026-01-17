@@ -65,22 +65,6 @@ object AuditTriggerInitializer {
             userColumns = listOf("updatedBy", "createdBy")
         ),
         TableConfig(
-            tableName = "product_sales",
-            columns = listOf(
-                "id",
-                "productId",
-                "quantity",
-                "priceAtSale",
-                "farmerName",
-                "date",
-                "siteId",
-                "createdAt",
-                "createdBy"
-            ),
-            siteIdColumn = "siteId",
-            userColumns = listOf("createdBy")
-        ),
-        TableConfig(
             tableName = "product_transfers",
             columns = listOf(
                 "id",
