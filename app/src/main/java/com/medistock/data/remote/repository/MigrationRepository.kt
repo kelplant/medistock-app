@@ -7,6 +7,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
@@ -155,10 +156,14 @@ class MigrationRepository {
                 pAppliedBy = appliedBy
             )
 
-            val result = supabase.postgrest.rpc(
+            val response = supabase.postgrest.rpc(
                 "apply_migration",
                 params
-            ).decodeSingle<JsonObject>()
+            )
+
+            // Parse the raw JSON response (JSONB functions return object directly, not array)
+            val jsonString = response.data
+            val result = Json.decodeFromString<JsonObject>(jsonString)
 
             MigrationResult(
                 success = result["success"]?.jsonPrimitive?.booleanOrNull ?: false,
@@ -225,10 +230,14 @@ class MigrationRepository {
                 pUpdatedBy = updatedBy
             )
 
-            val result = supabase.postgrest.rpc(
+            val response = supabase.postgrest.rpc(
                 "update_schema_version",
                 params
-            ).decodeSingle<JsonObject>()
+            )
+
+            // Parse the raw JSON response (JSONB functions return object directly, not array)
+            val jsonString = response.data
+            val result = Json.decodeFromString<JsonObject>(jsonString)
 
             result["success"]?.jsonPrimitive?.booleanOrNull ?: false
         } catch (e: Exception) {
