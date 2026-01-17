@@ -790,6 +790,259 @@ LEFT JOIN categories c ON p.category_id = c.id
 LEFT JOIN packaging_types ptg ON p.packaging_type_id = ptg.id;
 
 -- ============================================================================
+-- 8. SYSTÈME DE MIGRATION AUTOMATIQUE
+-- ============================================================================
+
+-- Table de suivi des migrations
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    name TEXT PRIMARY KEY,
+    checksum TEXT,
+    applied_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    applied_by TEXT NOT NULL DEFAULT 'system',
+    success BOOLEAN NOT NULL DEFAULT TRUE,
+    execution_time_ms INTEGER,
+    error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_schema_migrations_applied_at ON schema_migrations(applied_at);
+
+COMMENT ON TABLE schema_migrations IS 'Tracks all applied database migrations';
+COMMENT ON COLUMN schema_migrations.name IS 'Unique migration identifier (e.g., 2026011701_migration_system)';
+COMMENT ON COLUMN schema_migrations.checksum IS 'MD5 hash of the migration SQL for integrity verification';
+COMMENT ON COLUMN schema_migrations.applied_at IS 'Timestamp when migration was applied (ms since epoch)';
+COMMENT ON COLUMN schema_migrations.applied_by IS 'User or system that applied the migration';
+COMMENT ON COLUMN schema_migrations.success IS 'Whether the migration executed successfully';
+COMMENT ON COLUMN schema_migrations.execution_time_ms IS 'Time taken to execute the migration in milliseconds';
+COMMENT ON COLUMN schema_migrations.error_message IS 'Error message if migration failed';
+
+-- Fonction pour appliquer une migration (SECURITY DEFINER pour DDL)
+CREATE OR REPLACE FUNCTION apply_migration(
+    p_name TEXT,
+    p_sql TEXT,
+    p_checksum TEXT DEFAULT NULL,
+    p_applied_by TEXT DEFAULT 'app'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_start_time BIGINT;
+    v_end_time BIGINT;
+    v_execution_time INTEGER;
+    v_result JSONB;
+BEGIN
+    -- Vérifier si la migration a déjà été appliquée
+    IF EXISTS (SELECT 1 FROM schema_migrations WHERE name = p_name AND success = TRUE) THEN
+        RETURN jsonb_build_object(
+            'success', FALSE,
+            'already_applied', TRUE,
+            'message', format('Migration %s has already been applied', p_name)
+        );
+    END IF;
+
+    -- Enregistrer le temps de début
+    v_start_time := EXTRACT(EPOCH FROM clock_timestamp())::BIGINT * 1000;
+
+    BEGIN
+        -- Exécuter le SQL de la migration
+        EXECUTE p_sql;
+
+        -- Calculer le temps d'exécution
+        v_end_time := EXTRACT(EPOCH FROM clock_timestamp())::BIGINT * 1000;
+        v_execution_time := (v_end_time - v_start_time)::INTEGER;
+
+        -- Enregistrer la migration comme réussie
+        INSERT INTO schema_migrations (name, checksum, applied_by, success, execution_time_ms)
+        VALUES (p_name, p_checksum, p_applied_by, TRUE, v_execution_time)
+        ON CONFLICT (name) DO UPDATE SET
+            checksum = EXCLUDED.checksum,
+            applied_at = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+            applied_by = EXCLUDED.applied_by,
+            success = TRUE,
+            execution_time_ms = EXCLUDED.execution_time_ms,
+            error_message = NULL;
+
+        v_result := jsonb_build_object(
+            'success', TRUE,
+            'already_applied', FALSE,
+            'message', format('Migration %s applied successfully', p_name),
+            'execution_time_ms', v_execution_time
+        );
+
+    EXCEPTION WHEN OTHERS THEN
+        -- Calculer le temps d'exécution même en cas d'erreur
+        v_end_time := EXTRACT(EPOCH FROM clock_timestamp())::BIGINT * 1000;
+        v_execution_time := (v_end_time - v_start_time)::INTEGER;
+
+        -- Enregistrer l'échec de la migration
+        INSERT INTO schema_migrations (name, checksum, applied_by, success, execution_time_ms, error_message)
+        VALUES (p_name, p_checksum, p_applied_by, FALSE, v_execution_time, SQLERRM)
+        ON CONFLICT (name) DO UPDATE SET
+            checksum = EXCLUDED.checksum,
+            applied_at = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+            applied_by = EXCLUDED.applied_by,
+            success = FALSE,
+            execution_time_ms = EXCLUDED.execution_time_ms,
+            error_message = EXCLUDED.error_message;
+
+        v_result := jsonb_build_object(
+            'success', FALSE,
+            'already_applied', FALSE,
+            'message', format('Migration %s failed: %s', p_name, SQLERRM),
+            'execution_time_ms', v_execution_time,
+            'error', SQLERRM
+        );
+    END;
+
+    RETURN v_result;
+END;
+$$;
+
+COMMENT ON FUNCTION apply_migration IS 'Applies a database migration and records the result. Uses SECURITY DEFINER to allow DDL operations.';
+
+-- Fonction pour lister les migrations appliquées
+CREATE OR REPLACE FUNCTION get_applied_migrations()
+RETURNS TABLE (
+    name TEXT,
+    checksum TEXT,
+    applied_at BIGINT,
+    applied_by TEXT,
+    success BOOLEAN,
+    execution_time_ms INTEGER,
+    error_message TEXT
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT
+        sm.name,
+        sm.checksum,
+        sm.applied_at,
+        sm.applied_by,
+        sm.success,
+        sm.execution_time_ms,
+        sm.error_message
+    FROM schema_migrations sm
+    ORDER BY sm.name;
+$$;
+
+COMMENT ON FUNCTION get_applied_migrations IS 'Returns all migrations that have been applied to the database';
+
+-- Fonction pour vérifier si une migration a été appliquée
+CREATE OR REPLACE FUNCTION is_migration_applied(p_name TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM schema_migrations
+        WHERE name = p_name AND success = TRUE
+    );
+$$;
+
+COMMENT ON FUNCTION is_migration_applied IS 'Checks if a specific migration has been successfully applied';
+
+-- ============================================================================
+-- 9. SYSTÈME DE VERSIONING APP/DB
+-- ============================================================================
+
+-- Table de version du schéma (une seule ligne)
+CREATE TABLE IF NOT EXISTS schema_version (
+    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    schema_version INTEGER NOT NULL DEFAULT 1,
+    min_app_version INTEGER NOT NULL DEFAULT 1,
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    updated_by TEXT NOT NULL DEFAULT 'system'
+);
+
+COMMENT ON TABLE schema_version IS 'Single-row table tracking database schema version and minimum required app version';
+COMMENT ON COLUMN schema_version.schema_version IS 'Current database schema version (incremented with breaking changes)';
+COMMENT ON COLUMN schema_version.min_app_version IS 'Minimum app schema version required to use this database';
+
+-- Fonction pour récupérer la version
+CREATE OR REPLACE FUNCTION get_schema_version()
+RETURNS TABLE (
+    schema_version INTEGER,
+    min_app_version INTEGER,
+    updated_at BIGINT
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT
+        sv.schema_version,
+        sv.min_app_version,
+        sv.updated_at
+    FROM schema_version sv
+    WHERE sv.id = 1;
+$$;
+
+COMMENT ON FUNCTION get_schema_version IS 'Returns current schema version and minimum required app version';
+
+-- Fonction pour mettre à jour la version (utilisée par les migrations)
+CREATE OR REPLACE FUNCTION update_schema_version(
+    p_schema_version INTEGER,
+    p_min_app_version INTEGER DEFAULT NULL,
+    p_updated_by TEXT DEFAULT 'migration'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_current_schema INTEGER;
+    v_current_min_app INTEGER;
+BEGIN
+    SELECT sv.schema_version, sv.min_app_version
+    INTO v_current_schema, v_current_min_app
+    FROM schema_version sv WHERE sv.id = 1;
+
+    IF NOT FOUND THEN
+        INSERT INTO schema_version (schema_version, min_app_version, updated_by)
+        VALUES (p_schema_version, COALESCE(p_min_app_version, p_schema_version), p_updated_by);
+        RETURN jsonb_build_object(
+            'success', TRUE,
+            'message', 'Schema version initialized',
+            'schema_version', p_schema_version,
+            'min_app_version', COALESCE(p_min_app_version, p_schema_version)
+        );
+    END IF;
+
+    IF p_schema_version < v_current_schema THEN
+        RETURN jsonb_build_object(
+            'success', FALSE,
+            'message', format('Cannot downgrade schema version from %s to %s', v_current_schema, p_schema_version)
+        );
+    END IF;
+
+    UPDATE schema_version SET
+        schema_version = p_schema_version,
+        min_app_version = COALESCE(p_min_app_version, min_app_version),
+        updated_at = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+        updated_by = p_updated_by
+    WHERE id = 1;
+
+    RETURN jsonb_build_object(
+        'success', TRUE,
+        'message', 'Schema version updated',
+        'schema_version', p_schema_version,
+        'min_app_version', COALESCE(p_min_app_version, v_current_min_app)
+    );
+END;
+$$;
+
+COMMENT ON FUNCTION update_schema_version IS 'Updates the schema version. Used by migrations to bump version numbers.';
+
+-- ============================================================================
 -- DONNÉES INITIALES (EXEMPLES)
 -- ============================================================================
 
@@ -814,6 +1067,25 @@ INSERT INTO packaging_types (name, level1_name, level2_name, default_conversion_
 INSERT INTO app_users (username, password, full_name, is_admin, is_active, created_by) VALUES
     ('admin', '$2a$12$hNbp4sTlxIZe8pxNbi3uuOtBxZ3K7iiKolTTCDOidr3zalaWNbVUG', 'Administrateur', TRUE, TRUE, 'system');
 
+-- Enregistrer toutes les migrations comme déjà appliquées (car init.sql les inclut)
+INSERT INTO schema_migrations (name, checksum, applied_by, success, execution_time_ms)
+VALUES
+    ('2025122601_uuid_migration', NULL, 'init', TRUE, NULL),
+    ('2025122602_created_updated_by', NULL, 'init', TRUE, NULL),
+    ('2025122603_audit_triggers', NULL, 'init', TRUE, NULL),
+    ('2025122604_audit_trigger_null_site', NULL, 'init', TRUE, NULL),
+    ('2025122605_add_product_description', NULL, 'init', TRUE, NULL),
+    ('2025122605_transaction_flat_view', NULL, 'init', TRUE, NULL),
+    ('2026010501_schema_cleanup', NULL, 'init', TRUE, NULL),
+    ('2026011701_migration_system', NULL, 'init', TRUE, NULL),
+    ('2026011702_schema_version', NULL, 'init', TRUE, NULL)
+ON CONFLICT (name) DO NOTHING;
+
+-- Initialiser la version du schéma (version 2 = système de migration + versioning)
+INSERT INTO schema_version (schema_version, min_app_version, updated_by)
+VALUES (2, 2, 'init')
+ON CONFLICT (id) DO NOTHING;
+
 -- ============================================================================
 -- FIN DU SCHÉMA
 -- ============================================================================
@@ -822,6 +1094,8 @@ INSERT INTO app_users (username, password, full_name, is_admin, is_active, creat
 DO $$
 BEGIN
     RAISE NOTICE 'Medistock database schema created successfully!';
-    RAISE NOTICE 'Total tables: 16';
+    RAISE NOTICE 'Total tables: 18 (including schema_migrations and schema_version)';
     RAISE NOTICE 'Default admin user: admin / admin123';
+    RAISE NOTICE 'Migration system initialized with 9 migrations marked as applied';
+    RAISE NOTICE 'Schema version: 2, Min app version: 2';
 END $$;

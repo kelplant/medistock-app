@@ -8,11 +8,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
+import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
+import com.medistock.data.migration.CompatibilityResult
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.HomeActivity
 import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.util.AuthManager
@@ -22,6 +25,7 @@ import com.medistock.util.PasswordMigration
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -59,8 +63,11 @@ class LoginActivity : AppCompatActivity() {
         // Disable login button during initialization
         btnLogin.isEnabled = false
 
-        // IMPORTANT: Migrate passwords BEFORE checking login status
+        // IMPORTANT: Check app/DB compatibility first
         lifecycleScope.launch {
+            // Wait for compatibility check to complete (max 5 seconds)
+            checkAppCompatibility()
+
             // Migrate existing plain text passwords to hashed passwords
             PasswordMigration.migratePasswordsIfNeeded(this@LoginActivity)
 
@@ -174,6 +181,37 @@ class LoginActivity : AppCompatActivity() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
+    }
+
+    /**
+     * Vérifie la compatibilité app/DB.
+     * Attend que la vérification soit terminée (max 5 secondes).
+     * Si l'app est trop ancienne, redirige vers l'écran de mise à jour.
+     */
+    private suspend fun checkAppCompatibility() {
+        // Attendre que la vérification soit terminée (l'Application la fait en background)
+        var waited = 0
+        while (MedistockApplication.compatibilityResult == null && waited < 5000) {
+            delay(100)
+            waited += 100
+        }
+
+        val result = MedistockApplication.compatibilityResult
+
+        if (result is CompatibilityResult.AppTooOld) {
+            // Rediriger vers l'écran de mise à jour requise
+            withContext(Dispatchers.Main) {
+                val intent = Intent(this@LoginActivity, AppUpdateRequiredActivity::class.java).apply {
+                    putExtra(AppUpdateRequiredActivity.EXTRA_APP_VERSION, result.appVersion)
+                    putExtra(AppUpdateRequiredActivity.EXTRA_MIN_REQUIRED, result.minRequired)
+                    putExtra(AppUpdateRequiredActivity.EXTRA_DB_VERSION, result.dbVersion)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
+        // Si Compatible ou Unknown, on continue normalement
     }
 
     private fun observeRealtimeStatus() {

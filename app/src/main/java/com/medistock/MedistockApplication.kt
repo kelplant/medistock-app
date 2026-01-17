@@ -2,11 +2,15 @@ package com.medistock
 
 import android.app.Application
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import com.medistock.data.migration.CompatibilityResult
+import com.medistock.data.migration.MigrationManager
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
+import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
 import io.github.jan.supabase.realtime.realtime
@@ -24,6 +28,140 @@ import kotlinx.coroutines.launch
 class MedistockApplication : Application() {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Compte le nombre d'activités visibles pour détecter foreground/background */
+    private var visibleActivityCount = 0
+
+    /** Timestamp de la dernière vérification de compatibilité */
+    private var lastCompatibilityCheck = 0L
+
+    /** Intervalle minimum entre deux vérifications (30 secondes) */
+    private val compatibilityCheckInterval = 30_000L
+
+    companion object {
+        /**
+         * Résultat de la vérification de compatibilité app/DB.
+         * Vérifié par LoginActivity au démarrage.
+         * null = pas encore vérifié, Compatible = OK, AppTooOld = mise à jour requise
+         */
+        @Volatile
+        var compatibilityResult: CompatibilityResult? = null
+            private set
+
+        /**
+         * Met à jour le résultat de compatibilité (appelé par les vérifications)
+         */
+        internal fun updateCompatibilityResult(result: CompatibilityResult) {
+            compatibilityResult = result
+        }
+    }
+
+    /**
+     * Vérifie la compatibilité et exécute les migrations Supabase en attente
+     * Cette fonction est appelée au démarrage de l'app après l'initialisation de Supabase
+     */
+    private suspend fun checkCompatibilityAndRunMigrations() {
+        try {
+            val migrationManager = MigrationManager(this@MedistockApplication)
+
+            // 1. Vérifier la compatibilité app/DB
+            val compat = migrationManager.checkCompatibility()
+            updateCompatibilityResult(compat)
+            lastCompatibilityCheck = System.currentTimeMillis()
+
+            when (compat) {
+                is CompatibilityResult.AppTooOld -> {
+                    println("❌ App trop ancienne - mise à jour requise")
+                    println("   Version app: ${compat.appVersion}, Min requise: ${compat.minRequired}")
+                    // Ne pas exécuter les migrations si l'app est trop ancienne
+                    return
+                }
+                is CompatibilityResult.Unknown -> {
+                    println("⚠️ Impossible de vérifier la compatibilité: ${compat.reason}")
+                    // Continuer quand même (peut-être offline ou système non installé)
+                }
+                is CompatibilityResult.Compatible -> {
+                    println("✅ App compatible avec la base de données")
+                }
+            }
+
+            // 2. Exécuter les migrations en attente
+            val result = migrationManager.runPendingMigrations(appliedBy = "app")
+
+            when {
+                result.systemNotInstalled -> {
+                    println("⚠️ Système de migration non installé dans Supabase")
+                    println("⚠️ Veuillez exécuter 2026011701_migration_system.sql dans Supabase")
+                }
+                result.migrationsApplied.isNotEmpty() -> {
+                    println("✅ ${result.migrationsApplied.size} migration(s) appliquée(s):")
+                    result.migrationsApplied.forEach { println("   - $it") }
+                }
+                result.migrationsFailed.isNotEmpty() -> {
+                    println("❌ ${result.migrationsFailed.size} migration(s) échouée(s):")
+                    result.migrationsFailed.forEach { (name, error) ->
+                        println("   - $name: $error")
+                    }
+                }
+                else -> {
+                    println("✅ Aucune nouvelle migration à appliquer")
+                }
+            }
+        } catch (e: Exception) {
+            println("❌ Erreur lors de la vérification/migrations: ${e.message}")
+            // En cas d'erreur, on considère que c'est compatible (offline, etc.)
+            if (compatibilityResult == null) {
+                updateCompatibilityResult(CompatibilityResult.Unknown(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    /**
+     * Re-vérifie la compatibilité quand l'app revient au premier plan.
+     * Ne vérifie que si assez de temps s'est écoulé depuis la dernière vérification.
+     *
+     * @param currentActivity L'activité actuellement au premier plan
+     */
+    private fun recheckCompatibilityOnForeground(currentActivity: Activity) {
+        // Ne pas re-vérifier si on est déjà sur l'écran de mise à jour
+        if (currentActivity is AppUpdateRequiredActivity) return
+
+        // Ne pas re-vérifier si pas assez de temps s'est écoulé
+        val now = System.currentTimeMillis()
+        if (now - lastCompatibilityCheck < compatibilityCheckInterval) return
+
+        // Ne pas re-vérifier si Supabase n'est pas configuré
+        if (!SupabaseClientProvider.isConfigured(this)) return
+
+        println("🔄 Re-vérification de la compatibilité (retour au premier plan)...")
+
+        appScope.launch {
+            try {
+                val migrationManager = MigrationManager(this@MedistockApplication)
+                val compat = migrationManager.checkCompatibility()
+                updateCompatibilityResult(compat)
+                lastCompatibilityCheck = System.currentTimeMillis()
+
+                if (compat is CompatibilityResult.AppTooOld) {
+                    println("❌ App devenue incompatible - redirection vers mise à jour")
+                    // Lancer l'écran de mise à jour sur le thread UI
+                    kotlinx.coroutines.withContext(Dispatchers.Main) {
+                        val intent = Intent(currentActivity, AppUpdateRequiredActivity::class.java).apply {
+                            putExtra(AppUpdateRequiredActivity.EXTRA_APP_VERSION, compat.appVersion)
+                            putExtra(AppUpdateRequiredActivity.EXTRA_MIN_REQUIRED, compat.minRequired)
+                            putExtra(AppUpdateRequiredActivity.EXTRA_DB_VERSION, compat.dbVersion)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                        currentActivity.startActivity(intent)
+                        currentActivity.finish()
+                    }
+                }
+            } catch (e: Exception) {
+                println("⚠️ Erreur lors de la re-vérification: ${e.message}")
+                // En cas d'erreur, on ne bloque pas (peut-être offline)
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -43,6 +181,9 @@ class MedistockApplication : Application() {
             appScope.launch {
                 runCatching { SupabaseClientProvider.client.realtime.connect() }
                     .onFailure { println("⚠️ Realtime connect failed at startup: ${it.message}") }
+
+                // Vérifier la compatibilité et exécuter les migrations Supabase en attente
+                checkCompatibilityAndRunMigrations()
             }
             println("✅ Application démarrée avec Supabase 2.2.2")
             SyncScheduler.start(this)
@@ -64,10 +205,27 @@ class MedistockApplication : Application() {
                     UserProfileMenu.attach(activity)
                 }
             }
-            override fun onActivityStarted(activity: Activity) {}
+
+            override fun onActivityStarted(activity: Activity) {
+                val wasInBackground = visibleActivityCount == 0
+                visibleActivityCount++
+
+                // Si l'app revient au premier plan, re-vérifier la compatibilité
+                if (wasInBackground) {
+                    println("📱 App revenue au premier plan")
+                    recheckCompatibilityOnForeground(activity)
+                }
+            }
+
+            override fun onActivityStopped(activity: Activity) {
+                visibleActivityCount--
+                if (visibleActivityCount == 0) {
+                    println("📱 App passée en arrière-plan")
+                }
+            }
+
             override fun onActivityResumed(activity: Activity) {}
             override fun onActivityPaused(activity: Activity) {}
-            override fun onActivityStopped(activity: Activity) {}
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
             override fun onActivityDestroyed(activity: Activity) {}
         })

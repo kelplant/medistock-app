@@ -29,4 +29,11 @@
     <color name="teal_200">#03DAC5</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+
+    <!-- App colors -->
+    <color name="background">@color/md_theme_background</color>
+    <color name="text_primary">@color/md_theme_onBackground</color>
+    <color name="text_secondary">@color/md_theme_onSurfaceVariant</color>
+    <color name="warning_orange">#FF9800</color>
+    <color name="version_info_bg">#F5F5F5</color>
 </resources>
