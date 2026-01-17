@@ -5,6 +5,7 @@ import android.app.Activity
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import com.medistock.data.migration.CompatibilityResult
 import com.medistock.data.migration.MigrationManager
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
@@ -26,13 +27,46 @@ class MedistockApplication : Application() {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    companion object {
+        /**
+         * Résultat de la vérification de compatibilité app/DB.
+         * Vérifié par LoginActivity au démarrage.
+         * null = pas encore vérifié, Compatible = OK, AppTooOld = mise à jour requise
+         */
+        @Volatile
+        var compatibilityResult: CompatibilityResult? = null
+            private set
+    }
+
     /**
-     * Exécute les migrations Supabase en attente
+     * Vérifie la compatibilité et exécute les migrations Supabase en attente
      * Cette fonction est appelée au démarrage de l'app après l'initialisation de Supabase
      */
-    private suspend fun runPendingMigrations() {
+    private suspend fun checkCompatibilityAndRunMigrations() {
         try {
             val migrationManager = MigrationManager(this@MedistockApplication)
+
+            // 1. Vérifier la compatibilité app/DB
+            val compat = migrationManager.checkCompatibility()
+            compatibilityResult = compat
+
+            when (compat) {
+                is CompatibilityResult.AppTooOld -> {
+                    println("❌ App trop ancienne - mise à jour requise")
+                    println("   Version app: ${compat.appVersion}, Min requise: ${compat.minRequired}")
+                    // Ne pas exécuter les migrations si l'app est trop ancienne
+                    return
+                }
+                is CompatibilityResult.Unknown -> {
+                    println("⚠️ Impossible de vérifier la compatibilité: ${compat.reason}")
+                    // Continuer quand même (peut-être offline ou système non installé)
+                }
+                is CompatibilityResult.Compatible -> {
+                    println("✅ App compatible avec la base de données")
+                }
+            }
+
+            // 2. Exécuter les migrations en attente
             val result = migrationManager.runPendingMigrations(appliedBy = "app")
 
             when {
@@ -55,7 +89,11 @@ class MedistockApplication : Application() {
                 }
             }
         } catch (e: Exception) {
-            println("❌ Erreur lors de l'exécution des migrations: ${e.message}")
+            println("❌ Erreur lors de la vérification/migrations: ${e.message}")
+            // En cas d'erreur, on considère que c'est compatible (offline, etc.)
+            if (compatibilityResult == null) {
+                compatibilityResult = CompatibilityResult.Unknown(e.message ?: "Unknown error")
+            }
         }
     }
 
@@ -78,8 +116,8 @@ class MedistockApplication : Application() {
                 runCatching { SupabaseClientProvider.client.realtime.connect() }
                     .onFailure { println("⚠️ Realtime connect failed at startup: ${it.message}") }
 
-                // Exécuter les migrations Supabase en attente
-                runPendingMigrations()
+                // Vérifier la compatibilité et exécuter les migrations Supabase en attente
+                checkCompatibilityAndRunMigrations()
             }
             println("✅ Application démarrée avec Supabase 2.2.2")
             SyncScheduler.start(this)

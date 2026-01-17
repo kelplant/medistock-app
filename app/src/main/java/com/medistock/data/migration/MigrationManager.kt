@@ -39,6 +39,24 @@ data class MigrationRunResult(
 )
 
 /**
+ * Résultat de la vérification de compatibilité app/DB
+ */
+sealed class CompatibilityResult {
+    /** L'app est compatible avec la base de données */
+    object Compatible : CompatibilityResult()
+
+    /** L'app est trop ancienne pour cette DB - mise à jour requise */
+    data class AppTooOld(
+        val appVersion: Int,
+        val minRequired: Int,
+        val dbVersion: Int
+    ) : CompatibilityResult()
+
+    /** Impossible de vérifier (système non installé ou erreur réseau) */
+    data class Unknown(val reason: String) : CompatibilityResult()
+}
+
+/**
  * Callback pour suivre la progression des migrations
  */
 interface MigrationProgressListener {
@@ -71,6 +89,57 @@ class MigrationManager(
     companion object {
         private const val TAG = "MigrationManager"
         private const val MIGRATIONS_FOLDER = "migrations"
+
+        /**
+         * Version du schéma supportée par cette version de l'app.
+         *
+         * IMPORTANT: Incrémentez cette valeur quand vous ajoutez une migration
+         * qui modifie le schéma de façon incompatible avec les anciennes versions.
+         *
+         * Historique:
+         * - Version 1: Schéma initial
+         * - Version 2: Ajout du système de migration et versioning
+         */
+        const val APP_SCHEMA_VERSION = 2
+    }
+
+    /**
+     * Vérifie si cette version de l'app est compatible avec la base de données.
+     *
+     * Cette vérification doit être faite AVANT de tenter d'utiliser l'app.
+     * Si le résultat est AppTooOld, l'utilisateur doit mettre à jour l'app.
+     *
+     * @return CompatibilityResult indiquant si l'app peut être utilisée
+     */
+    suspend fun checkCompatibility(): CompatibilityResult {
+        return try {
+            val schemaVersion = repository.getSchemaVersion()
+
+            if (schemaVersion == null) {
+                // Le système de versioning n'est pas installé
+                // On considère que c'est compatible (ancienne DB sans versioning)
+                println("⚠️ Système de versioning non installé - compatibilité assumée")
+                CompatibilityResult.Compatible
+            } else {
+                val dbVersion = schemaVersion.schemaVersion
+                val minAppVersion = schemaVersion.minAppVersion
+
+                if (APP_SCHEMA_VERSION < minAppVersion) {
+                    println("❌ App trop ancienne: app=$APP_SCHEMA_VERSION, min=$minAppVersion, db=$dbVersion")
+                    CompatibilityResult.AppTooOld(
+                        appVersion = APP_SCHEMA_VERSION,
+                        minRequired = minAppVersion,
+                        dbVersion = dbVersion
+                    )
+                } else {
+                    println("✅ App compatible: app=$APP_SCHEMA_VERSION, min=$minAppVersion, db=$dbVersion")
+                    CompatibilityResult.Compatible
+                }
+            }
+        } catch (e: Exception) {
+            println("⚠️ Impossible de vérifier la compatibilité: ${e.message}")
+            CompatibilityResult.Unknown(e.message ?: "Unknown error")
+        }
     }
 
     /**

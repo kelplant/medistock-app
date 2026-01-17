@@ -949,6 +949,100 @@ $$;
 COMMENT ON FUNCTION is_migration_applied IS 'Checks if a specific migration has been successfully applied';
 
 -- ============================================================================
+-- 9. SYSTÈME DE VERSIONING APP/DB
+-- ============================================================================
+
+-- Table de version du schéma (une seule ligne)
+CREATE TABLE IF NOT EXISTS schema_version (
+    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    schema_version INTEGER NOT NULL DEFAULT 1,
+    min_app_version INTEGER NOT NULL DEFAULT 1,
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    updated_by TEXT NOT NULL DEFAULT 'system'
+);
+
+COMMENT ON TABLE schema_version IS 'Single-row table tracking database schema version and minimum required app version';
+COMMENT ON COLUMN schema_version.schema_version IS 'Current database schema version (incremented with breaking changes)';
+COMMENT ON COLUMN schema_version.min_app_version IS 'Minimum app schema version required to use this database';
+
+-- Fonction pour récupérer la version
+CREATE OR REPLACE FUNCTION get_schema_version()
+RETURNS TABLE (
+    schema_version INTEGER,
+    min_app_version INTEGER,
+    updated_at BIGINT
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT
+        sv.schema_version,
+        sv.min_app_version,
+        sv.updated_at
+    FROM schema_version sv
+    WHERE sv.id = 1;
+$$;
+
+COMMENT ON FUNCTION get_schema_version IS 'Returns current schema version and minimum required app version';
+
+-- Fonction pour mettre à jour la version (utilisée par les migrations)
+CREATE OR REPLACE FUNCTION update_schema_version(
+    p_schema_version INTEGER,
+    p_min_app_version INTEGER DEFAULT NULL,
+    p_updated_by TEXT DEFAULT 'migration'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_current_schema INTEGER;
+    v_current_min_app INTEGER;
+BEGIN
+    SELECT sv.schema_version, sv.min_app_version
+    INTO v_current_schema, v_current_min_app
+    FROM schema_version sv WHERE sv.id = 1;
+
+    IF NOT FOUND THEN
+        INSERT INTO schema_version (schema_version, min_app_version, updated_by)
+        VALUES (p_schema_version, COALESCE(p_min_app_version, p_schema_version), p_updated_by);
+        RETURN jsonb_build_object(
+            'success', TRUE,
+            'message', 'Schema version initialized',
+            'schema_version', p_schema_version,
+            'min_app_version', COALESCE(p_min_app_version, p_schema_version)
+        );
+    END IF;
+
+    IF p_schema_version < v_current_schema THEN
+        RETURN jsonb_build_object(
+            'success', FALSE,
+            'message', format('Cannot downgrade schema version from %s to %s', v_current_schema, p_schema_version)
+        );
+    END IF;
+
+    UPDATE schema_version SET
+        schema_version = p_schema_version,
+        min_app_version = COALESCE(p_min_app_version, min_app_version),
+        updated_at = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+        updated_by = p_updated_by
+    WHERE id = 1;
+
+    RETURN jsonb_build_object(
+        'success', TRUE,
+        'message', 'Schema version updated',
+        'schema_version', p_schema_version,
+        'min_app_version', COALESCE(p_min_app_version, v_current_min_app)
+    );
+END;
+$$;
+
+COMMENT ON FUNCTION update_schema_version IS 'Updates the schema version. Used by migrations to bump version numbers.';
+
+-- ============================================================================
 -- DONNÉES INITIALES (EXEMPLES)
 -- ============================================================================
 
@@ -983,8 +1077,14 @@ VALUES
     ('2025122605_add_product_description', NULL, 'init', TRUE, NULL),
     ('2025122605_transaction_flat_view', NULL, 'init', TRUE, NULL),
     ('2026010501_schema_cleanup', NULL, 'init', TRUE, NULL),
-    ('2026011701_migration_system', NULL, 'init', TRUE, NULL)
+    ('2026011701_migration_system', NULL, 'init', TRUE, NULL),
+    ('2026011702_schema_version', NULL, 'init', TRUE, NULL)
 ON CONFLICT (name) DO NOTHING;
+
+-- Initialiser la version du schéma (version 2 = système de migration + versioning)
+INSERT INTO schema_version (schema_version, min_app_version, updated_by)
+VALUES (2, 2, 'init')
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- FIN DU SCHÉMA
@@ -994,7 +1094,8 @@ ON CONFLICT (name) DO NOTHING;
 DO $$
 BEGIN
     RAISE NOTICE 'Medistock database schema created successfully!';
-    RAISE NOTICE 'Total tables: 17 (including schema_migrations)';
+    RAISE NOTICE 'Total tables: 18 (including schema_migrations and schema_version)';
     RAISE NOTICE 'Default admin user: admin / admin123';
-    RAISE NOTICE 'Migration system initialized with 8 migrations marked as applied';
+    RAISE NOTICE 'Migration system initialized with 9 migrations marked as applied';
+    RAISE NOTICE 'Schema version: 2, Min app version: 2';
 END $$;

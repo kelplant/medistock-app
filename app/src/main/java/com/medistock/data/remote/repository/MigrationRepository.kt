@@ -28,6 +28,19 @@ data class SchemaMigrationDto(
 )
 
 /**
+ * DTO pour la version du schéma
+ */
+@Serializable
+data class SchemaVersionDto(
+    @SerialName("schema_version")
+    val schemaVersion: Int,
+    @SerialName("min_app_version")
+    val minAppVersion: Int,
+    @SerialName("updated_at")
+    val updatedAt: Long? = null
+)
+
+/**
  * Résultat de l'application d'une migration
  */
 data class MigrationResult(
@@ -138,6 +151,48 @@ class MigrationRepository {
             true
         } catch (e: Exception) {
             println("⚠️ Système de migration non installé: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Récupère la version actuelle du schéma de la base de données
+     *
+     * @return SchemaVersionDto ou null si non disponible (système non installé ou erreur)
+     */
+    suspend fun getSchemaVersion(): SchemaVersionDto? {
+        return try {
+            supabase.postgrest.rpc("get_schema_version")
+                .decodeSingleOrNull<SchemaVersionDto>()
+        } catch (e: Exception) {
+            println("⚠️ Impossible de récupérer la version du schéma: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Met à jour la version du schéma (appelé après une migration importante)
+     */
+    suspend fun updateSchemaVersion(
+        schemaVersion: Int,
+        minAppVersion: Int? = null,
+        updatedBy: String = "app"
+    ): Boolean {
+        return try {
+            val params = buildMap {
+                put("p_schema_version", schemaVersion)
+                if (minAppVersion != null) put("p_min_app_version", minAppVersion)
+                put("p_updated_by", updatedBy)
+            }
+
+            val result = supabase.postgrest.rpc(
+                "update_schema_version",
+                params
+            ).decodeSingle<JsonObject>()
+
+            result["success"]?.jsonPrimitive?.booleanOrNull ?: false
+        } catch (e: Exception) {
+            println("❌ Erreur lors de la mise à jour de la version: ${e.message}")
             false
         }
     }
