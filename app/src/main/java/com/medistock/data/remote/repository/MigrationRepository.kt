@@ -2,10 +2,13 @@ package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -17,7 +20,7 @@ data class SchemaMigrationDto(
     val name: String,
     val checksum: String? = null,
     @SerialName("applied_at")
-    val appliedAt: Long? = null,
+    val appliedAt: String? = null,
     @SerialName("applied_by")
     val appliedBy: String? = null,
     val success: Boolean = true,
@@ -37,7 +40,7 @@ data class SchemaVersionDto(
     @SerialName("min_app_version")
     val minAppVersion: Int,
     @SerialName("updated_at")
-    val updatedAt: Long? = null
+    val updatedAt: String? = null
 )
 
 /**
@@ -49,6 +52,43 @@ data class MigrationResult(
     val message: String,
     val executionTimeMs: Int? = null,
     val error: String? = null
+)
+
+/**
+ * Paramètres pour apply_migration RPC
+ */
+@Serializable
+data class ApplyMigrationParams(
+    @SerialName("p_name")
+    val pName: String,
+    @SerialName("p_sql")
+    val pSql: String,
+    @SerialName("p_checksum")
+    val pChecksum: String? = null,
+    @SerialName("p_applied_by")
+    val pAppliedBy: String = "app"
+)
+
+/**
+ * Paramètres pour is_migration_applied RPC
+ */
+@Serializable
+data class IsMigrationAppliedParams(
+    @SerialName("p_name")
+    val pName: String
+)
+
+/**
+ * Paramètres pour update_schema_version RPC
+ */
+@Serializable
+data class UpdateSchemaVersionParams(
+    @SerialName("p_schema_version")
+    val pSchemaVersion: Int,
+    @SerialName("p_min_app_version")
+    val pMinAppVersion: Int? = null,
+    @SerialName("p_updated_by")
+    val pUpdatedBy: String = "app"
 )
 
 /**
@@ -83,7 +123,7 @@ class MigrationRepository {
         return try {
             supabase.postgrest.rpc(
                 "is_migration_applied",
-                mapOf("p_name" to name)
+                IsMigrationAppliedParams(pName = name)
             ).decodeSingle<Boolean>()
         } catch (e: Exception) {
             println("❌ Erreur lors de la vérification de la migration $name: ${e.message}")
@@ -108,12 +148,12 @@ class MigrationRepository {
         appliedBy: String = "app"
     ): MigrationResult {
         return try {
-            val params = buildMap {
-                put("p_name", name)
-                put("p_sql", sql)
-                if (checksum != null) put("p_checksum", checksum)
-                put("p_applied_by", appliedBy)
-            }
+            val params = ApplyMigrationParams(
+                pName = name,
+                pSql = sql,
+                pChecksum = checksum,
+                pAppliedBy = appliedBy
+            )
 
             val result = supabase.postgrest.rpc(
                 "apply_migration",
@@ -179,11 +219,11 @@ class MigrationRepository {
         updatedBy: String = "app"
     ): Boolean {
         return try {
-            val params = buildMap {
-                put("p_schema_version", schemaVersion)
-                if (minAppVersion != null) put("p_min_app_version", minAppVersion)
-                put("p_updated_by", updatedBy)
-            }
+            val params = UpdateSchemaVersionParams(
+                pSchemaVersion = schemaVersion,
+                pMinAppVersion = minAppVersion,
+                pUpdatedBy = updatedBy
+            )
 
             val result = supabase.postgrest.rpc(
                 "update_schema_version",
