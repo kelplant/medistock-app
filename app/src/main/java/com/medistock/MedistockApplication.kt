@@ -5,6 +5,7 @@ import android.app.Activity
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import com.medistock.data.migration.MigrationManager
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
 import com.medistock.ui.auth.LoginActivity
@@ -25,6 +26,39 @@ class MedistockApplication : Application() {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /**
+     * Exécute les migrations Supabase en attente
+     * Cette fonction est appelée au démarrage de l'app après l'initialisation de Supabase
+     */
+    private suspend fun runPendingMigrations() {
+        try {
+            val migrationManager = MigrationManager(this@MedistockApplication)
+            val result = migrationManager.runPendingMigrations(appliedBy = "app")
+
+            when {
+                result.systemNotInstalled -> {
+                    println("⚠️ Système de migration non installé dans Supabase")
+                    println("⚠️ Veuillez exécuter 2026011701_migration_system.sql dans Supabase")
+                }
+                result.migrationsApplied.isNotEmpty() -> {
+                    println("✅ ${result.migrationsApplied.size} migration(s) appliquée(s):")
+                    result.migrationsApplied.forEach { println("   - $it") }
+                }
+                result.migrationsFailed.isNotEmpty() -> {
+                    println("❌ ${result.migrationsFailed.size} migration(s) échouée(s):")
+                    result.migrationsFailed.forEach { (name, error) ->
+                        println("   - $name: $error")
+                    }
+                }
+                else -> {
+                    println("✅ Aucune nouvelle migration à appliquer")
+                }
+            }
+        } catch (e: Exception) {
+            println("❌ Erreur lors de l'exécution des migrations: ${e.message}")
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -43,6 +77,9 @@ class MedistockApplication : Application() {
             appScope.launch {
                 runCatching { SupabaseClientProvider.client.realtime.connect() }
                     .onFailure { println("⚠️ Realtime connect failed at startup: ${it.message}") }
+
+                // Exécuter les migrations Supabase en attente
+                runPendingMigrations()
             }
             println("✅ Application démarrée avec Supabase 2.2.2")
             SyncScheduler.start(this)
