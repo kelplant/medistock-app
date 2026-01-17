@@ -20,7 +20,7 @@ data class SchemaMigrationDto(
     val name: String,
     val checksum: String? = null,
     @SerialName("applied_at")
-    val appliedAt: String? = null,
+    val appliedAt: Long? = null,
     @SerialName("applied_by")
     val appliedBy: String? = null,
     val success: Boolean = true,
@@ -40,7 +40,7 @@ data class SchemaVersionDto(
     @SerialName("min_app_version")
     val minAppVersion: Int,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
