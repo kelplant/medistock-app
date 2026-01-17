@@ -27,6 +27,18 @@
     <string name="update_required_title">Mise à jour requise</string>
     <string name="update_required_message">Une version plus récente de l\'application est nécessaire pour utiliser cette base de données.\n\nVeuillez mettre à jour l\'application pour continuer.</string>
     <string name="update_version_info">Version app: %1$d\nVersion requise: %2$d\nVersion DB: %3$d</string>
-    <string name="update_app_button">Mettre à jour</string>
+    <string name="update_app_button">Play Store</string>
     <string name="close_app_button">Fermer l\'application</string>
+
+    <!-- GitHub Update -->
+    <string name="download_from_github">Télécharger depuis GitHub</string>
+    <string name="download_checking">Vérification de la mise à jour…</string>
+    <string name="download_available">Nouvelle version %s disponible (%s)</string>
+    <string name="download_progress">Téléchargement: %d%% (%s / %s)</string>
+    <string name="download_complete">Téléchargement terminé</string>
+    <string name="download_failed">Échec du téléchargement: %s</string>
+    <string name="download_no_update">Aucune mise à jour disponible</string>
+    <string name="download_installing">Installation en cours…</string>
+    <string name="install_permission_required">Veuillez autoriser l\'installation d\'applications inconnues</string>
+    <string name="install_button">Installer</string>
 </resources>

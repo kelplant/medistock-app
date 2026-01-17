@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Dossier de téléchargement des mises à jour APK -->
+    <external-files-path
+        name="updates"
+        path="Download/updates/" />
+
+    <!-- Dossier de cache externe -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+
+    <!-- Dossier de cache interne -->
+    <cache-path
+        name="cache"
+        path="." />
+</paths>

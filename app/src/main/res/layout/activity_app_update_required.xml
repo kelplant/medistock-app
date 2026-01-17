@@ -1,99 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="32dp"
-    android:background="@color/background">
+    android:background="@color/background"
+    android:fillViewport="true">
 
-    <!-- Icône d'alerte -->
-    <ImageView
-        android:id="@+id/ivWarning"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:src="@android:drawable/ic_dialog_alert"
-        android:contentDescription="@string/update_required_title"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/tvTitle"
-        app:layout_constraintVertical_chainStyle="packed"
-        app:tint="@color/warning_orange" />
-
-    <!-- Titre -->
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/update_required_title"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_primary"
-        app:layout_constraintTop_toBottomOf="@id/ivWarning"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/tvUpdateMessage" />
+        android:padding="32dp">
 
-    <!-- Message principal -->
-    <TextView
-        android:id="@+id/tvUpdateMessage"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/update_required_message"
-        android:textSize="16sp"
-        android:textColor="@color/text_secondary"
-        android:textAlignment="center"
-        android:lineSpacingMultiplier="1.3"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/tvVersionInfo" />
+        <!-- Icône d'alerte -->
+        <ImageView
+            android:id="@+id/ivWarning"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@android:drawable/ic_dialog_alert"
+            android:contentDescription="@string/update_required_title"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tint="@color/warning_orange" />
 
-    <!-- Informations de version -->
-    <TextView
-        android:id="@+id/tvVersionInfo"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:padding="16dp"
-        android:background="@drawable/bg_version_info"
-        android:textSize="14sp"
-        android:textColor="@color/text_secondary"
-        android:textAlignment="center"
-        android:fontFamily="monospace"
-        app:layout_constraintTop_toBottomOf="@id/tvUpdateMessage"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btnUpdate" />
+        <!-- Titre -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/update_required_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            app:layout_constraintTop_toBottomOf="@id/ivWarning"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Bouton Mettre à jour -->
-    <Button
-        android:id="@+id/btnUpdate"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="@string/update_app_button"
-        android:textAllCaps="false"
-        app:layout_constraintTop_toBottomOf="@id/tvVersionInfo"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btnClose" />
+        <!-- Message principal -->
+        <TextView
+            android:id="@+id/tvUpdateMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/update_required_message"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary"
+            android:textAlignment="center"
+            android:lineSpacingMultiplier="1.3"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Bouton Fermer -->
-    <Button
-        android:id="@+id/btnClose"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/close_app_button"
-        android:textAllCaps="false"
-        app:layout_constraintTop_toBottomOf="@id/btnUpdate"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        <!-- Informations de version -->
+        <TextView
+            android:id="@+id/tvVersionInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:padding="16dp"
+            android:background="@drawable/bg_version_info"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:textAlignment="center"
+            android:fontFamily="monospace"
+            app:layout_constraintTop_toBottomOf="@id/tvUpdateMessage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Section téléchargement GitHub -->
+        <LinearLayout
+            android:id="@+id/downloadSection"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tvVersionInfo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Barre de progression -->
+            <ProgressBar
+                android:id="@+id/progressDownload"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:progress="0" />
+
+            <!-- Texte de statut -->
+            <TextView
+                android:id="@+id/tvDownloadStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:textAlignment="center"
+                android:text="@string/download_checking" />
+
+        </LinearLayout>
+
+        <!-- Bouton Télécharger depuis GitHub -->
+        <Button
+            android:id="@+id/btnDownloadGithub"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="@string/download_from_github"
+            android:textAllCaps="false"
+            app:layout_constraintTop_toBottomOf="@id/downloadSection"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Bouton Play Store (optionnel) -->
+        <Button
+            android:id="@+id/btnUpdate"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/update_app_button"
+            android:textAllCaps="false"
+            app:layout_constraintTop_toBottomOf="@id/btnDownloadGithub"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Bouton Fermer -->
+        <Button
+            android:id="@+id/btnClose"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/close_app_button"
+            android:textAllCaps="false"
+            app:layout_constraintTop_toBottomOf="@id/btnUpdate"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>
