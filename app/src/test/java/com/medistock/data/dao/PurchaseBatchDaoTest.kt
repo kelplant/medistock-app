@@ -66,8 +66,8 @@ class PurchaseBatchDaoTest {
         // Then
         val result = purchaseBatchDao.getById("batch-1").first()
         assertNotNull(result)
-        assertEquals("BATCH001", result?.batchNumber)
-        assertEquals(100.0, result?.remainingQuantity, 0.01)
+        assertEquals("BATCH001", result!!.batchNumber)
+        assertEquals(100.0, result.remainingQuantity, 0.01)
     }
 
     @Test
@@ -91,7 +91,8 @@ class PurchaseBatchDaoTest {
 
         // Then
         val result = purchaseBatchDao.getById("batch-1").first()
-        assertEquals(50.0, result?.remainingQuantity, 0.01)
+        assertNotNull(result)
+        assertEquals(50.0, result!!.remainingQuantity, 0.01)
     }
 
     @Test
@@ -367,8 +368,9 @@ class PurchaseBatchDaoTest {
 
         // Then
         val result = purchaseBatchDao.getById("batch-1").first()
-        assertEquals(30.0, result?.remainingQuantity, 0.01)
-        assertFalse(result?.isExhausted ?: true)
+        assertNotNull(result)
+        assertEquals(30.0, result!!.remainingQuantity, 0.01)
+        assertFalse(result.isExhausted)
     }
 
     @Test
@@ -392,8 +394,9 @@ class PurchaseBatchDaoTest {
 
         // Then
         val result = purchaseBatchDao.getById("batch-1").first()
-        assertEquals(0.0, result?.remainingQuantity, 0.01)
-        assertTrue(result?.isExhausted ?: false)
+        assertNotNull(result)
+        assertEquals(0.0, result!!.remainingQuantity, 0.01)
+        assertTrue(result.isExhausted)
     }
 
     @Test

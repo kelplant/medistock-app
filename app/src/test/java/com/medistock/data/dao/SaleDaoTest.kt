@@ -64,8 +64,8 @@ class SaleDaoTest {
         // Then
         val result = saleDao.getById("sale-1").first()
         assertNotNull(result)
-        assertEquals("John Doe", result?.customerName)
-        assertEquals(150.0, result?.totalAmount, 0.01)
+        assertEquals("John Doe", result!!.customerName)
+        assertEquals(150.0, result.totalAmount, 0.01)
     }
 
     @Test
@@ -87,7 +87,8 @@ class SaleDaoTest {
 
         // Then
         val result = saleDao.getById("sale-1").first()
-        assertEquals(200.0, result?.totalAmount, 0.01)
+        assertNotNull(result)
+        assertEquals(200.0, result!!.totalAmount, 0.01)
     }
 
     @Test
@@ -195,9 +196,10 @@ class SaleDaoTest {
 
         // Then
         assertNotNull(saleWithItems)
-        assertEquals("John Doe", saleWithItems?.sale?.customerName)
-        assertEquals(2, saleWithItems?.items?.size)
-        assertEquals(150.0, saleWithItems?.sale?.totalAmount, 0.01)
+        assertNotNull(saleWithItems!!.sale)
+        assertEquals("John Doe", saleWithItems.sale.customerName)
+        assertEquals(2, saleWithItems.items.size)
+        assertEquals(150.0, saleWithItems.sale.totalAmount, 0.01)
     }
 
     @Test

@@ -80,8 +80,9 @@ class FifoAllocationTest {
 
         // Then
         val updatedBatch = purchaseBatchDao.getById("batch-1").first()
-        assertEquals(70.0, updatedBatch?.remainingQuantity, 0.01)
-        assertFalse(updatedBatch?.isExhausted ?: true)
+        assertNotNull(updatedBatch)
+        assertEquals(70.0, updatedBatch!!.remainingQuantity, 0.01)
+        assertFalse(updatedBatch.isExhausted)
     }
 
     @Test
@@ -186,12 +187,14 @@ class FifoAllocationTest {
 
         // Then
         val updatedBatch1 = purchaseBatchDao.getById("batch-1").first()
-        assertEquals(0.0, updatedBatch1?.remainingQuantity, 0.01)
-        assertTrue(updatedBatch1?.isExhausted ?: false)
+        assertNotNull(updatedBatch1)
+        assertEquals(0.0, updatedBatch1!!.remainingQuantity, 0.01)
+        assertTrue(updatedBatch1.isExhausted)
 
         val updatedBatch2 = purchaseBatchDao.getById("batch-2").first()
-        assertEquals(50.0, updatedBatch2?.remainingQuantity, 0.01)
-        assertFalse(updatedBatch2?.isExhausted ?: true)
+        assertNotNull(updatedBatch2)
+        assertEquals(50.0, updatedBatch2!!.remainingQuantity, 0.01)
+        assertFalse(updatedBatch2.isExhausted)
 
         val allocations = saleBatchAllocationDao.getAllocationsForSaleItem("sale-item-1").first()
         assertEquals(2, allocations.size)
