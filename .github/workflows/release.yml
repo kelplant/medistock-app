@@ -50,6 +50,12 @@ jobs:
 
           echo "✅ Version vérifiée avec succès"
 
+      - name: Run Unit Tests
+        run: |
+          echo "🧪 Exécution des tests unitaires..."
+          ./gradlew testDebugUnitTest --no-daemon
+          echo "✅ Tests unitaires réussis"
+
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
