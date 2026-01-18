@@ -10,6 +10,9 @@ import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Processeur de la queue de synchronisation.
@@ -512,8 +515,3 @@ sealed class SyncEvent {
     data class ItemSynced(val entityType: String, val entityId: String) : SyncEvent()
     data class ItemFailed(val entityType: String, val entityId: String, val error: String) : SyncEvent()
 }
-
-// Import nécessaire pour JsonPrimitive et jsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
