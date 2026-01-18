@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.medistock.data.migration.CompatibilityResult
@@ -13,6 +14,8 @@ import com.medistock.data.sync.SyncScheduler
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
+import com.medistock.util.AppUpdateManager
+import com.medistock.util.UpdateCheckResult
 import io.github.jan.supabase.realtime.realtime
 import org.conscrypt.Conscrypt
 import java.security.Security
@@ -35,8 +38,14 @@ class MedistockApplication : Application() {
     /** Timestamp de la dernière vérification de compatibilité */
     private var lastCompatibilityCheck = 0L
 
+    /** Timestamp de la dernière vérification de mise à jour GitHub */
+    private var lastGitHubUpdateCheck = 0L
+
     /** Intervalle minimum entre deux vérifications (30 secondes) */
     private val compatibilityCheckInterval = 30_000L
+
+    /** Intervalle minimum entre deux vérifications de mise à jour GitHub (5 minutes) */
+    private val githubUpdateCheckInterval = 5 * 60_000L
 
     companion object {
         /**
@@ -126,41 +135,126 @@ class MedistockApplication : Application() {
         // Ne pas re-vérifier si on est déjà sur l'écran de mise à jour
         if (currentActivity is AppUpdateRequiredActivity) return
 
-        // Ne pas re-vérifier si pas assez de temps s'est écoulé
         val now = System.currentTimeMillis()
-        if (now - lastCompatibilityCheck < compatibilityCheckInterval) return
 
-        // Ne pas re-vérifier si Supabase n'est pas configuré
-        if (!SupabaseClientProvider.isConfigured(this)) return
+        // Vérification de compatibilité app/DB
+        if (now - lastCompatibilityCheck >= compatibilityCheckInterval &&
+            SupabaseClientProvider.isConfigured(this)) {
 
-        println("🔄 Re-vérification de la compatibilité (retour au premier plan)...")
+            println("🔄 Re-vérification de la compatibilité (retour au premier plan)...")
 
-        appScope.launch {
-            try {
-                val migrationManager = MigrationManager(this@MedistockApplication)
-                val compat = migrationManager.checkCompatibility()
-                updateCompatibilityResult(compat)
-                lastCompatibilityCheck = System.currentTimeMillis()
+            appScope.launch {
+                try {
+                    val migrationManager = MigrationManager(this@MedistockApplication)
+                    val compat = migrationManager.checkCompatibility()
+                    updateCompatibilityResult(compat)
+                    lastCompatibilityCheck = System.currentTimeMillis()
 
-                if (compat is CompatibilityResult.AppTooOld) {
-                    println("❌ App devenue incompatible - redirection vers mise à jour")
-                    // Lancer l'écran de mise à jour sur le thread UI
-                    kotlinx.coroutines.withContext(Dispatchers.Main) {
-                        val intent = Intent(currentActivity, AppUpdateRequiredActivity::class.java).apply {
-                            putExtra(AppUpdateRequiredActivity.EXTRA_APP_VERSION, compat.appVersion)
-                            putExtra(AppUpdateRequiredActivity.EXTRA_MIN_REQUIRED, compat.minRequired)
-                            putExtra(AppUpdateRequiredActivity.EXTRA_DB_VERSION, compat.dbVersion)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    if (compat is CompatibilityResult.AppTooOld) {
+                        println("❌ App devenue incompatible - redirection vers mise à jour")
+                        // Lancer l'écran de mise à jour sur le thread UI
+                        kotlinx.coroutines.withContext(Dispatchers.Main) {
+                            val intent = Intent(currentActivity, AppUpdateRequiredActivity::class.java).apply {
+                                putExtra(AppUpdateRequiredActivity.EXTRA_APP_VERSION, compat.appVersion)
+                                putExtra(AppUpdateRequiredActivity.EXTRA_MIN_REQUIRED, compat.minRequired)
+                                putExtra(AppUpdateRequiredActivity.EXTRA_DB_VERSION, compat.dbVersion)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            }
+                            currentActivity.startActivity(intent)
+                            currentActivity.finish()
                         }
-                        currentActivity.startActivity(intent)
-                        currentActivity.finish()
                     }
+                } catch (e: Exception) {
+                    println("⚠️ Erreur lors de la re-vérification: ${e.message}")
+                    // En cas d'erreur, on ne bloque pas (peut-être offline)
                 }
-            } catch (e: Exception) {
-                println("⚠️ Erreur lors de la re-vérification: ${e.message}")
-                // En cas d'erreur, on ne bloque pas (peut-être offline)
             }
         }
+
+        // Vérification de mise à jour GitHub (moins fréquente)
+        if (now - lastGitHubUpdateCheck >= githubUpdateCheckInterval) {
+            println("🔄 Vérification des mises à jour GitHub (retour au premier plan)...")
+
+            appScope.launch {
+                try {
+                    val updateManager = AppUpdateManager(this@MedistockApplication)
+                    val result = updateManager.checkForUpdate()
+                    lastGitHubUpdateCheck = System.currentTimeMillis()
+
+                    if (result is UpdateCheckResult.UpdateAvailable) {
+                        // Afficher le dialogue sur le thread UI
+                        kotlinx.coroutines.withContext(Dispatchers.Main) {
+                            if (currentActivity is AppCompatActivity) {
+                                showUpdateAvailableDialog(
+                                    currentActivity,
+                                    result.currentVersion,
+                                    result.newVersion,
+                                    result.release.body
+                                )
+                            }
+                        }
+                    } else if (result is UpdateCheckResult.NoUpdateAvailable) {
+                        println("✅ Application à jour")
+                    }
+                } catch (e: Exception) {
+                    println("⚠️ Erreur lors de la vérification des mises à jour GitHub: ${e.message}")
+                    // En cas d'erreur, on ne bloque pas (peut-être offline)
+                }
+            }
+        }
+    }
+
+    /**
+     * Affiche un dialogue proposant à l'utilisateur de télécharger la mise à jour.
+     */
+    private fun showUpdateAvailableDialog(
+        activity: AppCompatActivity,
+        currentVersion: String,
+        newVersion: String,
+        releaseNotes: String?
+    ) {
+        val message = buildUpdateMessage(currentVersion, newVersion, releaseNotes)
+
+        AlertDialog.Builder(activity)
+            .setTitle("Mise à jour disponible")
+            .setMessage(message)
+            .setPositiveButton("Télécharger") { _, _ ->
+                // Rediriger vers l'écran de mise à jour
+                val intent = Intent(activity, AppUpdateRequiredActivity::class.java)
+                activity.startActivity(intent)
+            }
+            .setNegativeButton("Plus tard") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+
+    /**
+     * Construit le message du dialogue de mise à jour.
+     */
+    private fun buildUpdateMessage(
+        currentVersion: String,
+        newVersion: String,
+        releaseNotes: String?
+    ): String {
+        val message = StringBuilder()
+        message.append("Une nouvelle version de MediStock est disponible.\n\n")
+        message.append("Version actuelle : $currentVersion\n")
+        message.append("Nouvelle version : $newVersion\n")
+
+        if (!releaseNotes.isNullOrBlank()) {
+            message.append("\nNouveautés :\n")
+            // Limiter la longueur des notes de version pour le dialogue
+            val shortNotes = if (releaseNotes.length > 200) {
+                releaseNotes.take(200) + "..."
+            } else {
+                releaseNotes
+            }
+            message.append(shortNotes)
+        }
+
+        return message.toString()
     }
 
     override fun onCreate() {

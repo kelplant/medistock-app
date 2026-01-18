@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
@@ -22,6 +23,8 @@ import com.medistock.util.AuthManager
 import com.medistock.util.Modules
 import com.medistock.util.PasswordHasher
 import com.medistock.util.PasswordMigration
+import com.medistock.util.AppUpdateManager
+import com.medistock.util.UpdateCheckResult
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.Dispatchers
@@ -81,6 +84,9 @@ class LoginActivity : AppCompatActivity() {
                 } else {
                     // Enable login button
                     btnLogin.isEnabled = true
+
+                    // Vérifier les mises à jour disponibles sur GitHub
+                    checkForAppUpdates()
                 }
             }
         }
@@ -257,5 +263,98 @@ class LoginActivity : AppCompatActivity() {
     override fun onDestroy() {
         realtimeJob?.cancel()
         super.onDestroy()
+    }
+
+    /**
+     * Vérifie si une mise à jour est disponible sur GitHub Releases.
+     * Si oui, affiche un dialogue pour proposer à l'utilisateur de la télécharger.
+     */
+    private fun checkForAppUpdates() {
+        lifecycleScope.launch {
+            try {
+                val updateManager = AppUpdateManager(this@LoginActivity)
+                val result = withContext(Dispatchers.IO) {
+                    updateManager.checkForUpdate()
+                }
+
+                when (result) {
+                    is UpdateCheckResult.UpdateAvailable -> {
+                        // Une mise à jour est disponible, afficher un dialogue
+                        showUpdateAvailableDialog(
+                            currentVersion = result.currentVersion,
+                            newVersion = result.newVersion,
+                            releaseNotes = result.release.body
+                        )
+                    }
+                    is UpdateCheckResult.NoUpdateAvailable -> {
+                        println("✅ Application à jour")
+                    }
+                    is UpdateCheckResult.Error -> {
+                        println("⚠️ Impossible de vérifier les mises à jour: ${result.message}")
+                        // Ne pas afficher d'erreur à l'utilisateur, cela peut être dû à l'absence de connexion
+                    }
+                }
+            } catch (e: Exception) {
+                println("⚠️ Erreur lors de la vérification des mises à jour: ${e.message}")
+                // Ne pas perturber l'utilisateur avec cette erreur
+            }
+        }
+    }
+
+    /**
+     * Affiche un dialogue proposant à l'utilisateur de télécharger la mise à jour.
+     */
+    private fun showUpdateAvailableDialog(
+        currentVersion: String,
+        newVersion: String,
+        releaseNotes: String?
+    ) {
+        AlertDialog.Builder(this)
+            .setTitle("Mise à jour disponible")
+            .setMessage(buildUpdateMessage(currentVersion, newVersion, releaseNotes))
+            .setPositiveButton("Télécharger") { _, _ ->
+                // Rediriger vers l'écran de mise à jour
+                navigateToUpdateScreen()
+            }
+            .setNegativeButton("Plus tard") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+
+    /**
+     * Construit le message du dialogue de mise à jour.
+     */
+    private fun buildUpdateMessage(
+        currentVersion: String,
+        newVersion: String,
+        releaseNotes: String?
+    ): String {
+        val message = StringBuilder()
+        message.append("Une nouvelle version de MediStock est disponible.\n\n")
+        message.append("Version actuelle : $currentVersion\n")
+        message.append("Nouvelle version : $newVersion\n")
+
+        if (!releaseNotes.isNullOrBlank()) {
+            message.append("\nNouveautés :\n")
+            // Limiter la longueur des notes de version pour le dialogue
+            val shortNotes = if (releaseNotes.length > 200) {
+                releaseNotes.take(200) + "..."
+            } else {
+                releaseNotes
+            }
+            message.append(shortNotes)
+        }
+
+        return message.toString()
+    }
+
+    /**
+     * Redirige vers l'écran de téléchargement/installation de mise à jour.
+     */
+    private fun navigateToUpdateScreen() {
+        val intent = Intent(this, AppUpdateRequiredActivity::class.java)
+        startActivity(intent)
     }
 }
