@@ -3,10 +3,10 @@ package com.medistock.ui.product
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.ui.adapters.ProductAdapter
@@ -28,7 +28,7 @@ class ProductListActivity : AppCompatActivity() {
         db = AppDatabase.getInstance(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerProducts)
-        val btnAdd = findViewById<Button>(R.id.btnAddProduct)
+        val fabAdd = findViewById<FloatingActionButton>(R.id.fabAddProduct)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = ProductAdapter { product ->
@@ -38,7 +38,7 @@ class ProductListActivity : AppCompatActivity() {
         }
         recyclerView.adapter = adapter
 
-        btnAdd.setOnClickListener {
+        fabAdd.setOnClickListener {
             startActivity(Intent(this, ProductAddEditActivity::class.java))
         }
     }

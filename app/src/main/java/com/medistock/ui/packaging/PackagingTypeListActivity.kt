@@ -3,7 +3,6 @@ package com.medistock.ui.packaging
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.medistock.R
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
 import kotlinx.coroutines.launch
@@ -55,7 +55,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
     }
 
     private fun setupAddButton() {
-        findViewById<Button>(R.id.btnAddPackagingType).setOnClickListener {
+        findViewById<FloatingActionButton>(R.id.fabAddPackagingType).setOnClickListener {
             startActivity(Intent(this, PackagingTypeAddEditActivity::class.java))
         }
     }

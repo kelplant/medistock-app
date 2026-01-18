@@ -3,12 +3,12 @@ package com.medistock.ui.user
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.ui.adapters.UserAdapter
@@ -41,7 +41,7 @@ class UserListActivity : AppCompatActivity() {
         db = AppDatabase.getInstance(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerUsers)
-        val btnAdd = findViewById<Button>(R.id.btnAddUser)
+        val fabAdd = findViewById<FloatingActionButton>(R.id.fabAddUser)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = UserAdapter { user ->
@@ -51,7 +51,7 @@ class UserListActivity : AppCompatActivity() {
         }
         recyclerView.adapter = adapter
 
-        btnAdd.setOnClickListener {
+        fabAdd.setOnClickListener {
             startActivity(Intent(this, UserAddEditActivity::class.java))
         }
     }
