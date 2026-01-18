@@ -3,7 +3,7 @@ package com.medistock.data.dao
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import org.robolectric.RobolectricTestRunner
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.PurchaseBatch
 import com.medistock.data.entities.SaleBatchAllocation
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
  * Tests the critical business logic for pharmaceutical inventory management.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class FifoAllocationTest {
 
     @get:Rule

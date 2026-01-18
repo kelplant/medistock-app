@@ -2,11 +2,9 @@ package com.medistock.data.repository
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import org.robolectric.RobolectricTestRunner
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.Product
-import com.medistock.util.AuditLogger
-import com.medistock.util.AuthManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -17,7 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class AuditedProductRepositoryTest {
 
     private lateinit var repository: AuditedProductRepository
