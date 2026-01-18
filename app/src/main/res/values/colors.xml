@@ -36,4 +36,11 @@
     <color name="text_secondary">@color/md_theme_onSurfaceVariant</color>
     <color name="warning_orange">#FF9800</color>
     <color name="version_info_bg">#F5F5F5</color>
+
+    <!-- Sync indicator colors -->
+    <color name="sync_synced">#4CAF50</color>
+    <color name="sync_pending">#FFC107</color>
+    <color name="sync_syncing">#2196F3</color>
+    <color name="sync_offline">#9E9E9E</color>
+    <color name="sync_error">#F44336</color>
 </resources>
