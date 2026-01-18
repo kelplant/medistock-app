@@ -50,19 +50,36 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Rename APK
+      - name: Install Android SDK Build Tools
         run: |
-          mv ${{ steps.sign_app.outputs.signedReleaseFile }} medistock-${{ steps.version.outputs.tag }}.apk
+          yes | sdkmanager --licenses || true
+          sdkmanager "build-tools;34.0.0"
+
+      - name: Sign APK manually
+        run: |
+          # Décoder le keystore
+          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > release-keystore.jks
+
+          # Signer l'APK avec jarsigner
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore release-keystore.jks \
+            -storepass "${{ secrets.KEY_STORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            app/build/outputs/apk/release/app-release-unsigned.apk \
+            "${{ secrets.KEY_ALIAS }}"
+
+          # Aligner l'APK avec zipalign
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -v 4 \
+            app/build/outputs/apk/release/app-release-unsigned.apk \
+            medistock-${{ steps.version.outputs.tag }}.apk
+
+          # Nettoyer le keystore
+          rm release-keystore.jks
+
+          echo "APK signé et aligné: medistock-${{ steps.version.outputs.tag }}.apk"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
