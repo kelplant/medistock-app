@@ -3,3 +3,18 @@
 /app/build/
 /.gradle/
 /.idea/
+
+# Local configuration files
+local.properties
+
+# APK files
+*.apk
+*.aab
+
+# Keystore files (IMPORTANT: Never commit these!)
+*.jks
+*.keystore
+
+# OS-specific files
+.DS_Store
+Thumbs.db
