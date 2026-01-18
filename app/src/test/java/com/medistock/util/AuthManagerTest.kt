@@ -37,10 +37,9 @@ class AuthManagerTest {
             id = "user-1",
             username = "testuser",
             fullName = "Test User",
-            passwordHash = "hash",
+            password = "hash",
             isAdmin = false,
             isActive = true,
-            siteId = "site-1"
         )
 
         // When
@@ -61,10 +60,9 @@ class AuthManagerTest {
             id = "admin-1",
             username = "admin",
             fullName = "Admin User",
-            passwordHash = "hash",
+            password = "hash",
             isAdmin = true,
             isActive = true,
-            siteId = "site-1"
         )
 
         // When
@@ -82,10 +80,9 @@ class AuthManagerTest {
             id = "user-1",
             username = "testuser",
             fullName = "Test User",
-            passwordHash = "hash",
+            password = "hash",
             isAdmin = false,
             isActive = true,
-            siteId = "site-1"
         )
         authManager.login(user)
         assertTrue(authManager.isLoggedIn())
@@ -138,19 +135,17 @@ class AuthManagerTest {
             id = "user-1",
             username = "user1",
             fullName = "User One",
-            passwordHash = "hash1",
+            password = "hash1",
             isAdmin = false,
             isActive = true,
-            siteId = "site-1"
         )
         val user2 = User(
             id = "user-2",
             username = "user2",
             fullName = "User Two",
-            passwordHash = "hash2",
+            password = "hash2",
             isAdmin = true,
-            isActive = true,
-            siteId = "site-2"
+            isActive = true
         )
 
         // When
@@ -183,10 +178,9 @@ class AuthManagerTest {
             id = "user-1",
             username = "testuser",
             fullName = "Test User",
-            passwordHash = "hash",
+            password = "hash",
             isAdmin = false,
             isActive = true,
-            siteId = "site-1"
         )
         authManager.login(user)
 

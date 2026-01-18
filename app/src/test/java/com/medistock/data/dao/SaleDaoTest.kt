@@ -172,20 +172,20 @@ class SaleDaoTest {
             saleId = "sale-1",
             productId = "product-1",
             productName = "Product 1",
+            unit = "mg",
             quantity = 5.0,
-            unitPrice = 10.0,
-            totalPrice = 50.0,
-            siteId = "site-1"
+            pricePerUnit = 10.0,
+            subtotal = 50.0
         )
         val saleItem2 = SaleItem(
             id = "item-2",
             saleId = "sale-1",
             productId = "product-2",
             productName = "Product 2",
+            unit = "ml",
             quantity = 10.0,
-            unitPrice = 10.0,
-            totalPrice = 100.0,
-            siteId = "site-1"
+            pricePerUnit = 10.0,
+            subtotal = 100.0
         )
         saleItemDao.insert(saleItem1)
         saleItemDao.insert(saleItem2)
@@ -238,20 +238,20 @@ class SaleDaoTest {
             saleId = "sale-1",
             productId = "product-1",
             productName = "Product 1",
+            unit = "mg",
             quantity = 10.0,
-            unitPrice = 10.0,
-            totalPrice = 100.0,
-            siteId = "site-1"
+            pricePerUnit = 10.0,
+            subtotal = 100.0
         )
         val item2 = SaleItem(
             id = "item-2",
             saleId = "sale-2",
             productId = "product-2",
             productName = "Product 2",
+            unit = "ml",
             quantity = 20.0,
-            unitPrice = 10.0,
-            totalPrice = 200.0,
-            siteId = "site-1"
+            pricePerUnit = 10.0,
+            subtotal = 200.0
         )
         saleItemDao.insert(item1)
         saleItemDao.insert(item2)

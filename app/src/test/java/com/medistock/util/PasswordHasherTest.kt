@@ -122,7 +122,7 @@ class PasswordHasherTest {
     @Test
     fun isHashed_bcrypt2aFormat_returnsTrue() {
         // Given
-        val bcryptHash = "$2a$12$somehashvalue"
+        val bcryptHash = "\$2a\$12\$somehashvalue"
 
         // When
         val result = PasswordHasher.isHashed(bcryptHash)
@@ -134,7 +134,7 @@ class PasswordHasherTest {
     @Test
     fun isHashed_bcrypt2bFormat_returnsTrue() {
         // Given
-        val bcryptHash = "$2b$12$somehashvalue"
+        val bcryptHash = "\$2b\$12\$somehashvalue"
 
         // When
         val result = PasswordHasher.isHashed(bcryptHash)
@@ -146,7 +146,7 @@ class PasswordHasherTest {
     @Test
     fun isHashed_bcrypt2yFormat_returnsTrue() {
         // Given
-        val bcryptHash = "$2y$12$somehashvalue"
+        val bcryptHash = "\$2y\$12\$somehashvalue"
 
         // When
         val result = PasswordHasher.isHashed(bcryptHash)

@@ -193,9 +193,7 @@ class ProductDaoTest {
         // Given
         val category = Category(
             id = "cat-1",
-            name = "Antibiotics",
-            description = "Antibiotic medications",
-            siteId = "site-1"
+            name = "Antibiotics"
         )
         categoryDao.insert(category)
 
@@ -249,9 +247,7 @@ class ProductDaoTest {
         // Given
         val category1 = Category(
             id = "cat-1",
-            name = "Category 1",
-            description = "",
-            siteId = "site-1"
+            name = "Category 1"
         )
         categoryDao.insert(category1)
 

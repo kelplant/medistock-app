@@ -71,7 +71,7 @@ class FifoAllocationTest {
             saleItemId = "sale-item-1",
             batchId = "batch-1",
             quantityAllocated = 30.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
         saleBatchAllocationDao.insert(allocation)
 
@@ -168,7 +168,7 @@ class FifoAllocationTest {
             saleItemId = "sale-item-1",
             batchId = "batch-1",
             quantityAllocated = 30.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
         saleBatchAllocationDao.insert(allocation1)
         purchaseBatchDao.updateRemainingQuantity("batch-1", 0.0, System.currentTimeMillis())
@@ -179,7 +179,7 @@ class FifoAllocationTest {
             saleItemId = "sale-item-1",
             batchId = "batch-2",
             quantityAllocated = 50.0,
-            purchasePrice = 12.0
+            purchasePriceAtAllocation = 12.0
         )
         saleBatchAllocationDao.insert(allocation2)
         purchaseBatchDao.updateRemainingQuantity("batch-2", 50.0, System.currentTimeMillis())
@@ -252,14 +252,14 @@ class FifoAllocationTest {
             saleItemId = "sale-item-1",
             batchId = "batch-1",
             quantityAllocated = 20.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
         val allocation2 = SaleBatchAllocation(
             id = "alloc-2",
             saleItemId = "sale-item-2",
             batchId = "batch-1",
             quantityAllocated = 30.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
 
         saleBatchAllocationDao.insert(allocation1)
@@ -325,21 +325,21 @@ class FifoAllocationTest {
             saleItemId = "sale-item-1",
             batchId = "batch-1",
             quantityAllocated = 20.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
         val allocation2 = SaleBatchAllocation(
             id = "alloc-2",
             saleItemId = "sale-item-1",
             batchId = "batch-2",
             quantityAllocated = 30.0,
-            purchasePrice = 12.0
+            purchasePriceAtAllocation = 12.0
         )
         val otherAllocation = SaleBatchAllocation(
             id = "alloc-3",
             saleItemId = "sale-item-2",
             batchId = "batch-1",
             quantityAllocated = 10.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
 
         saleBatchAllocationDao.insert(allocation1)

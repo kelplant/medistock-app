@@ -72,10 +72,9 @@ class EntityValidationTest {
         val user = User(
             username = "testuser",
             fullName = "Test User",
-            passwordHash = "hash",
+            password = "hash",
             isAdmin = false,
-            isActive = true,
-            siteId = "site-1"
+            isActive = true
         )
 
         // Then
@@ -108,9 +107,7 @@ class EntityValidationTest {
     fun category_createsCorrectly() {
         // When
         val category = Category(
-            name = "Antibiotics",
-            description = "Antibiotic medications",
-            siteId = "site-1"
+            name = "Antibiotics"
         )
 
         // Then
@@ -129,8 +126,7 @@ class EntityValidationTest {
             unit = "mg",
             quantity = 10.0,
             pricePerUnit = 15.0,
-            subtotal = 150.0,
-            siteId = "site-1"
+            subtotal = 150.0
         )
 
         // Then
@@ -143,15 +139,12 @@ class EntityValidationTest {
     fun site_createsWithDefaults() {
         // When
         val site = Site(
-            name = "Main Warehouse",
-            address = "123 Main St",
-            isActive = true
+            name = "Main Warehouse"
         )
 
         // Then
         assertNotNull(site.id)
         assertEquals("Main Warehouse", site.name)
-        assertTrue(site.isActive)
     }
 
     @Test
@@ -159,17 +152,18 @@ class EntityValidationTest {
         // When
         val movement = StockMovement(
             productId = "product-1",
-            siteId = "site-1",
-            movementType = "SALE",
-            quantityChange = -10.0,
-            referenceId = "sale-1",
-            notes = "Sold to customer"
+            type = "SALE",
+            quantity = -10.0,
+            date = System.currentTimeMillis(),
+            purchasePriceAtMovement = 10.0,
+            sellingPriceAtMovement = 15.0,
+            siteId = "site-1"
         )
 
         // Then
         assertNotNull(movement.id)
-        assertEquals(-10.0, movement.quantityChange, 0.01)
-        assertEquals("SALE", movement.movementType)
+        assertEquals(-10.0, movement.quantity, 0.01)
+        assertEquals("SALE", movement.type)
     }
 
     @Test
@@ -179,31 +173,33 @@ class EntityValidationTest {
             saleItemId = "sale-item-1",
             batchId = "batch-1",
             quantityAllocated = 50.0,
-            purchasePrice = 10.0
+            purchasePriceAtAllocation = 10.0
         )
 
         // Then
         assertNotNull(allocation.id)
         assertEquals(50.0, allocation.quantityAllocated, 0.01)
-        assertEquals(10.0, allocation.purchasePrice, 0.01)
+        assertEquals(10.0, allocation.purchasePriceAtAllocation, 0.01)
     }
 
     @Test
     fun auditHistory_capturesChanges() {
         // When
         val audit = AuditHistory(
-            tableName = "products",
-            recordId = "product-1",
-            operation = "UPDATE",
-            changedFields = "{\"name\": \"Old Name\"}",
-            userId = "user-1",
+            entityType = "Product",
+            entityId = "product-1",
+            actionType = "UPDATE",
+            fieldName = "name",
+            oldValue = "Old Name",
+            newValue = "New Name",
+            changedBy = "user-1",
             siteId = "site-1"
         )
 
         // Then
         assertNotNull(audit.id)
-        assertEquals("UPDATE", audit.operation)
-        assertTrue(audit.changedFields.isNotEmpty())
+        assertEquals("UPDATE", audit.actionType)
+        assertEquals("name", audit.fieldName)
     }
 
     @Test
