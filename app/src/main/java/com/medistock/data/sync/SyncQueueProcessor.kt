@@ -5,12 +5,13 @@ import com.medistock.data.dao.SyncQueueDao
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.data.remote.dto.*
 import com.medistock.data.remote.repository.*
+import com.medistock.data.sync.SyncMapper.toEntity
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -359,11 +360,11 @@ class SyncQueueProcessor(
         when (entityType) {
             "Product" -> {
                 val dto = json.decodeFromString<ProductDto>(remoteData)
-                database.productDao().insert(SyncMapper.toEntity(dto))
+                database.productDao().insert(dto.toEntity())
             }
             "Category" -> {
                 val dto = json.decodeFromString<CategoryDto>(remoteData)
-                database.categoryDao().insert(SyncMapper.toEntity(dto))
+                database.categoryDao().insert(dto.toEntity())
             }
             // Ajouter les autres types selon les besoins
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import com.medistock.data.dao.SyncQueueDao
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
+import com.medistock.data.sync.SyncMapper.toDto
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -18,19 +19,19 @@ import kotlinx.serialization.json.Json
  * val helper = SyncQueueHelper(context)
  *
  * // Lors d'un insert
- * helper.enqueueInsert(product, remoteUpdatedAt)
+ * helper.enqueueProductInsert(product, userId)
  *
  * // Lors d'un update
- * helper.enqueueUpdate(product, localVersion, remoteUpdatedAt)
+ * helper.enqueueProductUpdate(product, remoteUpdatedAt, userId)
  *
  * // Lors d'un delete
- * helper.enqueueDelete<Product>(productId, localVersion, remoteUpdatedAt)
+ * helper.enqueueProductDelete(productId, siteId, remoteUpdatedAt, userId)
  * ```
  */
 class SyncQueueHelper(context: Context) {
 
     private val database = AppDatabase.getInstance(context)
-    private val syncQueueDao: SyncQueueDao by lazy { database.syncQueueDao() }
+    private val syncQueueDao: SyncQueueDao = database.syncQueueDao()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -38,20 +39,18 @@ class SyncQueueHelper(context: Context) {
         encodeDefaults = true
     }
 
-    // ==================== Enqueue Operations ====================
+    // ==================== Generic Enqueue Operations ====================
 
     /**
      * Ajoute une opération INSERT à la queue
      */
-    suspend inline fun <reified T : Any> enqueueInsert(
-        entity: T,
+    suspend fun enqueueInsert(
+        entityType: String,
         entityId: String,
-        entityType: String = T::class.simpleName ?: "Unknown",
+        payload: String,
         userId: String? = null,
         siteId: String? = null
     ) {
-        val payload = json.encodeToString(entity)
-
         val item = SyncQueueItem(
             entityType = entityType,
             entityId = entityId,
@@ -76,17 +75,15 @@ class SyncQueueHelper(context: Context) {
     /**
      * Ajoute une opération UPDATE à la queue
      */
-    suspend inline fun <reified T : Any> enqueueUpdate(
-        entity: T,
+    suspend fun enqueueUpdate(
+        entityType: String,
         entityId: String,
+        payload: String,
         localVersion: Long,
         lastKnownRemoteUpdatedAt: Long? = null,
-        entityType: String = T::class.simpleName ?: "Unknown",
         userId: String? = null,
         siteId: String? = null
     ) {
-        val payload = json.encodeToString(entity)
-
         // Vérifier s'il y a déjà des opérations en attente
         val existing = syncQueueDao.getLatestPendingForEntity(entityType, entityId)
 
@@ -164,35 +161,43 @@ class SyncQueueHelper(context: Context) {
         syncQueueDao.insert(item)
     }
 
-    // ==================== Convenience Methods ====================
+    // ==================== Product Operations ====================
 
     /**
-     * Enqueue un Product
+     * Enqueue un Product INSERT
      */
     suspend fun enqueueProductInsert(product: Product, userId: String? = null) {
-        val dto = SyncMapper.toDto(product)
+        val dto = product.toDto()
+        val payload = json.encodeToString(dto)
         enqueueInsert(
-            entity = dto,
-            entityId = product.id,
             entityType = "Product",
+            entityId = product.id,
+            payload = payload,
             userId = userId,
             siteId = product.siteId
         )
     }
 
+    /**
+     * Enqueue un Product UPDATE
+     */
     suspend fun enqueueProductUpdate(product: Product, remoteUpdatedAt: Long? = null, userId: String? = null) {
-        val dto = SyncMapper.toDto(product)
+        val dto = product.toDto()
+        val payload = json.encodeToString(dto)
         enqueueUpdate(
-            entity = dto,
+            entityType = "Product",
             entityId = product.id,
+            payload = payload,
             localVersion = product.updatedAt,
             lastKnownRemoteUpdatedAt = remoteUpdatedAt,
-            entityType = "Product",
             userId = userId,
             siteId = product.siteId
         )
     }
 
+    /**
+     * Enqueue un Product DELETE
+     */
     suspend fun enqueueProductDelete(productId: String, siteId: String?, remoteUpdatedAt: Long? = null, userId: String? = null) {
         enqueueDelete(
             entityType = "Product",
@@ -203,82 +208,139 @@ class SyncQueueHelper(context: Context) {
         )
     }
 
+    // ==================== Category Operations ====================
+
     /**
-     * Enqueue un Category
+     * Enqueue un Category INSERT
      */
     suspend fun enqueueCategoryInsert(category: Category, userId: String? = null) {
-        val dto = SyncMapper.toDto(category)
+        val dto = category.toDto()
+        val payload = json.encodeToString(dto)
         enqueueInsert(
-            entity = dto,
-            entityId = category.id,
             entityType = "Category",
+            entityId = category.id,
+            payload = payload,
             userId = userId,
-            siteId = category.siteId
+            siteId = null // Category n'a pas de siteId
         )
     }
 
+    /**
+     * Enqueue un Category UPDATE
+     */
     suspend fun enqueueCategoryUpdate(category: Category, remoteUpdatedAt: Long? = null, userId: String? = null) {
-        val dto = SyncMapper.toDto(category)
+        val dto = category.toDto()
+        val payload = json.encodeToString(dto)
         enqueueUpdate(
-            entity = dto,
+            entityType = "Category",
             entityId = category.id,
+            payload = payload,
             localVersion = category.updatedAt,
             lastKnownRemoteUpdatedAt = remoteUpdatedAt,
-            entityType = "Category",
             userId = userId,
-            siteId = category.siteId
+            siteId = null // Category n'a pas de siteId
         )
     }
 
+    // ==================== Customer Operations ====================
+
     /**
-     * Enqueue un Customer
+     * Enqueue un Customer INSERT
      */
     suspend fun enqueueCustomerInsert(customer: Customer, userId: String? = null) {
-        val dto = SyncMapper.toDto(customer)
+        val dto = customer.toDto()
+        val payload = json.encodeToString(dto)
         enqueueInsert(
-            entity = dto,
-            entityId = customer.id,
             entityType = "Customer",
-            userId = userId,
-            siteId = customer.siteId
-        )
-    }
-
-    suspend fun enqueueCustomerUpdate(customer: Customer, remoteUpdatedAt: Long? = null, userId: String? = null) {
-        val dto = SyncMapper.toDto(customer)
-        enqueueUpdate(
-            entity = dto,
             entityId = customer.id,
-            localVersion = customer.updatedAt,
-            lastKnownRemoteUpdatedAt = remoteUpdatedAt,
-            entityType = "Customer",
+            payload = payload,
             userId = userId,
             siteId = customer.siteId
         )
     }
 
     /**
-     * Enqueue un Site
+     * Enqueue un Customer UPDATE
      */
-    suspend fun enqueueSiteInsert(site: Site, userId: String? = null) {
-        val dto = SyncMapper.toDto(site)
-        enqueueInsert(
-            entity = dto,
-            entityId = site.id,
-            entityType = "Site",
-            userId = userId
+    suspend fun enqueueCustomerUpdate(customer: Customer, remoteUpdatedAt: Long? = null, userId: String? = null) {
+        val dto = customer.toDto()
+        val payload = json.encodeToString(dto)
+        enqueueUpdate(
+            entityType = "Customer",
+            entityId = customer.id,
+            payload = payload,
+            localVersion = customer.createdAt, // Customer n'a pas de updatedAt
+            lastKnownRemoteUpdatedAt = remoteUpdatedAt,
+            userId = userId,
+            siteId = customer.siteId
         )
     }
 
-    suspend fun enqueueSiteUpdate(site: Site, remoteUpdatedAt: Long? = null, userId: String? = null) {
-        val dto = SyncMapper.toDto(site)
-        enqueueUpdate(
-            entity = dto,
+    // ==================== Site Operations ====================
+
+    /**
+     * Enqueue un Site INSERT
+     */
+    suspend fun enqueueSiteInsert(site: Site, userId: String? = null) {
+        val dto = site.toDto()
+        val payload = json.encodeToString(dto)
+        enqueueInsert(
+            entityType = "Site",
             entityId = site.id,
+            payload = payload,
+            userId = userId,
+            siteId = null
+        )
+    }
+
+    /**
+     * Enqueue un Site UPDATE
+     */
+    suspend fun enqueueSiteUpdate(site: Site, remoteUpdatedAt: Long? = null, userId: String? = null) {
+        val dto = site.toDto()
+        val payload = json.encodeToString(dto)
+        enqueueUpdate(
+            entityType = "Site",
+            entityId = site.id,
+            payload = payload,
             localVersion = site.updatedAt,
             lastKnownRemoteUpdatedAt = remoteUpdatedAt,
-            entityType = "Site",
-            userId = userId
+            userId = userId,
+            siteId = null
+        )
+    }
+
+    // ==================== PackagingType Operations ====================
+
+    /**
+     * Enqueue un PackagingType INSERT
+     */
+    suspend fun enqueuePackagingTypeInsert(packagingType: PackagingType, userId: String? = null) {
+        val dto = packagingType.toDto()
+        val payload = json.encodeToString(dto)
+        enqueueInsert(
+            entityType = "PackagingType",
+            entityId = packagingType.id,
+            payload = payload,
+            userId = userId,
+            siteId = null
+        )
+    }
+
+    /**
+     * Enqueue un PackagingType UPDATE
+     */
+    suspend fun enqueuePackagingTypeUpdate(packagingType: PackagingType, remoteUpdatedAt: Long? = null, userId: String? = null) {
+        val dto = packagingType.toDto()
+        val payload = json.encodeToString(dto)
+        enqueueUpdate(
+            entityType = "PackagingType",
+            entityId = packagingType.id,
+            payload = payload,
+            localVersion = packagingType.updatedAt,
+            lastKnownRemoteUpdatedAt = remoteUpdatedAt,
+            userId = userId,
+            siteId = null
         )
     }
 
