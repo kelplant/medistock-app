@@ -33,19 +33,22 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Update version in build.gradle
+      - name: Verify version in build.gradle
         run: |
-          # Extraire le versionCode actuel
-          CURRENT_VERSION_CODE=$(grep 'versionCode' app/build.gradle | awk '{print $2}')
-          # Incrémenter le versionCode
-          NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+          # Vérifier que la version dans build.gradle correspond au tag
+          BUILD_VERSION=$(grep 'versionName' app/build.gradle | sed 's/.*versionName "\(.*\)"/\1/')
+          TAG_VERSION="${{ steps.version.outputs.version }}"
 
-          # Mettre à jour build.gradle avec la nouvelle version
-          sed -i "s/versionCode $CURRENT_VERSION_CODE/versionCode $NEW_VERSION_CODE/" app/build.gradle
-          sed -i "s/versionName \".*\"/versionName \"${{ steps.version.outputs.version }}\"/" app/build.gradle
+          echo "Version dans build.gradle: $BUILD_VERSION"
+          echo "Version du tag: $TAG_VERSION"
 
-          echo "Updated versionCode from $CURRENT_VERSION_CODE to $NEW_VERSION_CODE"
-          echo "Updated versionName to ${{ steps.version.outputs.version }}"
+          if [ "$BUILD_VERSION" != "$TAG_VERSION" ]; then
+            echo "⚠️ ATTENTION: La version dans build.gradle ($BUILD_VERSION) ne correspond pas au tag ($TAG_VERSION)"
+            echo "Veuillez mettre à jour app/build.gradle avant de créer le tag."
+            exit 1
+          fi
+
+          echo "✅ Version vérifiée avec succès"
 
       - name: Build Release APK
         run: ./gradlew assembleRelease
@@ -90,11 +93,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Commit version bump
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add app/build.gradle
-          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
-          git push origin HEAD:main || echo "Could not push version bump"
