@@ -57,6 +57,8 @@
         <activity android:name=".ui.category.CategoryAddEditActivity" android:exported="false" />
         <activity android:name=".ui.packaging.PackagingTypeListActivity" android:exported="false" />
         <activity android:name=".ui.packaging.PackagingTypeAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.transfer.TransferListActivity" android:exported="false" />
+        <activity android:name=".ui.transfer.TransferActivity" android:exported="false" />
 
         <!-- FileProvider pour partager les APK de mise à jour -->
         <provider
