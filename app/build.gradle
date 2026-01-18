@@ -52,31 +52,39 @@ android {
     }
 }
 
-// Task to extract sqlite4java native libraries for unit tests
-tasks.register('extractSqlite4JavaNativeLibs') {
-    doLast {
-        def targetDir = file("${buildDir}/sqlite4java-libs")
-        targetDir.mkdirs()
+// Extract sqlite4java native libraries for unit tests after project evaluation
+afterEvaluate {
+    tasks.register('extractSqlite4JavaNativeLibs') {
+        doLast {
+            def targetDir = file("${buildDir}/sqlite4java-libs")
+            targetDir.mkdirs()
 
-        configurations.testRuntimeClasspath.files.findAll {
-            it.name.contains('libsqlite4java') || it.name.contains('sqlite4java-win')
-        }.each { jarFile ->
-            copy {
-                from zipTree(jarFile)
-                into targetDir
-                include '**/*.dll', '**/*.so', '**/*.dylib', '**/*.jnilib'
-                eachFile { fcp ->
-                    fcp.relativePath = new RelativePath(!fcp.file.isDirectory(), fcp.relativePath.lastName)
+            def configNames = ['testDebugRuntimeClasspath', 'testReleaseRuntimeClasspath']
+            configNames.each { configName ->
+                def testConfig = configurations.findByName(configName)
+                if (testConfig != null && testConfig.canBeResolved) {
+                    testConfig.files.findAll {
+                        it.name.contains('libsqlite4java') || it.name.contains('sqlite4java-win')
+                    }.each { jarFile ->
+                        copy {
+                            from zipTree(jarFile)
+                            into targetDir
+                            include '**/*.dll', '**/*.so', '**/*.dylib', '**/*.jnilib'
+                            eachFile { fcp ->
+                                fcp.relativePath = new RelativePath(!fcp.file.isDirectory(), fcp.relativePath.lastName)
+                            }
+                            includeEmptyDirs = false
+                        }
+                    }
                 }
-                includeEmptyDirs = false
             }
         }
     }
-}
 
-// Ensure native libs are extracted before running unit tests
-tasks.withType(Test).configureEach {
-    dependsOn 'extractSqlite4JavaNativeLibs'
+    // Ensure native libs are extracted before running unit tests
+    tasks.withType(Test).configureEach {
+        dependsOn 'extractSqlite4JavaNativeLibs'
+    }
 }
 
 kapt {
