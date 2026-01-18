@@ -61,28 +61,34 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "build-tools;34.0.0"
 
-      - name: Sign APK manually
+      - name: Sign and align APK
         run: |
           # Décoder le keystore
           echo "${{ secrets.SIGNING_KEY }}" | base64 -d > release-keystore.jks
 
-          # Signer l'APK avec jarsigner
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore release-keystore.jks \
-            -storepass "${{ secrets.KEY_STORE_PASSWORD }}" \
-            -keypass "${{ secrets.KEY_PASSWORD }}" \
+          # Étape 1: Aligner l'APK unsigned avec zipalign (doit être fait AVANT la signature)
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -v -p 4 \
             app/build/outputs/apk/release/app-release-unsigned.apk \
-            "${{ secrets.KEY_ALIAS }}"
+            app/build/outputs/apk/release/app-release-aligned.apk
 
-          # Aligner l'APK avec zipalign
-          $ANDROID_HOME/build-tools/34.0.0/zipalign -v 4 \
-            app/build/outputs/apk/release/app-release-unsigned.apk \
-            medistock-${{ steps.version.outputs.tag }}.apk
+          # Étape 2: Signer l'APK aligné avec apksigner (meilleur que jarsigner pour Android)
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks release-keystore.jks \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out medistock-${{ steps.version.outputs.tag }}.apk \
+            app/build/outputs/apk/release/app-release-aligned.apk
 
-          # Nettoyer le keystore
+          # Étape 3: Vérifier la signature de l'APK
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify \
+            --print-certs medistock-${{ steps.version.outputs.tag }}.apk
+
+          # Nettoyer les fichiers temporaires
           rm release-keystore.jks
+          rm app/build/outputs/apk/release/app-release-aligned.apk
 
-          echo "APK signé et aligné: medistock-${{ steps.version.outputs.tag }}.apk"
+          echo "✅ APK signé et aligné avec succès: medistock-${{ steps.version.outputs.tag }}.apk"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
