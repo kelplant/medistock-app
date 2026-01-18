@@ -2,7 +2,7 @@ package com.medistock.ui.viewmodel
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
-import org.robolectric.RobolectricTestRunner
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.medistock.data.entities.Product
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -12,7 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class ProductViewModelTest {
 
     private lateinit var viewModel: ProductViewModel
