@@ -13,30 +13,51 @@ Ce guide explique comment créer des releases pour permettre la mise à jour aut
 
 ## 🤖 Méthode Automatique (Recommandée)
 
-Le workflow GitHub Actions automatise entièrement le processus de création de release.
+Le workflow GitHub Actions automatise le processus de création de release.
 
 ### Étapes :
 
-1. **Créer un tag de version**
+1. **Mettre à jour la version dans `app/build.gradle`**
+
+   **IMPORTANT** : Vous devez mettre à jour la version AVANT de créer le tag.
+
+   ```gradle
+   defaultConfig {
+       applicationId "com.medistock"
+       minSdk 26
+       targetSdk 34
+       versionCode 9        // Incrémenter de 1 à chaque release
+       versionName "0.7.0"  // Nouvelle version (SANS le préfixe "v")
+   }
+   ```
+
+2. **Committer et pousser les changements**
+   ```bash
+   git add app/build.gradle
+   git commit -m "chore: bump version to 0.7.0"
+   git push origin main
+   ```
+
+3. **Créer et pousser le tag de version**
    ```bash
    # Assurez-vous d'être sur la branche main
    git checkout main
    git pull origin main
 
    # Créer et pousser le tag (format: v1.2.3)
+   # ⚠️ Le tag doit correspondre au versionName dans build.gradle
    git tag v0.7.0
    git push origin v0.7.0
    ```
 
-2. **Le workflow GitHub Actions se déclenche automatiquement et va:**
-   - ✅ Mettre à jour le `versionCode` et `versionName` dans `build.gradle`
+4. **Le workflow GitHub Actions se déclenche automatiquement et va:**
+   - ✅ Vérifier que la version dans `build.gradle` correspond au tag
    - ✅ Compiler l'APK en mode release
    - ✅ Signer l'APK avec votre clé de signature
    - ✅ Créer une release GitHub avec l'APK attaché
    - ✅ Générer les notes de version automatiquement
-   - ✅ Committer la mise à jour de version sur la branche main
 
-3. **C'est tout !** La release est créée et disponible pour la mise à jour automatique.
+5. **C'est tout !** La release est créée et disponible pour la mise à jour automatique.
 
 ### Voir l'avancement :
 - Allez sur : https://github.com/kelplant/medistock-app/actions
