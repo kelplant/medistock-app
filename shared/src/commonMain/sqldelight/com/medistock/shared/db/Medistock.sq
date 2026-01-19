@@ -1,0 +1,448 @@
+-- MediStock Database Schema for SQLDelight (KMM)
+-- This schema mirrors the Room database from Android
+
+-- ============================================
+-- CORE TABLES
+-- ============================================
+
+CREATE TABLE sites (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE categories (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE packaging_types (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    level1_name TEXT NOT NULL,
+    level2_name TEXT,
+    level2_quantity INTEGER,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE products (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    unit_volume REAL NOT NULL,
+    packaging_type_id TEXT,
+    selected_level INTEGER,
+    conversion_factor REAL,
+    category_id TEXT,
+    margin_type TEXT,
+    margin_value REAL,
+    description TEXT,
+    site_id TEXT NOT NULL,
+    min_stock REAL DEFAULT 0.0,
+    max_stock REAL DEFAULT 0.0,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id),
+    FOREIGN KEY (packaging_type_id) REFERENCES packaging_types(id)
+);
+
+CREATE TABLE product_prices (
+    id TEXT NOT NULL PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    price REAL NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+-- ============================================
+-- INVENTORY & STOCK TABLES
+-- ============================================
+
+CREATE TABLE purchase_batches (
+    id TEXT NOT NULL PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    batch_number TEXT,
+    purchase_date INTEGER NOT NULL,
+    initial_quantity REAL NOT NULL,
+    remaining_quantity REAL NOT NULL,
+    purchase_price REAL NOT NULL,
+    supplier_name TEXT NOT NULL DEFAULT '',
+    expiry_date INTEGER,
+    is_exhausted INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+CREATE TABLE stock_movements (
+    id TEXT NOT NULL PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    movement_type TEXT NOT NULL,
+    reference_id TEXT,
+    notes TEXT,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+CREATE TABLE product_transfers (
+    id TEXT NOT NULL PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    from_site_id TEXT NOT NULL,
+    to_site_id TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    notes TEXT,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (from_site_id) REFERENCES sites(id),
+    FOREIGN KEY (to_site_id) REFERENCES sites(id)
+);
+
+CREATE TABLE inventories (
+    id TEXT NOT NULL PRIMARY KEY,
+    site_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'in_progress',
+    started_at INTEGER NOT NULL,
+    completed_at INTEGER,
+    notes TEXT,
+    created_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+-- ============================================
+-- SALES TABLES
+-- ============================================
+
+CREATE TABLE customers (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    notes TEXT,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE sales (
+    id TEXT NOT NULL PRIMARY KEY,
+    customer_name TEXT NOT NULL,
+    customer_id TEXT,
+    date INTEGER NOT NULL,
+    total_amount REAL NOT NULL,
+    site_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+CREATE TABLE sale_items (
+    id TEXT NOT NULL PRIMARY KEY,
+    sale_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    unit_price REAL NOT NULL,
+    total_price REAL NOT NULL,
+    FOREIGN KEY (sale_id) REFERENCES sales(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+CREATE TABLE sale_batch_allocations (
+    id TEXT NOT NULL PRIMARY KEY,
+    sale_item_id TEXT NOT NULL,
+    batch_id TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    unit_cost REAL NOT NULL,
+    FOREIGN KEY (sale_item_id) REFERENCES sale_items(id),
+    FOREIGN KEY (batch_id) REFERENCES purchase_batches(id)
+);
+
+-- ============================================
+-- USER & AUTH TABLES
+-- ============================================
+
+CREATE TABLE app_users (
+    id TEXT NOT NULL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    is_admin INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE user_permissions (
+    id TEXT NOT NULL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    can_sell INTEGER NOT NULL DEFAULT 0,
+    can_purchase INTEGER NOT NULL DEFAULT 0,
+    can_manage_stock INTEGER NOT NULL DEFAULT 0,
+    can_view_reports INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES app_users(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+-- ============================================
+-- AUDIT & SYNC TABLES
+-- ============================================
+
+CREATE TABLE audit_history (
+    id TEXT NOT NULL PRIMARY KEY,
+    table_name TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    old_values TEXT,
+    new_values TEXT,
+    user_id TEXT NOT NULL,
+    timestamp INTEGER NOT NULL
+);
+
+CREATE TABLE sync_queue (
+    id TEXT NOT NULL PRIMARY KEY,
+    table_name TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    operation TEXT NOT NULL,
+    data TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+);
+
+-- ============================================
+-- INDEXES
+-- ============================================
+
+CREATE INDEX idx_products_site ON products(site_id);
+CREATE INDEX idx_products_category ON products(category_id);
+CREATE INDEX idx_purchase_batches_product ON purchase_batches(product_id);
+CREATE INDEX idx_purchase_batches_site ON purchase_batches(site_id);
+CREATE INDEX idx_sales_site ON sales(site_id);
+CREATE INDEX idx_sales_date ON sales(date);
+CREATE INDEX idx_sale_items_sale ON sale_items(sale_id);
+CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
+CREATE INDEX idx_audit_history_table ON audit_history(table_name);
+CREATE INDEX idx_sync_queue_status ON sync_queue(status);
+
+-- ============================================
+-- QUERIES - Sites
+-- ============================================
+
+getAllSites:
+SELECT * FROM sites ORDER BY name;
+
+getSiteById:
+SELECT * FROM sites WHERE id = ?;
+
+insertSite:
+INSERT INTO sites(id, name, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateSite:
+UPDATE sites SET name = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deleteSite:
+DELETE FROM sites WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Categories
+-- ============================================
+
+getAllCategories:
+SELECT * FROM categories ORDER BY name;
+
+getCategoryById:
+SELECT * FROM categories WHERE id = ?;
+
+insertCategory:
+INSERT INTO categories(id, name, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateCategory:
+UPDATE categories SET name = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deleteCategory:
+DELETE FROM categories WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Products
+-- ============================================
+
+getAllProducts:
+SELECT * FROM products ORDER BY name;
+
+getProductsBySite:
+SELECT * FROM products WHERE site_id = ? ORDER BY name;
+
+getProductById:
+SELECT * FROM products WHERE id = ?;
+
+insertProduct:
+INSERT INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateProduct:
+UPDATE products SET name = ?, unit = ?, unit_volume = ?, packaging_type_id = ?, selected_level = ?, conversion_factor = ?, category_id = ?, margin_type = ?, margin_value = ?, description = ?, min_stock = ?, max_stock = ?, updated_at = ?, updated_by = ?
+WHERE id = ?;
+
+deleteProduct:
+DELETE FROM products WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Purchase Batches
+-- ============================================
+
+getAllBatches:
+SELECT * FROM purchase_batches ORDER BY purchase_date DESC;
+
+getBatchesByProduct:
+SELECT * FROM purchase_batches WHERE product_id = ? AND is_exhausted = 0 ORDER BY purchase_date ASC;
+
+getBatchesByProductAndSite:
+SELECT * FROM purchase_batches WHERE product_id = ? AND site_id = ? AND is_exhausted = 0 ORDER BY purchase_date ASC;
+
+getBatchById:
+SELECT * FROM purchase_batches WHERE id = ?;
+
+insertBatch:
+INSERT INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateBatchQuantity:
+UPDATE purchase_batches SET remaining_quantity = ?, is_exhausted = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Sales
+-- ============================================
+
+getAllSales:
+SELECT * FROM sales ORDER BY date DESC;
+
+getSalesBySite:
+SELECT * FROM sales WHERE site_id = ? ORDER BY date DESC;
+
+getSaleById:
+SELECT * FROM sales WHERE id = ?;
+
+insertSale:
+INSERT INTO sales(id, customer_name, customer_id, date, total_amount, site_id, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+-- ============================================
+-- QUERIES - Sale Items
+-- ============================================
+
+getSaleItemsBySale:
+SELECT * FROM sale_items WHERE sale_id = ?;
+
+insertSaleItem:
+INSERT INTO sale_items(id, sale_id, product_id, quantity, unit_price, total_price)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- ============================================
+-- QUERIES - Users
+-- ============================================
+
+getAllUsers:
+SELECT * FROM app_users ORDER BY username;
+
+getUserById:
+SELECT * FROM app_users WHERE id = ?;
+
+getUserByUsername:
+SELECT * FROM app_users WHERE username = ?;
+
+insertUser:
+INSERT INTO app_users(id, username, password, full_name, is_admin, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateUser:
+UPDATE app_users SET username = ?, full_name = ?, is_admin = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+updateUserPassword:
+UPDATE app_users SET password = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Current Stock (computed)
+-- ============================================
+
+getCurrentStockByProductAndSite:
+SELECT product_id, site_id, COALESCE(SUM(remaining_quantity), 0.0) AS total_stock
+FROM purchase_batches
+WHERE product_id = ? AND site_id = ? AND is_exhausted = 0
+GROUP BY product_id, site_id;
+
+getAllCurrentStock:
+SELECT product_id, site_id, COALESCE(SUM(remaining_quantity), 0.0) AS total_stock
+FROM purchase_batches
+WHERE is_exhausted = 0
+GROUP BY product_id, site_id;
+
+-- ============================================
+-- QUERIES - Sync Queue
+-- ============================================
+
+getPendingSyncItems:
+SELECT * FROM sync_queue WHERE status = 'pending' ORDER BY created_at ASC;
+
+insertSyncItem:
+INSERT INTO sync_queue(id, table_name, record_id, operation, data, created_at, retry_count, last_error, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateSyncItemStatus:
+UPDATE sync_queue SET status = ?, last_error = ?, retry_count = ? WHERE id = ?;
+
+deleteSyncItem:
+DELETE FROM sync_queue WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Audit History
+-- ============================================
+
+getAuditHistory:
+SELECT * FROM audit_history ORDER BY timestamp DESC LIMIT ?;
+
+getAuditHistoryByTable:
+SELECT * FROM audit_history WHERE table_name = ? ORDER BY timestamp DESC LIMIT ?;
+
+insertAuditEntry:
+INSERT INTO audit_history(id, table_name, record_id, action, old_values, new_values, user_id, timestamp)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
