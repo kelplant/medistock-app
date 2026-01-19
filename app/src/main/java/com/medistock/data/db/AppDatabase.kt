@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.medistock.data.entities.*
 import com.medistock.data.dao.*
 
@@ -24,11 +25,13 @@ import com.medistock.data.dao.*
         SaleBatchAllocation::class,
         PackagingType::class,
         AuditHistory::class,
-        ProductTransfer::class
+        ProductTransfer::class,
+        SyncQueueItem::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
+@TypeConverters(SyncTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun categoryDao(): CategoryDao
@@ -46,6 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun packagingTypeDao(): PackagingTypeDao
     abstract fun auditHistoryDao(): AuditHistoryDao
     abstract fun productTransferDao(): ProductTransferDao
+    abstract fun syncQueueDao(): SyncQueueDao
 
     companion object {
         @Volatile

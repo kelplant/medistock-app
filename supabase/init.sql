@@ -330,146 +330,14 @@ CREATE INDEX idx_audit_history_user ON audit_history(changed_by);
 CREATE INDEX idx_audit_history_date ON audit_history(changed_at);
 CREATE INDEX idx_audit_history_site ON audit_history(site_id);
 
-CREATE OR REPLACE FUNCTION log_audit_history_trigger()
-RETURNS TRIGGER AS $$
-DECLARE
-    site_column TEXT;
-    site_value UUID;
-    change_user TEXT;
-    target_id UUID;
-    new_value TEXT;
-    old_value TEXT;
-    new_value_payload TEXT;
-    old_value_payload TEXT;
-BEGIN
-    -- Récupère l'argument facultatif passé par le trigger (nom de colonne site)
-    IF TG_NARGS > 0 THEN
-        site_column := TG_ARGV[0];
-    ELSE
-        site_column := NULL;
-    END IF;
-
-    -- Normalise les valeurs vides/NULL explicites passées par le trigger helper
-    IF site_column IS NULL OR site_column = '' OR lower(site_column) = 'null' THEN
-        site_column := NULL;
-    END IF;
-
-    change_user := COALESCE(
-        current_setting('request.jwt.claim.email', true),
-        current_setting('request.jwt.claim.sub', true),
-        current_user::text,
-        'system'
-    );
-
-    target_id := COALESCE(CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END, gen_random_uuid());
-
-    IF site_column IS NOT NULL AND site_column <> '' THEN
-        IF TG_OP = 'DELETE' THEN
-            EXECUTE format('SELECT ($1).%I::uuid', site_column) USING OLD INTO site_value;
-        ELSE
-            EXECUTE format('SELECT ($1).%I::uuid', site_column) USING NEW INTO site_value;
-        END IF;
-    ELSE
-        site_value := NULL;
-    END IF;
-
-    -- Préparer les valeurs JSON pour la déduplication et l'insertion
-    IF TG_OP = 'INSERT' THEN
-        old_value_payload := NULL;
-        new_value_payload := to_jsonb(NEW)::text;
-    ELSIF TG_OP = 'UPDATE' THEN
-        old_value_payload := to_jsonb(OLD)::text;
-        new_value_payload := to_jsonb(NEW)::text;
-    ELSE -- DELETE
-        old_value_payload := to_jsonb(OLD)::text;
-        new_value_payload := NULL;
-    END IF;
-
-    -- Éviter les doublons si l'app a déjà écrit dans audit_history pour cette opération
-    IF EXISTS (
-        SELECT 1
-        FROM audit_history ah
-        WHERE ah.entity_type = TG_TABLE_NAME
-          AND ah.entity_id = target_id
-          AND ah.action_type = TG_OP
-          AND (
-              (ah.old_value IS NOT DISTINCT FROM old_value_payload)
-              OR ah.old_value IS NULL AND old_value_payload IS NULL
-          )
-          AND (
-              (ah.new_value IS NOT DISTINCT FROM new_value_payload)
-              OR ah.new_value IS NULL AND new_value_payload IS NULL
-          )
-    ) THEN
-        IF TG_OP = 'DELETE' THEN
-            RETURN OLD;
-        ELSE
-            RETURN NEW;
-        END IF;
-    END IF;
-
-    IF TG_OP = 'INSERT' THEN
-        INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
-        VALUES (TG_TABLE_NAME, target_id, 'INSERT', 'ALL_FIELDS', NULL, new_value_payload, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
-        RETURN NEW;
-    ELSIF TG_OP = 'UPDATE' THEN
-        INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
-        VALUES (TG_TABLE_NAME, target_id, 'UPDATE', 'ALL_FIELDS', old_value_payload, new_value_payload, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
-        RETURN NEW;
-    ELSIF TG_OP = 'DELETE' THEN
-        INSERT INTO audit_history (entity_type, entity_id, action_type, field_name, old_value, new_value, changed_by, site_id, description, changed_at)
-        VALUES (TG_TABLE_NAME, target_id, 'DELETE', 'ALL_FIELDS', old_value_payload, NULL, change_user, site_value, 'Supabase trigger audit', EXTRACT(EPOCH FROM NOW())::BIGINT * 1000);
-        RETURN OLD;
-    END IF;
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
--- Triggers d'audit pour chaque table métier (hors audit_history pour éviter la récursion)
-CREATE TRIGGER audit_sites_trigger AFTER INSERT OR UPDATE OR DELETE ON sites
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_categories_trigger AFTER INSERT OR UPDATE OR DELETE ON categories
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_packaging_types_trigger AFTER INSERT OR UPDATE OR DELETE ON packaging_types
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_app_users_trigger AFTER INSERT OR UPDATE OR DELETE ON app_users
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_user_permissions_trigger AFTER INSERT OR UPDATE OR DELETE ON user_permissions
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_customers_trigger AFTER INSERT OR UPDATE OR DELETE ON customers
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
-CREATE TRIGGER audit_products_trigger AFTER INSERT OR UPDATE OR DELETE ON products
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
-CREATE TRIGGER audit_product_prices_trigger AFTER INSERT OR UPDATE OR DELETE ON product_prices
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_purchase_batches_trigger AFTER INSERT OR UPDATE OR DELETE ON purchase_batches
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
-CREATE TRIGGER audit_stock_movements_trigger AFTER INSERT OR UPDATE OR DELETE ON stock_movements
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
-CREATE TRIGGER audit_inventories_trigger AFTER INSERT OR UPDATE OR DELETE ON inventories
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
-CREATE TRIGGER audit_product_transfers_trigger AFTER INSERT OR UPDATE OR DELETE ON product_transfers
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('from_site_id');
-
-CREATE TRIGGER audit_sales_trigger AFTER INSERT OR UPDATE OR DELETE ON sales
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger('site_id');
-
-CREATE TRIGGER audit_sale_items_trigger AFTER INSERT OR UPDATE OR DELETE ON sale_items
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
-
-CREATE TRIGGER audit_sale_batch_allocations_trigger AFTER INSERT OR UPDATE OR DELETE ON sale_batch_allocations
-    FOR EACH ROW EXECUTE FUNCTION log_audit_history_trigger();
+-- ============================================================================
+-- NOTE: Les triggers d'audit Supabase ont été désactivés.
+-- L'audit est géré uniquement côté application Android (Room + AuditLogger)
+-- pour éviter la duplication des données et réduire le volume de stockage.
+--
+-- La table audit_history reste disponible pour recevoir les audits de l'app.
+-- Voir migration 2026011901_remove_audit_triggers.sql pour plus de détails.
+-- ============================================================================
 
 -- ============================================================================
 -- TRIGGERS POUR UPDATE TIMESTAMPS
@@ -1078,12 +946,14 @@ VALUES
     ('2025122605_transaction_flat_view', NULL, 'init', TRUE, NULL),
     ('2026010501_schema_cleanup', NULL, 'init', TRUE, NULL),
     ('2026011701_migration_system', NULL, 'init', TRUE, NULL),
-    ('2026011702_schema_version', NULL, 'init', TRUE, NULL)
+    ('2026011702_schema_version', NULL, 'init', TRUE, NULL),
+    ('2026011801_sync_tracking', NULL, 'init', TRUE, NULL),
+    ('2026011901_remove_audit_triggers', NULL, 'init', TRUE, NULL)
 ON CONFLICT (name) DO NOTHING;
 
--- Initialiser la version du schéma (version 2 = système de migration + versioning)
+-- Initialiser la version du schéma (version 4 = triggers d'audit supprimés)
 INSERT INTO schema_version (schema_version, min_app_version, updated_by)
-VALUES (2, 2, 'init')
+VALUES (4, 2, 'init')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================

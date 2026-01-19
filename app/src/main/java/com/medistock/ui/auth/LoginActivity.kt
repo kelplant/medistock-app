@@ -265,6 +265,13 @@ class LoginActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Rafraîchir l'état du badge Realtime quand on revient sur cet écran
+        // (par exemple après avoir configuré Supabase)
+        observeRealtimeStatus()
+    }
+
     /**
      * Vérifie si une mise à jour est disponible sur GitHub Releases.
      * Si oui, affiche un dialogue pour proposer à l'utilisateur de la télécharger.

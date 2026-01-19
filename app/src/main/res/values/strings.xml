@@ -41,4 +41,13 @@
     <string name="download_installing">Installation en cours…</string>
     <string name="install_permission_required">Veuillez autoriser l\'installation d\'applications inconnues</string>
     <string name="install_button">Installer</string>
+
+    <!-- Sync Indicator -->
+    <string name="sync_indicator_description">Indicateur de synchronisation</string>
+    <string name="sync_status_synced">Synchronisé</string>
+    <string name="sync_status_syncing">Synchronisation…</string>
+    <string name="sync_status_offline">Hors ligne</string>
+    <string name="sync_status_pending">%d en attente</string>
+    <string name="sync_status_conflicts">%d conflit(s)</string>
+    <string name="sync_status_error">Erreur de sync</string>
 </resources>
