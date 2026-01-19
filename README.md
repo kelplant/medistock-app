@@ -92,6 +92,7 @@ Les migrations Supabase sont dans `app/src/main/assets/migrations/` :
 | `2026011701_migration_system.sql` | Système de migrations |
 | `2026011702_schema_version.sql` | Versioning du schéma |
 | `2026011801_sync_tracking.sql` | Tracking synchronisation offline |
+| `2026011901_remove_audit_triggers.sql` | Suppression triggers audit Supabase |
 
 ---
 
