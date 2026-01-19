@@ -55,8 +55,8 @@ medistock-app/
 
 | Document | Description |
 |----------|-------------|
-| [SUPABASE-SETUP-GUIDE.md](documentation/SUPABASE-SETUP-GUIDE.md) | Guide de configuration initiale de Supabase |
-| [SUPABASE-README.md](documentation/SUPABASE-README.md) | Vue d'ensemble de l'intégration Supabase |
+| [SUPABASE-SETUP-GUIDE.md](documentation/supabase/SUPABASE-SETUP-GUIDE.md) | Guide de configuration initiale de Supabase |
+| [SUPABASE-README.md](documentation/supabase/SUPABASE-README.md) | Vue d'ensemble de l'intégration Supabase |
 | [TESTING.md](documentation/TESTING.md) | Guide pour exécuter les tests |
 | [RELEASE_GUIDE.md](documentation/RELEASE_GUIDE.md) | Guide de publication des releases |
 
@@ -64,7 +64,7 @@ medistock-app/
 
 | Document | Description |
 |----------|-------------|
-| [SUPABASE-INTEGRATION-GUIDE.md](documentation/SUPABASE-INTEGRATION-GUIDE.md) | Guide complet d'intégration Supabase |
+| [SUPABASE-INTEGRATION-GUIDE.md](documentation/supabase/SUPABASE-INTEGRATION-GUIDE.md) | Guide complet d'intégration Supabase |
 | [OFFLINE_SYNC_STRATEGY.md](documentation/OFFLINE_SYNC_STRATEGY.md) | Stratégie de synchronisation offline/online |
 | [AUDIT_HISTORY_SYSTEM.md](documentation/AUDIT_HISTORY_SYSTEM.md) | Système d'audit et traçabilité |
 | [DATABASE_SCHEMA_AUDIT.md](documentation/DATABASE_SCHEMA_AUDIT.md) | Schéma de base de données complet |
@@ -74,7 +74,7 @@ medistock-app/
 
 | Document | Description |
 |----------|-------------|
-| [supabase/realtime.md](documentation/supabase/realtime.md) | Configuration Realtime Supabase |
+| [realtime.md](documentation/supabase/realtime.md) | Configuration Realtime Supabase |
 
 ### Migrations SQL
 
