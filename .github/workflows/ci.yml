@@ -1,10 +1,10 @@
 name: CI - Build & Test
 
 on:
-  push:
-    branches: [ main, develop, 'feature/**', 'claude/**' ]
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:  # Manual trigger only
+  # Uncomment below to run on PRs:
+  # pull_request:
+  #   branches: [ main, dev ]
 
 jobs:
   # ===========================================
