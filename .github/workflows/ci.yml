@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # Manual trigger only
   # Uncomment below to run on PRs:
   # pull_request:
-  #   branches: [ main, develop ]
+  #   branches: [ main, dev ]
 
 jobs:
   # ===========================================
