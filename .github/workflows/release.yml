@@ -108,13 +108,28 @@ jobs:
           path: medistock-${{ steps.version.outputs.tag }}.apk
 
   # ===========================================
-  # Build iOS IPA
+  # Build iOS IPA (OPTIONAL - requires secrets)
   # ===========================================
   build-ios:
     name: Build iOS IPA
     runs-on: macos-latest
+    # Skip if iOS secrets are not configured
+    if: ${{ vars.IOS_BUILD_ENABLED == 'true' }}
+
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
 
     steps:
+      - name: Check iOS secrets
+        id: check
+        run: |
+          if [ -z "${{ secrets.IOS_BUILD_CERTIFICATE_BASE64 }}" ]; then
+            echo "⚠️ iOS secrets not configured, skipping iOS build"
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "enabled=true" >> $GITHUB_OUTPUT
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -248,30 +263,6 @@ jobs:
           name: ios-ipa
           path: medistock-${{ steps.version.outputs.tag }}.ipa
 
-      # ============================================
-      # DÉSACTIVÉ - Upload vers App Store Connect
-      # Décommenter quand prêt pour la distribution
-      # ============================================
-      # - name: Upload to App Store Connect
-      #   env:
-      #     APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-      #     APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
-      #     APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
-      #   run: |
-      #     echo "🚀 Uploading to App Store Connect..."
-      #
-      #     # Décoder la clé API
-      #     mkdir -p ~/.appstoreconnect/private_keys
-      #     echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
-      #
-      #     xcrun altool --upload-app \
-      #       --type ios \
-      #       --file medistock-${{ steps.version.outputs.tag }}.ipa \
-      #       --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-      #       --apiIssuer "$APP_STORE_CONNECT_API_ISSUER_ID"
-      #
-      #     echo "✅ Uploaded to App Store Connect"
-
       - name: Cleanup keychain
         if: always()
         run: |
@@ -283,7 +274,9 @@ jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-android, build-ios]
+    needs: [build-android]
+    # Don't require iOS build to complete
+    if: always() && needs.build-android.result == 'success'
 
     permissions:
       contents: write
@@ -294,15 +287,16 @@ jobs:
         with:
           name: android-apk
 
-      - name: Download iOS IPA
+      - name: Download iOS IPA (if available)
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: ios-ipa
 
       - name: List artifacts
         run: |
           echo "📦 Artifacts téléchargés:"
-          ls -la *.apk *.ipa
+          ls -la *.apk *.ipa 2>/dev/null || ls -la *.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -313,15 +307,15 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: false
+          fail_on_unmatched_files: false
           body: |
             ## MediStock ${{ needs.build-android.outputs.tag }}
 
             ### Downloads
             - **Android**: `medistock-${{ needs.build-android.outputs.tag }}.apk`
-            - **iOS**: `medistock-${{ needs.build-android.outputs.tag }}.ipa`
 
             ### Installation
             - **Android**: Télécharger l'APK et installer (activer les sources inconnues si nécessaire)
-            - **iOS**: L'IPA sera disponible via Custom Apps sur l'App Store (bientôt)
+            - **iOS**: Bientôt disponible (configuration Apple Developer requise)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
