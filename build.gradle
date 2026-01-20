@@ -3,12 +3,16 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.10.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:2.0.21"
+        classpath "app.cash.sqldelight:gradle-plugin:2.0.1"
     }
 }
+
 allprojects {
     repositories {
         google()

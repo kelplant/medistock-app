@@ -62,7 +62,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "medistock-db"
                 )
-                .fallbackToDestructiveMigration() // Allow destructive migration for development
+                .addMigrations(*RoomMigrations.ALL_MIGRATIONS)
+                .fallbackToDestructiveMigrationOnDowngrade() // Only destroy on downgrade, not upgrade
                 .addCallback(AuditTriggerInitializer.createCallback())
                 .build().also { INSTANCE = it }
             }
