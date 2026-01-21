@@ -114,10 +114,18 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 ### 2.3. Permissions offline-first
 - Définir une stratégie commune (cache local + refresh distant).
 
+### 2.4. Sécurisation de la configuration Supabase
+- Actuellement stockée en clair dans UserDefaults (iOS) / SharedPreferences (Android).
+- Investiguer des solutions de stockage sécurisé :
+  - **iOS** : Keychain Services
+  - **Android** : EncryptedSharedPreferences / Android Keystore
+- Empêcher la lecture des credentials par d'autres apps ou en cas de backup non chiffré.
+
 ### Livrables
 - Auth partagée.
 - Modules unifiés.
 - Permissions cohérentes dans les deux apps.
+- Configuration Supabase stockée de manière sécurisée.
 
 ---
 
