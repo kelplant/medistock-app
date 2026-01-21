@@ -1,10 +1,8 @@
 package com.medistock.shared
 
-import com.medistock.shared.data.repository.ProductRepository
-import com.medistock.shared.data.repository.SiteRepository
+import com.medistock.shared.data.repository.*
 import com.medistock.shared.db.MedistockDatabase
-import com.medistock.shared.domain.model.Product
-import com.medistock.shared.domain.model.Site
+import com.medistock.shared.domain.model.*
 import kotlinx.datetime.Clock
 import kotlin.random.Random
 
@@ -19,10 +17,22 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     // Repositories
     val siteRepository: SiteRepository by lazy { SiteRepository(database) }
     val productRepository: ProductRepository by lazy { ProductRepository(database) }
+    val categoryRepository: CategoryRepository by lazy { CategoryRepository(database) }
+    val userRepository: UserRepository by lazy { UserRepository(database) }
+    val purchaseBatchRepository: PurchaseBatchRepository by lazy { PurchaseBatchRepository(database) }
+    val saleRepository: SaleRepository by lazy { SaleRepository(database) }
+    val customerRepository: CustomerRepository by lazy { CustomerRepository(database) }
+    val stockMovementRepository: StockMovementRepository by lazy { StockMovementRepository(database) }
+    val productTransferRepository: ProductTransferRepository by lazy { ProductTransferRepository(database) }
+    val packagingTypeRepository: PackagingTypeRepository by lazy { PackagingTypeRepository(database) }
+    val inventoryRepository: InventoryRepository by lazy { InventoryRepository(database) }
+    val auditRepository: AuditRepository by lazy { AuditRepository(database) }
+    val stockRepository: StockRepository by lazy { StockRepository(database) }
 
     // Platform info
     val platformName: String = getPlatform().name
 
+    // Factory methods
     fun createSite(name: String, userId: String = "ios"): Site {
         val now = Clock.System.now().toEpochMilliseconds()
         return Site(
@@ -40,6 +50,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         siteId: String,
         unit: String = "unité",
         unitVolume: Double = 1.0,
+        categoryId: String? = null,
         userId: String = "ios"
     ): Product {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -49,10 +60,240 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             unit = unit,
             unitVolume = unitVolume,
             siteId = siteId,
+            categoryId = categoryId,
             createdAt = now,
             updatedAt = now,
             createdBy = userId,
             updatedBy = userId
+        )
+    }
+
+    fun createCategory(name: String, userId: String = "ios"): Category {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return Category(
+            id = generateId(prefix = "category"),
+            name = name,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
+    fun createUser(
+        username: String,
+        password: String,
+        fullName: String,
+        isAdmin: Boolean = false,
+        userId: String = "ios"
+    ): User {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return User(
+            id = generateId(prefix = "user"),
+            username = username,
+            password = password,
+            fullName = fullName,
+            isAdmin = isAdmin,
+            isActive = true,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
+    fun createCustomer(
+        name: String,
+        phone: String? = null,
+        email: String? = null,
+        address: String? = null,
+        notes: String? = null,
+        userId: String = "ios"
+    ): Customer {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return Customer(
+            id = generateId(prefix = "customer"),
+            name = name,
+            phone = phone,
+            email = email,
+            address = address,
+            notes = notes,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
+    fun createPurchaseBatch(
+        productId: String,
+        siteId: String,
+        quantity: Double,
+        purchasePrice: Double,
+        supplierName: String = "",
+        batchNumber: String? = null,
+        expiryDate: Long? = null,
+        userId: String = "ios"
+    ): PurchaseBatch {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return PurchaseBatch(
+            id = generateId(prefix = "batch"),
+            productId = productId,
+            siteId = siteId,
+            batchNumber = batchNumber,
+            purchaseDate = now,
+            initialQuantity = quantity,
+            remainingQuantity = quantity,
+            purchasePrice = purchasePrice,
+            supplierName = supplierName,
+            expiryDate = expiryDate,
+            isExhausted = false,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
+    fun createSale(
+        customerName: String,
+        siteId: String,
+        totalAmount: Double,
+        customerId: String? = null,
+        userId: String = "ios"
+    ): Sale {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return Sale(
+            id = generateId(prefix = "sale"),
+            customerName = customerName,
+            customerId = customerId,
+            date = now,
+            totalAmount = totalAmount,
+            siteId = siteId,
+            createdAt = now,
+            createdBy = userId
+        )
+    }
+
+    fun createSaleItem(
+        saleId: String,
+        productId: String,
+        quantity: Double,
+        unitPrice: Double
+    ): SaleItem {
+        return SaleItem(
+            id = generateId(prefix = "saleitem"),
+            saleId = saleId,
+            productId = productId,
+            quantity = quantity,
+            unitPrice = unitPrice,
+            totalPrice = quantity * unitPrice
+        )
+    }
+
+    fun createProductTransfer(
+        productId: String,
+        fromSiteId: String,
+        toSiteId: String,
+        quantity: Double,
+        notes: String? = null,
+        userId: String = "ios"
+    ): ProductTransfer {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return ProductTransfer(
+            id = generateId(prefix = "transfer"),
+            productId = productId,
+            fromSiteId = fromSiteId,
+            toSiteId = toSiteId,
+            quantity = quantity,
+            status = "pending",
+            notes = notes,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
+    fun createStockMovement(
+        productId: String,
+        siteId: String,
+        quantity: Double,
+        movementType: String,
+        referenceId: String? = null,
+        notes: String? = null,
+        userId: String = "ios"
+    ): StockMovement {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return StockMovement(
+            id = generateId(prefix = "movement"),
+            productId = productId,
+            siteId = siteId,
+            quantity = quantity,
+            movementType = movementType,
+            referenceId = referenceId,
+            notes = notes,
+            createdAt = now,
+            createdBy = userId
+        )
+    }
+
+    fun createPackagingType(
+        name: String,
+        level1Name: String,
+        level2Name: String? = null,
+        level2Quantity: Int? = null,
+        userId: String = "ios"
+    ): PackagingType {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return PackagingType(
+            id = generateId(prefix = "packaging"),
+            name = name,
+            level1Name = level1Name,
+            level2Name = level2Name,
+            level2Quantity = level2Quantity,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
+    fun createInventory(
+        siteId: String,
+        notes: String? = null,
+        userId: String = "ios"
+    ): Inventory {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return Inventory(
+            id = generateId(prefix = "inventory"),
+            siteId = siteId,
+            status = "in_progress",
+            startedAt = now,
+            completedAt = null,
+            notes = notes,
+            createdBy = userId
+        )
+    }
+
+    fun createAuditEntry(
+        tableName: String,
+        recordId: String,
+        action: String,
+        oldValues: String? = null,
+        newValues: String? = null,
+        userId: String
+    ): AuditEntry {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return AuditEntry(
+            id = generateId(prefix = "audit"),
+            tableName = tableName,
+            recordId = recordId,
+            action = action,
+            oldValues = oldValues,
+            newValues = newValues,
+            userId = userId,
+            timestamp = now
         )
     }
 

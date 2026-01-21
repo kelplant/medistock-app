@@ -1,0 +1,282 @@
+import Foundation
+import SwiftUI
+import shared
+
+// MARK: - Inventory List View
+struct InventoryListView: View {
+    let sdk: MedistockSDK
+    @ObservedObject var session: SessionManager
+    let siteId: String?
+
+    @State private var inventories: [Inventory] = []
+    @State private var sites: [Site] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+    @State private var showAddSheet = false
+
+    var body: some View {
+        List {
+            if let errorMessage {
+                Section {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                }
+            }
+
+            if isLoading {
+                Section {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                }
+            } else if inventories.isEmpty {
+                Section {
+                    EmptyStateView(
+                        icon: "list.clipboard",
+                        title: "Aucun inventaire",
+                        message: "Démarrez un inventaire pour compter votre stock physique."
+                    )
+                }
+                .listRowSeparator(.hidden)
+            } else {
+                // In progress
+                let inProgress = inventories.filter { $0.status == "in_progress" }
+                if !inProgress.isEmpty {
+                    Section(header: Text("En cours (\(inProgress.count))")) {
+                        ForEach(inProgress, id: \.id) { inventory in
+                            InventoryRowView(
+                                inventory: inventory,
+                                siteName: siteName(for: inventory.siteId),
+                                onComplete: { completeInventory(inventory) }
+                            )
+                        }
+                    }
+                }
+
+                // Completed
+                let completed = inventories.filter { $0.status == "completed" }
+                if !completed.isEmpty {
+                    Section(header: Text("Terminés (\(completed.count))")) {
+                        ForEach(completed, id: \.id) { inventory in
+                            InventoryRowView(
+                                inventory: inventory,
+                                siteName: siteName(for: inventory.siteId),
+                                onComplete: nil
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Inventaires")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showAddSheet = true }) {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showAddSheet) {
+            InventoryEditorView(sdk: sdk, session: session, sites: sites, defaultSiteId: siteId) {
+                Task { await loadData() }
+            }
+        }
+        .refreshable {
+            await loadData()
+        }
+        .task {
+            await loadData()
+        }
+    }
+
+    @MainActor
+    private func loadData() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            async let inventoriesResult = sdk.inventoryRepository.getAll()
+            async let sitesResult = sdk.siteRepository.getAll()
+
+            inventories = try await inventoriesResult
+            sites = try await sitesResult
+
+            if let siteId = siteId {
+                inventories = inventories.filter { $0.siteId == siteId }
+            }
+        } catch {
+            errorMessage = "Erreur: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+
+    private func siteName(for siteId: String) -> String {
+        sites.first { $0.id == siteId }?.name ?? "Site inconnu"
+    }
+
+    private func completeInventory(_ inventory: Inventory) {
+        Task {
+            do {
+                try await sdk.inventoryRepository.updateStatus(
+                    id: inventory.id,
+                    status: "completed",
+                    completedAt: Int64(Date().timeIntervalSince1970 * 1000)
+                )
+                await loadData()
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Erreur: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Inventory Row View
+struct InventoryRowView: View {
+    let inventory: Inventory
+    let siteName: String
+    let onComplete: (() -> Void)?
+
+    var statusColor: Color {
+        inventory.status == "completed" ? .green : .orange
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Inventaire - \(siteName)")
+                    .font(.headline)
+                Spacer()
+                Text(inventory.status == "completed" ? "Terminé" : "En cours")
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(statusColor.opacity(0.2))
+                    .foregroundColor(statusColor)
+                    .cornerRadius(4)
+            }
+
+            HStack {
+                Text("Démarré: \(formatDate(inventory.startedAt))")
+                if let completed = inventory.completedAt {
+                    Text("• Terminé: \(formatDate(completed))")
+                }
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+
+            if let notes = inventory.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            if let onComplete = onComplete, inventory.status == "in_progress" {
+                Button(action: onComplete) {
+                    Text("Terminer l'inventaire")
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 4)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func formatDate(_ timestamp: Int64) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Inventory Editor View
+struct InventoryEditorView: View {
+    let sdk: MedistockSDK
+    @ObservedObject var session: SessionManager
+    let sites: [Site]
+    let defaultSiteId: String?
+    let onSave: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedSiteId: String = ""
+    @State private var notes: String = ""
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Site")) {
+                    Picker("Site", selection: $selectedSiteId) {
+                        Text("Sélectionner").tag("")
+                        ForEach(sites, id: \.id) { site in
+                            Text(site.name).tag(site.id)
+                        }
+                    }
+                }
+
+                Section(header: Text("Notes (optionnel)")) {
+                    TextField("Notes", text: $notes, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            .navigationTitle("Nouvel inventaire")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Annuler") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Démarrer") {
+                        saveInventory()
+                    }
+                    .disabled(selectedSiteId.isEmpty || isSaving)
+                }
+            }
+            .onAppear {
+                selectedSiteId = defaultSiteId ?? sites.first?.id ?? ""
+            }
+        }
+    }
+
+    private func saveInventory() {
+        isSaving = true
+        errorMessage = nil
+
+        Task {
+            do {
+                let inventory = sdk.createInventory(
+                    siteId: selectedSiteId,
+                    notes: notes.isEmpty ? nil : notes,
+                    userId: session.username
+                )
+                try await sdk.inventoryRepository.insert(inventory: inventory)
+
+                await MainActor.run {
+                    onSave()
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isSaving = false
+                    errorMessage = "Erreur: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+}
+
+extension Inventory: Identifiable {}
