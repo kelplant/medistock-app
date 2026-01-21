@@ -2,6 +2,177 @@ import Foundation
 import SwiftUI
 import shared
 
+struct LoginView: View {
+    @State private var username: String = ""
+    @State private var password: String = ""
+    @State private var errorMessage: String?
+    @State private var isShowingSupabase = false
+
+    let onLogin: (String) -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "cross.case.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .foregroundColor(.blue)
+
+            Text("MediStock")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Text("Connexion")
+                .font(.headline)
+                .foregroundColor(.secondary)
+
+            VStack(spacing: 12) {
+                TextField("Nom d'utilisateur", text: $username)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textFieldStyle(.roundedBorder)
+
+                SecureField("Mot de passe", text: $password)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .font(.footnote)
+            }
+
+            Button("Se connecter") {
+                let trimmedUser = username.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmedUser.isEmpty, !trimmedPassword.isEmpty else {
+                    errorMessage = "Veuillez renseigner vos identifiants."
+                    return
+                }
+                errorMessage = nil
+                onLogin(trimmedUser)
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Configurer Supabase") {
+                isShowingSupabase = true
+            }
+            .buttonStyle(.bordered)
+            .sheet(isPresented: $isShowingSupabase) {
+                SupabaseView()
+            }
+
+            Spacer()
+        }
+        .padding()
+        .navigationTitle("Authentification")
+    }
+}
+
+struct HomeView: View {
+    let sdk: MedistockSDK
+    let username: String
+    let onLogout: () -> Void
+
+    var body: some View {
+        List {
+            Section {
+                NavigationLink(destination: PurchasesView()) {
+                    HomeMenuRow(emoji: "📦", title: "Purchase Products")
+                }
+
+                NavigationLink(destination: SalesView()) {
+                    HomeMenuRow(emoji: "💰", title: "Sell Products")
+                }
+
+                NavigationLink(destination: TransfersView()) {
+                    HomeMenuRow(emoji: "🔄", title: "Transfer Products")
+                }
+
+                NavigationLink(destination: StockView()) {
+                    HomeMenuRow(emoji: "📊", title: "View Stock")
+                }
+
+                NavigationLink(destination: InventoryView()) {
+                    HomeMenuRow(emoji: "📋", title: "Inventory Stock")
+                }
+            }
+
+            Section(header: Text("Administration")) {
+                NavigationLink(destination: AdminMenuView(sdk: sdk)) {
+                    HomeMenuRow(emoji: "⚙️", title: "Administration")
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("MediStock - \(username)")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Déconnexion") {
+                    onLogout()
+                }
+            }
+        }
+    }
+}
+
+struct HomeMenuRow: View {
+    let emoji: String
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Text(emoji)
+                .font(.system(size: 28))
+                .frame(width: 32)
+            Text(title)
+                .font(.headline)
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct AdminMenuView: View {
+    let sdk: MedistockSDK
+
+    var body: some View {
+        List {
+            Section {
+                NavigationLink(destination: SitesView(sdk: sdk)) {
+                    HomeMenuRow(emoji: "📍", title: "Site Management")
+                }
+
+                NavigationLink(destination: ProductsView(sdk: sdk)) {
+                    HomeMenuRow(emoji: "📦", title: "Manage Products")
+                }
+
+                NavigationLink(destination: StockMovementView()) {
+                    HomeMenuRow(emoji: "🔄", title: "Stock Movement")
+                }
+
+                NavigationLink(destination: PackagingTypesView()) {
+                    HomeMenuRow(emoji: "📦", title: "Packaging Types")
+                }
+
+                NavigationLink(destination: UserManagementView()) {
+                    HomeMenuRow(emoji: "👥", title: "User Management")
+                }
+
+                NavigationLink(destination: AuditHistoryView()) {
+                    HomeMenuRow(emoji: "🧾", title: "Audit History")
+                }
+
+                NavigationLink(destination: SupabaseView()) {
+                    HomeMenuRow(emoji: "🔑", title: "Configuration Supabase")
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Administration")
+    }
+}
+
 struct SitesView: View {
     let sdk: MedistockSDK
     @State private var sites: [Site] = []
@@ -314,6 +485,15 @@ struct EmptyStateView: View {
     }
 }
 
+struct InventoryView: View {
+    var body: some View {
+        FeatureUnavailableView(
+            title: "Inventory Stock",
+            message: "L'inventaire sera disponible prochainement dans l'application iOS."
+        )
+    }
+}
+
 struct SalesView: View {
     var body: some View {
         FeatureUnavailableView(title: "Ventes", message: "Les ventes seront disponibles prochainement dans l'application iOS.")
@@ -338,27 +518,33 @@ struct StockView: View {
     }
 }
 
-struct AuthView: View {
-    var body: some View {
-        FeatureUnavailableView(title: "Authentification", message: "La connexion et la gestion des sessions seront disponibles prochainement sur iOS.")
-    }
-}
-
-struct AdminView: View {
-    var body: some View {
-        FeatureUnavailableView(title: "Administration", message: "Les outils d'administration sont en cours de migration vers iOS.")
-    }
-}
-
 struct SupabaseView: View {
     var body: some View {
         FeatureUnavailableView(title: "Supabase", message: "La configuration Supabase sera disponible dans une prochaine version iOS.")
     }
 }
 
-struct PasswordManagementView: View {
+struct StockMovementView: View {
     var body: some View {
-        FeatureUnavailableView(title: "Gestion du mot de passe", message: "La gestion des mots de passe sera disponible prochainement sur iOS.")
+        FeatureUnavailableView(title: "Stock Movement", message: "Les mouvements de stock seront disponibles prochainement sur iOS.")
+    }
+}
+
+struct PackagingTypesView: View {
+    var body: some View {
+        FeatureUnavailableView(title: "Packaging Types", message: "La gestion des conditionnements sera disponible prochainement sur iOS.")
+    }
+}
+
+struct UserManagementView: View {
+    var body: some View {
+        FeatureUnavailableView(title: "User Management", message: "La gestion des utilisateurs sera disponible prochainement sur iOS.")
+    }
+}
+
+struct AuditHistoryView: View {
+    var body: some View {
+        FeatureUnavailableView(title: "Audit History", message: "L'historique des audits sera disponible prochainement sur iOS.")
     }
 }
 
