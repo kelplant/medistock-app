@@ -28,6 +28,12 @@ class SyncManager(
     private val siteRepo by lazy { SiteSupabaseRepository() }
     private val customerRepo by lazy { CustomerSupabaseRepository() }
     private val packagingTypeRepo by lazy { PackagingTypeSupabaseRepository() }
+    private val userRepo by lazy { UserSupabaseRepository() }
+    private val userPermissionRepo by lazy { UserPermissionSupabaseRepository() }
+    private val saleRepo by lazy { SaleSupabaseRepository() }
+    private val saleItemRepo by lazy { SaleItemSupabaseRepository() }
+    private val purchaseBatchRepo by lazy { PurchaseBatchSupabaseRepository() }
+    private val stockMovementRepo by lazy { StockMovementSupabaseRepository() }
 
     /**
      * Synchronise toutes les données de Room vers Supabase
@@ -67,6 +73,26 @@ class SyncManager(
             // 5. Customers
             onProgress?.invoke("Synchronisation des clients...")
             syncCustomersToRemote(onError)
+
+            // 6. Users
+            onProgress?.invoke("Synchronisation des utilisateurs...")
+            syncUsersToRemote(onError)
+
+            // 7. User Permissions
+            onProgress?.invoke("Synchronisation des permissions...")
+            syncUserPermissionsToRemote(onError)
+
+            // 8. Purchase Batches
+            onProgress?.invoke("Synchronisation des achats...")
+            syncPurchaseBatchesToRemote(onError)
+
+            // 9. Sales and Sale Items
+            onProgress?.invoke("Synchronisation des ventes...")
+            syncSalesToRemote(onError)
+
+            // 10. Stock Movements
+            onProgress?.invoke("Synchronisation des mouvements de stock...")
+            syncStockMovementsToRemote(onError)
 
             onProgress?.invoke("Synchronisation terminée ✅")
         } catch (e: Exception) {
@@ -112,6 +138,26 @@ class SyncManager(
             // 5. Customers
             onProgress?.invoke("Récupération des clients...")
             syncCustomersFromRemote(onError)
+
+            // 6. Users
+            onProgress?.invoke("Récupération des utilisateurs...")
+            syncUsersFromRemote(onError)
+
+            // 7. User Permissions
+            onProgress?.invoke("Récupération des permissions...")
+            syncUserPermissionsFromRemote(onError)
+
+            // 8. Purchase Batches
+            onProgress?.invoke("Récupération des achats...")
+            syncPurchaseBatchesFromRemote(onError)
+
+            // 9. Sales and Sale Items
+            onProgress?.invoke("Récupération des ventes...")
+            syncSalesFromRemote(onError)
+
+            // 10. Stock Movements
+            onProgress?.invoke("Récupération des mouvements de stock...")
+            syncStockMovementsFromRemote(onError)
 
             onProgress?.invoke("Récupération terminée ✅")
         } catch (e: Exception) {
@@ -291,6 +337,198 @@ class SyncManager(
             }
         } catch (e: Exception) {
             onError?.invoke("Customers", e)
+        }
+    }
+
+    // ==================== Synchronisation Users ====================
+
+    private suspend fun syncUsersToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localUsers = database.userDao().getAllUsers()
+            localUsers.forEach { user ->
+                try {
+                    val dto = user.toDto()
+                    userRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("User: ${user.username}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Users", e)
+        }
+    }
+
+    private suspend fun syncUsersFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteUsers = userRepo.getAllUsers()
+            remoteUsers.forEach { dto ->
+                try {
+                    val entity = dto.toEntity()
+                    database.userDao().insertUser(entity)
+                } catch (e: Exception) {
+                    onError?.invoke("User: ${dto.username}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Users", e)
+        }
+    }
+
+    // ==================== Synchronisation User Permissions ====================
+
+    private suspend fun syncUserPermissionsToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localPermissions = database.userPermissionDao().getAllPermissions()
+            localPermissions.forEach { permission ->
+                try {
+                    val dto = permission.toDto()
+                    userPermissionRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("Permission: ${permission.module}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Permissions", e)
+        }
+    }
+
+    private suspend fun syncUserPermissionsFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remotePermissions = userPermissionRepo.getAllPermissions()
+            remotePermissions.forEach { dto ->
+                try {
+                    val entity = dto.toEntity()
+                    database.userPermissionDao().insertPermission(entity)
+                } catch (e: Exception) {
+                    onError?.invoke("Permission: ${dto.module}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Permissions", e)
+        }
+    }
+
+    // ==================== Synchronisation Purchase Batches ====================
+
+    private suspend fun syncPurchaseBatchesToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localBatches = database.purchaseBatchDao().getAll().firstOrNull() ?: emptyList()
+            localBatches.forEach { batch ->
+                try {
+                    val dto = batch.toDto()
+                    purchaseBatchRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("Batch: ${batch.batchNumber ?: batch.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Purchase Batches", e)
+        }
+    }
+
+    private suspend fun syncPurchaseBatchesFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteBatches = purchaseBatchRepo.getAllBatches()
+            remoteBatches.forEach { dto ->
+                try {
+                    val entity = dto.toEntity()
+                    database.purchaseBatchDao().insert(entity)
+                } catch (e: Exception) {
+                    onError?.invoke("Batch: ${dto.batchNumber ?: dto.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Purchase Batches", e)
+        }
+    }
+
+    // ==================== Synchronisation Sales ====================
+
+    private suspend fun syncSalesToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localSales = database.saleDao().getAll().firstOrNull() ?: emptyList()
+            localSales.forEach { sale ->
+                try {
+                    // Upsert sale
+                    val saleDto = sale.toDto()
+                    saleRepo.upsert(saleDto)
+
+                    // Sync sale items for this sale
+                    val saleItems = database.saleItemDao().getItemsBySale(sale.id)
+                    saleItems.forEach { item ->
+                        val itemDto = item.toDto()
+                        saleItemRepo.upsert(itemDto)
+                    }
+                } catch (e: Exception) {
+                    onError?.invoke("Sale: ${sale.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Sales", e)
+        }
+    }
+
+    private suspend fun syncSalesFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            // Fetch all sales
+            val remoteSales = saleRepo.getAllSales()
+            // Fetch all sale items
+            val remoteSaleItems = saleItemRepo.getAllSaleItems()
+            // Group items by sale_id
+            val itemsBySale = remoteSaleItems.groupBy { it.saleId }
+
+            remoteSales.forEach { saleDto ->
+                try {
+                    // Insert sale
+                    val saleEntity = saleDto.toEntity()
+                    database.saleDao().insert(saleEntity)
+
+                    // Insert sale items
+                    val items = itemsBySale[saleDto.id] ?: emptyList()
+                    items.forEach { itemDto ->
+                        val itemEntity = itemDto.toEntity()
+                        database.saleItemDao().insert(itemEntity)
+                    }
+                } catch (e: Exception) {
+                    onError?.invoke("Sale: ${saleDto.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Sales", e)
+        }
+    }
+
+    // ==================== Synchronisation Stock Movements ====================
+
+    private suspend fun syncStockMovementsToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localMovements = database.stockMovementDao().getAll().firstOrNull() ?: emptyList()
+            localMovements.forEach { movement ->
+                try {
+                    val dto = movement.toDto()
+                    stockMovementRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("Movement: ${movement.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Stock Movements", e)
+        }
+    }
+
+    private suspend fun syncStockMovementsFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteMovements = stockMovementRepo.getAllMovements()
+            remoteMovements.forEach { dto ->
+                try {
+                    val entity = dto.toEntity()
+                    database.stockMovementDao().insert(entity)
+                } catch (e: Exception) {
+                    onError?.invoke("Movement: ${dto.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Stock Movements", e)
         }
     }
 

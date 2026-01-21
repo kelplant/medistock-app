@@ -145,4 +145,172 @@ object SyncMapper {
         createdBy = createdBy,
         updatedBy = updatedBy
     )
+
+    // ==================== User ====================
+
+    fun User.toDto(): AppUserDto = AppUserDto(
+        id = id,
+        username = username,
+        password = password,
+        fullName = fullName,
+        isAdmin = isAdmin,
+        isActive = isActive,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
+    )
+
+    fun AppUserDto.toEntity(): User = User(
+        id = id,
+        username = username,
+        password = password,
+        fullName = fullName,
+        isAdmin = isAdmin,
+        isActive = isActive,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
+    )
+
+    // ==================== UserPermission ====================
+
+    fun UserPermission.toDto(): UserPermissionDto = UserPermissionDto(
+        id = id,
+        userId = userId,
+        module = module,
+        canView = canView,
+        canCreate = canCreate,
+        canEdit = canEdit,
+        canDelete = canDelete,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
+    )
+
+    fun UserPermissionDto.toEntity(): UserPermission = UserPermission(
+        id = id,
+        userId = userId,
+        module = module,
+        canView = canView,
+        canCreate = canCreate,
+        canEdit = canEdit,
+        canDelete = canDelete,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
+    )
+
+    // ==================== Sale ====================
+
+    fun Sale.toDto(): SaleDto = SaleDto(
+        id = id,
+        customerName = customerName,
+        customerId = customerId,
+        date = date,
+        totalAmount = totalAmount,
+        siteId = siteId,
+        createdAt = createdAt,
+        createdBy = createdBy
+    )
+
+    fun SaleDto.toEntity(): Sale = Sale(
+        id = id,
+        customerName = customerName,
+        customerId = customerId,
+        date = date,
+        totalAmount = totalAmount,
+        siteId = siteId,
+        createdAt = createdAt,
+        createdBy = createdBy
+    )
+
+    // ==================== SaleItem ====================
+
+    fun SaleItem.toDto(): SaleItemDto = SaleItemDto(
+        id = id,
+        saleId = saleId,
+        productId = productId,
+        quantity = quantity,
+        unitPrice = unitPrice,
+        totalPrice = totalPrice
+    )
+
+    fun SaleItemDto.toEntity(): SaleItem = SaleItem(
+        id = id,
+        saleId = saleId,
+        productId = productId,
+        quantity = quantity,
+        unitPrice = unitPrice,
+        totalPrice = totalPrice
+    )
+
+    // ==================== PurchaseBatch ====================
+
+    fun PurchaseBatch.toDto(): PurchaseBatchDto = PurchaseBatchDto(
+        id = id,
+        productId = productId,
+        siteId = siteId,
+        batchNumber = batchNumber,
+        purchaseDate = purchaseDate,
+        initialQuantity = initialQuantity,
+        remainingQuantity = remainingQuantity,
+        purchasePrice = purchasePrice,
+        supplierName = supplierName,
+        expiryDate = expiryDate,
+        isExhausted = isExhausted,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
+    )
+
+    fun PurchaseBatchDto.toEntity(): PurchaseBatch = PurchaseBatch(
+        id = id,
+        productId = productId,
+        siteId = siteId,
+        batchNumber = batchNumber,
+        purchaseDate = purchaseDate,
+        initialQuantity = initialQuantity,
+        remainingQuantity = remainingQuantity,
+        purchasePrice = purchasePrice,
+        supplierName = supplierName,
+        expiryDate = expiryDate,
+        isExhausted = isExhausted,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
+    )
+
+    // ==================== StockMovement ====================
+
+    fun StockMovement.toDto(): StockMovementDto = StockMovementDto(
+        id = id,
+        productId = productId,
+        siteId = siteId,
+        quantity = quantity,
+        type = type,
+        referenceId = referenceId,
+        notes = notes,
+        date = date,
+        createdAt = createdAt,
+        createdBy = createdBy
+    )
+
+    fun StockMovementDto.toEntity(): StockMovement = StockMovement(
+        id = id,
+        productId = productId,
+        siteId = siteId,
+        quantity = quantity,
+        type = type,
+        referenceId = referenceId,
+        notes = notes,
+        date = date,
+        createdAt = createdAt,
+        createdBy = createdBy
+    )
 }

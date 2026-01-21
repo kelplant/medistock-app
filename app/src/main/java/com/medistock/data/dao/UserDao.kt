@@ -19,7 +19,7 @@ interface UserDao {
     @Query("SELECT * FROM app_users WHERE username = :username AND is_active = 1 LIMIT 1")
     fun getUserForAuth(username: String): com.medistock.data.entities.User?
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertUser(user: com.medistock.data.entities.User): Long
 
     @Update
