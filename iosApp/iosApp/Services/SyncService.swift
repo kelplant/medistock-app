@@ -51,7 +51,7 @@ class SyncService {
             try await syncCustomers(sdk: sdk)
             try await syncPurchaseBatches(sdk: sdk)
             try await syncSales(sdk: sdk)
-            try await syncStock(sdk: sdk)
+            try await syncStockMovements(sdk: sdk)
 
             await MainActor.run {
                 isSyncing = false
@@ -71,8 +71,6 @@ class SyncService {
     private func syncSites(sdk: MedistockSDK) async throws {
         let remoteSites: [RemoteSite] = try await supabase.fetchAll(from: "sites")
         for site in remoteSites {
-            let localSite = sdk.createSite(name: site.name, userId: site.createdBy)
-            // Note: SDK would need upsert method - for now we insert
             try? await sdk.siteRepository.insert(site: Site(
                 id: site.id,
                 name: site.name,
@@ -123,8 +121,16 @@ class SyncService {
                 name: product.name,
                 unit: product.unit,
                 unitVolume: product.unitVolume,
-                siteId: product.siteId,
+                packagingTypeId: product.packagingTypeId,
+                selectedLevel: product.selectedLevel.map { KotlinInt(int: Int32($0)) },
+                conversionFactor: product.conversionFactor.map { KotlinDouble(double: $0) },
                 categoryId: product.categoryId,
+                marginType: product.marginType,
+                marginValue: product.marginValue.map { KotlinDouble(double: $0) },
+                description: product.description_,
+                siteId: product.siteId,
+                minStock: product.minStock.map { KotlinDouble(double: $0) },
+                maxStock: product.maxStock.map { KotlinDouble(double: $0) },
                 createdAt: product.createdAt,
                 updatedAt: product.updatedAt,
                 createdBy: product.createdBy,
@@ -208,15 +214,19 @@ class SyncService {
         }
     }
 
-    private func syncStock(sdk: MedistockSDK) async throws {
-        let remoteStock: [RemoteStock] = try await supabase.fetchAll(from: "stock")
-        for stock in remoteStock {
-            try? await sdk.stockRepository.upsert(stock: Stock(
-                id: stock.id,
-                productId: stock.productId,
-                siteId: stock.siteId,
-                quantity: stock.quantity,
-                updatedAt: stock.updatedAt
+    private func syncStockMovements(sdk: MedistockSDK) async throws {
+        let remoteMovements: [RemoteStockMovement] = try await supabase.fetchAll(from: "stock_movements")
+        for movement in remoteMovements {
+            try? await sdk.stockMovementRepository.insert(movement: StockMovement(
+                id: movement.id,
+                productId: movement.productId,
+                siteId: movement.siteId,
+                quantity: movement.quantity,
+                movementType: movement.movementType,
+                referenceId: movement.referenceId,
+                notes: movement.notes,
+                createdAt: movement.createdAt,
+                createdBy: movement.createdBy
             ))
         }
     }
@@ -272,12 +282,27 @@ struct RemoteProduct: Codable, Identifiable {
     let name: String
     let unit: String
     let unitVolume: Double
-    let siteId: String
+    let packagingTypeId: String?
+    let selectedLevel: Int?
+    let conversionFactor: Double?
     let categoryId: String?
+    let marginType: String?
+    let marginValue: Double?
+    let description_: String?
+    let siteId: String
+    let minStock: Double?
+    let maxStock: Double?
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
     let updatedBy: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, unit, unitVolume, packagingTypeId, selectedLevel
+        case conversionFactor, categoryId, marginType, marginValue
+        case description_ = "description"
+        case siteId, minStock, maxStock, createdAt, updatedAt, createdBy, updatedBy
+    }
 }
 
 struct RemoteCustomer: Codable, Identifiable {
@@ -322,10 +347,14 @@ struct RemoteSale: Codable, Identifiable {
     let createdBy: String
 }
 
-struct RemoteStock: Codable, Identifiable {
+struct RemoteStockMovement: Codable, Identifiable {
     let id: String
     let productId: String
     let siteId: String
     let quantity: Double
-    let updatedAt: Int64
+    let movementType: String
+    let referenceId: String?
+    let notes: String?
+    let createdAt: Int64
+    let createdBy: String
 }
