@@ -1,4 +1,6 @@
 import Foundation
+
+#if canImport(Supabase)
 import Supabase
 
 /// Résultat de l'application d'une migration
@@ -302,6 +304,7 @@ class MigrationManager {
         )
     }
 }
+#endif
 
 // MARK: - String MD5 Extension
 
