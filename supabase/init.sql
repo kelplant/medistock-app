@@ -17,10 +17,12 @@ CREATE TABLE sites (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_sites_name ON sites(name);
+CREATE INDEX idx_sites_client_id ON sites(client_id);
 
 -- Catégories de produits
 CREATE TABLE categories (
@@ -29,10 +31,12 @@ CREATE TABLE categories (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_categories_name ON categories(name);
+CREATE INDEX idx_categories_client_id ON categories(client_id);
 
 -- Types de conditionnement (Boîte/Comprimés, Flacon/ml, etc.)
 CREATE TABLE packaging_types (
@@ -46,7 +50,8 @@ CREATE TABLE packaging_types (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_packaging_types_active ON packaging_types(is_active);
@@ -67,11 +72,13 @@ CREATE TABLE app_users (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_users_username ON app_users(username);
 CREATE INDEX idx_users_active ON app_users(is_active);
+CREATE INDEX idx_app_users_client_id ON app_users(client_id);
 
 -- Permissions par utilisateur et module
 CREATE TABLE user_permissions (
@@ -85,7 +92,8 @@ CREATE TABLE user_permissions (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_user_permissions_user ON user_permissions(user_id);
@@ -105,7 +113,8 @@ CREATE TABLE customers (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_customers_site ON customers(site_id);
@@ -143,13 +152,15 @@ CREATE TABLE products (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_products_site ON products(site_id);
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_packaging_type ON products(packaging_type_id);
 CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_client_id ON products(client_id);
 
 -- Historique des prix des produits
 CREATE TABLE product_prices (
@@ -162,7 +173,8 @@ CREATE TABLE product_prices (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_product_prices_product ON product_prices(product_id);
@@ -188,13 +200,15 @@ CREATE TABLE purchase_batches (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_purchase_batches_product ON purchase_batches(product_id);
 CREATE INDEX idx_purchase_batches_site ON purchase_batches(site_id);
 CREATE INDEX idx_purchase_batches_exhausted ON purchase_batches(is_exhausted);
 CREATE INDEX idx_purchase_batches_date ON purchase_batches(purchase_date);
+CREATE INDEX idx_purchase_batches_client_id ON purchase_batches(client_id);
 
 -- Mouvements de stock
 CREATE TABLE stock_movements (
@@ -207,13 +221,15 @@ CREATE TABLE stock_movements (
     selling_price_at_movement DOUBLE PRECISION NOT NULL,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT 'system'
+    created_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
 CREATE INDEX idx_stock_movements_site ON stock_movements(site_id);
 CREATE INDEX idx_stock_movements_type ON stock_movements(type);
 CREATE INDEX idx_stock_movements_date ON stock_movements(date);
+CREATE INDEX idx_stock_movements_client_id ON stock_movements(client_id);
 
 -- Inventaires physiques
 CREATE TABLE inventories (
@@ -228,7 +244,8 @@ CREATE TABLE inventories (
     counted_by TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT 'system'
+    created_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_inventories_product ON inventories(product_id);
@@ -247,7 +264,8 @@ CREATE TABLE product_transfers (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_product_transfers_product ON product_transfers(product_id);
@@ -268,12 +286,14 @@ CREATE TABLE sales (
     total_amount DOUBLE PRECISION NOT NULL,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT 'system'
+    created_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_sales_customer ON sales(customer_id);
 CREATE INDEX idx_sales_site ON sales(site_id);
 CREATE INDEX idx_sales_date ON sales(date);
+CREATE INDEX idx_sales_client_id ON sales(client_id);
 
 -- Lignes de vente (détails)
 CREATE TABLE sale_items (
@@ -286,7 +306,8 @@ CREATE TABLE sale_items (
     price_per_unit DOUBLE PRECISION NOT NULL,
     subtotal DOUBLE PRECISION NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT 'system'
+    created_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_sale_items_sale ON sale_items(sale_id);
@@ -300,7 +321,8 @@ CREATE TABLE sale_batch_allocations (
     quantity_allocated DOUBLE PRECISION NOT NULL,
     purchase_price_at_allocation DOUBLE PRECISION NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
-    created_by TEXT NOT NULL DEFAULT 'system'
+    created_by TEXT NOT NULL DEFAULT 'system',
+    client_id TEXT
 );
 
 CREATE INDEX idx_sale_batch_allocations_sale_item ON sale_batch_allocations(sale_item_id);
@@ -322,7 +344,8 @@ CREATE TABLE audit_history (
     changed_by TEXT NOT NULL,
     changed_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     site_id UUID REFERENCES sites(id) ON DELETE SET NULL,
-    description TEXT
+    description TEXT,
+    client_id TEXT
 );
 
 CREATE INDEX idx_audit_history_entity ON audit_history(entity_type, entity_id);
@@ -948,7 +971,8 @@ VALUES
     ('2026011701_migration_system', NULL, 'init', TRUE, NULL),
     ('2026011702_schema_version', NULL, 'init', TRUE, NULL),
     ('2026011801_sync_tracking', NULL, 'init', TRUE, NULL),
-    ('2026011901_remove_audit_triggers', NULL, 'init', TRUE, NULL)
+    ('2026011901_remove_audit_triggers', NULL, 'init', TRUE, NULL),
+    ('2026012101_add_client_id', NULL, 'init', TRUE, NULL)
 ON CONFLICT (name) DO NOTHING;
 
 -- Initialiser la version du schéma (version 4 = triggers d'audit supprimés)
@@ -966,6 +990,7 @@ BEGIN
     RAISE NOTICE 'Medistock database schema created successfully!';
     RAISE NOTICE 'Total tables: 18 (including schema_migrations and schema_version)';
     RAISE NOTICE 'Default admin user: admin / admin123';
-    RAISE NOTICE 'Migration system initialized with 9 migrations marked as applied';
-    RAISE NOTICE 'Schema version: 2, Min app version: 2';
+    RAISE NOTICE 'Migration system initialized with 12 migrations marked as applied';
+    RAISE NOTICE 'Schema version: 4, Min app version: 2';
+    RAISE NOTICE 'All tables include client_id column for Realtime support';
 END $$;
