@@ -6,7 +6,7 @@ struct ContentView: View {
     @State private var greeting: String = ""
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 20) {
                 // App Logo/Header
                 Image(systemName: "cross.case.fill")

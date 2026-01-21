@@ -210,7 +210,7 @@ struct SiteEditorView: View {
     let onSave: (String) -> Void
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 Section(header: Text("Informations")) {
                     TextField("Nom du site", text: $name)
@@ -244,7 +244,7 @@ struct ProductEditorView: View {
     @State private var selectedSiteId: String = ""
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 Section(header: Text("Produit")) {
                     TextField("Nom", text: $name)
