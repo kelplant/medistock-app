@@ -45,6 +45,15 @@ class SupabaseService {
         print("[SupabaseService] Disconnected")
     }
 
+    /// Returns the stored configuration if available
+    func getStoredConfig() -> SupabaseConfig? {
+        guard let data = UserDefaults.standard.data(forKey: configKey),
+              let config = try? JSONDecoder().decode(SupabaseConfig.self, from: data) else {
+            return nil
+        }
+        return config
+    }
+
     private func loadConfiguration() {
         guard let data = UserDefaults.standard.data(forKey: configKey),
               let config = try? JSONDecoder().decode(SupabaseConfig.self, from: data) else {

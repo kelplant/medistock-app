@@ -15,8 +15,10 @@ struct SupabaseConfigView: View {
     @State private var showSuccess = false
     @State private var errorMessage: String?
     @State private var syncMessage: String?
+    @State private var hasExistingKey: Bool = false
 
     private let supabase = SupabaseService.shared
+    private let maskedKey = "••••••••••••••••••••••••••••••••"
 
     var body: some View {
         NavigationView {
@@ -36,9 +38,24 @@ struct SupabaseConfigView: View {
                         Text("Anon Key")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        SecureField("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", text: $anonKey)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
+                        if hasExistingKey && anonKey.isEmpty {
+                            HStack {
+                                Text(maskedKey)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button("Modifier") {
+                                    hasExistingKey = false
+                                }
+                                .font(.caption)
+                            }
+                            .padding(8)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(6)
+                        } else {
+                            SecureField("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", text: $anonKey)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                        }
                     }
                 }
 
@@ -55,7 +72,7 @@ struct SupabaseConfigView: View {
                             Spacer()
                         }
                     }
-                    .disabled(projectUrl.isEmpty || anonKey.isEmpty || isSaving)
+                    .disabled(projectUrl.isEmpty || (!hasExistingKey && anonKey.isEmpty) || isSaving)
                 }
 
                 if showSuccess {
@@ -186,9 +203,16 @@ struct SupabaseConfigView: View {
     }
 
     private func loadConfig() {
-        let defaults = UserDefaults.standard
-        projectUrl = defaults.string(forKey: "supabase_url") ?? ""
-        anonKey = defaults.string(forKey: "supabase_key") ?? ""
+        if let config = supabase.getStoredConfig() {
+            projectUrl = config.url
+            // Don't load the actual key - just mark that we have one
+            hasExistingKey = true
+            anonKey = ""
+        } else {
+            projectUrl = ""
+            anonKey = ""
+            hasExistingKey = false
+        }
     }
 
     private func saveConfig() {
@@ -203,8 +227,26 @@ struct SupabaseConfigView: View {
             return
         }
 
+        // Determine the key to use
+        let keyToSave: String
+        if !anonKey.isEmpty {
+            // User entered a new key
+            keyToSave = anonKey
+        } else if hasExistingKey, let existingConfig = supabase.getStoredConfig() {
+            // Use existing key
+            keyToSave = existingConfig.anonKey
+        } else {
+            errorMessage = "La clé Anon est requise"
+            isSaving = false
+            return
+        }
+
         // Save configuration
-        supabase.configure(url: projectUrl, anonKey: anonKey)
+        supabase.configure(url: projectUrl, anonKey: keyToSave)
+
+        // Update state
+        hasExistingKey = true
+        anonKey = ""
 
         // Start sync scheduler after configuration
         SyncScheduler.shared.start(sdk: sdk)
@@ -220,13 +262,12 @@ struct SupabaseConfigView: View {
         SyncScheduler.shared.stop()
         RealtimeSyncService.shared.stop()
 
-        // Clear stored configuration
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: "supabase_url")
-        defaults.removeObject(forKey: "supabase_key")
+        // Clear stored configuration via SupabaseService
+        supabase.disconnect()
 
         projectUrl = ""
         anonKey = ""
+        hasExistingKey = false
         showSuccess = false
         errorMessage = nil
         syncMessage = nil
