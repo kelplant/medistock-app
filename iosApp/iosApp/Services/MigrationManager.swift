@@ -1,5 +1,4 @@
 import Foundation
-import Supabase
 
 /// Résultat de l'application d'une migration
 struct MigrationResult {
@@ -61,6 +60,9 @@ struct SchemaVersionDto: Codable {
     }
 }
 
+#if canImport(Supabase)
+import Supabase
+
 /// Gestionnaire des migrations de schéma Supabase pour iOS
 ///
 /// Ce gestionnaire:
@@ -75,7 +77,10 @@ class MigrationManager {
     private let supabase: SupabaseClient
 
     init() {
-        self.supabase = SupabaseService.shared.client
+        guard let client = SupabaseService.shared.currentClient() else {
+            fatalError("Supabase client not configured for migrations")
+        }
+        self.supabase = client
     }
 
     // MARK: - Compatibility Check
@@ -190,8 +195,7 @@ class MigrationManager {
                 .execute()
 
             // Parse JSON response
-            if let data = response.data,
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let json = try? JSONSerialization.jsonObject(with: response.data) as? [String: Any] {
                 return MigrationResult(
                     success: json["success"] as? Bool ?? false,
                     alreadyApplied: json["already_applied"] as? Bool ?? false,
@@ -302,6 +306,28 @@ class MigrationManager {
         )
     }
 }
+#else
+class MigrationManager {
+    func checkCompatibility() async -> CompatibilityResult {
+        .unknown(reason: "Supabase indisponible")
+    }
+
+    func loadMigrationsFromBundle() -> [(name: String, sql: String, checksum: String)] {
+        []
+    }
+
+    func runPendingMigrations(appliedBy: String) async -> MigrationRunResult {
+        MigrationRunResult(
+            success: false,
+            migrationsApplied: [],
+            migrationsFailed: [],
+            migrationsSkipped: [],
+            systemNotInstalled: true,
+            errorMessage: "Supabase indisponible"
+        )
+    }
+}
+#endif
 
 // MARK: - String MD5 Extension
 
