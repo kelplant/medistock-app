@@ -337,4 +337,4 @@ struct PurchaseEditorView: View {
     }
 }
 
-extension PurchaseBatch: Identifiable {}
+extension PurchaseBatch: @retroactive Identifiable {}

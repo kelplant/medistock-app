@@ -262,4 +262,4 @@ struct PackagingTypeEditorView: View {
     }
 }
 
-extension PackagingType: Identifiable {}
+extension PackagingType: @retroactive Identifiable {}

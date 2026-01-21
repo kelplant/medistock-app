@@ -209,4 +209,4 @@ struct CategoryEditorView: View {
     }
 }
 
-extension shared.Category: Identifiable {}
+extension shared.Category: @retroactive Identifiable {}

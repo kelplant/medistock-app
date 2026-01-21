@@ -119,10 +119,11 @@ struct InventoryListView: View {
     private func completeInventory(_ inventory: Inventory) {
         Task {
             do {
+                let completedAt = KotlinLong(value: Int64(Date().timeIntervalSince1970 * 1000))
                 try await sdk.inventoryRepository.updateStatus(
                     id: inventory.id,
                     status: "completed",
-                    completedAt: Int64(Date().timeIntervalSince1970 * 1000)
+                    completedAt: completedAt
                 )
                 await loadData()
             } catch {
@@ -160,9 +161,9 @@ struct InventoryRowView: View {
             }
 
             HStack {
-                Text("Démarré: \(formatDate(inventory.startedAt))")
+                Text("Démarré: \(formatDate(inventory.startedAt.int64Value))")
                 if let completed = inventory.completedAt {
-                    Text("• Terminé: \(formatDate(completed))")
+                    Text("• Terminé: \(formatDate(completed.int64Value))")
                 }
             }
             .font(.caption)
@@ -210,6 +211,16 @@ struct InventoryEditorView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    @ViewBuilder
+    private var notesField: some View {
+        if #available(iOS 16.0, *) {
+            TextField("Notes", text: $notes, axis: .vertical)
+                .lineLimit(3...6)
+        } else {
+            TextField("Notes", text: $notes)
+        }
+    }
+
     var body: some View {
         NavigationView {
             Form {
@@ -223,8 +234,7 @@ struct InventoryEditorView: View {
                 }
 
                 Section(header: Text("Notes (optionnel)")) {
-                    TextField("Notes", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
+                    notesField
                 }
 
                 if let errorMessage {
@@ -279,4 +289,4 @@ struct InventoryEditorView: View {
     }
 }
 
-extension Inventory: Identifiable {}
+extension Inventory: @retroactive Identifiable {}
