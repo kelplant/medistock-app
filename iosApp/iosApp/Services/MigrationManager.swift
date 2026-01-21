@@ -77,7 +77,10 @@ class MigrationManager {
     private let supabase: SupabaseClient
 
     init() {
-        self.supabase = SupabaseService.shared.client
+        guard let client = SupabaseService.shared.currentClient() else {
+            fatalError("Supabase client not configured for migrations")
+        }
+        self.supabase = client
     }
 
     // MARK: - Compatibility Check
@@ -192,8 +195,7 @@ class MigrationManager {
                 .execute()
 
             // Parse JSON response
-            if let data = response.data,
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let json = try? JSONSerialization.jsonObject(with: response.data) as? [String: Any] {
                 return MigrationResult(
                     success: json["success"] as? Bool ?? false,
                     alreadyApplied: json["already_applied"] as? Bool ?? false,

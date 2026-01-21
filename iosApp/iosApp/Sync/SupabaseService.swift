@@ -17,6 +17,10 @@ class SupabaseService {
         loadConfiguration()
     }
 
+    func currentClient() -> SupabaseClient? {
+        client
+    }
+
     // MARK: - Configuration
 
     func configure(url: String, anonKey: String) {
