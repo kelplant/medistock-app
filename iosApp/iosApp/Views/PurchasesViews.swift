@@ -79,6 +79,39 @@ struct PurchasesListView: View {
     private func loadData() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+            do {
+                // Sync purchase batches from Supabase
+                let remoteBatches: [RemotePurchaseBatch] = try await SupabaseClient.shared.fetchAll(from: "purchase_batches")
+                for remoteBatch in remoteBatches {
+                    let localBatch = PurchaseBatch(
+                        id: remoteBatch.id,
+                        productId: remoteBatch.productId,
+                        siteId: remoteBatch.siteId,
+                        initialQuantity: remoteBatch.initialQuantity,
+                        remainingQuantity: remoteBatch.remainingQuantity,
+                        purchasePrice: remoteBatch.purchasePrice,
+                        sellingPrice: remoteBatch.sellingPrice ?? 0,
+                        supplierName: remoteBatch.supplierName,
+                        batchNumber: remoteBatch.batchNumber,
+                        purchaseDate: remoteBatch.purchaseDate,
+                        expiryDate: remoteBatch.expiryDate.map { KotlinLong(value: $0) },
+                        isExhausted: remoteBatch.isExhausted,
+                        createdAt: remoteBatch.createdAt,
+                        updatedAt: remoteBatch.updatedAt,
+                        createdBy: remoteBatch.createdBy,
+                        updatedBy: remoteBatch.updatedBy
+                    )
+                    try? await sdk.purchaseBatchRepository.upsert(batch: localBatch)
+                }
+            } catch {
+                print("Failed to sync purchase batches from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             async let batchesResult = sdk.purchaseBatchRepository.getAll()
             async let productsResult = sdk.productRepository.getAll()
@@ -309,9 +342,7 @@ struct PurchaseEditorView: View {
                     expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
                     userId: session.username
                 )
-                try await sdk.purchaseBatchRepository.insert(batch: batch)
 
-                // Create stock movement
                 let movement = sdk.createStockMovement(
                     productId: selectedProductId,
                     siteId: selectedSiteId,
@@ -321,6 +352,48 @@ struct PurchaseEditorView: View {
                     notes: "Achat - Lot: \(batchNumber.isEmpty ? batch.id : batchNumber)",
                     userId: session.username
                 )
+
+                // Online-first: save to Supabase first
+                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                    let remoteBatch = RemotePurchaseBatch(
+                        id: batch.id,
+                        productId: batch.productId,
+                        siteId: batch.siteId,
+                        initialQuantity: batch.initialQuantity,
+                        remainingQuantity: batch.remainingQuantity,
+                        purchasePrice: batch.purchasePrice,
+                        sellingPrice: batch.sellingPrice,
+                        supplierName: batch.supplierName,
+                        batchNumber: batch.batchNumber,
+                        purchaseDate: batch.purchaseDate,
+                        expiryDate: batch.expiryDate?.int64Value,
+                        isExhausted: batch.isExhausted,
+                        createdAt: batch.createdAt,
+                        updatedAt: batch.updatedAt,
+                        createdBy: batch.createdBy,
+                        updatedBy: batch.updatedBy
+                    )
+                    _ = try await SupabaseClient.shared.upsert(into: "purchase_batches", record: remoteBatch)
+
+                    let remoteMovement = RemoteStockMovement(
+                        id: movement.id,
+                        productId: movement.productId,
+                        siteId: movement.siteId,
+                        quantity: movement.quantity,
+                        movementType: movement.movementType,
+                        referenceId: movement.referenceId,
+                        notes: movement.notes,
+                        movementDate: movement.movementDate,
+                        createdAt: movement.createdAt,
+                        updatedAt: movement.updatedAt,
+                        createdBy: movement.createdBy,
+                        updatedBy: movement.updatedBy
+                    )
+                    _ = try await SupabaseClient.shared.upsert(into: "stock_movements", record: remoteMovement)
+                }
+
+                // Then sync to local database
+                try await sdk.purchaseBatchRepository.insert(batch: batch)
                 try await sdk.stockMovementRepository.insert(movement: movement)
 
                 await MainActor.run {

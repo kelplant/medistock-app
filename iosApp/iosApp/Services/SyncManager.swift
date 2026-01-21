@@ -390,3 +390,109 @@ struct RemoteSiteProduct: Codable {
     let createdBy: String
     let updatedBy: String
 }
+
+struct RemotePurchaseBatch: Codable, Identifiable {
+    let id: String
+    let productId: String
+    let siteId: String
+    let initialQuantity: Double
+    let remainingQuantity: Double
+    let purchasePrice: Double
+    let sellingPrice: Double?
+    let supplierName: String
+    let batchNumber: String?
+    let purchaseDate: Int64
+    let expiryDate: Int64?
+    let isExhausted: Bool
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
+
+struct RemoteStockMovement: Codable, Identifiable {
+    let id: String
+    let productId: String
+    let siteId: String
+    let quantity: Double
+    let movementType: String
+    let referenceId: String?
+    let notes: String?
+    let movementDate: Int64
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
+
+struct RemoteSale: Codable, Identifiable {
+    let id: String
+    let siteId: String
+    let customerId: String?
+    let totalAmount: Double
+    let discountAmount: Double
+    let finalAmount: Double
+    let paymentMethod: String
+    let status: String
+    let notes: String?
+    let saleDate: Int64
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
+
+struct RemoteSaleItem: Codable, Identifiable {
+    let id: String
+    let saleId: String
+    let productId: String
+    let quantity: Double
+    let unitPrice: Double
+    let totalPrice: Double
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
+
+struct RemoteTransfer: Codable, Identifiable {
+    let id: String
+    let productId: String
+    let fromSiteId: String
+    let toSiteId: String
+    let quantity: Double
+    let status: String
+    let notes: String?
+    let transferDate: Int64
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
+
+struct RemoteInventoryCount: Codable, Identifiable {
+    let id: String
+    let siteId: String
+    let status: String
+    let startDate: Int64
+    let endDate: Int64?
+    let notes: String?
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
+
+struct RemoteInventoryItem: Codable, Identifiable {
+    let id: String
+    let inventoryId: String
+    let productId: String
+    let expectedQuantity: Double
+    let countedQuantity: Double?
+    let difference: Double?
+    let notes: String?
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}

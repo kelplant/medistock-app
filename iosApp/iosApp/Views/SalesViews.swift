@@ -82,6 +82,37 @@ struct SalesListView: View {
     private func loadData() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+            do {
+                let remoteSales: [RemoteSale] = try await SupabaseClient.shared.fetchAll(from: "sales")
+                for remoteSale in remoteSales {
+                    let localSale = Sale(
+                        id: remoteSale.id,
+                        siteId: remoteSale.siteId,
+                        customerId: remoteSale.customerId,
+                        customerName: "", // Will be looked up
+                        totalAmount: remoteSale.totalAmount,
+                        discountAmount: remoteSale.discountAmount,
+                        finalAmount: remoteSale.finalAmount,
+                        paymentMethod: remoteSale.paymentMethod,
+                        status: remoteSale.status,
+                        notes: remoteSale.notes,
+                        saleDate: remoteSale.saleDate,
+                        createdAt: remoteSale.createdAt,
+                        updatedAt: remoteSale.updatedAt,
+                        createdBy: remoteSale.createdBy,
+                        updatedBy: remoteSale.updatedBy
+                    )
+                    try? await sdk.saleRepository.upsert(sale: localSale)
+                }
+            } catch {
+                print("Failed to sync sales from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             async let salesResult = sdk.saleRepository.getAll()
             async let sitesResult = sdk.siteRepository.getAll()
