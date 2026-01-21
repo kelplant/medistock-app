@@ -302,7 +302,11 @@ struct TransferEditorView: View {
                         }
 
                         if !selectedProductId.isEmpty {
-                            LabeledContent("Stock disponible", value: String(format: "%.1f", availableStock))
+                            LabeledContentCompat {
+                                Text("Stock disponible")
+                            } content: {
+                                Text(String(format: "%.1f", availableStock))
+                            }
                         }
                     }
                 }
