@@ -82,6 +82,32 @@ struct CategoriesListView: View {
     private func loadCategories() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+            do {
+                let remoteCategories: [RemoteCategory] = try await SupabaseClient.shared.fetchAll(from: "categories")
+                // Sync to local database
+                for remoteCategory in remoteCategories {
+                    let localCategory = shared.Category(
+                        id: remoteCategory.id,
+                        name: remoteCategory.name,
+                        createdAt: remoteCategory.createdAt,
+                        updatedAt: remoteCategory.updatedAt,
+                        createdBy: remoteCategory.createdBy,
+                        updatedBy: remoteCategory.updatedBy
+                    )
+                    try? await sdk.categoryRepository.upsert(category: localCategory)
+                }
+                categories = try await sdk.categoryRepository.getAll()
+                isLoading = false
+                return
+            } catch {
+                print("Failed to fetch from Supabase: \(error)")
+            }
+        }
+
+        // Fallback to local database
         do {
             categories = try await sdk.categoryRepository.getAll()
         } catch {
@@ -96,10 +122,15 @@ struct CategoriesListView: View {
         Task {
             for category in categoriesToDelete {
                 do {
+                    // Online-first: delete from Supabase first
+                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                        try await SupabaseClient.shared.delete(from: "categories", id: category.id)
+                    }
+                    // Then delete locally
                     try await sdk.categoryRepository.delete(id: category.id)
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression"
+                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
                     }
                 }
             }
@@ -181,8 +212,10 @@ struct CategoryEditorView: View {
 
         Task {
             do {
+                var savedCategory: shared.Category
+
                 if let existingCategory = category {
-                    let updated = shared.Category(
+                    savedCategory = shared.Category(
                         id: existingCategory.id,
                         name: trimmedName,
                         createdAt: existingCategory.createdAt,
@@ -190,11 +223,30 @@ struct CategoryEditorView: View {
                         createdBy: existingCategory.createdBy,
                         updatedBy: session.username
                     )
-                    try await sdk.categoryRepository.update(category: updated)
                 } else {
-                    let newCategory = sdk.createCategory(name: trimmedName, userId: session.username)
-                    try await sdk.categoryRepository.insert(category: newCategory)
+                    savedCategory = sdk.createCategory(name: trimmedName, userId: session.username)
                 }
+
+                // Online-first: save to Supabase first
+                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                    let remoteCategory = RemoteCategory(
+                        id: savedCategory.id,
+                        name: savedCategory.name,
+                        createdAt: savedCategory.createdAt,
+                        updatedAt: savedCategory.updatedAt,
+                        createdBy: savedCategory.createdBy,
+                        updatedBy: savedCategory.updatedBy
+                    )
+                    _ = try await SupabaseClient.shared.upsert(into: "categories", record: remoteCategory)
+                }
+
+                // Then sync to local database
+                if category != nil {
+                    try await sdk.categoryRepository.update(category: savedCategory)
+                } else {
+                    try await sdk.categoryRepository.insert(category: savedCategory)
+                }
+
                 await MainActor.run {
                     onSave()
                     dismiss()

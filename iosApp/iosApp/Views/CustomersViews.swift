@@ -92,6 +92,32 @@ struct CustomersListView: View {
     private func loadCustomers() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+            do {
+                let remoteCustomers: [RemoteCustomer] = try await SupabaseClient.shared.fetchAll(from: "customers")
+                for remoteCustomer in remoteCustomers {
+                    let localCustomer = Customer(
+                        id: remoteCustomer.id,
+                        name: remoteCustomer.name,
+                        phone: remoteCustomer.phone,
+                        email: remoteCustomer.email,
+                        address: remoteCustomer.address,
+                        notes: nil,
+                        createdAt: remoteCustomer.createdAt,
+                        updatedAt: remoteCustomer.updatedAt,
+                        createdBy: remoteCustomer.createdBy,
+                        updatedBy: remoteCustomer.updatedBy
+                    )
+                    try? await sdk.customerRepository.upsert(customer: localCustomer)
+                }
+            } catch {
+                print("Failed to sync customers from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             customers = try await sdk.customerRepository.getAll()
         } catch {
@@ -106,10 +132,14 @@ struct CustomersListView: View {
         Task {
             for customer in customersToDelete {
                 do {
+                    // Online-first: delete from Supabase first
+                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                        try await SupabaseClient.shared.delete(from: "customers", id: customer.id)
+                    }
                     try await sdk.customerRepository.delete(id: customer.id)
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression"
+                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
                     }
                 }
             }
@@ -228,8 +258,10 @@ struct CustomerEditorView: View {
 
         Task {
             do {
+                var savedCustomer: Customer
+
                 if let existingCustomer = customer {
-                    let updated = Customer(
+                    savedCustomer = Customer(
                         id: existingCustomer.id,
                         name: trimmedName,
                         phone: phone.isEmpty ? nil : phone,
@@ -241,9 +273,8 @@ struct CustomerEditorView: View {
                         createdBy: existingCustomer.createdBy,
                         updatedBy: session.username
                     )
-                    try await sdk.customerRepository.update(customer: updated)
                 } else {
-                    let newCustomer = sdk.createCustomer(
+                    savedCustomer = sdk.createCustomer(
                         name: trimmedName,
                         phone: phone.isEmpty ? nil : phone,
                         email: email.isEmpty ? nil : email,
@@ -251,7 +282,29 @@ struct CustomerEditorView: View {
                         notes: notes.isEmpty ? nil : notes,
                         userId: session.username
                     )
-                    try await sdk.customerRepository.insert(customer: newCustomer)
+                }
+
+                // Online-first: save to Supabase first
+                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                    let remoteCustomer = RemoteCustomer(
+                        id: savedCustomer.id,
+                        name: savedCustomer.name,
+                        phone: savedCustomer.phone,
+                        email: savedCustomer.email,
+                        address: savedCustomer.address,
+                        createdAt: savedCustomer.createdAt,
+                        updatedAt: savedCustomer.updatedAt,
+                        createdBy: savedCustomer.createdBy,
+                        updatedBy: savedCustomer.updatedBy
+                    )
+                    _ = try await SupabaseClient.shared.upsert(into: "customers", record: remoteCustomer)
+                }
+
+                // Then sync to local database
+                if customer != nil {
+                    try await sdk.customerRepository.update(customer: savedCustomer)
+                } else {
+                    try await sdk.customerRepository.insert(customer: savedCustomer)
                 }
 
                 await MainActor.run {

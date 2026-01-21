@@ -82,6 +82,33 @@ struct SitesListView: View {
     private func loadSites() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+            do {
+                let remoteSites: [RemoteSite] = try await SupabaseClient.shared.fetchAll(from: "sites")
+                // Sync to local database
+                for remoteSite in remoteSites {
+                    let localSite = Site(
+                        id: remoteSite.id,
+                        name: remoteSite.name,
+                        createdAt: remoteSite.createdAt,
+                        updatedAt: remoteSite.updatedAt,
+                        createdBy: remoteSite.createdBy,
+                        updatedBy: remoteSite.updatedBy
+                    )
+                    try? await sdk.siteRepository.upsert(site: localSite)
+                }
+                sites = try await sdk.siteRepository.getAll()
+                isLoading = false
+                return
+            } catch {
+                // Fall through to local
+                print("Failed to fetch from Supabase: \(error)")
+            }
+        }
+
+        // Fallback to local database
         do {
             sites = try await sdk.siteRepository.getAll()
         } catch {
@@ -96,10 +123,15 @@ struct SitesListView: View {
         Task {
             for site in sitesToDelete {
                 do {
+                    // Online-first: delete from Supabase first
+                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                        try await SupabaseClient.shared.delete(from: "sites", id: site.id)
+                    }
+                    // Then delete locally
                     try await sdk.siteRepository.delete(id: site.id)
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression"
+                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
                     }
                 }
             }
@@ -181,9 +213,11 @@ struct SiteEditorView: View {
 
         Task {
             do {
+                var savedSite: Site
+
                 if let existingSite = site {
                     // Update
-                    let updated = Site(
+                    savedSite = Site(
                         id: existingSite.id,
                         name: trimmedName,
                         createdAt: existingSite.createdAt,
@@ -191,12 +225,31 @@ struct SiteEditorView: View {
                         createdBy: existingSite.createdBy,
                         updatedBy: session.username
                     )
-                    try await sdk.siteRepository.update(site: updated)
                 } else {
                     // Insert
-                    let newSite = sdk.createSite(name: trimmedName, userId: session.username)
-                    try await sdk.siteRepository.insert(site: newSite)
+                    savedSite = sdk.createSite(name: trimmedName, userId: session.username)
                 }
+
+                // Online-first: save to Supabase first
+                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+                    let remoteSite = RemoteSite(
+                        id: savedSite.id,
+                        name: savedSite.name,
+                        createdAt: savedSite.createdAt,
+                        updatedAt: savedSite.updatedAt,
+                        createdBy: savedSite.createdBy,
+                        updatedBy: savedSite.updatedBy
+                    )
+                    _ = try await SupabaseClient.shared.upsert(into: "sites", record: remoteSite)
+                }
+
+                // Then sync to local database
+                if site != nil {
+                    try await sdk.siteRepository.update(site: savedSite)
+                } else {
+                    try await sdk.siteRepository.insert(site: savedSite)
+                }
+
                 await MainActor.run {
                     onSave()
                     dismiss()

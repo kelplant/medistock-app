@@ -36,6 +36,7 @@
 		A1SVC005BBBB000100000005 /* RealtimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC005BBBB000000000005 /* RealtimeService.swift */; };
 		A1000013AAAA000100000013 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013AAAA000000000013 /* ProfileViews.swift */; };
 		A1SVC006BBBB000100000006 /* PasswordHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC006BBBB000000000006 /* PasswordHasher.swift */; };
+		A1SVC007BBBB000100000007 /* SyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC007BBBB000000000007 /* SyncManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -70,6 +71,7 @@
 		A1SVC005BBBB000000000005 /* RealtimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeService.swift; sourceTree = "<group>"; };
 		A1000013AAAA000000000013 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
 		A1SVC006BBBB000000000006 /* PasswordHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordHasher.swift; sourceTree = "<group>"; };
+		A1SVC007BBBB000000000007 /* SyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +159,7 @@
 				A1SVC004BBBB000000000004 /* SyncService.swift */,
 				A1SVC005BBBB000000000005 /* RealtimeService.swift */,
 				A1SVC006BBBB000000000006 /* PasswordHasher.swift */,
+				A1SVC007BBBB000000000007 /* SyncManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				A1SVC005BBBB000100000005 /* RealtimeService.swift in Sources */,
 				A1000013AAAA000100000013 /* ProfileViews.swift in Sources */,
 				A1SVC006BBBB000100000006 /* PasswordHasher.swift in Sources */,
+				A1SVC007BBBB000100000007 /* SyncManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
