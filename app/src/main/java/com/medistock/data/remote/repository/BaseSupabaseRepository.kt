@@ -70,10 +70,14 @@ abstract class BaseSupabaseRepository(
      * Utilise la clé primaire 'id' pour détecter les conflits
      */
     suspend inline fun <reified R : Any> upsert(item: R): R {
+        println("🔄 Upsert to $tableName: $item")
         val payload = withClientId(item)
-        return supabase.from(tableName).upsert(payload) {
+        println("🔄 Payload with client_id: $payload")
+        val result = supabase.from(tableName).upsert(payload) {
             select()
-        }.decodeSingle()
+        }.decodeSingle<R>()
+        println("✅ Upsert result from $tableName: $result")
+        return result
     }
 
     /**
