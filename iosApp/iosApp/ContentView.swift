@@ -14,8 +14,8 @@ struct ContentView: View {
                         session: session
                     )
                 } else {
-                    LoginView(sdk: sdk) { username, fullName, isAdmin in
-                        session.login(username: username, fullName: fullName, isAdmin: isAdmin)
+                    LoginView(sdk: sdk) { user in
+                        session.loginWithAuth(user: user)
                     }
                 }
             }

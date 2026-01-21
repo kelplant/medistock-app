@@ -11,7 +11,7 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var isShowingSupabase = false
 
-    let onLogin: (String, String, Bool) -> Void
+    let onLogin: (RemoteUser) -> Void
 
     var body: some View {
         VStack(spacing: 20) {
@@ -29,6 +29,16 @@ struct LoginView: View {
                 .font(.headline)
                 .foregroundColor(.secondary)
 
+            // Supabase status indicator
+            HStack {
+                Circle()
+                    .fill(SupabaseClient.shared.isConfigured ? Color.green : Color.orange)
+                    .frame(width: 8, height: 8)
+                Text(SupabaseClient.shared.isConfigured ? "Supabase connecté" : "Mode hors-ligne")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             VStack(spacing: 12) {
                 TextField("Nom d'utilisateur", text: $username)
                     .textInputAutocapitalization(.never)
@@ -44,6 +54,7 @@ struct LoginView: View {
                     .foregroundColor(.red)
                     .font(.footnote)
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
 
             Button(action: performLogin) {
@@ -55,7 +66,7 @@ struct LoginView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(isLoading)
+            .disabled(isLoading || username.isEmpty || password.isEmpty)
 
             Button("Configurer Supabase") {
                 isShowingSupabase = true
@@ -84,27 +95,33 @@ struct LoginView: View {
         errorMessage = nil
 
         Task {
-            do {
-                let user = try await sdk.userRepository.getByUsername(username: trimmedUser)
-                await MainActor.run {
-                    isLoading = false
-                    if let user = user {
-                        // Simple password check (in production, use proper hashing)
-                        if user.password == trimmedPassword || trimmedPassword == "admin" {
-                            onLogin(user.username, user.fullName, user.isAdmin)
-                        } else {
-                            errorMessage = "Mot de passe incorrect."
-                        }
-                    } else {
-                        // For demo, allow any login
-                        onLogin(trimmedUser, trimmedUser, trimmedUser == "admin")
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    isLoading = false
-                    // For demo, allow login on error
-                    onLogin(trimmedUser, trimmedUser, trimmedUser == "admin")
+            let result = await AuthService.shared.authenticate(
+                username: trimmedUser,
+                password: trimmedPassword,
+                sdk: sdk
+            )
+
+            await MainActor.run {
+                isLoading = false
+
+                switch result {
+                case .success(let user):
+                    onLogin(user)
+
+                case .invalidCredentials:
+                    errorMessage = "Mot de passe incorrect."
+
+                case .userNotFound:
+                    errorMessage = "Utilisateur non trouvé."
+
+                case .userInactive:
+                    errorMessage = "Ce compte est désactivé. Contactez un administrateur."
+
+                case .networkError(let message):
+                    errorMessage = "Erreur de connexion: \(message)"
+
+                case .notConfigured:
+                    errorMessage = "Supabase n'est pas configuré et aucun utilisateur local trouvé."
                 }
             }
         }
@@ -115,6 +132,9 @@ struct LoginView: View {
 class SessionManager: ObservableObject {
     @Published var isLoggedIn: Bool {
         didSet { UserDefaults.standard.set(isLoggedIn, forKey: "medistock_is_logged_in") }
+    }
+    @Published var userId: String {
+        didSet { UserDefaults.standard.set(userId, forKey: "medistock_user_id") }
     }
     @Published var username: String {
         didSet { UserDefaults.standard.set(username, forKey: "medistock_username") }
@@ -131,10 +151,18 @@ class SessionManager: ObservableObject {
 
     init() {
         self.isLoggedIn = UserDefaults.standard.bool(forKey: "medistock_is_logged_in")
+        self.userId = UserDefaults.standard.string(forKey: "medistock_user_id") ?? ""
         self.username = UserDefaults.standard.string(forKey: "medistock_username") ?? ""
         self.fullName = UserDefaults.standard.string(forKey: "medistock_fullname") ?? ""
         self.isAdmin = UserDefaults.standard.bool(forKey: "medistock_is_admin")
         self.currentSiteId = UserDefaults.standard.string(forKey: "medistock_current_site")
+
+        // Load permissions if already logged in
+        if isLoggedIn && !userId.isEmpty {
+            Task {
+                await PermissionManager.shared.loadPermissions(forUserId: userId)
+            }
+        }
     }
 
     func login(username: String, fullName: String, isAdmin: Bool) {
@@ -146,9 +174,11 @@ class SessionManager: ObservableObject {
 
     func logout() {
         self.isLoggedIn = false
+        self.userId = ""
         self.username = ""
         self.fullName = ""
         self.isAdmin = false
         self.currentSiteId = nil
+        PermissionManager.shared.clearPermissions()
     }
 }

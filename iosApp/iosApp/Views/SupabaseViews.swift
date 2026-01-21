@@ -10,11 +10,12 @@ struct SupabaseConfigView: View {
     @State private var projectUrl: String = ""
     @State private var anonKey: String = ""
     @State private var isSaving = false
+    @State private var isSyncing = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var syncMessage: String?
 
-    private let urlKey = "medistock_supabase_url"
-    private let keyKey = "medistock_supabase_key"
+    private let supabase = SupabaseClient.shared
 
     var body: some View {
         NavigationView {
@@ -74,6 +75,39 @@ struct SupabaseConfigView: View {
                     }
                 }
 
+                Section(header: Text("Synchronisation")) {
+                    Button(action: performSync) {
+                        HStack {
+                            Spacer()
+                            if isSyncing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                Text("Synchronisation...")
+                            } else {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                Text("Synchroniser les données")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(!supabase.isConfigured || isSyncing)
+
+                    if let syncMessage {
+                        Text(syncMessage)
+                            .font(.caption)
+                            .foregroundColor(syncMessage.contains("Erreur") ? .red : .green)
+                    }
+
+                    if let lastSync = SyncService.shared.lastSyncDate {
+                        LabeledContentCompat {
+                            Text("Dernière sync")
+                        } content: {
+                            Text(lastSync, style: .relative)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
                 Section(header: Text("Informations")) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Comment obtenir ces informations:")
@@ -92,15 +126,38 @@ struct SupabaseConfigView: View {
                     LabeledContentCompat {
                         Text("URL configurée")
                     } content: {
-                        Text(UserDefaults.standard.string(forKey: urlKey)?.isEmpty == false ? "Oui" : "Non")
-                            .foregroundColor(UserDefaults.standard.string(forKey: urlKey)?.isEmpty == false ? .green : .red)
+                        Text(supabase.supabaseUrl?.isEmpty == false ? "Oui" : "Non")
+                            .foregroundColor(supabase.supabaseUrl?.isEmpty == false ? .green : .red)
                     }
                     LabeledContentCompat {
                         Text("Clé configurée")
                     } content: {
-                        Text(UserDefaults.standard.string(forKey: keyKey)?.isEmpty == false ? "Oui" : "Non")
-                            .foregroundColor(UserDefaults.standard.string(forKey: keyKey)?.isEmpty == false ? .green : .red)
+                        Text(supabase.supabaseKey?.isEmpty == false ? "Oui" : "Non")
+                            .foregroundColor(supabase.supabaseKey?.isEmpty == false ? .green : .red)
                     }
+                    LabeledContentCompat {
+                        Text("Statut")
+                    } content: {
+                        HStack {
+                            Circle()
+                                .fill(supabase.isConfigured ? Color.green : Color.orange)
+                                .frame(width: 8, height: 8)
+                            Text(supabase.isConfigured ? "Connecté" : "Non configuré")
+                                .foregroundColor(supabase.isConfigured ? .green : .orange)
+                        }
+                    }
+                }
+
+                Section {
+                    Button(action: testConnection) {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "network")
+                            Text("Tester la connexion")
+                            Spacer()
+                        }
+                    }
+                    .disabled(!supabase.isConfigured)
                 }
 
                 Section {
@@ -126,8 +183,8 @@ struct SupabaseConfigView: View {
     }
 
     private func loadConfig() {
-        projectUrl = UserDefaults.standard.string(forKey: urlKey) ?? ""
-        anonKey = UserDefaults.standard.string(forKey: keyKey) ?? ""
+        projectUrl = supabase.supabaseUrl ?? ""
+        anonKey = supabase.supabaseKey ?? ""
     }
 
     private func saveConfig() {
@@ -142,9 +199,8 @@ struct SupabaseConfigView: View {
             return
         }
 
-        // Save to UserDefaults
-        UserDefaults.standard.set(projectUrl, forKey: urlKey)
-        UserDefaults.standard.set(anonKey, forKey: keyKey)
+        // Save configuration
+        supabase.configure(url: projectUrl, key: anonKey)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
@@ -153,11 +209,48 @@ struct SupabaseConfigView: View {
     }
 
     private func clearConfig() {
-        UserDefaults.standard.removeObject(forKey: urlKey)
-        UserDefaults.standard.removeObject(forKey: keyKey)
+        supabase.clearConfiguration()
         projectUrl = ""
         anonKey = ""
         showSuccess = false
         errorMessage = nil
+        syncMessage = nil
+    }
+
+    private func performSync() {
+        isSyncing = true
+        syncMessage = nil
+
+        Task {
+            await SyncService.shared.performFullSync(sdk: sdk)
+
+            await MainActor.run {
+                isSyncing = false
+                if let error = SyncService.shared.lastError {
+                    syncMessage = "Erreur: \(error)"
+                } else {
+                    syncMessage = "Synchronisation réussie!"
+                }
+            }
+        }
+    }
+
+    private func testConnection() {
+        errorMessage = nil
+        syncMessage = nil
+
+        Task {
+            do {
+                // Try to fetch a small amount of data to test connection
+                let _: [RemoteSite] = try await supabase.fetchAll(from: "sites", query: ["limit": "1"])
+                await MainActor.run {
+                    syncMessage = "Connexion réussie!"
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Erreur de connexion: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 }
