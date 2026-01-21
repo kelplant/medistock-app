@@ -6,11 +6,11 @@ import shared
 struct CategoriesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
-    @State private var categories: [Category] = []
+    @State private var categories: [shared.Category] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showAddSheet = false
-    @State private var categoryToEdit: Category?
+    @State private var categoryToEdit: shared.Category?
 
     var body: some View {
         List {
@@ -110,7 +110,7 @@ struct CategoriesListView: View {
 
 // MARK: - Category Row View
 struct CategoryRowView: View {
-    let category: Category
+    let category: shared.Category
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -128,7 +128,7 @@ struct CategoryRowView: View {
 struct CategoryEditorView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
-    let category: Category?
+    let category: shared.Category?
     let onSave: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -182,7 +182,7 @@ struct CategoryEditorView: View {
         Task {
             do {
                 if let existingCategory = category {
-                    let updated = Category(
+                    let updated = shared.Category(
                         id: existingCategory.id,
                         name: trimmedName,
                         createdAt: existingCategory.createdAt,
@@ -209,4 +209,4 @@ struct CategoryEditorView: View {
     }
 }
 
-extension Category: Identifiable {}
+extension shared.Category: Identifiable {}

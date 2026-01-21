@@ -8,7 +8,7 @@ struct ProductsListView: View {
     @ObservedObject var session: SessionManager
     @State private var products: [Product] = []
     @State private var sites: [Site] = []
-    @State private var categories: [Category] = []
+    @State private var categories: [shared.Category] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showAddSheet = false
@@ -165,7 +165,7 @@ struct ProductEditorView: View {
     @ObservedObject var session: SessionManager
     let product: Product?
     let sites: [Site]
-    let categories: [Category]
+    let categories: [shared.Category]
     let onSave: () -> Void
 
     @Environment(\.dismiss) private var dismiss
