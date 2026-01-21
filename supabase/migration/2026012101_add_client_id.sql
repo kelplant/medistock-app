@@ -3,8 +3,6 @@
 -- This column allows filtering Realtime events to ignore self-triggered changes
 -- ============================================================================
 
-BEGIN;
-
 -- ============================================================================
 -- 1. AJOUTER LA COLONNE client_id À TOUTES LES TABLES
 -- ============================================================================
@@ -42,9 +40,6 @@ ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS client_id TEXT;
 -- Inventories
 ALTER TABLE inventories ADD COLUMN IF NOT EXISTS client_id TEXT;
 
--- Inventory Items
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS client_id TEXT;
-
 -- Product Transfers
 ALTER TABLE product_transfers ADD COLUMN IF NOT EXISTS client_id TEXT;
 
@@ -57,8 +52,8 @@ ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS client_id TEXT;
 -- Sale Batch Allocations
 ALTER TABLE sale_batch_allocations ADD COLUMN IF NOT EXISTS client_id TEXT;
 
--- Audit Log
-ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS client_id TEXT;
+-- Audit History
+ALTER TABLE audit_history ADD COLUMN IF NOT EXISTS client_id TEXT;
 
 -- ============================================================================
 -- 2. CRÉER LES INDEX POUR OPTIMISER LES REQUÊTES REALTIME
@@ -71,15 +66,3 @@ CREATE INDEX IF NOT EXISTS idx_products_client_id ON products(client_id);
 CREATE INDEX IF NOT EXISTS idx_purchase_batches_client_id ON purchase_batches(client_id);
 CREATE INDEX IF NOT EXISTS idx_sales_client_id ON sales(client_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movements_client_id ON stock_movements(client_id);
-
-COMMIT;
-
--- ============================================================================
--- FIN DE LA MIGRATION
--- ============================================================================
-
-DO $$
-BEGIN
-    RAISE NOTICE 'Migration 2026012101_add_client_id completed!';
-    RAISE NOTICE 'Added client_id column to all tables for Realtime support';
-END $$;
