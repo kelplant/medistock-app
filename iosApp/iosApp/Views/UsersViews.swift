@@ -288,7 +288,11 @@ struct UserEditorView: View {
                     if password.isEmpty {
                         finalPassword = existingUser.password
                     } else {
-                        finalPassword = PasswordHasher.shared.hashPassword(password) ?? password
+                        // Hash password with BCrypt - fail if hashing fails
+                        guard let hashedPassword = PasswordHasher.shared.hashPassword(password) else {
+                            throw UserEditorError.hashingFailed
+                        }
+                        finalPassword = hashedPassword
                     }
 
                     savedUser = User(
@@ -305,7 +309,9 @@ struct UserEditorView: View {
                     )
                 } else {
                     // Create new user - hash password with BCrypt
-                    let hashedPassword = PasswordHasher.shared.hashPassword(password) ?? password
+                    guard let hashedPassword = PasswordHasher.shared.hashPassword(password) else {
+                        throw UserEditorError.hashingFailed
+                    }
 
                     savedUser = sdk.createUser(
                         username: trimmedUsername,
@@ -553,6 +559,18 @@ struct UserPermissionsEditView: View {
                     errorMessage = error.localizedDescription
                 }
             }
+        }
+    }
+}
+
+// MARK: - User Editor Errors
+enum UserEditorError: LocalizedError {
+    case hashingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .hashingFailed:
+            return "Erreur lors du hachage du mot de passe"
         }
     }
 }
