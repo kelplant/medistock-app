@@ -298,6 +298,7 @@ struct UserEditorView: View {
                 }
 
                 // Push to Supabase if configured
+                // Note: app_users table doesn't have client_id column
                 if SupabaseClient.shared.isConfigured {
                     let remoteUser = RemoteUser(
                         id: savedUser.id,
@@ -311,7 +312,7 @@ struct UserEditorView: View {
                         createdBy: savedUser.createdBy,
                         updatedBy: savedUser.updatedBy
                     )
-                    _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser)
+                    _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser, includeClientId: false)
                 }
 
                 await MainActor.run {

@@ -151,9 +151,11 @@ class SupabaseClient {
     }
 
     /// Upsert a record (insert or update)
-    func upsert<T: Codable>(into table: String, record: T) async throws -> T {
+    func upsert<T: Codable>(into table: String, record: T, includeClientId: Bool = true) async throws -> T {
         var recordDict = try encodeToDict(record)
-        recordDict["client_id"] = clientId
+        if includeClientId {
+            recordDict["client_id"] = clientId
+        }
 
         let body = try JSONSerialization.data(withJSONObject: recordDict)
         var request = try buildRequest(endpoint: table, method: "POST", body: body)
