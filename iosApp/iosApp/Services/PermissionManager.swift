@@ -187,7 +187,13 @@ class PermissionManager: ObservableObject {
         }
 
         _ = try await supabase.upsert(into: "user_permissions", record: permission)
-        await loadPermissions(forUserId: permission.userId)
+
+        // Only reload permissions if we're editing the current user's permissions
+        // to avoid overwriting the current user's cache with another user's permissions
+        let currentUserId = SessionManager.shared.userId
+        if permission.userId == currentUserId {
+            await loadPermissions(forUserId: permission.userId)
+        }
     }
 
     /// Delete a permission
@@ -197,7 +203,12 @@ class PermissionManager: ObservableObject {
         }
 
         try await supabase.delete(from: "user_permissions", id: permission.id)
-        await loadPermissions(forUserId: permission.userId)
+
+        // Only reload permissions if we're editing the current user's permissions
+        let currentUserId = SessionManager.shared.userId
+        if permission.userId == currentUserId {
+            await loadPermissions(forUserId: permission.userId)
+        }
     }
 
     /// Get all permissions for a specific user (admin function)
@@ -208,10 +219,4 @@ class PermissionManager: ObservableObject {
 
         return try await supabase.fetch(from: "user_permissions", filter: ["user_id": userId])
     }
-}
-
-// MARK: - SessionManager Extension
-
-extension SessionManager {
-    static let shared = SessionManager()
 }

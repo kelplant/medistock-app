@@ -120,6 +120,9 @@ struct LoginView: View {
 
 // MARK: - Session Manager
 class SessionManager: ObservableObject {
+    /// Shared singleton instance - all code should use this
+    static let shared = SessionManager()
+
     @Published var isLoggedIn: Bool {
         didSet { UserDefaults.standard.set(isLoggedIn, forKey: "medistock_is_logged_in") }
     }
@@ -139,7 +142,7 @@ class SessionManager: ObservableObject {
         didSet { UserDefaults.standard.set(currentSiteId, forKey: "medistock_current_site") }
     }
 
-    init() {
+    private init() {
         self.isLoggedIn = UserDefaults.standard.bool(forKey: "medistock_is_logged_in")
         self.userId = UserDefaults.standard.string(forKey: "medistock_user_id") ?? ""
         self.username = UserDefaults.standard.string(forKey: "medistock_username") ?? ""

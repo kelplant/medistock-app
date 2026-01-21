@@ -3,7 +3,7 @@ import shared
 
 struct ContentView: View {
     let sdk: MedistockSDK
-    @StateObject private var session = SessionManager()
+    @ObservedObject private var session = SessionManager.shared
 
     var body: some View {
         NavigationView {
