@@ -59,6 +59,7 @@ struct ContentView: View {
     }
 
     private func runMigrationsIfNeeded() async {
+#if canImport(Supabase)
         guard SupabaseService.shared.isConfigured else {
             print("⚠️ Supabase non configuré - migrations ignorées")
             return
@@ -93,6 +94,9 @@ struct ContentView: View {
         } else {
             print("✅ Aucune nouvelle migration à appliquer")
         }
+#else
+        print("⚠️ Supabase indisponible - migrations ignorées")
+#endif
     }
 }
 

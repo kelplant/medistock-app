@@ -528,6 +528,8 @@ struct StockMovementDTO: Codable {
     let siteId: String
     let quantity: Double
     let movementType: String
+    let purchasePriceAtMovement: Double
+    let sellingPriceAtMovement: Double
     let referenceId: String?
     let notes: String?
     let movementDate: Int64
@@ -540,10 +542,12 @@ struct StockMovementDTO: Codable {
         case productId = "product_id"
         case siteId = "site_id"
         case quantity
-        case movementType = "movement_type"
+        case movementType = "type"
+        case purchasePriceAtMovement = "purchase_price_at_movement"
+        case sellingPriceAtMovement = "selling_price_at_movement"
         case referenceId = "reference_id"
         case notes
-        case movementDate = "movement_date"
+        case movementDate = "date"
         case createdAt = "created_at"
         case createdBy = "created_by"
         case clientId = "client_id"
@@ -555,6 +559,8 @@ struct StockMovementDTO: Codable {
         self.siteId = movement.siteId
         self.quantity = movement.quantity
         self.movementType = movement.movementType
+        self.purchasePriceAtMovement = 0.0
+        self.sellingPriceAtMovement = 0.0
         self.referenceId = movement.referenceId
         self.notes = movement.notes
         self.movementDate = movement.createdAt
