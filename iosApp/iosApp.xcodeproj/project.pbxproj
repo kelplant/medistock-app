@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2152FB042600AC8F00CF470E /* MedistockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* MedistockApp.swift */; };
 		2152FB062600AC8F00CF470E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB052600AC8F00CF470E /* ContentView.swift */; };
+		4E9F94EF2C90C9E2001B4B35 /* InventoryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E9F94EE2C90C9E2001B4B35 /* InventoryViews.swift */; };
 		2152FB082600AC9000CF470E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2152FB072600AC9000CF470E /* Assets.xcassets */; };
 		82938AF22F203E5A0047A524 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 82938AF12F203E5A0047A524 /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
@@ -17,6 +18,7 @@
 		2152FB002600AC8F00CF470E /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2152FB032600AC8F00CF470E /* MedistockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedistockApp.swift; sourceTree = "<group>"; };
 		2152FB052600AC8F00CF470E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		4E9F94EE2C90C9E2001B4B35 /* InventoryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryViews.swift; sourceTree = "<group>"; };
 		2152FB072600AC9000CF470E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2152FB0C2600AC9000CF470E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		82938AF12F203E5A0047A524 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
@@ -63,6 +65,7 @@
 			children = (
 				2152FB032600AC8F00CF470E /* MedistockApp.swift */,
 				2152FB052600AC8F00CF470E /* ContentView.swift */,
+				4E9F94EE2C90C9E2001B4B35 /* InventoryViews.swift */,
 				2152FB072600AC9000CF470E /* Assets.xcassets */,
 				2152FB0C2600AC9000CF470E /* Info.plist */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
@@ -189,6 +192,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB062600AC8F00CF470E /* ContentView.swift in Sources */,
+				4E9F94EF2C90C9E2001B4B35 /* InventoryViews.swift in Sources */,
 				2152FB042600AC8F00CF470E /* MedistockApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
