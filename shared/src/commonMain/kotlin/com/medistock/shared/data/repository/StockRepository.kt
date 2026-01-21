@@ -18,7 +18,7 @@ class StockRepository(private val database: MedistockDatabase) {
             CurrentStock(
                 productId = it.product_id,
                 siteId = it.site_id,
-                totalStock = it.total_stock
+                totalStock = it.total_stock ?: 0.0
             )
         }
     }
@@ -28,7 +28,7 @@ class StockRepository(private val database: MedistockDatabase) {
             CurrentStock(
                 productId = it.product_id,
                 siteId = it.site_id,
-                totalStock = it.total_stock
+                totalStock = it.total_stock ?: 0.0
             )
         }
     }
@@ -42,7 +42,7 @@ class StockRepository(private val database: MedistockDatabase) {
                     CurrentStock(
                         productId = it.product_id,
                         siteId = it.site_id,
-                        totalStock = it.total_stock
+                        totalStock = it.total_stock ?: 0.0
                     )
                 }
             }
