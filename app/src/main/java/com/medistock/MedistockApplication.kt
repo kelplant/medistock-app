@@ -302,10 +302,13 @@ class MedistockApplication : Application() {
                     .onFailure { println("⚠️ Realtime connect failed at startup: ${it.message}") }
 
                 // Vérifier la compatibilité et exécuter les migrations Supabase en attente
+                // IMPORTANT: Les migrations doivent être exécutées AVANT la sync
                 checkCompatibilityAndRunMigrations()
+
+                // Démarrer la sync APRÈS les migrations
+                SyncScheduler.start(this@MedistockApplication)
+                println("✅ Application démarrée avec Supabase 2.2.2")
             }
-            println("✅ Application démarrée avec Supabase 2.2.2")
-            SyncScheduler.start(this)
         } catch (e: IllegalStateException) {
             // Les credentials Supabase ne sont pas encore configurés
             println("⚠️ Supabase non configuré: ${e.message}")

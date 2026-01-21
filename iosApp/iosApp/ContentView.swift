@@ -44,14 +44,54 @@ struct ContentView: View {
     }
 
     private func startSyncForRestoredSession() {
-        // Start the sync scheduler
-        SyncScheduler.shared.start(sdk: sdk)
+        // Run migrations BEFORE starting sync
+        Task {
+            await runMigrationsIfNeeded()
 
-        // Trigger initial sync if online and configured
-        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
-            Task {
+            // Start the sync scheduler after migrations
+            SyncScheduler.shared.start(sdk: sdk)
+
+            // Trigger initial sync if online and configured
+            if syncStatus.isOnline && SupabaseService.shared.isConfigured {
                 await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             }
+        }
+    }
+
+    private func runMigrationsIfNeeded() async {
+        guard SupabaseService.shared.isConfigured else {
+            print("⚠️ Supabase non configuré - migrations ignorées")
+            return
+        }
+
+        let migrationManager = MigrationManager()
+
+        // Check compatibility first
+        let compat = await migrationManager.checkCompatibility()
+        switch compat {
+        case .compatible:
+            print("✅ App compatible avec la base de données")
+        case .appTooOld(let appVersion, let minRequired, let dbVersion):
+            print("❌ App trop ancienne: app=\(appVersion), min=\(minRequired), db=\(dbVersion)")
+            // TODO: Show update required screen
+            return
+        case .unknown(let reason):
+            print("⚠️ Impossible de vérifier la compatibilité: \(reason)")
+        }
+
+        // Run pending migrations
+        let result = await migrationManager.runPendingMigrations(appliedBy: "ios_app")
+
+        if result.systemNotInstalled {
+            print("⚠️ Système de migration non installé dans Supabase")
+        } else if !result.migrationsApplied.isEmpty {
+            print("✅ \(result.migrationsApplied.count) migration(s) appliquée(s):")
+            result.migrationsApplied.forEach { print("   - \($0)") }
+        } else if !result.migrationsFailed.isEmpty {
+            print("❌ \(result.migrationsFailed.count) migration(s) échouée(s):")
+            result.migrationsFailed.forEach { print("   - \($0.0): \($0.1)") }
+        } else {
+            print("✅ Aucune nouvelle migration à appliquer")
         }
     }
 }
