@@ -3,12 +3,13 @@ package com.medistock.shared
 import com.medistock.shared.data.repository.*
 import com.medistock.shared.db.MedistockDatabase
 import com.medistock.shared.domain.model.*
+import com.medistock.shared.domain.usecase.*
 import kotlinx.datetime.Clock
 import kotlin.random.Random
 
 /**
  * Main entry point for the MediStock shared SDK
- * This class provides access to all repositories and shared business logic
+ * This class provides access to all repositories, UseCases, and shared business logic
  */
 class MedistockSDK(driverFactory: DatabaseDriverFactory) {
 
@@ -28,6 +29,53 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val inventoryRepository: InventoryRepository by lazy { InventoryRepository(database) }
     val auditRepository: AuditRepository by lazy { AuditRepository(database) }
     val stockRepository: StockRepository by lazy { StockRepository(database) }
+    val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
+
+    // UseCases - Business logic layer
+    val purchaseUseCase: PurchaseUseCase by lazy {
+        PurchaseUseCase(
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository
+        )
+    }
+
+    val saleUseCase: SaleUseCase by lazy {
+        SaleUseCase(
+            saleRepository = saleRepository,
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository,
+            saleBatchAllocationRepository = saleBatchAllocationRepository
+        )
+    }
+
+    val transferUseCase: TransferUseCase by lazy {
+        TransferUseCase(
+            productTransferRepository = productTransferRepository,
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository
+        )
+    }
+
+    val inventoryUseCase: InventoryUseCase by lazy {
+        InventoryUseCase(
+            inventoryRepository = inventoryRepository,
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository,
+            stockRepository = stockRepository
+        )
+    }
 
     // Platform info
     val platformName: String = getPlatform().name
