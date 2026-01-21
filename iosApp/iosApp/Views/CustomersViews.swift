@@ -184,8 +184,8 @@ struct CustomerEditorView: View {
                 }
 
                 Section(header: Text("Notes")) {
-                    TextField("Notes (optionnel)", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 80)
                 }
 
                 if let errorMessage {
