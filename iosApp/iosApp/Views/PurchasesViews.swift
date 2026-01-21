@@ -149,8 +149,8 @@ struct PurchaseBatchRowView: View {
             HStack {
                 Text("Date: \(formatDate(batch.purchaseDate))")
                 if let expiry = batch.expiryDate {
-                    Text("• Exp: \(formatDate(expiry))")
-                        .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
+                    Text("• Exp: \(formatDate(expiry.int64Value))")
+                        .foregroundColor(isExpiringSoon(expiry.int64Value) ? .orange : .secondary)
                 }
             }
             .font(.caption)
@@ -306,7 +306,7 @@ struct PurchaseEditorView: View {
                     purchasePrice: price,
                     supplierName: supplierName,
                     batchNumber: batchNumber.isEmpty ? nil : batchNumber,
-                    expiryDate: hasExpiryDate ? Int64(expiryDate.timeIntervalSince1970 * 1000) : nil,
+                    expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
                     userId: session.username
                 )
                 try await sdk.purchaseBatchRepository.insert(batch: batch)
