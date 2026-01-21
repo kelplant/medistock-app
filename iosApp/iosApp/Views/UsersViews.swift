@@ -257,12 +257,14 @@ struct UserEditorView: View {
 
         Task {
             do {
+                var savedUser: User
+
                 if let existingUser = user {
                     // Update user
                     let updated = User(
                         id: existingUser.id,
                         username: trimmedUsername,
-                        password: existingUser.password,
+                        password: password.isEmpty ? existingUser.password : password,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
                         isActive: isActive,
@@ -272,26 +274,35 @@ struct UserEditorView: View {
                         updatedBy: session.username
                     )
                     try await sdk.userRepository.update(user: updated)
-
-                    // Update password if provided
-                    if !password.isEmpty {
-                        try await sdk.userRepository.updatePassword(
-                            userId: existingUser.id,
-                            password: password, // In production, hash this
-                            updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
-                            updatedBy: session.username
-                        )
-                    }
+                    savedUser = updated
                 } else {
                     // Create new user
                     let newUser = sdk.createUser(
                         username: trimmedUsername,
-                        password: password, // In production, hash this
+                        password: password,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
                         userId: session.username
                     )
                     try await sdk.userRepository.insert(user: newUser)
+                    savedUser = newUser
+                }
+
+                // Push to Supabase if configured
+                if SupabaseClient.shared.isConfigured {
+                    let remoteUser = RemoteUser(
+                        id: savedUser.id,
+                        username: savedUser.username,
+                        password: savedUser.password,
+                        fullName: savedUser.fullName,
+                        isAdmin: savedUser.isAdmin,
+                        isActive: savedUser.isActive,
+                        createdAt: savedUser.createdAt,
+                        updatedAt: savedUser.updatedAt,
+                        createdBy: savedUser.createdBy,
+                        updatedBy: savedUser.updatedBy
+                    )
+                    _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser)
                 }
 
                 await MainActor.run {

@@ -367,7 +367,20 @@ class SyncService: ObservableObject {
     }
 }
 
-// MARK: - Remote Models (for Supabase JSON decoding)
+// MARK: - Remote Models (for Supabase JSON encoding/decoding)
+
+struct RemoteUser: Codable, Identifiable {
+    let id: String
+    let username: String
+    let password: String
+    let fullName: String
+    let isAdmin: Bool
+    let isActive: Bool
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+}
 
 struct RemoteSite: Codable, Identifiable {
     let id: String
