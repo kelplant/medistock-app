@@ -161,9 +161,9 @@ struct InventoryRowView: View {
             }
 
             HStack {
-                Text("Démarré: \(formatDate(inventory.startedAt.int64Value))")
+                Text("Démarré: \(formatDate(inventory.startedAt))")
                 if let completed = inventory.completedAt {
-                    Text("• Terminé: \(formatDate(completed.int64Value))")
+                    Text("• Terminé: \(formatDate(completed))")
                 }
             }
             .font(.caption)
