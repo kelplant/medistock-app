@@ -48,15 +48,16 @@ struct ProfileBadgeView: View {
 
     var body: some View {
         Text(initial)
-            .font(.system(size: 16, weight: .bold))
+            .font(.system(size: 14, weight: .bold))
             .foregroundColor(textColor)
-            .frame(width: 36, height: 36)
+            .frame(width: 30, height: 30)
             .background(backgroundColor)
             .clipShape(Circle())
             .overlay(
                 Circle()
-                    .stroke(statusColor, lineWidth: 3)
+                    .stroke(statusColor, lineWidth: 2.5)
             )
+            .padding(2) // Prevent stroke from being clipped
             .accessibilityLabel(statusAccessibilityLabel)
     }
 
