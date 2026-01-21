@@ -200,7 +200,7 @@ struct PackagingTypeEditorView: View {
                         hasLevel2 = true
                         level2Name = l2
                         if let qty = packagingType.level2Quantity {
-                            level2QuantityText = String(qty)
+                            level2QuantityText = "\(qty.int32Value)"
                         }
                     }
                 }
@@ -217,7 +217,7 @@ struct PackagingTypeEditorView: View {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLevel1 = level1Name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLevel2 = level2Name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let level2Qty = Int32(level2QuantityText)
+        let level2Qty: KotlinInt? = hasLevel2 ? Int32(level2QuantityText).map { KotlinInt(int: $0) } : nil
 
         isSaving = true
         errorMessage = nil
@@ -230,7 +230,7 @@ struct PackagingTypeEditorView: View {
                         name: trimmedName,
                         level1Name: trimmedLevel1,
                         level2Name: hasLevel2 && !trimmedLevel2.isEmpty ? trimmedLevel2 : nil,
-                        level2Quantity: hasLevel2 ? level2Qty : nil,
+                        level2Quantity: level2Qty,
                         createdAt: existing.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existing.createdBy,
@@ -242,7 +242,7 @@ struct PackagingTypeEditorView: View {
                         name: trimmedName,
                         level1Name: trimmedLevel1,
                         level2Name: hasLevel2 && !trimmedLevel2.isEmpty ? trimmedLevel2 : nil,
-                        level2Quantity: hasLevel2 ? level2Qty : nil,
+                        level2Quantity: level2Qty,
                         userId: session.username
                     )
                     try await sdk.packagingTypeRepository.insert(packagingType: newType)
