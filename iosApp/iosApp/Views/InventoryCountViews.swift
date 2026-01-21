@@ -161,9 +161,9 @@ struct InventoryRowView: View {
             }
 
             HStack {
-                Text("Démarré: \(formatDate(inventory.startedAt.int64Value))")
+                Text("Démarré: \(formatDate(inventory.startedAt))")
                 if let completed = inventory.completedAt {
-                    Text("• Terminé: \(formatDate(completed.int64Value))")
+                    Text("• Terminé: \(formatDate(completed))")
                 }
             }
             .font(.caption)
@@ -188,8 +188,8 @@ struct InventoryRowView: View {
         .padding(.vertical, 4)
     }
 
-    private func formatDate(_ timestamp: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .short
