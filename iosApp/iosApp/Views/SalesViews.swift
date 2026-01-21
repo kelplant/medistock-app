@@ -130,8 +130,8 @@ struct SaleRowView: View {
         .padding(.vertical, 4)
     }
 
-    private func formatDate(_ timestamp: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -153,9 +153,21 @@ struct SaleDetailView: View {
         NavigationView {
             List {
                 Section(header: Text("Informations")) {
-                    LabeledContent("Client", value: sale.customerName)
-                    LabeledContent("Total", value: String(format: "%.2f €", sale.totalAmount))
-                    LabeledContent("Date", value: formatDate(sale.date))
+                    LabeledContentCompat {
+                        Text("Client")
+                    } content: {
+                        Text(sale.customerName)
+                    }
+                    LabeledContentCompat {
+                        Text("Total")
+                    } content: {
+                        Text(String(format: "%.2f €", sale.totalAmount))
+                    }
+                    LabeledContentCompat {
+                        Text("Date")
+                    } content: {
+                        Text(formatDate(sale.date))
+                    }
                 }
 
                 if let items = saleWithItems?.items, !items.isEmpty {
@@ -209,8 +221,8 @@ struct SaleDetailView: View {
         products.first { $0.id == productId }?.name ?? "Produit inconnu"
     }
 
-    private func formatDate(_ timestamp: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -520,7 +532,11 @@ struct SaleItemEditorView: View {
                     }
 
                     if !selectedProductId.isEmpty {
-                        LabeledContent("Stock disponible", value: String(format: "%.1f", availableStock))
+                        LabeledContentCompat {
+                            Text("Stock disponible")
+                        } content: {
+                            Text(String(format: "%.1f", availableStock))
+                        }
                     }
                 }
 
@@ -535,8 +551,16 @@ struct SaleItemEditorView: View {
                     Section(header: Text("Résumé")) {
                         let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         let price = Double(priceText.replacingOccurrences(of: ",", with: ".")) ?? 0
-                        LabeledContent("Produit", value: product.name)
-                        LabeledContent("Total", value: String(format: "%.2f €", qty * price))
+                        LabeledContentCompat {
+                            Text("Produit")
+                        } content: {
+                            Text(product.name)
+                        }
+                        LabeledContentCompat {
+                            Text("Total")
+                        } content: {
+                            Text(String(format: "%.2f €", qty * price))
+                        }
                     }
                 }
             }

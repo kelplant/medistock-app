@@ -27,6 +27,7 @@
 		A100000EAAAA00010000000E /* AuditViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000EAAAA00000000000E /* AuditViews.swift */; };
 		A100000FAAAA00010000000F /* SupabaseViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000FAAAA00000000000F /* SupabaseViews.swift */; };
 		A1000010AAAA000100000010 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010AAAA000000000010 /* CommonViews.swift */; };
+		A1000011AAAA000100000011 /* TimestampConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011AAAA000000000011 /* TimestampConvertible.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,7 @@
 		A100000EAAAA00000000000E /* AuditViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditViews.swift; sourceTree = "<group>"; };
 		A100000FAAAA00000000000F /* SupabaseViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseViews.swift; sourceTree = "<group>"; };
 		A1000010AAAA000000000010 /* CommonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
+		A1000011AAAA000000000011 /* TimestampConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampConvertible.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +97,7 @@
 			children = (
 				2152FB032600AC8F00CF470E /* MedistockApp.swift */,
 				2152FB052600AC8F00CF470E /* ContentView.swift */,
+				A1000011AAAA000000000011 /* TimestampConvertible.swift */,
 				A1VIEWS0000000000000000 /* Views */,
 				2152FB072600AC9000CF470E /* Assets.xcassets */,
 				2152FB0C2600AC9000CF470E /* Info.plist */,
@@ -264,6 +267,7 @@
 				A100000EAAAA00010000000E /* AuditViews.swift in Sources */,
 				A100000FAAAA00010000000F /* SupabaseViews.swift in Sources */,
 				A1000010AAAA000100000010 /* CommonViews.swift in Sources */,
+				A1000011AAAA000100000011 /* TimestampConvertible.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

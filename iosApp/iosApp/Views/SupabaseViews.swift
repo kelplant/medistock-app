@@ -89,11 +89,15 @@ struct SupabaseConfigView: View {
                 }
 
                 Section(header: Text("État actuel")) {
-                    LabeledContent("URL configurée") {
+                    LabeledContentCompat {
+                        Text("URL configurée")
+                    } content: {
                         Text(UserDefaults.standard.string(forKey: urlKey)?.isEmpty == false ? "Oui" : "Non")
                             .foregroundColor(UserDefaults.standard.string(forKey: urlKey)?.isEmpty == false ? .green : .red)
                     }
-                    LabeledContent("Clé configurée") {
+                    LabeledContentCompat {
+                        Text("Clé configurée")
+                    } content: {
                         Text(UserDefaults.standard.string(forKey: keyKey)?.isEmpty == false ? "Oui" : "Non")
                             .foregroundColor(UserDefaults.standard.string(forKey: keyKey)?.isEmpty == false ? .green : .red)
                     }
