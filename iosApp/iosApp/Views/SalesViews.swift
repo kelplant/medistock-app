@@ -130,8 +130,8 @@ struct SaleRowView: View {
         .padding(.vertical, 4)
     }
 
-    private func formatDate(_ timestamp: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -209,8 +209,8 @@ struct SaleDetailView: View {
         products.first { $0.id == productId }?.name ?? "Produit inconnu"
     }
 
-    private func formatDate(_ timestamp: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short

@@ -149,8 +149,8 @@ struct PurchaseBatchRowView: View {
             HStack {
                 Text("Date: \(formatDate(batch.purchaseDate))")
                 if let expiry = batch.expiryDate {
-                    Text("• Exp: \(formatDate(expiry.int64Value))")
-                        .foregroundColor(isExpiringSoon(expiry.int64Value) ? .orange : .secondary)
+                    Text("• Exp: \(formatDate(expiry))")
+                        .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
                 }
             }
             .font(.caption)
@@ -165,15 +165,15 @@ struct PurchaseBatchRowView: View {
         .padding(.vertical, 4)
     }
 
-    private func formatDate(_ timestamp: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         return formatter.string(from: date)
     }
 
-    private func isExpiringSoon(_ timestamp: Int64) -> Bool {
-        let expiryDate = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+    private func isExpiringSoon<T: TimestampConvertible>(_ timestamp: T) -> Bool {
+        let expiryDate = Date(timeIntervalSince1970: Double(timestamp.timestampValue) / 1000)
         let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
         return expiryDate < thirtyDaysFromNow
     }
