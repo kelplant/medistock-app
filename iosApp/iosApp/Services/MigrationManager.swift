@@ -1,5 +1,4 @@
 import Foundation
-import Supabase
 
 /// Résultat de l'application d'une migration
 struct MigrationResult {
@@ -60,6 +59,9 @@ struct SchemaVersionDto: Codable {
         case updatedAt = "updated_at"
     }
 }
+
+#if canImport(Supabase)
+import Supabase
 
 /// Gestionnaire des migrations de schéma Supabase pour iOS
 ///
@@ -302,6 +304,28 @@ class MigrationManager {
         )
     }
 }
+#else
+class MigrationManager {
+    func checkCompatibility() async -> CompatibilityResult {
+        .unknown(reason: "Supabase indisponible")
+    }
+
+    func loadMigrationsFromBundle() -> [(name: String, sql: String, checksum: String)] {
+        []
+    }
+
+    func runPendingMigrations(appliedBy: String) async -> MigrationRunResult {
+        MigrationRunResult(
+            success: false,
+            migrationsApplied: [],
+            migrationsFailed: [],
+            migrationsSkipped: [],
+            systemNotInstalled: true,
+            errorMessage: "Supabase indisponible"
+        )
+    }
+}
+#endif
 
 // MARK: - String MD5 Extension
 
