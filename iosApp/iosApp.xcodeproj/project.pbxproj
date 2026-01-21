@@ -9,19 +9,51 @@
 /* Begin PBXBuildFile section */
 		2152FB042600AC8F00CF470E /* MedistockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* MedistockApp.swift */; };
 		2152FB062600AC8F00CF470E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB052600AC8F00CF470E /* ContentView.swift */; };
-		4E9F94EF2C90C9E2001B4B35 /* InventoryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E9F94EE2C90C9E2001B4B35 /* InventoryViews.swift */; };
 		2152FB082600AC9000CF470E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2152FB072600AC9000CF470E /* Assets.xcassets */; };
 		82938AF22F203E5A0047A524 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 82938AF12F203E5A0047A524 /* libsqlite3.tbd */; };
+		A1000001AAAA000100000001 /* AuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001AAAA000000000001 /* AuthViews.swift */; };
+		A1000002AAAA000100000002 /* HomeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002AAAA000000000002 /* HomeViews.swift */; };
+		A1000003AAAA000100000003 /* SitesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003AAAA000000000003 /* SitesViews.swift */; };
+		A1000004AAAA000100000004 /* ProductsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004AAAA000000000004 /* ProductsViews.swift */; };
+		A1000005AAAA000100000005 /* CategoriesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000005AAAA000000000005 /* CategoriesViews.swift */; };
+		A1000006AAAA000100000006 /* PurchasesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006AAAA000000000006 /* PurchasesViews.swift */; };
+		A1000007AAAA000100000007 /* SalesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000007AAAA000000000007 /* SalesViews.swift */; };
+		A1000008AAAA000100000008 /* StockViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008AAAA000000000008 /* StockViews.swift */; };
+		A1000009AAAA000100000009 /* TransfersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009AAAA000000000009 /* TransfersViews.swift */; };
+		A100000AAAAA00010000000A /* UsersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000AAAAA00000000000A /* UsersViews.swift */; };
+		A100000BAAAA00010000000B /* CustomersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000BAAAA00000000000B /* CustomersViews.swift */; };
+		A100000CAAAA00010000000C /* PackagingTypesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000CAAAA00000000000C /* PackagingTypesViews.swift */; };
+		A100000DAAAA00010000000D /* InventoryCountViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000DAAAA00000000000D /* InventoryCountViews.swift */; };
+		A100000EAAAA00010000000E /* AuditViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000EAAAA00000000000E /* AuditViews.swift */; };
+		A100000FAAAA00010000000F /* SupabaseViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000FAAAA00000000000F /* SupabaseViews.swift */; };
+		A1000010AAAA000100000010 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010AAAA000000000010 /* CommonViews.swift */; };
+		A1000011AAAA000100000011 /* TimestampConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011AAAA000000000011 /* TimestampConvertible.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2152FB002600AC8F00CF470E /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2152FB032600AC8F00CF470E /* MedistockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedistockApp.swift; sourceTree = "<group>"; };
 		2152FB052600AC8F00CF470E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		4E9F94EE2C90C9E2001B4B35 /* InventoryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryViews.swift; sourceTree = "<group>"; };
 		2152FB072600AC9000CF470E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2152FB0C2600AC9000CF470E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		82938AF12F203E5A0047A524 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		A1000001AAAA000000000001 /* AuthViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViews.swift; sourceTree = "<group>"; };
+		A1000002AAAA000000000002 /* HomeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViews.swift; sourceTree = "<group>"; };
+		A1000003AAAA000000000003 /* SitesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitesViews.swift; sourceTree = "<group>"; };
+		A1000004AAAA000000000004 /* ProductsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsViews.swift; sourceTree = "<group>"; };
+		A1000005AAAA000000000005 /* CategoriesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoriesViews.swift; sourceTree = "<group>"; };
+		A1000006AAAA000000000006 /* PurchasesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesViews.swift; sourceTree = "<group>"; };
+		A1000007AAAA000000000007 /* SalesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalesViews.swift; sourceTree = "<group>"; };
+		A1000008AAAA000000000008 /* StockViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockViews.swift; sourceTree = "<group>"; };
+		A1000009AAAA000000000009 /* TransfersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransfersViews.swift; sourceTree = "<group>"; };
+		A100000AAAAA00000000000A /* UsersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersViews.swift; sourceTree = "<group>"; };
+		A100000BAAAA00000000000B /* CustomersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersViews.swift; sourceTree = "<group>"; };
+		A100000CAAAA00000000000C /* PackagingTypesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackagingTypesViews.swift; sourceTree = "<group>"; };
+		A100000DAAAA00000000000D /* InventoryCountViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryCountViews.swift; sourceTree = "<group>"; };
+		A100000EAAAA00000000000E /* AuditViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditViews.swift; sourceTree = "<group>"; };
+		A100000FAAAA00000000000F /* SupabaseViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseViews.swift; sourceTree = "<group>"; };
+		A1000010AAAA000000000010 /* CommonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
+		A1000011AAAA000000000011 /* TimestampConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampConvertible.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,12 +97,36 @@
 			children = (
 				2152FB032600AC8F00CF470E /* MedistockApp.swift */,
 				2152FB052600AC8F00CF470E /* ContentView.swift */,
-				4E9F94EE2C90C9E2001B4B35 /* InventoryViews.swift */,
+				A1000011AAAA000000000011 /* TimestampConvertible.swift */,
+				A1VIEWS0000000000000000 /* Views */,
 				2152FB072600AC9000CF470E /* Assets.xcassets */,
 				2152FB0C2600AC9000CF470E /* Info.plist */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = iosApp;
+			sourceTree = "<group>";
+		};
+		A1VIEWS0000000000000000 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001AAAA000000000001 /* AuthViews.swift */,
+				A1000002AAAA000000000002 /* HomeViews.swift */,
+				A1000003AAAA000000000003 /* SitesViews.swift */,
+				A1000004AAAA000000000004 /* ProductsViews.swift */,
+				A1000005AAAA000000000005 /* CategoriesViews.swift */,
+				A1000006AAAA000000000006 /* PurchasesViews.swift */,
+				A1000007AAAA000000000007 /* SalesViews.swift */,
+				A1000008AAAA000000000008 /* StockViews.swift */,
+				A1000009AAAA000000000009 /* TransfersViews.swift */,
+				A100000AAAAA00000000000A /* UsersViews.swift */,
+				A100000BAAAA00000000000B /* CustomersViews.swift */,
+				A100000CAAAA00000000000C /* PackagingTypesViews.swift */,
+				A100000DAAAA00000000000D /* InventoryCountViews.swift */,
+				A100000EAAAA00000000000E /* AuditViews.swift */,
+				A100000FAAAA00000000000F /* SupabaseViews.swift */,
+				A1000010AAAA000000000010 /* CommonViews.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		7555FFB0242A642C00829871 /* Frameworks */ = {
@@ -161,6 +217,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/shared.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -179,6 +236,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/shared.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -192,8 +250,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB062600AC8F00CF470E /* ContentView.swift in Sources */,
-				4E9F94EF2C90C9E2001B4B35 /* InventoryViews.swift in Sources */,
 				2152FB042600AC8F00CF470E /* MedistockApp.swift in Sources */,
+				A1000001AAAA000100000001 /* AuthViews.swift in Sources */,
+				A1000002AAAA000100000002 /* HomeViews.swift in Sources */,
+				A1000003AAAA000100000003 /* SitesViews.swift in Sources */,
+				A1000004AAAA000100000004 /* ProductsViews.swift in Sources */,
+				A1000005AAAA000100000005 /* CategoriesViews.swift in Sources */,
+				A1000006AAAA000100000006 /* PurchasesViews.swift in Sources */,
+				A1000007AAAA000100000007 /* SalesViews.swift in Sources */,
+				A1000008AAAA000100000008 /* StockViews.swift in Sources */,
+				A1000009AAAA000100000009 /* TransfersViews.swift in Sources */,
+				A100000AAAAA00010000000A /* UsersViews.swift in Sources */,
+				A100000BAAAA00010000000B /* CustomersViews.swift in Sources */,
+				A100000CAAAA00010000000C /* PackagingTypesViews.swift in Sources */,
+				A100000DAAAA00010000000D /* InventoryCountViews.swift in Sources */,
+				A100000EAAAA00010000000E /* AuditViews.swift in Sources */,
+				A100000FAAAA00010000000F /* SupabaseViews.swift in Sources */,
+				A1000010AAAA000100000010 /* CommonViews.swift in Sources */,
+				A1000011AAAA000100000011 /* TimestampConvertible.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -3,27 +3,24 @@ import shared
 
 struct ContentView: View {
     let sdk: MedistockSDK
-    @AppStorage("medistock_is_logged_in") private var isLoggedIn = false
-    @AppStorage("medistock_username") private var username = ""
+    @StateObject private var session = SessionManager()
+
     var body: some View {
         NavigationView {
             Group {
-                if isLoggedIn {
+                if session.isLoggedIn {
                     HomeView(
                         sdk: sdk,
-                        username: username,
-                        onLogout: {
-                            isLoggedIn = false
-                        }
+                        session: session
                     )
                 } else {
-                    LoginView { user in
-                        username = user
-                        isLoggedIn = true
+                    LoginView(sdk: sdk) { username, fullName, isAdmin in
+                        session.login(username: username, fullName: fullName, isAdmin: isAdmin)
                     }
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 

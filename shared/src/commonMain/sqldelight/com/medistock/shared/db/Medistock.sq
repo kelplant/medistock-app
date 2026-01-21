@@ -446,3 +446,125 @@ SELECT * FROM audit_history WHERE table_name = ? ORDER BY timestamp DESC LIMIT ?
 insertAuditEntry:
 INSERT INTO audit_history(id, table_name, record_id, action, old_values, new_values, user_id, timestamp)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+-- ============================================
+-- QUERIES - Packaging Types
+-- ============================================
+
+getAllPackagingTypes:
+SELECT * FROM packaging_types ORDER BY name;
+
+getPackagingTypeById:
+SELECT * FROM packaging_types WHERE id = ?;
+
+insertPackagingType:
+INSERT INTO packaging_types(id, name, level1_name, level2_name, level2_quantity, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updatePackagingType:
+UPDATE packaging_types SET name = ?, level1_name = ?, level2_name = ?, level2_quantity = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deletePackagingType:
+DELETE FROM packaging_types WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Customers
+-- ============================================
+
+getAllCustomers:
+SELECT * FROM customers ORDER BY name;
+
+getCustomerById:
+SELECT * FROM customers WHERE id = ?;
+
+insertCustomer:
+INSERT INTO customers(id, name, phone, email, address, notes, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateCustomer:
+UPDATE customers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deleteCustomer:
+DELETE FROM customers WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Stock Movements
+-- ============================================
+
+getAllStockMovements:
+SELECT * FROM stock_movements ORDER BY created_at DESC;
+
+getStockMovementsByProduct:
+SELECT * FROM stock_movements WHERE product_id = ? ORDER BY created_at DESC;
+
+getStockMovementsBySite:
+SELECT * FROM stock_movements WHERE site_id = ? ORDER BY created_at DESC;
+
+insertStockMovement:
+INSERT INTO stock_movements(id, product_id, site_id, quantity, movement_type, reference_id, notes, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- ============================================
+-- QUERIES - Product Transfers
+-- ============================================
+
+getAllTransfers:
+SELECT * FROM product_transfers ORDER BY created_at DESC;
+
+getTransfersByStatus:
+SELECT * FROM product_transfers WHERE status = ? ORDER BY created_at DESC;
+
+getTransferById:
+SELECT * FROM product_transfers WHERE id = ?;
+
+insertTransfer:
+INSERT INTO product_transfers(id, product_id, from_site_id, to_site_id, quantity, status, notes, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateTransferStatus:
+UPDATE product_transfers SET status = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Inventories
+-- ============================================
+
+getAllInventories:
+SELECT * FROM inventories ORDER BY started_at DESC;
+
+getInventoriesBySite:
+SELECT * FROM inventories WHERE site_id = ? ORDER BY started_at DESC;
+
+getInventoryById:
+SELECT * FROM inventories WHERE id = ?;
+
+insertInventory:
+INSERT INTO inventories(id, site_id, status, started_at, completed_at, notes, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+updateInventoryStatus:
+UPDATE inventories SET status = ?, completed_at = ? WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Sale Batch Allocations
+-- ============================================
+
+getSaleBatchAllocationsBySaleItem:
+SELECT * FROM sale_batch_allocations WHERE sale_item_id = ?;
+
+insertSaleBatchAllocation:
+INSERT INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity, unit_cost)
+VALUES (?, ?, ?, ?, ?);
+
+-- ============================================
+-- QUERIES - Product Prices
+-- ============================================
+
+getProductPricesByProduct:
+SELECT * FROM product_prices WHERE product_id = ? ORDER BY created_at DESC;
+
+getLatestProductPrice:
+SELECT * FROM product_prices WHERE product_id = ? AND site_id = ? ORDER BY created_at DESC LIMIT 1;
+
+insertProductPrice:
+INSERT INTO product_prices(id, product_id, site_id, price, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
