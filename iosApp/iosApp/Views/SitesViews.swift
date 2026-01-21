@@ -6,6 +6,7 @@ import shared
 struct SitesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var sites: [Site] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
@@ -71,6 +72,7 @@ struct SitesListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadSites()
         }
         .task {
@@ -84,31 +86,26 @@ struct SitesListView: View {
         errorMessage = nil
 
         // Online-first: try Supabase first, then sync to local
-        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
-                let remoteSites: [RemoteSite] = try await SupabaseClient.shared.fetchAll(from: "sites")
+                let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
                 // Sync to local database
-                for remoteSite in remoteSites {
-                    let localSite = Site(
-                        id: remoteSite.id,
-                        name: remoteSite.name,
-                        createdAt: remoteSite.createdAt,
-                        updatedAt: remoteSite.updatedAt,
-                        createdBy: remoteSite.createdBy,
-                        updatedBy: remoteSite.updatedBy
-                    )
-                    try? await sdk.siteRepository.upsert(site: localSite)
+                for dto in remoteSites {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.siteRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.siteRepository.update(site: entity)
+                    } else {
+                        try? await sdk.siteRepository.insert(site: entity)
+                    }
                 }
-                sites = try await sdk.siteRepository.getAll()
-                isLoading = false
-                return
             } catch {
-                // Fall through to local
-                print("Failed to fetch from Supabase: \(error)")
+                print("[SitesListView] Failed to fetch from Supabase: \(error)")
+                // Continue to local fetch
             }
         }
 
-        // Fallback to local database
+        // Always return from local database
         do {
             sites = try await sdk.siteRepository.getAll()
         } catch {
@@ -123,12 +120,14 @@ struct SitesListView: View {
         Task {
             for site in sitesToDelete {
                 do {
-                    // Online-first: delete from Supabase first
-                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                        try await SupabaseClient.shared.delete(from: "sites", id: site.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "sites",
+                        entityType: .site,
+                        entityId: site.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.siteRepository.delete(id: site.id)
                     }
-                    // Then delete locally
-                    try await sdk.siteRepository.delete(id: site.id)
                 } catch {
                     await MainActor.run {
                         errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
@@ -163,6 +162,7 @@ struct SiteEditorView: View {
     let site: Site?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var isSaving = false
@@ -213,6 +213,7 @@ struct SiteEditorView: View {
 
         Task {
             do {
+                let isNew = site == nil
                 var savedSite: Site
 
                 if let existingSite = site {
@@ -223,31 +224,29 @@ struct SiteEditorView: View {
                         createdAt: existingSite.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingSite.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
                 } else {
                     // Insert
-                    savedSite = sdk.createSite(name: trimmedName, userId: session.username)
+                    savedSite = sdk.createSite(name: trimmedName, userId: session.userId)
                 }
 
-                // Online-first: save to Supabase first
-                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                    let remoteSite = RemoteSite(
-                        id: savedSite.id,
-                        name: savedSite.name,
-                        createdAt: savedSite.createdAt,
-                        updatedAt: savedSite.updatedAt,
-                        createdBy: savedSite.createdBy,
-                        updatedBy: savedSite.updatedBy
-                    )
-                    _ = try await SupabaseClient.shared.upsert(into: "sites", record: remoteSite)
-                }
+                let dto = SiteDTO(from: savedSite)
 
-                // Then sync to local database
-                if site != nil {
-                    try await sdk.siteRepository.update(site: savedSite)
-                } else {
-                    try await sdk.siteRepository.insert(site: savedSite)
+                try await OnlineFirstHelper.shared.save(
+                    table: "sites",
+                    dto: dto,
+                    entityType: .site,
+                    entityId: savedSite.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: site?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.siteRepository.insert(site: savedSite)
+                    } else {
+                        try await sdk.siteRepository.update(site: savedSite)
+                    }
                 }
 
                 await MainActor.run {

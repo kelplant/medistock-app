@@ -11,7 +11,7 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var isShowingSupabase = false
 
-    let onLogin: (RemoteUser) -> Void
+    let onLogin: (UserDTO) -> Void
 
     var body: some View {
         VStack(spacing: 20) {

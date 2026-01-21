@@ -6,6 +6,7 @@ import shared
 struct PackagingTypesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var packagingTypes: [PackagingType] = []
     @State private var isLoading = true
@@ -72,6 +73,7 @@ struct PackagingTypesListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadPackagingTypes()
         }
         .task {
@@ -85,25 +87,20 @@ struct PackagingTypesListView: View {
         errorMessage = nil
 
         // Online-first: try Supabase first, then sync to local
-        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
-                let remoteTypes: [RemotePackagingType] = try await SupabaseClient.shared.fetchAll(from: "packaging_types")
-                for remoteType in remoteTypes {
-                    let localType = PackagingType(
-                        id: remoteType.id,
-                        name: remoteType.name,
-                        level1Name: remoteType.level1Name,
-                        level2Name: remoteType.level2Name,
-                        level2Quantity: remoteType.level2Quantity.map { KotlinInt(int: $0) },
-                        createdAt: remoteType.createdAt,
-                        updatedAt: remoteType.updatedAt,
-                        createdBy: remoteType.createdBy,
-                        updatedBy: remoteType.updatedBy
-                    )
-                    try? await sdk.packagingTypeRepository.upsert(packagingType: localType)
+                let remoteTypes: [PackagingTypeDTO] = try await SupabaseService.shared.fetchAll(from: "packaging_types")
+                for dto in remoteTypes {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.packagingTypeRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.packagingTypeRepository.update(packagingType: entity)
+                    } else {
+                        try? await sdk.packagingTypeRepository.insert(packagingType: entity)
+                    }
                 }
             } catch {
-                print("Failed to sync packaging types from Supabase: \(error)")
+                print("[PackagingTypesListView] Failed to sync packaging types from Supabase: \(error)")
             }
         }
 
@@ -122,11 +119,14 @@ struct PackagingTypesListView: View {
         Task {
             for packagingType in typesToDelete {
                 do {
-                    // Online-first: delete from Supabase first
-                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                        try await SupabaseClient.shared.delete(from: "packaging_types", id: packagingType.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "packaging_types",
+                        entityType: .packagingType,
+                        entityId: packagingType.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.packagingTypeRepository.delete(id: packagingType.id)
                     }
-                    try await sdk.packagingTypeRepository.delete(id: packagingType.id)
                 } catch {
                     await MainActor.run {
                         errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
@@ -173,6 +173,7 @@ struct PackagingTypeEditorView: View {
     let packagingType: PackagingType?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var level1Name: String = ""
@@ -253,6 +254,7 @@ struct PackagingTypeEditorView: View {
 
         Task {
             do {
+                let isNew = packagingType == nil
                 var savedType: PackagingType
 
                 if let existing = packagingType {
@@ -265,7 +267,7 @@ struct PackagingTypeEditorView: View {
                         createdAt: existing.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existing.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
                 } else {
                     savedType = sdk.createPackagingType(
@@ -273,31 +275,26 @@ struct PackagingTypeEditorView: View {
                         level1Name: trimmedLevel1,
                         level2Name: hasLevel2 && !trimmedLevel2.isEmpty ? trimmedLevel2 : nil,
                         level2Quantity: level2Qty,
-                        userId: session.username
+                        userId: session.userId
                     )
                 }
 
-                // Online-first: save to Supabase first
-                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                    let remoteType = RemotePackagingType(
-                        id: savedType.id,
-                        name: savedType.name,
-                        level1Name: savedType.level1Name,
-                        level2Name: savedType.level2Name,
-                        level2Quantity: savedType.level2Quantity?.int32Value,
-                        createdAt: savedType.createdAt,
-                        updatedAt: savedType.updatedAt,
-                        createdBy: savedType.createdBy,
-                        updatedBy: savedType.updatedBy
-                    )
-                    _ = try await SupabaseClient.shared.upsert(into: "packaging_types", record: remoteType)
-                }
+                let dto = PackagingTypeDTO(from: savedType)
 
-                // Then sync to local database
-                if packagingType != nil {
-                    try await sdk.packagingTypeRepository.update(packagingType: savedType)
-                } else {
-                    try await sdk.packagingTypeRepository.insert(packagingType: savedType)
+                try await OnlineFirstHelper.shared.save(
+                    table: "packaging_types",
+                    dto: dto,
+                    entityType: .packagingType,
+                    entityId: savedType.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: packagingType?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.packagingTypeRepository.insert(packagingType: savedType)
+                    } else {
+                        try await sdk.packagingTypeRepository.update(packagingType: savedType)
+                    }
                 }
 
                 await MainActor.run {

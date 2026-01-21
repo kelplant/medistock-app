@@ -6,6 +6,7 @@ import shared
 struct UsersListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var users: [User] = []
     @State private var isLoading = true
@@ -36,7 +37,7 @@ struct UsersListView: View {
                     EmptyStateView(
                         icon: "person.3",
                         title: "Aucun utilisateur",
-                        message: "Ajoutez des utilisateurs pour gérer les accès."
+                        message: "Ajoutez des utilisateurs pour gerer les acces."
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -78,6 +79,7 @@ struct UsersListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadUsers()
         }
         .task {
@@ -89,6 +91,25 @@ struct UsersListView: View {
     private func loadUsers() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                let remoteUsers: [UserDTO] = try await SupabaseService.shared.fetchAll(from: "app_users")
+                for dto in remoteUsers {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.userRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.userRepository.update(user: entity)
+                    } else {
+                        try? await sdk.userRepository.insert(user: entity)
+                    }
+                }
+            } catch {
+                print("[UsersListView] Failed to sync users from Supabase: \(error)")
+            }
+        }
+
         do {
             users = try await sdk.userRepository.getAll()
         } catch {
@@ -169,6 +190,7 @@ struct UserEditorView: View {
     let user: User?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var username: String = ""
     @State private var password: String = ""
@@ -257,6 +279,7 @@ struct UserEditorView: View {
 
         Task {
             do {
+                let isNew = user == nil
                 var savedUser: User
 
                 if let existingUser = user {
@@ -278,7 +301,7 @@ struct UserEditorView: View {
                         createdAt: existingUser.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingUser.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
                 } else {
                     // Create new user - hash password with BCrypt
@@ -289,33 +312,48 @@ struct UserEditorView: View {
                         password: hashedPassword,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
-                        userId: session.username
+                        userId: session.userId
                     )
                 }
 
+                let dto = UserDTO(from: savedUser)
+
                 // Online-first: try Supabase first if configured
-                if SupabaseClient.shared.isConfigured {
-                    let remoteUser = RemoteUser(
-                        id: savedUser.id,
-                        username: savedUser.username,
-                        password: savedUser.password,
-                        fullName: savedUser.fullName,
-                        isAdmin: savedUser.isAdmin,
-                        isActive: savedUser.isActive,
-                        createdAt: savedUser.createdAt,
-                        updatedAt: savedUser.updatedAt,
-                        createdBy: savedUser.createdBy,
-                        updatedBy: savedUser.updatedBy
-                    )
-                    // Note: app_users table doesn't have client_id column
-                    _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser, includeClientId: false)
+                var savedOnline = false
+                if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+                    do {
+                        try await SupabaseService.shared.upsert(into: "app_users", record: dto)
+                        savedOnline = true
+                    } catch {
+                        print("[UserEditorView] Failed to save to Supabase: \(error)")
+                    }
                 }
 
                 // Sync to local database
-                if user != nil {
-                    try await sdk.userRepository.update(user: savedUser)
-                } else {
+                if isNew {
                     try await sdk.userRepository.insert(user: savedUser)
+                } else {
+                    try await sdk.userRepository.update(user: savedUser)
+                }
+
+                // Queue for sync if not saved online
+                if !savedOnline {
+                    if isNew {
+                        SyncQueueHelper.shared.enqueueInsert(
+                            entityType: .user,
+                            entityId: savedUser.id,
+                            entity: dto,
+                            userId: session.userId
+                        )
+                    } else {
+                        SyncQueueHelper.shared.enqueueUpdate(
+                            entityType: .user,
+                            entityId: savedUser.id,
+                            entity: dto,
+                            userId: session.userId,
+                            lastKnownRemoteUpdatedAt: user?.updatedAt
+                        )
+                    }
                 }
 
                 await MainActor.run {
@@ -369,7 +407,7 @@ struct UserPermissionsEditView: View {
                 ForEach(Module.allCases, id: \.rawValue) { module in
                     Section(header: Text(module.displayName)) {
                         Toggle("Voir", isOn: binding(for: module, action: \.canView))
-                        Toggle("Créer", isOn: binding(for: module, action: \.canCreate))
+                        Toggle("Creer", isOn: binding(for: module, action: \.canCreate))
                         Toggle("Modifier", isOn: binding(for: module, action: \.canEdit))
                         Toggle("Supprimer", isOn: binding(for: module, action: \.canDelete))
                     }
@@ -507,7 +545,7 @@ struct UserPermissionsEditView: View {
                 }
                 await MainActor.run {
                     isSaving = false
-                    successMessage = "Permissions enregistrées avec succès"
+                    successMessage = "Permissions enregistrees avec succes"
                 }
             } catch {
                 await MainActor.run {

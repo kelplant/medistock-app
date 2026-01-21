@@ -6,6 +6,7 @@ import shared
 struct ProductsListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var products: [Product] = []
     @State private var sites: [Site] = []
     @State private var categories: [shared.Category] = []
@@ -82,6 +83,7 @@ struct ProductsListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadData()
         }
         .task {
@@ -95,50 +97,45 @@ struct ProductsListView: View {
         errorMessage = nil
 
         // Online-first: try Supabase first, then sync to local
-        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
                 // Sync sites
-                let remoteSites: [RemoteSite] = try await SupabaseClient.shared.fetchAll(from: "sites")
-                for remoteSite in remoteSites {
-                    let localSite = Site(
-                        id: remoteSite.id, name: remoteSite.name,
-                        createdAt: remoteSite.createdAt, updatedAt: remoteSite.updatedAt,
-                        createdBy: remoteSite.createdBy, updatedBy: remoteSite.updatedBy
-                    )
-                    try? await sdk.siteRepository.upsert(site: localSite)
+                let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
+                for dto in remoteSites {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.siteRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.siteRepository.update(site: entity)
+                    } else {
+                        try? await sdk.siteRepository.insert(site: entity)
+                    }
                 }
 
                 // Sync categories
-                let remoteCategories: [RemoteCategory] = try await SupabaseClient.shared.fetchAll(from: "categories")
-                for remoteCategory in remoteCategories {
-                    let localCategory = shared.Category(
-                        id: remoteCategory.id, name: remoteCategory.name,
-                        createdAt: remoteCategory.createdAt, updatedAt: remoteCategory.updatedAt,
-                        createdBy: remoteCategory.createdBy, updatedBy: remoteCategory.updatedBy
-                    )
-                    try? await sdk.categoryRepository.upsert(category: localCategory)
+                let remoteCategories: [CategoryDTO] = try await SupabaseService.shared.fetchAll(from: "categories")
+                for dto in remoteCategories {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.categoryRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.categoryRepository.update(category: entity)
+                    } else {
+                        try? await sdk.categoryRepository.insert(category: entity)
+                    }
                 }
 
                 // Sync products
-                let remoteProducts: [RemoteProduct] = try await SupabaseClient.shared.fetchAll(from: "products")
-                for remoteProduct in remoteProducts {
-                    let localProduct = Product(
-                        id: remoteProduct.id, name: remoteProduct.name,
-                        unit: remoteProduct.unit, unitVolume: remoteProduct.unitVolume ?? 1.0,
-                        packagingTypeId: remoteProduct.packagingTypeId,
-                        selectedLevel: remoteProduct.selectedLevel,
-                        conversionFactor: remoteProduct.conversionFactor,
-                        categoryId: remoteProduct.categoryId,
-                        marginType: remoteProduct.marginType, marginValue: remoteProduct.marginValue,
-                        description: remoteProduct.description,
-                        siteId: "", minStock: 0, maxStock: 0,
-                        createdAt: remoteProduct.createdAt, updatedAt: remoteProduct.updatedAt,
-                        createdBy: remoteProduct.createdBy, updatedBy: remoteProduct.updatedBy
-                    )
-                    try? await sdk.productRepository.upsert(product: localProduct)
+                let remoteProducts: [ProductDTO] = try await SupabaseService.shared.fetchAll(from: "products")
+                for dto in remoteProducts {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.productRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.productRepository.update(product: entity)
+                    } else {
+                        try? await sdk.productRepository.insert(product: entity)
+                    }
                 }
             } catch {
-                print("Failed to sync from Supabase: \(error)")
+                print("[ProductsListView] Failed to sync from Supabase: \(error)")
             }
         }
 
@@ -171,11 +168,14 @@ struct ProductsListView: View {
         Task {
             for product in productsToDelete {
                 do {
-                    // Online-first: delete from Supabase first
-                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                        try await SupabaseClient.shared.delete(from: "products", id: product.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "products",
+                        entityType: .product,
+                        entityId: product.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.productRepository.delete(id: product.id)
                     }
-                    try await sdk.productRepository.delete(id: product.id)
                 } catch {
                     await MainActor.run {
                         errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
@@ -222,6 +222,7 @@ struct ProductEditorView: View {
     let categories: [shared.Category]
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var unit: String = "unité"
@@ -315,6 +316,7 @@ struct ProductEditorView: View {
 
         Task {
             do {
+                let isNew = product == nil
                 var savedProduct: Product
 
                 if let existingProduct = product {
@@ -336,7 +338,7 @@ struct ProductEditorView: View {
                         createdAt: existingProduct.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingProduct.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
                 } else {
                     savedProduct = sdk.createProduct(
@@ -345,37 +347,26 @@ struct ProductEditorView: View {
                         unit: trimmedUnit.isEmpty ? "unité" : trimmedUnit,
                         unitVolume: volume,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
-                        userId: session.username
+                        userId: session.userId
                     )
                 }
 
-                // Online-first: save to Supabase first
-                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                    let remoteProduct = RemoteProduct(
-                        id: savedProduct.id,
-                        name: savedProduct.name,
-                        description: savedProduct.description_,
-                        unit: savedProduct.unit,
-                        unitVolume: savedProduct.unitVolume,
-                        packagingTypeId: savedProduct.packagingTypeId,
-                        conversionFactor: savedProduct.conversionFactor,
-                        categoryId: savedProduct.categoryId,
-                        marginType: savedProduct.marginType,
-                        marginValue: savedProduct.marginValue,
-                        selectedLevel: savedProduct.selectedLevel,
-                        createdAt: savedProduct.createdAt,
-                        updatedAt: savedProduct.updatedAt,
-                        createdBy: savedProduct.createdBy,
-                        updatedBy: savedProduct.updatedBy
-                    )
-                    _ = try await SupabaseClient.shared.upsert(into: "products", record: remoteProduct)
-                }
+                let dto = ProductDTO(from: savedProduct)
 
-                // Then sync to local database
-                if product != nil {
-                    try await sdk.productRepository.update(product: savedProduct)
-                } else {
-                    try await sdk.productRepository.insert(product: savedProduct)
+                try await OnlineFirstHelper.shared.save(
+                    table: "products",
+                    dto: dto,
+                    entityType: .product,
+                    entityId: savedProduct.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: product?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.productRepository.insert(product: savedProduct)
+                    } else {
+                        try await sdk.productRepository.update(product: savedProduct)
+                    }
                 }
 
                 await MainActor.run {

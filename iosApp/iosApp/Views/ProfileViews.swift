@@ -3,10 +3,10 @@ import SwiftUI
 import shared
 
 // MARK: - Profile Badge View
-/// Badge showing user initial with realtime status border (green/yellow/red)
+/// Badge showing user initial with sync status border (green/yellow/red)
 struct ProfileBadgeView: View {
     @ObservedObject var session: SessionManager
-    @ObservedObject var realtimeService = RealtimeService.shared
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     var initial: String {
         let name = session.fullName.isEmpty ? session.username : session.fullName
@@ -14,62 +14,101 @@ struct ProfileBadgeView: View {
     }
 
     var statusColor: Color {
-        switch realtimeService.status {
-        case .connected:
+        switch syncStatus.indicatorColor {
+        case .synced:
             return .green
-        case .connecting:
+        case .syncing:
+            return .blue
+        case .pending:
             return .orange
-        case .disconnected:
+        case .offline:
+            return .gray
+        case .error:
             return .red
         }
     }
 
     var backgroundColor: Color {
-        switch realtimeService.status {
-        case .connected:
+        switch syncStatus.indicatorColor {
+        case .synced:
             return Color(red: 232/255, green: 245/255, blue: 233/255)
-        case .connecting:
+        case .syncing:
+            return Color(red: 227/255, green: 242/255, blue: 253/255)
+        case .pending:
             return Color(red: 255/255, green: 248/255, blue: 225/255)
-        case .disconnected:
+        case .offline:
+            return Color(red: 245/255, green: 245/255, blue: 245/255)
+        case .error:
             return Color(red: 255/255, green: 235/255, blue: 238/255)
         }
     }
 
     var textColor: Color {
-        switch realtimeService.status {
-        case .connected:
+        switch syncStatus.indicatorColor {
+        case .synced:
             return Color(red: 46/255, green: 125/255, blue: 50/255)
-        case .connecting:
+        case .syncing:
+            return Color(red: 25/255, green: 118/255, blue: 210/255)
+        case .pending:
             return Color(red: 255/255, green: 143/255, blue: 0/255)
-        case .disconnected:
+        case .offline:
+            return Color(red: 117/255, green: 117/255, blue: 117/255)
+        case .error:
             return Color(red: 198/255, green: 40/255, blue: 40/255)
         }
     }
 
     var body: some View {
-        Text(initial)
-            .font(.system(size: 14, weight: .bold))
-            .foregroundColor(textColor)
-            .frame(width: 30, height: 30)
-            .background(backgroundColor)
-            .clipShape(Circle())
-            .overlay(
-                Circle()
-                    .stroke(statusColor, lineWidth: 2.5)
-            )
-            .padding(2) // Prevent stroke from being clipped
-            .accessibilityLabel(statusAccessibilityLabel)
+        ZStack(alignment: .topTrailing) {
+            Text(initial)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(textColor)
+                .frame(width: 30, height: 30)
+                .background(backgroundColor)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(statusColor, lineWidth: 2.5)
+                )
+
+            // Pending count badge
+            if syncStatus.pendingCount > 0 {
+                Text("\(min(syncStatus.pendingCount, 99))")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 16, height: 16)
+                    .background(Color.orange)
+                    .clipShape(Circle())
+                    .offset(x: 4, y: -4)
+            }
+
+            // Conflict indicator
+            if syncStatus.conflictCount > 0 {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.red)
+                    .offset(x: -20, y: -4)
+            }
+        }
+        .padding(2)
+        .accessibilityLabel(statusAccessibilityLabel)
     }
 
     private var statusAccessibilityLabel: String {
-        switch realtimeService.status {
-        case .connected:
-            return "Profil - Realtime connecté"
-        case .connecting:
-            return "Profil - Connexion Realtime..."
-        case .disconnected:
-            return "Profil - Realtime déconnecté"
+        var label = "Profil - "
+        switch syncStatus.indicatorColor {
+        case .synced:
+            label += "Synchronisé"
+        case .syncing:
+            label += "Synchronisation en cours"
+        case .pending:
+            label += "\(syncStatus.pendingCount) modifications en attente"
+        case .offline:
+            label += "Mode hors ligne"
+        case .error:
+            label += "Erreur de synchronisation"
         }
+        return label
     }
 }
 
@@ -77,7 +116,9 @@ struct ProfileBadgeView: View {
 struct ProfileMenuView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
-    @ObservedObject var realtimeService = RealtimeService.shared
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
+    @ObservedObject private var syncManager = BidirectionalSyncManager.shared
+    @ObservedObject private var realtimeService = RealtimeSyncService.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -103,18 +144,73 @@ struct ProfileMenuView: View {
                     }
                 }
 
-                Section(header: Text("Statut Supabase")) {
+                Section(header: Text("Synchronisation")) {
+                    // Status indicator
                     HStack {
                         Circle()
-                            .fill(realtimeService.status == .connected ? Color.green :
-                                    realtimeService.status == .connecting ? Color.orange : Color.red)
+                            .fill(statusColor)
                             .frame(width: 12, height: 12)
 
-                        Text(statusText)
+                        Text(syncStatus.statusSummary)
                             .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        if syncStatus.isSyncing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
                     }
 
-                    if let error = realtimeService.lastError {
+                    // Pending operations
+                    if syncStatus.pendingCount > 0 {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundColor(.orange)
+                            Text("\(syncStatus.pendingCount) modification(s) en attente")
+                                .font(.subheadline)
+                        }
+                    }
+
+                    // Conflicts
+                    if syncStatus.conflictCount > 0 {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text("\(syncStatus.conflictCount) conflit(s) à résoudre")
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                        }
+                    }
+
+                    // Network status
+                    HStack {
+                        Image(systemName: syncStatus.isOnline ? "wifi" : "wifi.slash")
+                            .foregroundColor(syncStatus.isOnline ? .green : .gray)
+                        Text(syncStatus.isOnline ? "En ligne" : "Hors ligne")
+                            .font(.subheadline)
+                    }
+
+                    // Realtime status
+                    HStack {
+                        Image(systemName: realtimeService.isConnected ? "bolt.fill" : "bolt.slash")
+                            .foregroundColor(realtimeService.isConnected ? .green : .gray)
+                        Text(realtimeService.isConnected ? "Realtime connecté" : "Realtime déconnecté")
+                            .font(.subheadline)
+                    }
+
+                    // Manual sync button
+                    Button(action: triggerSync) {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                            Text("Synchroniser maintenant")
+                        }
+                    }
+                    .disabled(!syncStatus.isOnline || syncStatus.isSyncing)
+                }
+
+                if let error = syncStatus.lastSyncInfo.error {
+                    Section(header: Text("Dernière erreur")) {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(.red)
@@ -129,8 +225,7 @@ struct ProfileMenuView: View {
 
                 Section {
                     Button(role: .destructive) {
-                        session.logout()
-                        dismiss()
+                        logout()
                     } label: {
                         Label("Déconnexion", systemImage: "rectangle.portrait.and.arrow.right")
                     }
@@ -145,15 +240,26 @@ struct ProfileMenuView: View {
         }
     }
 
-    private var statusText: String {
-        switch realtimeService.status {
-        case .connected:
-            return "Connecté en temps réel"
-        case .connecting:
-            return "Connexion en cours..."
-        case .disconnected:
-            return "Déconnecté"
+    private var statusColor: Color {
+        switch syncStatus.indicatorColor {
+        case .synced: return .green
+        case .syncing: return .blue
+        case .pending: return .orange
+        case .offline: return .gray
+        case .error: return .red
         }
+    }
+
+    private func triggerSync() {
+        Task {
+            await syncManager.fullSync(sdk: sdk)
+        }
+    }
+
+    private func logout() {
+        SyncScheduler.shared.stop()
+        session.logout()
+        dismiss()
     }
 }
 
@@ -161,6 +267,7 @@ struct ProfileMenuView: View {
 struct ChangePasswordView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
 
     @State private var currentPassword = ""
@@ -232,7 +339,7 @@ struct ChangePasswordView: View {
 
         Task {
             do {
-                // 1. Get current user from local database (needed for password verification)
+                // 1. Get current user from local database
                 guard let user = try await sdk.userRepository.getById(id: session.userId) else {
                     throw PasswordChangeError.userNotFound
                 }
@@ -247,12 +354,9 @@ struct ChangePasswordView: View {
                     throw PasswordChangeError.hashingFailed
                 }
 
-                // 4. Online-first: update Supabase first if configured
-                if SupabaseClient.shared.isConfigured {
-                    try await syncPasswordToSupabase(hashedPassword: hashedPassword)
-                }
+                let now = Int64(Date().timeIntervalSince1970 * 1000)
 
-                // 5. Sync to local database
+                // 4. Create updated user
                 let updatedUser = User(
                     id: user.id,
                     username: user.username,
@@ -261,11 +365,24 @@ struct ChangePasswordView: View {
                     isAdmin: user.isAdmin,
                     isActive: user.isActive,
                     createdAt: user.createdAt,
-                    updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
+                    updatedAt: now,
                     createdBy: user.createdBy,
                     updatedBy: session.userId
                 )
+
+                // 5. Online-first: try Supabase first
+                if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+                    let dto = UserDTO(from: updatedUser)
+                    try await SupabaseService.shared.upsert(into: "app_users", record: dto)
+                }
+
+                // 6. Update local database
                 try await sdk.userRepository.update(user: updatedUser)
+
+                // 7. Queue for sync if offline
+                if !syncStatus.isOnline {
+                    SyncQueueHelper.shared.enqueueUserUpdate(updatedUser, userId: session.userId, lastKnownRemoteUpdatedAt: user.updatedAt)
+                }
 
                 await MainActor.run {
                     isLoading = false
@@ -274,7 +391,6 @@ struct ChangePasswordView: View {
                     newPassword = ""
                     confirmPassword = ""
 
-                    // Auto-dismiss after success
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         dismiss()
                     }
@@ -285,36 +401,6 @@ struct ChangePasswordView: View {
                     errorMessage = error.localizedDescription
                 }
             }
-        }
-    }
-
-    private func syncPasswordToSupabase(hashedPassword: String) async throws {
-        guard let baseUrl = SupabaseClient.shared.supabaseUrl,
-              let apiKey = SupabaseClient.shared.supabaseKey else {
-            return
-        }
-
-        let urlString = "\(baseUrl)/rest/v1/app_users?id=eq.\(session.userId)"
-        guard let url = URL(string: urlString) else { return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "PATCH"
-        request.setValue(apiKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "password": hashedPassword,
-            "updated_at": Int64(Date().timeIntervalSince1970 * 1000),
-            "updated_by": session.userId
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (_, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw SupabaseError.serverError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 500)
         }
     }
 }

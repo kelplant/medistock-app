@@ -7,6 +7,7 @@ struct SalesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
     let siteId: String?
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var sales: [Sale] = []
     @State private var sites: [Site] = []
@@ -37,7 +38,7 @@ struct SalesListView: View {
                     EmptyStateView(
                         icon: "cart",
                         title: "Aucune vente",
-                        message: "Enregistrez votre première vente."
+                        message: "Enregistrez votre premiere vente."
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -71,6 +72,7 @@ struct SalesListView: View {
             SaleDetailView(sdk: sdk, sale: sale)
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadData()
         }
         .task {
@@ -84,31 +86,18 @@ struct SalesListView: View {
         errorMessage = nil
 
         // Online-first: try Supabase first, then sync to local
-        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
-                let remoteSales: [RemoteSale] = try await SupabaseClient.shared.fetchAll(from: "sales")
-                for remoteSale in remoteSales {
-                    let localSale = Sale(
-                        id: remoteSale.id,
-                        siteId: remoteSale.siteId,
-                        customerId: remoteSale.customerId,
-                        customerName: "", // Will be looked up
-                        totalAmount: remoteSale.totalAmount,
-                        discountAmount: remoteSale.discountAmount,
-                        finalAmount: remoteSale.finalAmount,
-                        paymentMethod: remoteSale.paymentMethod,
-                        status: remoteSale.status,
-                        notes: remoteSale.notes,
-                        saleDate: remoteSale.saleDate,
-                        createdAt: remoteSale.createdAt,
-                        updatedAt: remoteSale.updatedAt,
-                        createdBy: remoteSale.createdBy,
-                        updatedBy: remoteSale.updatedBy
-                    )
-                    try? await sdk.saleRepository.upsert(sale: localSale)
+                let remoteSales: [SaleDTO] = try await SupabaseService.shared.fetchAll(from: "sales")
+                for dto in remoteSales {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.saleRepository.getById(id: dto.id)
+                    if existing == nil {
+                        try? await sdk.saleRepository.insertSaleWithItems(sale: entity, items: [])
+                    }
                 }
             } catch {
-                print("Failed to sync sales from Supabase: \(error)")
+                print("[SalesListView] Failed to sync sales from Supabase: \(error)")
             }
         }
 
@@ -145,7 +134,7 @@ struct SaleRowView: View {
                 Text(sale.customerName)
                     .font(.headline)
                 Spacer()
-                Text("\(String(format: "%.2f", sale.totalAmount)) €")
+                Text("\(String(format: "%.2f", sale.totalAmount)) EUR")
                     .font(.headline)
                     .foregroundColor(.green)
             }
@@ -192,7 +181,7 @@ struct SaleDetailView: View {
                     LabeledContentCompat {
                         Text("Total")
                     } content: {
-                        Text(String(format: "%.2f €", sale.totalAmount))
+                        Text(String(format: "%.2f EUR", sale.totalAmount))
                     }
                     LabeledContentCompat {
                         Text("Date")
@@ -208,10 +197,10 @@ struct SaleDetailView: View {
                                 Text(productName(for: item.productId))
                                     .font(.headline)
                                 HStack {
-                                    Text("Qté: \(String(format: "%.1f", item.quantity))")
+                                    Text("Qte: \(String(format: "%.1f", item.quantity))")
                                     Spacer()
-                                    Text("\(String(format: "%.2f", item.unitPrice)) € x \(String(format: "%.1f", item.quantity))")
-                                    Text("= \(String(format: "%.2f", item.totalPrice)) €")
+                                    Text("\(String(format: "%.2f", item.unitPrice)) EUR x \(String(format: "%.1f", item.quantity))")
+                                    Text("= \(String(format: "%.2f", item.totalPrice)) EUR")
                                         .fontWeight(.medium)
                                 }
                                 .font(.subheadline)
@@ -222,7 +211,7 @@ struct SaleDetailView: View {
                     }
                 }
             }
-            .navigationTitle("Détail de la vente")
+            .navigationTitle("Detail de la vente")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Fermer") { dismiss() }
@@ -268,6 +257,7 @@ struct SaleEditorView: View {
     let defaultSiteId: String?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var sites: [Site] = []
     @State private var products: [Product] = []
@@ -295,7 +285,7 @@ struct SaleEditorView: View {
             Form {
                 Section(header: Text("Site")) {
                     Picker("Site", selection: $selectedSiteId) {
-                        Text("Sélectionner").tag("")
+                        Text("Selectionner").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
@@ -305,7 +295,7 @@ struct SaleEditorView: View {
                 Section(header: Text("Client")) {
                     TextField("Nom du client", text: $customerName)
                     if !customers.isEmpty {
-                        Picker("Ou sélectionner", selection: $selectedCustomerId) {
+                        Picker("Ou selectionner", selection: $selectedCustomerId) {
                             Text("Client occasionnel").tag("")
                             ForEach(customers, id: \.id) { customer in
                                 Text(customer.name).tag(customer.id)
@@ -328,7 +318,7 @@ struct SaleEditorView: View {
                     .disabled(selectedSiteId.isEmpty)
                 }) {
                     if saleItems.isEmpty {
-                        Text("Ajoutez des articles à la vente")
+                        Text("Ajoutez des articles a la vente")
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(saleItems.indices, id: \.self) { index in
@@ -337,10 +327,10 @@ struct SaleEditorView: View {
                                 Text(item.productName)
                                     .font(.headline)
                                 HStack {
-                                    Text("Qté: \(String(format: "%.1f", item.quantity))")
-                                    Text("x \(String(format: "%.2f", item.unitPrice)) €")
+                                    Text("Qte: \(String(format: "%.1f", item.quantity))")
+                                    Text("x \(String(format: "%.2f", item.unitPrice)) EUR")
                                     Spacer()
-                                    Text("\(String(format: "%.2f", item.totalPrice)) €")
+                                    Text("\(String(format: "%.2f", item.totalPrice)) EUR")
                                         .fontWeight(.medium)
                                 }
                                 .font(.subheadline)
@@ -355,7 +345,7 @@ struct SaleEditorView: View {
                         Text("Total")
                             .font(.headline)
                         Spacer()
-                        Text("\(String(format: "%.2f", totalAmount)) €")
+                        Text("\(String(format: "%.2f", totalAmount)) EUR")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.green)
@@ -435,7 +425,7 @@ struct SaleEditorView: View {
                     siteId: selectedSiteId,
                     totalAmount: totalAmount,
                     customerId: selectedCustomerId.isEmpty ? nil : selectedCustomerId,
-                    userId: session.username
+                    userId: session.userId
                 )
 
                 let items = saleItems.map { draft in
@@ -447,6 +437,7 @@ struct SaleEditorView: View {
                     )
                 }
 
+                // Save locally first
                 try await sdk.saleRepository.insertSaleWithItems(sale: sale, items: items)
 
                 // Create stock movements and update batches (FIFO)
@@ -457,13 +448,42 @@ struct SaleEditorView: View {
                         quantity: -draft.quantity,
                         movementType: "SALE",
                         referenceId: sale.id,
-                        notes: "Vente à \(customerName)",
-                        userId: session.username
+                        notes: "Vente a \(customerName)",
+                        userId: session.userId
                     )
                     try await sdk.stockMovementRepository.insert(movement: movement)
 
                     // Deduct from batches (FIFO)
                     await deductFromBatches(productId: draft.productId, quantity: draft.quantity)
+                }
+
+                // Online-first: try to save to Supabase
+                var savedOnline = false
+                if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+                    do {
+                        let saleDTO = SaleDTO(from: sale)
+                        try await SupabaseService.shared.upsert(into: "sales", record: saleDTO)
+
+                        for item in items {
+                            let itemDTO = SaleItemDTO(from: item)
+                            try await SupabaseService.shared.upsert(into: "sale_items", record: itemDTO)
+                        }
+                        savedOnline = true
+                    } catch {
+                        print("[SaleEditorView] Failed to save to Supabase: \(error)")
+                    }
+                }
+
+                // Queue for sync if not saved online
+                if !savedOnline {
+                    let saleDTO = SaleDTO(from: sale)
+                    SyncQueueHelper.shared.enqueueInsert(
+                        entityType: .sale,
+                        entityId: sale.id,
+                        entity: saleDTO,
+                        userId: session.userId,
+                        siteId: selectedSiteId
+                    )
                 }
 
                 await MainActor.run {
@@ -498,7 +518,7 @@ struct SaleEditorView: View {
                     remainingQuantity: newRemaining,
                     isExhausted: isExhausted,
                     updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
-                    updatedBy: session.username
+                    updatedBy: session.userId
                 )
                 remainingToDeduct -= deductAmount
             } catch {
@@ -551,7 +571,7 @@ struct SaleItemEditorView: View {
             Form {
                 Section(header: Text("Produit")) {
                     Picker("Produit", selection: $selectedProductId) {
-                        Text("Sélectionner").tag("")
+                        Text("Selectionner").tag("")
                         ForEach(products, id: \.id) { product in
                             Text(product.name).tag(product.id)
                         }
@@ -571,15 +591,15 @@ struct SaleItemEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantité et Prix")) {
-                    TextField("Quantité", text: $quantityText)
+                Section(header: Text("Quantite et Prix")) {
+                    TextField("Quantite", text: $quantityText)
                         .keyboardType(.decimalPad)
                     TextField("Prix unitaire", text: $priceText)
                         .keyboardType(.decimalPad)
                 }
 
                 if let product = selectedProduct {
-                    Section(header: Text("Résumé")) {
+                    Section(header: Text("Resume")) {
                         let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         let price = Double(priceText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         LabeledContentCompat {
@@ -590,7 +610,7 @@ struct SaleItemEditorView: View {
                         LabeledContentCompat {
                             Text("Total")
                         } content: {
-                            Text(String(format: "%.2f €", qty * price))
+                            Text(String(format: "%.2f EUR", qty * price))
                         }
                     }
                 }

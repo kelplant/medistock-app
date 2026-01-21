@@ -6,6 +6,7 @@ import shared
 struct CustomersListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var customers: [Customer] = []
     @State private var isLoading = true
@@ -81,6 +82,7 @@ struct CustomersListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadCustomers()
         }
         .task {
@@ -94,26 +96,20 @@ struct CustomersListView: View {
         errorMessage = nil
 
         // Online-first: try Supabase first, then sync to local
-        if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
-                let remoteCustomers: [RemoteCustomer] = try await SupabaseClient.shared.fetchAll(from: "customers")
-                for remoteCustomer in remoteCustomers {
-                    let localCustomer = Customer(
-                        id: remoteCustomer.id,
-                        name: remoteCustomer.name,
-                        phone: remoteCustomer.phone,
-                        email: remoteCustomer.email,
-                        address: remoteCustomer.address,
-                        notes: nil,
-                        createdAt: remoteCustomer.createdAt,
-                        updatedAt: remoteCustomer.updatedAt,
-                        createdBy: remoteCustomer.createdBy,
-                        updatedBy: remoteCustomer.updatedBy
-                    )
-                    try? await sdk.customerRepository.upsert(customer: localCustomer)
+                let remoteCustomers: [CustomerDTO] = try await SupabaseService.shared.fetchAll(from: "customers")
+                for dto in remoteCustomers {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.customerRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.customerRepository.update(customer: entity)
+                    } else {
+                        try? await sdk.customerRepository.insert(customer: entity)
+                    }
                 }
             } catch {
-                print("Failed to sync customers from Supabase: \(error)")
+                print("[CustomersListView] Failed to sync customers from Supabase: \(error)")
             }
         }
 
@@ -132,11 +128,14 @@ struct CustomersListView: View {
         Task {
             for customer in customersToDelete {
                 do {
-                    // Online-first: delete from Supabase first
-                    if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                        try await SupabaseClient.shared.delete(from: "customers", id: customer.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "customers",
+                        entityType: .customer,
+                        entityId: customer.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.customerRepository.delete(id: customer.id)
                     }
-                    try await sdk.customerRepository.delete(id: customer.id)
                 } catch {
                     await MainActor.run {
                         errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
@@ -186,6 +185,7 @@ struct CustomerEditorView: View {
     let customer: Customer?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var phone: String = ""
@@ -258,6 +258,7 @@ struct CustomerEditorView: View {
 
         Task {
             do {
+                let isNew = customer == nil
                 var savedCustomer: Customer
 
                 if let existingCustomer = customer {
@@ -271,7 +272,7 @@ struct CustomerEditorView: View {
                         createdAt: existingCustomer.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingCustomer.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
                 } else {
                     savedCustomer = sdk.createCustomer(
@@ -280,31 +281,26 @@ struct CustomerEditorView: View {
                         email: email.isEmpty ? nil : email,
                         address: address.isEmpty ? nil : address,
                         notes: notes.isEmpty ? nil : notes,
-                        userId: session.username
+                        userId: session.userId
                     )
                 }
 
-                // Online-first: save to Supabase first
-                if SyncManager.shared.isOnline && SupabaseClient.shared.isConfigured {
-                    let remoteCustomer = RemoteCustomer(
-                        id: savedCustomer.id,
-                        name: savedCustomer.name,
-                        phone: savedCustomer.phone,
-                        email: savedCustomer.email,
-                        address: savedCustomer.address,
-                        createdAt: savedCustomer.createdAt,
-                        updatedAt: savedCustomer.updatedAt,
-                        createdBy: savedCustomer.createdBy,
-                        updatedBy: savedCustomer.updatedBy
-                    )
-                    _ = try await SupabaseClient.shared.upsert(into: "customers", record: remoteCustomer)
-                }
+                let dto = CustomerDTO(from: savedCustomer)
 
-                // Then sync to local database
-                if customer != nil {
-                    try await sdk.customerRepository.update(customer: savedCustomer)
-                } else {
-                    try await sdk.customerRepository.insert(customer: savedCustomer)
+                try await OnlineFirstHelper.shared.save(
+                    table: "customers",
+                    dto: dto,
+                    entityType: .customer,
+                    entityId: savedCustomer.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: customer?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.customerRepository.insert(customer: savedCustomer)
+                    } else {
+                        try await sdk.customerRepository.update(customer: savedCustomer)
+                    }
                 }
 
                 await MainActor.run {

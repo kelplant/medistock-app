@@ -1,11 +1,9 @@
 import Foundation
 import shared
 
-// Note: RemoteUser is defined in SyncService.swift
-
 /// Authentication result
 enum AuthResult {
-    case success(user: RemoteUser)
+    case success(user: UserDTO)
     case invalidCredentials
     case userInactive
     case userNotFound
@@ -18,19 +16,27 @@ enum AuthResult {
 class AuthService {
     static let shared = AuthService()
 
-    private let supabase = SupabaseClient.shared
+    private let supabase = SupabaseService.shared
+    private let statusManager = SyncStatusManager.shared
 
     private init() {}
 
     /// Authenticate user with username and password
-    /// This replaces the previous "demo mode" that allowed any login
     func authenticate(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // First, try to authenticate against Supabase if configured
-        if supabase.isConfigured {
-            return await authenticateWithSupabase(username: trimmedUsername, password: trimmedPassword)
+        // First, try to authenticate against Supabase if configured and online
+        if statusManager.isOnline && supabase.isConfigured {
+            let result = await authenticateWithSupabase(username: trimmedUsername, password: trimmedPassword, sdk: sdk)
+            // If we got a definitive answer (not network error), return it
+            switch result {
+            case .success, .invalidCredentials, .userInactive, .userNotFound:
+                return result
+            case .networkError, .notConfigured:
+                // Fall through to local authentication
+                break
+            }
         }
 
         // Fall back to local SDK authentication
@@ -38,12 +44,12 @@ class AuthService {
     }
 
     /// Authenticate against Supabase
-    private func authenticateWithSupabase(username: String, password: String) async -> AuthResult {
+    private func authenticateWithSupabase(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
         do {
-            // Fetch user by username
-            let users: [RemoteUser] = try await supabase.fetch(
+            // Fetch user by username using filter
+            let users: [UserDTO] = try await supabase.fetchWithFilter(
                 from: "app_users",
-                filter: ["username": username]
+                filter: "username=eq.\(username)"
             )
 
             guard let user = users.first else {
@@ -55,22 +61,18 @@ class AuthService {
                 return .userInactive
             }
 
-            // Validate password (in production, this should be done server-side with proper hashing)
-            // For now, we compare directly but this should be improved
-            guard validatePassword(input: password, stored: user.password) else {
+            // Validate password using BCrypt
+            guard PasswordHasher.shared.verifyPassword(password, storedPassword: user.password) else {
                 return .invalidCredentials
             }
 
+            // Sync user to local database
+            await syncUserToLocal(user, sdk: sdk)
+
             return .success(user: user)
 
-        } catch let error as SupabaseError {
-            switch error {
-            case .notConfigured:
-                return .notConfigured
-            default:
-                return .networkError(error.localizedDescription)
-            }
         } catch {
+            print("[AuthService] Supabase authentication failed: \(error)")
             return .networkError(error.localizedDescription)
         }
     }
@@ -90,50 +92,42 @@ class AuthService {
                 return .userInactive
             }
 
-            // Validate password
-            guard validatePassword(input: password, stored: user.password) else {
+            // Validate password using BCrypt
+            guard PasswordHasher.shared.verifyPassword(password, storedPassword: user.password) else {
                 return .invalidCredentials
             }
 
-            // Convert to RemoteUser format for consistency
-            let remoteUser = RemoteUser(
-                id: user.id,
-                username: user.username,
-                password: user.password,
-                fullName: user.fullName,
-                isAdmin: user.isAdmin,
-                isActive: user.isActive,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt,
-                createdBy: user.createdBy,
-                updatedBy: user.updatedBy
-            )
+            // Convert to UserDTO format for consistency
+            let userDTO = UserDTO(from: user)
 
-            return .success(user: remoteUser)
+            return .success(user: userDTO)
         } catch {
             return .networkError(error.localizedDescription)
         }
     }
 
-    /// Validate password using BCrypt verification
-    /// Supports both BCrypt hashed passwords and plain text (legacy)
-    private func validatePassword(input: String, stored: String) -> Bool {
-        return PasswordHasher.shared.verifyPassword(input, storedPassword: stored)
-    }
-
-    /// Sync local user with Supabase (for offline-first approach)
-    func syncUserFromSupabase(userId: String) async throws -> RemoteUser? {
-        guard supabase.isConfigured else { return nil }
-
-        return try await supabase.fetchById(from: "app_users", id: userId)
+    /// Sync user to local database
+    private func syncUserToLocal(_ userDTO: UserDTO, sdk: MedistockSDK) async {
+        do {
+            let localUser = userDTO.toEntity()
+            let existing = try? await sdk.userRepository.getById(id: userDTO.id)
+            if existing != nil {
+                try await sdk.userRepository.update(user: localUser)
+            } else {
+                try await sdk.userRepository.insert(user: localUser)
+            }
+            print("[AuthService] User synced to local: \(userDTO.username)")
+        } catch {
+            print("[AuthService] Failed to sync user to local: \(error)")
+        }
     }
 }
 
 // MARK: - Session Management Extension
 
 extension SessionManager {
-    /// Login with proper authentication
-    func loginWithAuth(user: RemoteUser) {
+    /// Login with proper authentication and trigger initial sync
+    func loginWithAuth(user: UserDTO, sdk: MedistockSDK) {
         self.userId = user.id
         self.username = user.username
         self.fullName = user.fullName
@@ -144,10 +138,23 @@ extension SessionManager {
         Task {
             await PermissionManager.shared.loadPermissions(forUserId: user.id)
         }
+
+        // Start sync scheduler
+        SyncScheduler.shared.start(sdk: sdk)
+
+        // Trigger initial full sync if online
+        if SyncStatusManager.shared.isOnline && SupabaseService.shared.isConfigured {
+            Task {
+                await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
+            }
+        }
     }
 
     /// Logout and clear all session data
     func logoutWithCleanup() {
+        // Stop sync scheduler first
+        SyncScheduler.shared.stop()
+
         self.isLoggedIn = false
         self.userId = ""
         self.username = ""

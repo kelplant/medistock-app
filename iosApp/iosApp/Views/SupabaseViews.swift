@@ -7,6 +7,7 @@ struct SupabaseConfigView: View {
     let sdk: MedistockSDK
 
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var projectUrl: String = ""
     @State private var anonKey: String = ""
     @State private var isSaving = false
@@ -15,7 +16,7 @@ struct SupabaseConfigView: View {
     @State private var errorMessage: String?
     @State private var syncMessage: String?
 
-    private let supabase = SupabaseClient.shared
+    private let supabase = SupabaseService.shared
 
     var body: some View {
         NavigationView {
@@ -98,7 +99,7 @@ struct SupabaseConfigView: View {
                             .foregroundColor(syncMessage.contains("Erreur") ? .red : .green)
                     }
 
-                    if let lastSync = SyncService.shared.lastSyncDate {
+                    if let lastSync = syncStatus.lastSyncInfo.lastSyncDate {
                         LabeledContentCompat {
                             Text("Dernière sync")
                         } content: {
@@ -124,26 +125,28 @@ struct SupabaseConfigView: View {
 
                 Section(header: Text("État actuel")) {
                     LabeledContentCompat {
-                        Text("URL configurée")
+                        Text("Configuré")
                     } content: {
-                        Text(supabase.supabaseUrl?.isEmpty == false ? "Oui" : "Non")
-                            .foregroundColor(supabase.supabaseUrl?.isEmpty == false ? .green : .red)
+                        Text(supabase.isConfigured ? "Oui" : "Non")
+                            .foregroundColor(supabase.isConfigured ? .green : .red)
                     }
                     LabeledContentCompat {
-                        Text("Clé configurée")
-                    } content: {
-                        Text(supabase.supabaseKey?.isEmpty == false ? "Oui" : "Non")
-                            .foregroundColor(supabase.supabaseKey?.isEmpty == false ? .green : .red)
-                    }
-                    LabeledContentCompat {
-                        Text("Statut")
+                        Text("Connexion")
                     } content: {
                         HStack {
                             Circle()
-                                .fill(supabase.isConfigured ? Color.green : Color.orange)
+                                .fill(syncStatus.isOnline ? Color.green : Color.orange)
                                 .frame(width: 8, height: 8)
-                            Text(supabase.isConfigured ? "Connecté" : "Non configuré")
-                                .foregroundColor(supabase.isConfigured ? .green : .orange)
+                            Text(syncStatus.isOnline ? "En ligne" : "Hors ligne")
+                                .foregroundColor(syncStatus.isOnline ? .green : .orange)
+                        }
+                    }
+                    if syncStatus.pendingCount > 0 {
+                        LabeledContentCompat {
+                            Text("En attente")
+                        } content: {
+                            Text("\(syncStatus.pendingCount) modification(s)")
+                                .foregroundColor(.orange)
                         }
                     }
                 }
@@ -183,8 +186,9 @@ struct SupabaseConfigView: View {
     }
 
     private func loadConfig() {
-        projectUrl = supabase.supabaseUrl ?? ""
-        anonKey = supabase.supabaseKey ?? ""
+        let defaults = UserDefaults.standard
+        projectUrl = defaults.string(forKey: "supabase_url") ?? ""
+        anonKey = defaults.string(forKey: "supabase_key") ?? ""
     }
 
     private func saveConfig() {
@@ -200,7 +204,10 @@ struct SupabaseConfigView: View {
         }
 
         // Save configuration
-        supabase.configure(url: projectUrl, key: anonKey)
+        supabase.configure(url: projectUrl, anonKey: anonKey)
+
+        // Start sync scheduler after configuration
+        SyncScheduler.shared.start(sdk: sdk)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
@@ -209,7 +216,15 @@ struct SupabaseConfigView: View {
     }
 
     private func clearConfig() {
-        supabase.clearConfiguration()
+        // Stop sync services
+        SyncScheduler.shared.stop()
+        RealtimeSyncService.shared.disconnect()
+
+        // Clear stored configuration
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "supabase_url")
+        defaults.removeObject(forKey: "supabase_key")
+
         projectUrl = ""
         anonKey = ""
         showSuccess = false
@@ -222,11 +237,11 @@ struct SupabaseConfigView: View {
         syncMessage = nil
 
         Task {
-            await SyncService.shared.performFullSync(sdk: sdk)
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
 
             await MainActor.run {
                 isSyncing = false
-                if let error = SyncService.shared.lastError {
+                if let error = syncStatus.lastSyncInfo.error {
                     syncMessage = "Erreur: \(error)"
                 } else {
                     syncMessage = "Synchronisation réussie!"
@@ -242,7 +257,7 @@ struct SupabaseConfigView: View {
         Task {
             do {
                 // Try to fetch a small amount of data to test connection
-                let _: [RemoteSite] = try await supabase.fetchAll(from: "sites", query: ["limit": "1"])
+                let _: [SiteDTO] = try await supabase.fetchAll(from: "sites")
                 await MainActor.run {
                     syncMessage = "Connexion réussie!"
                 }

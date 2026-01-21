@@ -7,7 +7,7 @@ struct HomeView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
     @ObservedObject private var permissions = PermissionManager.shared
-    @ObservedObject private var realtimeService = RealtimeService.shared
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var selectedSite: Site?
     @State private var sites: [Site] = []
     @State private var showSiteSelector = false
@@ -15,6 +15,13 @@ struct HomeView: View {
 
     var body: some View {
         List {
+            // Sync status banner (if issues)
+            if syncStatus.hasIssues || syncStatus.pendingCount > 0 {
+                Section {
+                    SyncStatusBannerView(sdk: sdk)
+                }
+            }
+
             // Site selector section
             Section(header: Text("Site actuel")) {
                 Button(action: { showSiteSelector = true }) {
@@ -88,33 +95,145 @@ struct HomeView: View {
             ProfileMenuView(sdk: sdk, session: session)
         }
         .task {
+            // Start sync scheduler
+            SyncScheduler.shared.start(sdk: sdk)
+
+            // Load sites (online-first)
             await loadSites()
+
+            // Restore selected site
             if selectedSite == nil, let siteId = session.currentSiteId {
                 selectedSite = sites.first { $0.id == siteId }
             }
             if selectedSite == nil {
                 selectedSite = sites.first
             }
-
-            // Start realtime sync automatically
-            if SupabaseClient.shared.isConfigured {
-                realtimeService.start(sdk: sdk)
-            }
         }
         .onChange(of: selectedSite) { newSite in
             session.currentSiteId = newSite?.id
         }
-        .onDisappear {
-            // Don't stop realtime when navigating, only when logging out
+        .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
+            await loadSites()
         }
     }
 
     @MainActor
     private func loadSites() async {
+        // Online-first: try Supabase first
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
+                // Sync to local
+                for dto in remoteSites {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.siteRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.siteRepository.update(site: entity)
+                    } else {
+                        try? await sdk.siteRepository.insert(site: entity)
+                    }
+                }
+            } catch {
+                print("[HomeView] Failed to fetch sites from Supabase: \(error)")
+            }
+        }
+
+        // Load from local (always have local data)
         do {
             sites = try await sdk.siteRepository.getAll()
         } catch {
             sites = []
+        }
+    }
+}
+
+// MARK: - Sync Status Banner
+struct SyncStatusBannerView: View {
+    let sdk: MedistockSDK
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
+    @ObservedObject private var syncManager = BidirectionalSyncManager.shared
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: statusIcon)
+                .foregroundColor(statusColor)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(statusTitle)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Text(statusSubtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            if syncStatus.isSyncing {
+                ProgressView()
+                    .scaleEffect(0.8)
+            } else if syncStatus.isOnline && syncStatus.pendingCount > 0 {
+                Button(action: sync) {
+                    Image(systemName: "arrow.clockwise")
+                        .foregroundColor(.accentColor)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var statusIcon: String {
+        if !syncStatus.isOnline {
+            return "wifi.slash"
+        } else if syncStatus.conflictCount > 0 {
+            return "exclamationmark.triangle.fill"
+        } else if syncStatus.pendingCount > 0 {
+            return "arrow.triangle.2.circlepath"
+        } else {
+            return "checkmark.circle.fill"
+        }
+    }
+
+    private var statusColor: Color {
+        if !syncStatus.isOnline {
+            return .gray
+        } else if syncStatus.conflictCount > 0 {
+            return .red
+        } else if syncStatus.pendingCount > 0 {
+            return .orange
+        } else {
+            return .green
+        }
+    }
+
+    private var statusTitle: String {
+        if !syncStatus.isOnline {
+            return "Mode hors ligne"
+        } else if syncStatus.conflictCount > 0 {
+            return "Conflits détectés"
+        } else if syncStatus.pendingCount > 0 {
+            return "Modifications en attente"
+        } else {
+            return "Synchronisé"
+        }
+    }
+
+    private var statusSubtitle: String {
+        if !syncStatus.isOnline {
+            return "Les modifications seront synchronisées automatiquement"
+        } else if syncStatus.conflictCount > 0 {
+            return "\(syncStatus.conflictCount) conflit(s) à résoudre"
+        } else if syncStatus.pendingCount > 0 {
+            return "\(syncStatus.pendingCount) modification(s)"
+        } else {
+            return syncStatus.statusSummary
+        }
+    }
+
+    private func sync() {
+        Task {
+            await syncManager.fullSync(sdk: sdk)
         }
     }
 }
@@ -179,7 +298,7 @@ struct AdminMenuView: View {
                 }
             }
 
-            // Users section - permissions are managed per user, not globally
+            // Users section
             if permissions.canView(.users) {
                 Section(header: Text("Utilisateurs")) {
                     NavigationLink(destination: UsersListView(sdk: sdk, session: session)) {
@@ -219,6 +338,7 @@ struct AdminMenuView: View {
 struct SiteSelectorView: View {
     let sdk: MedistockSDK
     @Binding var selectedSite: Site?
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var sites: [Site] = []
     @State private var isLoading = true
@@ -265,11 +385,32 @@ struct SiteSelectorView: View {
     @MainActor
     private func loadSites() async {
         isLoading = true
+
+        // Online-first
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
+                for dto in remoteSites {
+                    let entity = dto.toEntity()
+                    let existing = try? await sdk.siteRepository.getById(id: dto.id)
+                    if existing != nil {
+                        try? await sdk.siteRepository.update(site: entity)
+                    } else {
+                        try? await sdk.siteRepository.insert(site: entity)
+                    }
+                }
+            } catch {
+                print("[SiteSelectorView] Failed to fetch sites from Supabase: \(error)")
+            }
+        }
+
+        // Load from local
         do {
             sites = try await sdk.siteRepository.getAll()
         } catch {
             sites = []
         }
+
         isLoading = false
     }
 }

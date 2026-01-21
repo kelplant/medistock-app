@@ -85,7 +85,7 @@ class PermissionManager: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var lastError: String?
 
-    private let supabase = SupabaseClient.shared
+    private let supabase = SupabaseService.shared
     private let cacheKeyPrefix = "medistock_permissions_"
 
     private init() {
@@ -226,7 +226,7 @@ class PermissionManager: ObservableObject {
                 throw error
             }
         } else {
-            throw SupabaseError.notConfigured
+            throw SupabaseServiceError.notConfigured
         }
     }
 
@@ -253,7 +253,7 @@ class PermissionManager: ObservableObject {
                 throw error
             }
         } else {
-            throw SupabaseError.notConfigured
+            throw SupabaseServiceError.notConfigured
         }
     }
 
