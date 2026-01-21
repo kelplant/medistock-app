@@ -1,19 +1,7 @@
 import Foundation
 import shared
 
-/// Remote user model for Supabase - matches the app_users table
-struct RemoteUser: Codable, Identifiable {
-    let id: String
-    let username: String
-    let password: String
-    let fullName: String
-    let isAdmin: Bool
-    let isActive: Bool
-    let createdAt: Int64
-    let updatedAt: Int64
-    let createdBy: String
-    let updatedBy: String
-}
+// Note: RemoteUser is defined in SyncService.swift
 
 /// Authentication result
 enum AuthResult {
@@ -127,13 +115,10 @@ class AuthService {
         }
     }
 
-    /// Validate password
-    /// In a real production app, passwords should be hashed server-side
-    /// and validation should happen on the server
+    /// Validate password using BCrypt verification
+    /// Supports both BCrypt hashed passwords and plain text (legacy)
     private func validatePassword(input: String, stored: String) -> Bool {
-        // Direct comparison for now
-        // TODO: Implement proper password hashing (bcrypt, argon2, etc.)
-        return input == stored
+        return PasswordHasher.shared.verifyPassword(input, storedPassword: stored)
     }
 
     /// Sync local user with Supabase (for offline-first approach)

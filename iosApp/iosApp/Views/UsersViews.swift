@@ -260,11 +260,18 @@ struct UserEditorView: View {
                 var savedUser: User
 
                 if let existingUser = user {
-                    // Update user
+                    // Update user - hash password if changed
+                    let finalPassword: String
+                    if password.isEmpty {
+                        finalPassword = existingUser.password
+                    } else {
+                        finalPassword = PasswordHasher.shared.hashPassword(password) ?? password
+                    }
+
                     let updated = User(
                         id: existingUser.id,
                         username: trimmedUsername,
-                        password: password.isEmpty ? existingUser.password : password,
+                        password: finalPassword,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
                         isActive: isActive,
@@ -276,10 +283,12 @@ struct UserEditorView: View {
                     try await sdk.userRepository.update(user: updated)
                     savedUser = updated
                 } else {
-                    // Create new user
+                    // Create new user - hash password with BCrypt
+                    let hashedPassword = PasswordHasher.shared.hashPassword(password) ?? password
+
                     let newUser = sdk.createUser(
                         username: trimmedUsername,
-                        password: password,
+                        password: hashedPassword,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
                         userId: session.username
