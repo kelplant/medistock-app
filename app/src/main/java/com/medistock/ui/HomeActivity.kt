@@ -2,10 +2,13 @@ package com.medistock.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.medistock.R
+import com.medistock.data.db.AppDatabase
+import com.medistock.data.entities.Site
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.stock.StockListActivity
@@ -15,19 +18,25 @@ import com.medistock.ui.admin.AdminActivity
 import com.medistock.ui.transfer.TransferListActivity
 import com.medistock.util.AuthManager
 import com.medistock.util.AppUpdateManager
+import com.medistock.util.PrefsHelper
 import com.medistock.util.UpdateCheckResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var authManager: AuthManager
+    private lateinit var db: AppDatabase
+    private var sites: List<Site> = emptyList()
+    private var currentSite: Site? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         authManager = AuthManager.getInstance(this)
+        db = AppDatabase.getInstance(this)
 
         // Check if user is logged in
         if (!authManager.isLoggedIn()) {
@@ -40,8 +49,16 @@ class HomeActivity : AppCompatActivity() {
         // Set title with user name
         supportActionBar?.title = "MediStock - ${authManager.getFullName()}"
 
+        // Load sites and set default if needed
+        loadSitesAndSetDefault()
+
         // Vérifier les mises à jour disponibles sur GitHub
         checkForAppUpdates()
+
+        // Site selector click handler
+        findViewById<android.view.View>(R.id.siteSelector).setOnClickListener {
+            showSiteSelectionDialog()
+        }
 
         findViewById<android.view.View>(R.id.viewStockButton).setOnClickListener {
             startActivity(Intent(this, StockListActivity::class.java))
@@ -66,6 +83,67 @@ class HomeActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.adminButton).setOnClickListener {
             startActivity(Intent(this, AdminActivity::class.java))
         }
+    }
+
+    private fun loadSitesAndSetDefault() {
+        lifecycleScope.launch {
+            try {
+                sites = withContext(Dispatchers.IO) {
+                    db.siteDao().getAll().first()
+                }
+
+                if (sites.isNotEmpty()) {
+                    // Check if there's a saved site ID
+                    val savedSiteId = PrefsHelper.getActiveSiteId(this@HomeActivity)
+
+                    currentSite = if (savedSiteId != null) {
+                        // Try to find the saved site
+                        sites.find { it.id == savedSiteId } ?: sites.first()
+                    } else {
+                        // No saved site, use the first one
+                        sites.first()
+                    }
+
+                    // Save the current site ID
+                    PrefsHelper.saveActiveSiteId(this@HomeActivity, currentSite!!.id)
+
+                    // Update UI
+                    updateCurrentSiteDisplay()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun updateCurrentSiteDisplay() {
+        findViewById<TextView>(R.id.currentSiteName)?.text =
+            currentSite?.name ?: "Sélectionner un site"
+    }
+
+    private fun showSiteSelectionDialog() {
+        if (sites.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Aucun site")
+                .setMessage("Aucun site disponible. Veuillez d'abord créer un site dans l'administration.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        val siteNames = sites.map { it.name }.toTypedArray()
+        val currentIndex = sites.indexOfFirst { it.id == currentSite?.id }.takeIf { it >= 0 } ?: 0
+
+        AlertDialog.Builder(this)
+            .setTitle("Sélectionner un site")
+            .setSingleChoiceItems(siteNames, currentIndex) { dialog, which ->
+                currentSite = sites[which]
+                PrefsHelper.saveActiveSiteId(this, currentSite!!.id)
+                updateCurrentSiteDisplay()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Annuler", null)
+            .show()
     }
 
     private fun navigateToLogin() {

@@ -29,16 +29,6 @@ struct LoginView: View {
                 .font(.headline)
                 .foregroundColor(.secondary)
 
-            // Supabase status indicator
-            HStack {
-                Circle()
-                    .fill(SupabaseClient.shared.isConfigured ? Color.green : Color.orange)
-                    .frame(width: 8, height: 8)
-                Text(SupabaseClient.shared.isConfigured ? "Supabase connecté" : "Mode hors-ligne")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
             VStack(spacing: 12) {
                 TextField("Nom d'utilisateur", text: $username)
                     .textInputAutocapitalization(.never)
