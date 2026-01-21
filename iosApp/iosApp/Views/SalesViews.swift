@@ -583,5 +583,5 @@ struct SaleItemEditorView: View {
     }
 }
 
-extension Sale: Identifiable {}
-extension SaleItem: Identifiable {}
+extension Sale: @retroactive Identifiable {}
+extension SaleItem: @retroactive Identifiable {}

@@ -123,7 +123,7 @@ struct StockListView: View {
 
                 // Get batches for expiry info
                 let productBatches = batches.filter { $0.productId == product.id && !$0.isExhausted }
-                let nearestExpiry = productBatches.compactMap { $0.expiryDate }.min()
+                let nearestExpiry = productBatches.compactMap { $0.expiryDate?.int64Value }.min()
 
                 items.append(StockItem(
                     productId: product.id,
@@ -371,7 +371,7 @@ struct StockMovementRowView: View {
     }
 }
 
-extension StockMovement: Identifiable {}
-extension CurrentStock: Identifiable {
+extension StockMovement: @retroactive Identifiable {}
+extension CurrentStock: @retroactive Identifiable {
     public var id: String { "\(productId)-\(siteId)" }
 }

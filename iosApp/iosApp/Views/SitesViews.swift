@@ -211,4 +211,4 @@ struct SiteEditorView: View {
     }
 }
 
-extension Site: Identifiable {}
+extension Site: @retroactive Identifiable {}
