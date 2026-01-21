@@ -33,6 +33,8 @@
 		A1SVC002BBBB000100000002 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC002BBBB000000000002 /* PermissionManager.swift */; };
 		A1SVC003BBBB000100000003 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC003BBBB000000000003 /* AuthService.swift */; };
 		A1SVC004BBBB000100000004 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC004BBBB000000000004 /* SyncService.swift */; };
+		A1SVC005BBBB000100000005 /* RealtimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC005BBBB000000000005 /* RealtimeService.swift */; };
+		A1000013AAAA000100000013 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013AAAA000000000013 /* ProfileViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +66,8 @@
 		A1SVC002BBBB000000000002 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		A1SVC003BBBB000000000003 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		A1SVC004BBBB000000000004 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
+		A1SVC005BBBB000000000005 /* RealtimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeService.swift; sourceTree = "<group>"; };
+		A1000013AAAA000000000013 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +141,7 @@
 				A100000EAAAA00000000000E /* AuditViews.swift */,
 				A100000FAAAA00000000000F /* SupabaseViews.swift */,
 				A1000010AAAA000000000010 /* CommonViews.swift */,
+				A1000013AAAA000000000013 /* ProfileViews.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -148,6 +153,7 @@
 				A1SVC002BBBB000000000002 /* PermissionManager.swift */,
 				A1SVC003BBBB000000000003 /* AuthService.swift */,
 				A1SVC004BBBB000000000004 /* SyncService.swift */,
+				A1SVC005BBBB000000000005 /* RealtimeService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -296,6 +302,8 @@
 				A1SVC002BBBB000100000002 /* PermissionManager.swift in Sources */,
 				A1SVC003BBBB000100000003 /* AuthService.swift in Sources */,
 				A1SVC004BBBB000100000004 /* SyncService.swift in Sources */,
+				A1SVC005BBBB000100000005 /* RealtimeService.swift in Sources */,
+				A1000013AAAA000100000013 /* ProfileViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
