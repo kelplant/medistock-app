@@ -226,9 +226,74 @@ curl -s https://api.github.com/repos/kelplant/medistock-app/releases/latest | gr
 
 ---
 
+---
+
+## 🍎 Configuration iOS (Quand les certificats seront disponibles)
+
+Le workflow de release supporte également la génération d'IPA iOS, mais nécessite une configuration préalable.
+
+### Prérequis
+
+1. **Compte Apple Developer** (99$/an)
+2. **Certificat de distribution** (.p12)
+3. **Provisioning Profile** (App Store ou Ad Hoc)
+
+### Étape 1 : Activer le build iOS
+
+Dans GitHub → Settings → Variables → Repository variables :
+
+| Variable | Valeur |
+|----------|--------|
+| `IOS_BUILD_ENABLED` | `true` |
+
+### Étape 2 : Configurer les secrets
+
+Dans GitHub → Settings → Secrets → Actions, ajouter :
+
+| Secret | Description | Comment l'obtenir |
+|--------|-------------|-------------------|
+| `IOS_BUILD_CERTIFICATE_BASE64` | Certificat .p12 encodé en base64 | `base64 -i certificate.p12` |
+| `IOS_P12_PASSWORD` | Mot de passe du certificat .p12 | Défini lors de l'export |
+| `IOS_KEYCHAIN_PASSWORD` | Mot de passe temporaire pour le keychain CI | Générer un mot de passe aléatoire |
+| `IOS_PROVISIONING_PROFILE_BASE64` | Provisioning profile encodé en base64 | `base64 -i profile.mobileprovision` |
+| `IOS_TEAM_ID` | ID de l'équipe Apple Developer | Visible sur developer.apple.com |
+| `IOS_PROVISIONING_PROFILE_NAME` | Nom exact du provisioning profile | Nom défini dans Apple Developer Portal |
+
+### Étape 3 : Exporter le certificat depuis Xcode
+
+1. Ouvrir **Keychain Access**
+2. Trouver le certificat "Apple Distribution: ..."
+3. Clic droit → **Export...**
+4. Sauvegarder en format `.p12` avec un mot de passe
+5. Encoder en base64 :
+   ```bash
+   base64 -i MyCertificate.p12 | pbcopy
+   ```
+6. Coller dans le secret `IOS_BUILD_CERTIFICATE_BASE64`
+
+### Étape 4 : Télécharger le Provisioning Profile
+
+1. Aller sur https://developer.apple.com/account/resources/profiles/list
+2. Créer ou télécharger un profil "App Store" ou "Ad Hoc"
+3. Encoder en base64 :
+   ```bash
+   base64 -i MyProfile.mobileprovision | pbcopy
+   ```
+4. Coller dans le secret `IOS_PROVISIONING_PROFILE_BASE64`
+
+### Vérification
+
+Une fois configuré, le prochain tag `v*.*.*` déclenchera :
+- ✅ Build Android APK (comme avant)
+- ✅ Build iOS IPA
+- ✅ Release GitHub avec les deux fichiers
+
+---
+
 ## 📚 Ressources
 
 - **Documentation Android :** https://developer.android.com/studio/publish/app-signing
+- **Documentation iOS Code Signing :** https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases
 - **GitHub Releases :** https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
 - **GitHub Actions :** https://docs.github.com/en/actions
 

@@ -160,12 +160,12 @@ class SyncQueueHelper {
         enqueueUpdate(entityType: .site, entityId: site.id, entity: dto, userId: userId, lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt)
     }
 
-    func enqueueCategoryInsert(_ category: Category, userId: String) {
+    func enqueueCategoryInsert(_ category: shared.Category, userId: String) {
         let dto = CategoryDTO(from: category)
         enqueueInsert(entityType: .category, entityId: category.id, entity: dto, userId: userId)
     }
 
-    func enqueueCategoryUpdate(_ category: Category, userId: String, lastKnownRemoteUpdatedAt: Int64? = nil) {
+    func enqueueCategoryUpdate(_ category: shared.Category, userId: String, lastKnownRemoteUpdatedAt: Int64? = nil) {
         let dto = CategoryDTO(from: category)
         enqueueUpdate(entityType: .category, entityId: category.id, entity: dto, userId: userId, lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt)
     }

@@ -29,6 +29,12 @@ class PurchaseBatchRepository(private val database: MedistockDatabase) {
         queries.getBatchesByProductAndSite(productId, siteId).executeAsList().map { it.toModel() }
     }
 
+    suspend fun getBySite(siteId: String): List<PurchaseBatch> = withContext(Dispatchers.Default) {
+        queries.getAllBatches().executeAsList()
+            .filter { it.site_id == siteId }
+            .map { it.toModel() }
+    }
+
     suspend fun insert(batch: PurchaseBatch) = withContext(Dispatchers.Default) {
         queries.insertBatch(
             id = batch.id,

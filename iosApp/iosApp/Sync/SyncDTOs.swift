@@ -62,7 +62,7 @@ struct CategoryDTO: Codable {
         case clientId = "client_id"
     }
 
-    init(from category: Category) {
+    init(from category: shared.Category) {
         self.id = category.id
         self.name = category.name
         self.createdAt = category.createdAt
@@ -72,8 +72,8 @@ struct CategoryDTO: Codable {
         self.clientId = SyncClientId.current
     }
 
-    func toEntity() -> Category {
-        Category(
+    func toEntity() -> shared.Category {
+        shared.Category(
             id: id,
             name: name,
             createdAt: createdAt,
@@ -148,6 +148,9 @@ struct ProductDTO: Codable {
     let marginType: String
     let marginValue: Double
     let selectedLevel: Int32?
+    let siteId: String?
+    let minStock: Double?
+    let maxStock: Double?
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -163,6 +166,9 @@ struct ProductDTO: Codable {
         case marginType = "margin_type"
         case marginValue = "margin_value"
         case selectedLevel = "selected_level"
+        case siteId = "site_id"
+        case minStock = "min_stock"
+        case maxStock = "max_stock"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -182,6 +188,9 @@ struct ProductDTO: Codable {
         self.marginType = product.marginType ?? "PERCENTAGE"
         self.marginValue = product.marginValue?.doubleValue ?? 0.0
         self.selectedLevel = product.selectedLevel?.int32Value
+        self.siteId = product.siteId
+        self.minStock = product.minStock?.doubleValue
+        self.maxStock = product.maxStock?.doubleValue
         self.createdAt = product.createdAt
         self.updatedAt = product.updatedAt
         self.createdBy = product.createdBy
@@ -202,9 +211,9 @@ struct ProductDTO: Codable {
             marginType: marginType,
             marginValue: KotlinDouble(double: marginValue),
             description: description,
-            siteId: nil,
-            minStock: nil,
-            maxStock: nil,
+            siteId: siteId ?? "",
+            minStock: minStock.map { KotlinDouble(double: $0) },
+            maxStock: maxStock.map { KotlinDouble(double: $0) },
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,
@@ -565,6 +574,65 @@ struct StockMovementDTO: Codable {
             notes: notes,
             createdAt: createdAt,
             createdBy: createdBy
+        )
+    }
+}
+
+struct ProductTransferDTO: Codable {
+    let id: String
+    let productId: String
+    let fromSiteId: String
+    let toSiteId: String
+    let quantity: Double
+    let status: String
+    let notes: String?
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+    var clientId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case productId = "product_id"
+        case fromSiteId = "from_site_id"
+        case toSiteId = "to_site_id"
+        case quantity, status, notes
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case createdBy = "created_by"
+        case updatedBy = "updated_by"
+        case clientId = "client_id"
+    }
+
+    init(from transfer: ProductTransfer) {
+        self.id = transfer.id
+        self.productId = transfer.productId
+        self.fromSiteId = transfer.fromSiteId
+        self.toSiteId = transfer.toSiteId
+        self.quantity = transfer.quantity
+        self.status = transfer.status
+        self.notes = transfer.notes
+        self.createdAt = transfer.createdAt
+        self.updatedAt = transfer.updatedAt
+        self.createdBy = transfer.createdBy
+        self.updatedBy = transfer.updatedBy
+        self.clientId = SyncClientId.current
+    }
+
+    func toEntity() -> ProductTransfer {
+        ProductTransfer(
+            id: id,
+            productId: productId,
+            fromSiteId: fromSiteId,
+            toSiteId: toSiteId,
+            quantity: quantity,
+            status: status,
+            notes: notes,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            createdBy: createdBy,
+            updatedBy: updatedBy
         )
     }
 }

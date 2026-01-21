@@ -419,53 +419,50 @@ struct SaleEditorView: View {
         errorMessage = nil
 
         Task {
-            do {
-                let sale = sdk.createSale(
-                    customerName: customerName.trimmingCharacters(in: .whitespacesAndNewlines),
-                    siteId: selectedSiteId,
-                    totalAmount: totalAmount,
-                    customerId: selectedCustomerId.isEmpty ? nil : selectedCustomerId,
-                    userId: session.userId
+            // Convert sale items to UseCase input format
+            let itemInputs = saleItems.map { draft in
+                SaleItemInput(
+                    productId: draft.productId,
+                    quantity: draft.quantity,
+                    unitPrice: draft.unitPrice
                 )
+            }
 
-                let items = saleItems.map { draft in
-                    sdk.createSaleItem(
-                        saleId: sale.id,
-                        productId: draft.productId,
-                        quantity: draft.quantity,
-                        unitPrice: draft.unitPrice
-                    )
+            // Use SaleUseCase for business logic (handles FIFO allocation, stock movements, etc.)
+            let input = SaleInput(
+                siteId: selectedSiteId,
+                customerName: customerName.trimmingCharacters(in: .whitespacesAndNewlines),
+                customerId: selectedCustomerId.isEmpty ? nil : selectedCustomerId,
+                items: itemInputs,
+                userId: session.userId
+            )
+
+            do {
+                let result = try await sdk.saleUseCase.execute(input: input)
+
+                // Handle result
+                if let success = result as? UseCaseResultSuccess<SaleResult>,
+               let saleResult = success.data {
+                let sale = saleResult.sale
+
+                // Show warnings if any (e.g., insufficient stock - still allowed per business rules)
+                if !success.warnings.isEmpty {
+                    for warning in success.warnings {
+                        if let stockWarning = warning as? BusinessWarning.InsufficientStock {
+                            print("[SaleEditorView] Warning: Insufficient stock for product \(stockWarning.productId): requested \(stockWarning.requested), available \(stockWarning.available)")
+                        }
+                    }
                 }
 
-                // Save locally first
-                try await sdk.saleRepository.insertSaleWithItems(sale: sale, items: items)
-
-                // Create stock movements and update batches (FIFO)
-                for draft in saleItems {
-                    let movement = sdk.createStockMovement(
-                        productId: draft.productId,
-                        siteId: selectedSiteId,
-                        quantity: -draft.quantity,
-                        movementType: "SALE",
-                        referenceId: sale.id,
-                        notes: "Vente a \(customerName)",
-                        userId: session.userId
-                    )
-                    try await sdk.stockMovementRepository.insert(movement: movement)
-
-                    // Deduct from batches (FIFO)
-                    await deductFromBatches(productId: draft.productId, quantity: draft.quantity)
-                }
-
-                // Online-first: try to save to Supabase
+                // Sync to Supabase
                 var savedOnline = false
                 if syncStatus.isOnline && SupabaseService.shared.isConfigured {
                     do {
                         let saleDTO = SaleDTO(from: sale)
                         try await SupabaseService.shared.upsert(into: "sales", record: saleDTO)
 
-                        for item in items {
-                            let itemDTO = SaleItemDTO(from: item)
+                        for processedItem in saleResult.items {
+                            let itemDTO = SaleItemDTO(from: processedItem.saleItem)
                             try await SupabaseService.shared.upsert(into: "sale_items", record: itemDTO)
                         }
                         savedOnline = true
@@ -490,39 +487,18 @@ struct SaleEditorView: View {
                     onSave()
                     dismiss()
                 }
+
+            } else if let error = result as? UseCaseResultError {
+                await MainActor.run {
+                    isSaving = false
+                    errorMessage = error.error.message
+                }
+            }
             } catch {
                 await MainActor.run {
                     isSaving = false
                     errorMessage = "Erreur: \(error.localizedDescription)"
                 }
-            }
-        }
-    }
-
-    private func deductFromBatches(productId: String, quantity: Double) async {
-        var remainingToDeduct = quantity
-        let productBatches = batches
-            .filter { $0.productId == productId && $0.siteId == selectedSiteId && !$0.isExhausted }
-            .sorted { $0.purchaseDate < $1.purchaseDate }
-
-        for batch in productBatches {
-            guard remainingToDeduct > 0 else { break }
-
-            let deductAmount = min(batch.remainingQuantity, remainingToDeduct)
-            let newRemaining = batch.remainingQuantity - deductAmount
-            let isExhausted = newRemaining <= 0
-
-            do {
-                try await sdk.purchaseBatchRepository.updateQuantity(
-                    id: batch.id,
-                    remainingQuantity: newRemaining,
-                    isExhausted: isExhausted,
-                    updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
-                    updatedBy: session.userId
-                )
-                remainingToDeduct -= deductAmount
-            } catch {
-                // Continue with next batch
             }
         }
     }
@@ -634,10 +610,19 @@ struct SaleItemEditorView: View {
         guard !selectedProductId.isEmpty,
               let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")),
               let price = Double(priceText.replacingOccurrences(of: ",", with: ".")),
-              qty > 0, price > 0, qty <= availableStock else {
+              qty > 0, price > 0 else {
             return false
         }
+        // Note: We allow sales even with insufficient stock (negative stock allowed per business rules)
+        // The UseCase will generate a warning but not block the sale
         return true
+    }
+
+    private var hasInsufficientStock: Bool {
+        guard let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) else {
+            return false
+        }
+        return qty > availableStock
     }
 
     private func addItem() {

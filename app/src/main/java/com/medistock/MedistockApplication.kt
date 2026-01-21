@@ -11,6 +11,8 @@ import com.medistock.data.migration.CompatibilityResult
 import com.medistock.data.migration.MigrationManager
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
+import com.medistock.shared.DatabaseDriverFactory
+import com.medistock.shared.MedistockSDK
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
@@ -56,6 +58,19 @@ class MedistockApplication : Application() {
         @Volatile
         var compatibilityResult: CompatibilityResult? = null
             private set
+
+        /**
+         * Shared MedistockSDK instance for accessing UseCases and repositories
+         */
+        @Volatile
+        private var _sdk: MedistockSDK? = null
+
+        /**
+         * Get the shared MedistockSDK instance
+         * Must be called after Application.onCreate()
+         */
+        val sdk: MedistockSDK
+            get() = _sdk ?: throw IllegalStateException("MedistockSDK not initialized. Call from Activity after onCreate.")
 
         /**
          * Met à jour le résultat de compatibilité (appelé par les vérifications)
@@ -266,6 +281,16 @@ class MedistockApplication : Application() {
         // Ensure modern trust store (Let's Encrypt, etc.) is available
         if (Security.getProvider("Conscrypt") == null) {
             Security.insertProviderAt(Conscrypt.newProvider(), 1)
+        }
+
+        // Initialize shared MedistockSDK (SQLDelight database + UseCases)
+        try {
+            val driverFactory = DatabaseDriverFactory(this)
+            _sdk = MedistockSDK(driverFactory)
+            println("✅ MedistockSDK initialized")
+        } catch (e: Exception) {
+            println("❌ Failed to initialize MedistockSDK: ${e.message}")
+            e.printStackTrace()
         }
 
         // Initialiser le client Supabase au démarrage de l'app

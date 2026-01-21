@@ -354,9 +354,10 @@ struct TransferEditorView: View {
               !toSiteId.isEmpty,
               fromSiteId != toSiteId,
               let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")),
-              qty > 0, qty <= availableStock else {
+              qty > 0 else {
             return false
         }
+        // Note: We allow transfers even with insufficient stock (negative stock allowed per business rules)
         return true
     }
 
@@ -376,20 +377,53 @@ struct TransferEditorView: View {
         errorMessage = nil
 
         Task {
-            do {
-                let transfer = sdk.createProductTransfer(
-                    productId: selectedProductId,
-                    fromSiteId: fromSiteId,
-                    toSiteId: toSiteId,
-                    quantity: quantity,
-                    notes: notes.isEmpty ? nil : notes,
-                    userId: session.username
-                )
-                try await sdk.productTransferRepository.insert(transfer: transfer)
+            // Use TransferUseCase for business logic (handles FIFO batch transfer, stock movements, etc.)
+            let input = TransferInput(
+                productId: selectedProductId,
+                fromSiteId: fromSiteId,
+                toSiteId: toSiteId,
+                quantity: quantity,
+                notes: notes.isEmpty ? nil : notes,
+                userId: session.userId
+            )
 
-                await MainActor.run {
-                    onSave()
-                    dismiss()
+            do {
+                let result = try await sdk.transferUseCase.execute(input: input)
+
+                // Handle result
+                if let success = result as? UseCaseResultSuccess<TransferResult>,
+                   let transferResult = success.data {
+
+                    // Show warnings if any (e.g., insufficient stock)
+                    if !success.warnings.isEmpty {
+                        for warning in success.warnings {
+                            if let stockWarning = warning as? BusinessWarning.InsufficientStock {
+                                print("[TransferEditorView] Warning: Insufficient stock for transfer: requested \(stockWarning.requested), available \(stockWarning.available)")
+                            }
+                        }
+                    }
+
+                    // Sync to Supabase
+                    let syncStatus = SyncStatusManager.shared
+                    if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+                        do {
+                            let transferDTO = ProductTransferDTO(from: transferResult.transfer)
+                            try await SupabaseService.shared.upsert(into: "product_transfers", record: transferDTO)
+                        } catch {
+                            print("[TransferEditorView] Failed to save to Supabase: \(error)")
+                        }
+                    }
+
+                    await MainActor.run {
+                        onSave()
+                        dismiss()
+                    }
+
+                } else if let error = result as? UseCaseResultError {
+                    await MainActor.run {
+                        isSaving = false
+                        errorMessage = error.error.message
+                    }
                 }
             } catch {
                 await MainActor.run {

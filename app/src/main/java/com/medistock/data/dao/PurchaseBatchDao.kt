@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PurchaseBatchDao {
+    @Query("SELECT * FROM purchase_batches")
+    fun getAll(): Flow<List<PurchaseBatch>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(batch: PurchaseBatch): Long
 

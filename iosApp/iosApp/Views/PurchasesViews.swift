@@ -328,32 +328,38 @@ struct PurchaseEditorView: View {
         errorMessage = nil
 
         Task {
+            // Use PurchaseUseCase for business logic
+            let input = PurchaseInput(
+                productId: selectedProductId,
+                siteId: selectedSiteId,
+                quantity: quantity,
+                purchasePrice: price,
+                supplierName: supplierName,
+                batchNumber: batchNumber.isEmpty ? nil : batchNumber,
+                expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
+                userId: session.userId
+            )
+
             do {
-                let batch = sdk.createPurchaseBatch(
-                    productId: selectedProductId,
-                    siteId: selectedSiteId,
-                    quantity: quantity,
-                    purchasePrice: price,
-                    supplierName: supplierName,
-                    batchNumber: batchNumber.isEmpty ? nil : batchNumber,
-                    expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
-                    userId: session.userId
-                )
+                let result = try await sdk.purchaseUseCase.execute(input: input)
 
-                let movement = sdk.createStockMovement(
-                    productId: selectedProductId,
-                    siteId: selectedSiteId,
-                    quantity: quantity,
-                    movementType: "PURCHASE",
-                    referenceId: batch.id,
-                    notes: "Achat - Lot: \(batchNumber.isEmpty ? batch.id : batchNumber)",
-                    userId: session.userId
-                )
+                // Handle result
+                if let success = result as? UseCaseResultSuccess<PurchaseResult>,
+               let purchaseResult = success.data {
+                let batch = purchaseResult.purchaseBatch
+                let movement = purchaseResult.stockMovement
 
+                // Show warnings if any (non-blocking)
+                if !success.warnings.isEmpty {
+                    for warning in success.warnings {
+                        print("[PurchaseEditorView] Warning: \(warning)")
+                    }
+                }
+
+                // Sync to Supabase
                 let batchDTO = PurchaseBatchDTO(from: batch)
                 let movementDTO = StockMovementDTO(from: movement)
 
-                // Online-first: save to Supabase first
                 var savedOnline = false
                 if syncStatus.isOnline && SupabaseService.shared.isConfigured {
                     do {
@@ -364,10 +370,6 @@ struct PurchaseEditorView: View {
                         print("[PurchaseEditorView] Failed to save to Supabase: \(error)")
                     }
                 }
-
-                // Then save to local database
-                try await sdk.purchaseBatchRepository.insert(batch: batch)
-                try await sdk.stockMovementRepository.insert(movement: movement)
 
                 // Queue for sync if not saved online
                 if !savedOnline {
@@ -391,6 +393,13 @@ struct PurchaseEditorView: View {
                     onSave()
                     dismiss()
                 }
+
+            } else if let error = result as? UseCaseResultError {
+                await MainActor.run {
+                    isSaving = false
+                    errorMessage = error.error.message
+                }
+            }
             } catch {
                 await MainActor.run {
                     isSaving = false

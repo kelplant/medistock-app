@@ -99,7 +99,7 @@ struct SupabaseConfigView: View {
                             .foregroundColor(syncMessage.contains("Erreur") ? .red : .green)
                     }
 
-                    if let lastSync = syncStatus.lastSyncInfo.lastSyncDate {
+                    if let lastSync = syncStatus.lastSyncInfo.timestamp {
                         LabeledContentCompat {
                             Text("Dernière sync")
                         } content: {
@@ -218,7 +218,7 @@ struct SupabaseConfigView: View {
     private func clearConfig() {
         // Stop sync services
         SyncScheduler.shared.stop()
-        RealtimeSyncService.shared.disconnect()
+        RealtimeSyncService.shared.stop()
 
         // Clear stored configuration
         let defaults = UserDefaults.standard

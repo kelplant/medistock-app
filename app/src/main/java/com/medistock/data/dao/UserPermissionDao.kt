@@ -4,6 +4,9 @@ import androidx.room.*
 
 @Dao
 interface UserPermissionDao {
+    @Query("SELECT * FROM user_permissions")
+    fun getAllPermissions(): List<com.medistock.data.entities.UserPermission>
+
     @Query("SELECT * FROM user_permissions WHERE user_id = :userId")
     fun getPermissionsForUser(userId: String): List<com.medistock.data.entities.UserPermission>
 

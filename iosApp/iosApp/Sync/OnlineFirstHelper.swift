@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import shared
 
 /// Helper for implementing online-first pattern in Views

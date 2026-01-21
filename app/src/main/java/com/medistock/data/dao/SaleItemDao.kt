@@ -21,6 +21,9 @@ interface SaleItemDao {
     @Query("SELECT * FROM sale_items WHERE saleId = :saleId")
     fun getItemsForSale(saleId: String): Flow<List<SaleItem>>
 
+    @Query("SELECT * FROM sale_items WHERE saleId = :saleId")
+    fun getItemsBySale(saleId: String): List<SaleItem>
+
     @Query("DELETE FROM sale_items WHERE saleId = :saleId")
     fun deleteAllForSale(saleId: String)
 }

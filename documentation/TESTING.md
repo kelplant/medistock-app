@@ -2,37 +2,54 @@
 
 ## 📋 Vue d'ensemble
 
-Ce projet dispose maintenant d'une suite complète de tests unitaires couvrant les composants critiques de l'application.
+Ce projet dispose d'une suite complète de tests couvrant les composants critiques de l'application, organisée en trois niveaux :
+- **Tests Shared (KMM)** : Logique métier partagée entre Android et iOS
+- **Tests Android** : Tests spécifiques à la plateforme Android
+- **Tests d'instrumentation** : Tests avec base de données réelle
 
 ## 🧪 Structure des Tests
 
 ```
+shared/src/
+└── commonTest/                     # Tests partagés KMM (Android + iOS)
+    └── kotlin/com/medistock/shared/
+        ├── ModelTests.kt           # Tests des modèles (Site, Product, User, etc.)
+        └── UseCaseTests.kt         # Tests des UseCases et règles métier
+
 app/src/
-├── test/                           # Tests unitaires (JVM)
+├── test/                           # Tests unitaires Android (JVM)
 │   └── java/com/medistock/
 │       ├── data/
-│       │   ├── dao/                # Tests des DAOs (ProductDao, PurchaseBatchDao, SaleDao, FIFO)
-│       │   ├── entities/           # Tests de validation des entités
-│       │   └── repository/         # Tests des repositories auditées
-│       └── util/                   # Tests des utilitaires (AuthManager, PermissionManager, PasswordHasher)
+│       │   └── entities/           # Tests de validation des entités
+│       └── util/                   # Tests des utilitaires (PasswordHasher, PermissionManager)
 │
 └── androidTest/                    # Tests d'instrumentation Android
     └── java/com/medistock/
-        ├── data/dao/               # Tests DAO avec base réelle
-        ├── ui/                     # Tests UI Espresso
-        └── integration/            # Tests d'intégration end-to-end
+        ├── data/dao/               # Tests DAO avec base réelle (FIFO, etc.)
+        ├── data/repository/        # Tests des repositories
+        └── ui/viewmodel/           # Tests ViewModels
 ```
 
 ## 🚀 Exécuter les Tests
 
-### Tous les tests unitaires
+### Tests du module Shared (KMM)
 ```bash
-./gradlew test
+# Tous les tests shared (Android + iOS)
+./gradlew :shared:allTests
+
+# Tests shared sur simulateur iOS uniquement
+./gradlew :shared:iosSimulatorArm64Test
+
+# Tests shared sur Android uniquement
+./gradlew :shared:testDebugUnitTest
 ```
 
-### Tests d'un module spécifique
+### Tests Android
 ```bash
-./gradlew test --tests "com.medistock.data.dao.*"
+# Tests unitaires Android
+./gradlew :app:testDebugUnitTest
+
+# Tests d'un module spécifique
 ./gradlew test --tests "com.medistock.util.*"
 ```
 
@@ -49,26 +66,36 @@ app/src/
 ### Rapport de couverture
 Les rapports HTML des tests sont générés dans :
 ```
-app/build/reports/tests/testDebugUnitTest/index.html
+shared/build/reports/tests/           # Tests shared
+app/build/reports/tests/testDebugUnitTest/index.html  # Tests Android
 ```
 
 ## 📊 Couverture des Tests
 
-### Tests Critiques (P0) ✅
-- ✅ **ProductDao** : 10 tests - CRUD, filtrage par site, jointures
-- ✅ **PurchaseBatchDao** : 14 tests - FIFO, quantités, dates d'expiration
-- ✅ **SaleDao** : 9 tests - Ventes avec items, transactions
-- ✅ **FIFO Allocation** : 8 tests - Allocation multi-lots, épuisement
-- ✅ **AuthManager** : 11 tests - Login, logout, sessions
+### Tests Shared (KMM) - Logique Métier ✅
+- ✅ **UseCaseTests** : Tests des inputs/outputs UseCases
+  - `PurchaseInput`, `SaleInput`, `TransferInput` validation
+  - `BusinessError` (ValidationError, NotFound, SameSiteTransfer, etc.)
+  - `BusinessWarning` (InsufficientStock, LowStock, ExpiringProduct)
+  - `UseCaseResult` (Success, Error, hasWarnings, getOrThrow, map)
+  - `PurchaseResult`, `SaleResult`, `TransferResult`
+  - `MovementType` constants
+- ✅ **ModelTests** : Tests des modèles partagés
+  - Site, Product, User, PurchaseBatch, Sale, SaleItem
+
+### Tests Android Critiques (P0) ✅
+- ✅ **FifoAllocationTest** : 8 tests - Allocation multi-lots, épuisement
+- ✅ **PurchaseBatchDaoTest** : FIFO, quantités, dates d'expiration
+- ✅ **SaleDaoTest** : Ventes avec items, transactions
 - ✅ **PermissionManager** : 11 tests - Permissions granulaires, admin bypass
 - ✅ **PasswordHasher** : 13 tests - BCrypt hashing, vérification
 
-### Tests Importants (P1) ✅
+### Tests Android Importants (P1) ✅
 - ✅ **AuditedProductRepository** : 4 tests - Audit logging
 - ✅ **ProductViewModel** : 5 tests - StateFlow, calculs de marge
 - ✅ **Entity Validation** : 13 tests - Validation entités, contraintes
 
-### Total : ~98 tests unitaires
+### Total : ~100+ tests (shared + Android)
 
 ## 🎯 Tests Clés
 
@@ -188,9 +215,18 @@ androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 3. **Tests de performance** - Requêtes lourdes, syncs massifs
 4. **Tests de migration** - Vérification migrations SQL
 
-### CI/CD
-Le projet dispose déjà d'une GitHub Action pour les releases.
-Considérer l'ajout d'une étape `./gradlew test` dans le workflow.
+### CI/CD ✅
+Le workflow GitHub Actions (`.github/workflows/ci.yml`) exécute automatiquement les tests :
+
+| Job | Commande | Plateforme |
+|-----|----------|------------|
+| `test-shared` | `./gradlew :shared:allTests` | Linux |
+| `build-android` | `./gradlew :app:testDebugUnitTest` | Linux |
+| `build-ios` | `./gradlew :shared:iosSimulatorArm64Test` | macOS |
+
+**Déclencheurs :**
+- Manuel (`workflow_dispatch`)
+- Push de tags (`v*`)
 
 ## ✅ Checklist Développeur
 

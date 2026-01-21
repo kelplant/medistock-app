@@ -234,18 +234,26 @@ object SyncMapper {
         id = id,
         saleId = saleId,
         productId = productId,
+        productName = productName,
+        unit = unit,
         quantity = quantity,
-        unitPrice = unitPrice,
-        totalPrice = totalPrice
+        pricePerUnit = pricePerUnit,
+        subtotal = subtotal,
+        createdAt = createdAt,
+        createdBy = createdBy
     )
 
     fun SaleItemDto.toEntity(): SaleItem = SaleItem(
         id = id,
         saleId = saleId,
         productId = productId,
+        productName = productName,
+        unit = unit,
         quantity = quantity,
-        unitPrice = unitPrice,
-        totalPrice = totalPrice
+        pricePerUnit = pricePerUnit,
+        subtotal = subtotal,
+        createdAt = createdAt,
+        createdBy = createdBy
     )
 
     // ==================== PurchaseBatch ====================
@@ -294,8 +302,8 @@ object SyncMapper {
         siteId = siteId,
         quantity = quantity,
         type = type,
-        referenceId = referenceId,
-        notes = notes,
+        purchasePriceAtMovement = purchasePriceAtMovement,
+        sellingPriceAtMovement = sellingPriceAtMovement,
         date = date,
         createdAt = createdAt,
         createdBy = createdBy
@@ -307,8 +315,8 @@ object SyncMapper {
         siteId = siteId,
         quantity = quantity,
         type = type,
-        referenceId = referenceId,
-        notes = notes,
+        purchasePriceAtMovement = purchasePriceAtMovement,
+        sellingPriceAtMovement = sellingPriceAtMovement,
         date = date,
         createdAt = createdAt,
         createdBy = createdBy

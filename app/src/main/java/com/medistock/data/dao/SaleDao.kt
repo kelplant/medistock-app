@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SaleDao {
+    @Query("SELECT * FROM sales")
+    fun getAll(): Flow<List<Sale>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(sale: Sale): Long
 
