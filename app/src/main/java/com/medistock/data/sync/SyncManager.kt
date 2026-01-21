@@ -345,23 +345,15 @@ class SyncManager(
     private suspend fun syncUsersToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
             val localUsers = database.userDao().getAllUsers()
-            println("📤 Sync Users: ${localUsers.size} utilisateur(s) à synchroniser")
             localUsers.forEach { user ->
                 try {
-                    println("📤 Sync User: ${user.username} (id=${user.id})")
                     val dto = user.toDto()
-                    println("📤 User DTO: username=${dto.username}, fullName=${dto.fullName}, isAdmin=${dto.isAdmin}")
-                    val result = userRepo.upsert(dto)
-                    println("✅ User synced: ${result.username}")
+                    userRepo.upsert(dto)
                 } catch (e: Exception) {
-                    println("❌ User sync failed: ${user.username} - ${e.message}")
-                    e.printStackTrace()
                     onError?.invoke("User: ${user.username}", e)
                 }
             }
         } catch (e: Exception) {
-            println("❌ Users sync failed: ${e.message}")
-            e.printStackTrace()
             onError?.invoke("Users", e)
         }
     }
