@@ -157,7 +157,8 @@ class SupabaseClient {
 
         let body = try JSONSerialization.data(withJSONObject: recordDict)
         var request = try buildRequest(endpoint: table, method: "POST", body: body)
-        request.setValue("resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
+        // Combine return=representation (to get response body) with resolution=merge-duplicates (for upsert)
+        request.setValue("return=representation,resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
 
         let (data, response) = try await session.data(for: request)
 
