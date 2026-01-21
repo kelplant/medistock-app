@@ -275,4 +275,4 @@ struct UserEditorView: View {
     }
 }
 
-extension User: Identifiable {}
+extension User: @retroactive Identifiable {}

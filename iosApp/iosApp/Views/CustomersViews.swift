@@ -268,4 +268,4 @@ struct CustomerEditorView: View {
     }
 }
 
-extension Customer: Identifiable {}
+extension Customer: @retroactive Identifiable {}

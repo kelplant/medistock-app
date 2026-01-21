@@ -308,4 +308,4 @@ struct ProductEditorView: View {
     }
 }
 
-extension Product: Identifiable {}
+extension Product: @retroactive Identifiable {}

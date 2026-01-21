@@ -397,4 +397,4 @@ struct TransferEditorView: View {
     }
 }
 
-extension ProductTransfer: Identifiable {}
+extension ProductTransfer: @retroactive Identifiable {}

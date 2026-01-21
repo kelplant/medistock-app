@@ -185,4 +185,4 @@ struct AuditEntryRowView: View {
     }
 }
 
-extension AuditEntry: Identifiable {}
+extension AuditEntry: @retroactive Identifiable {}
