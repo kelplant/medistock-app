@@ -77,7 +77,7 @@ struct UserPermission: Codable, Identifiable {
 }
 
 /// Manages user permissions - mirrors Android PermissionManager
-/// Uses UserDefaults as local primary store for offline-first behavior
+/// Online-first: tries Supabase first, falls back to local cache if offline
 class PermissionManager: ObservableObject {
     static let shared = PermissionManager()
 
@@ -127,39 +127,41 @@ class PermissionManager: ObservableObject {
         permissions.first { $0.module == module.rawValue }
     }
 
-    // MARK: - Permission Loading (offline-first)
+    // MARK: - Permission Loading (online-first)
 
-    /// Load permissions for current user - local first, then sync from Supabase
+    /// Load permissions for current user - online first, fallback to local cache
     func loadPermissions(forUserId userId: String) async {
-        // 1. Load from local storage first (immediate)
+        await MainActor.run { isLoading = true }
+
+        // Try Supabase first if configured
+        if supabase.isConfigured {
+            do {
+                let fetchedPermissions: [UserPermission] = try await supabase.fetch(
+                    from: "user_permissions",
+                    filter: ["user_id": userId]
+                )
+
+                await MainActor.run {
+                    self.permissions = fetchedPermissions
+                    self.isLoading = false
+                    self.lastError = nil
+                    // Sync to local cache
+                    self.savePermissionsLocally(fetchedPermissions, forUserId: userId)
+                }
+                return
+            } catch {
+                await MainActor.run {
+                    self.lastError = error.localizedDescription
+                }
+                // Fall through to local fallback
+            }
+        }
+
+        // Fallback to local cache if offline or Supabase not configured
         let localPermissions = loadPermissionsLocally(forUserId: userId)
         await MainActor.run {
             self.permissions = localPermissions
-        }
-
-        // 2. Try to sync from Supabase in background
-        guard supabase.isConfigured else { return }
-
-        await MainActor.run { isLoading = true }
-
-        do {
-            let fetchedPermissions: [UserPermission] = try await supabase.fetch(
-                from: "user_permissions",
-                filter: ["user_id": userId]
-            )
-
-            await MainActor.run {
-                self.permissions = fetchedPermissions
-                self.isLoading = false
-                self.lastError = nil
-                self.savePermissionsLocally(fetchedPermissions, forUserId: userId)
-            }
-        } catch {
-            await MainActor.run {
-                self.isLoading = false
-                self.lastError = error.localizedDescription
-                // Keep using local permissions (already loaded)
-            }
+            self.isLoading = false
         }
     }
 
@@ -194,87 +196,86 @@ class PermissionManager: ObservableObject {
         permissions = loadPermissionsLocally(forUserId: userId)
     }
 
-    // MARK: - Admin functions (for permission management UI) - offline-first
+    // MARK: - Admin functions (for permission management UI) - online-first
 
-    /// Save a permission - local first, then sync to Supabase
+    /// Save a permission - online first, fallback to local if offline
     func savePermission(_ permission: UserPermission) async throws {
-        // 1. Save locally first
-        var userPermissions = loadPermissionsLocally(forUserId: permission.userId)
-        if let index = userPermissions.firstIndex(where: { $0.id == permission.id }) {
-            userPermissions[index] = permission
+        // Try Supabase first if configured
+        if supabase.isConfigured {
+            do {
+                _ = try await supabase.upsert(into: "user_permissions", record: permission)
+                // Success - sync to local cache
+                var userPermissions = loadPermissionsLocally(forUserId: permission.userId)
+                if let index = userPermissions.firstIndex(where: { $0.id == permission.id }) {
+                    userPermissions[index] = permission
+                } else {
+                    userPermissions.append(permission)
+                }
+                savePermissionsLocally(userPermissions, forUserId: permission.userId)
+
+                // Update current user's permissions if applicable
+                let currentUserId = SessionManager.shared.userId
+                if permission.userId == currentUserId {
+                    await MainActor.run {
+                        self.permissions = userPermissions
+                    }
+                }
+                return
+            } catch {
+                // If offline, fall through to local-only save
+                throw error
+            }
         } else {
-            userPermissions.append(permission)
-        }
-        savePermissionsLocally(userPermissions, forUserId: permission.userId)
-
-        // Update current user's permissions if applicable
-        let currentUserId = SessionManager.shared.userId
-        if permission.userId == currentUserId {
-            await MainActor.run {
-                self.permissions = userPermissions
-            }
-        }
-
-        // 2. Sync to Supabase in background (non-blocking)
-        if supabase.isConfigured {
-            Task {
-                do {
-                    _ = try await supabase.upsert(into: "user_permissions", record: permission)
-                } catch {
-                    print("Warning: Failed to sync permission to Supabase: \(error). Will sync on next sync cycle.")
-                }
-            }
+            throw SupabaseError.notConfigured
         }
     }
 
-    /// Delete a permission - local first, then sync to Supabase
+    /// Delete a permission - online first, fallback to local if offline
     func deletePermission(_ permission: UserPermission) async throws {
-        // 1. Delete locally first
-        var userPermissions = loadPermissionsLocally(forUserId: permission.userId)
-        userPermissions.removeAll { $0.id == permission.id }
-        savePermissionsLocally(userPermissions, forUserId: permission.userId)
-
-        // Update current user's permissions if applicable
-        let currentUserId = SessionManager.shared.userId
-        if permission.userId == currentUserId {
-            await MainActor.run {
-                self.permissions = userPermissions
-            }
-        }
-
-        // 2. Sync to Supabase in background (non-blocking)
+        // Try Supabase first if configured
         if supabase.isConfigured {
-            Task {
-                do {
-                    try await supabase.delete(from: "user_permissions", id: permission.id)
-                } catch {
-                    print("Warning: Failed to delete permission from Supabase: \(error). Will sync on next sync cycle.")
+            do {
+                try await supabase.delete(from: "user_permissions", id: permission.id)
+                // Success - sync to local cache
+                var userPermissions = loadPermissionsLocally(forUserId: permission.userId)
+                userPermissions.removeAll { $0.id == permission.id }
+                savePermissionsLocally(userPermissions, forUserId: permission.userId)
+
+                // Update current user's permissions if applicable
+                let currentUserId = SessionManager.shared.userId
+                if permission.userId == currentUserId {
+                    await MainActor.run {
+                        self.permissions = userPermissions
+                    }
                 }
+                return
+            } catch {
+                throw error
             }
+        } else {
+            throw SupabaseError.notConfigured
         }
     }
 
-    /// Get all permissions for a specific user (admin function) - offline-first
+    /// Get all permissions for a specific user (admin function) - online first
     func getPermissions(forUserId userId: String) async throws -> [UserPermission] {
-        // 1. Load from local first
-        var localPermissions = loadPermissionsLocally(forUserId: userId)
-
-        // 2. Try to fetch from Supabase and merge
+        // Try Supabase first if configured
         if supabase.isConfigured {
             do {
                 let remotePermissions: [UserPermission] = try await supabase.fetch(
                     from: "user_permissions",
                     filter: ["user_id": userId]
                 )
-                // Use remote as source of truth if available
-                localPermissions = remotePermissions
+                // Sync to local cache
                 savePermissionsLocally(remotePermissions, forUserId: userId)
+                return remotePermissions
             } catch {
-                // Fall back to local permissions
+                // Fallback to local cache if offline
                 print("Warning: Failed to fetch permissions from Supabase: \(error). Using local cache.")
             }
         }
 
-        return localPermissions
+        // Fallback to local cache
+        return loadPermissionsLocally(forUserId: userId)
     }
 }

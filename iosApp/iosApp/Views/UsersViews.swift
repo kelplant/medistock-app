@@ -268,7 +268,7 @@ struct UserEditorView: View {
                         finalPassword = PasswordHasher.shared.hashPassword(password) ?? password
                     }
 
-                    let updated = User(
+                    savedUser = User(
                         id: existingUser.id,
                         username: trimmedUsername,
                         password: finalPassword,
@@ -280,46 +280,42 @@ struct UserEditorView: View {
                         createdBy: existingUser.createdBy,
                         updatedBy: session.username
                     )
-                    try await sdk.userRepository.update(user: updated)
-                    savedUser = updated
                 } else {
                     // Create new user - hash password with BCrypt
                     let hashedPassword = PasswordHasher.shared.hashPassword(password) ?? password
 
-                    let newUser = sdk.createUser(
+                    savedUser = sdk.createUser(
                         username: trimmedUsername,
                         password: hashedPassword,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
                         userId: session.username
                     )
-                    try await sdk.userRepository.insert(user: newUser)
-                    savedUser = newUser
                 }
 
-                // Local save succeeded - now sync to Supabase in background (non-blocking)
-                // Note: app_users table doesn't have client_id column
+                // Online-first: try Supabase first if configured
                 if SupabaseClient.shared.isConfigured {
-                    let userToSync = savedUser
-                    Task {
-                        do {
-                            let remoteUser = RemoteUser(
-                                id: userToSync.id,
-                                username: userToSync.username,
-                                password: userToSync.password,
-                                fullName: userToSync.fullName,
-                                isAdmin: userToSync.isAdmin,
-                                isActive: userToSync.isActive,
-                                createdAt: userToSync.createdAt,
-                                updatedAt: userToSync.updatedAt,
-                                createdBy: userToSync.createdBy,
-                                updatedBy: userToSync.updatedBy
-                            )
-                            _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser, includeClientId: false)
-                        } catch {
-                            print("Warning: Failed to sync user to Supabase: \(error). Will sync on next sync cycle.")
-                        }
-                    }
+                    let remoteUser = RemoteUser(
+                        id: savedUser.id,
+                        username: savedUser.username,
+                        password: savedUser.password,
+                        fullName: savedUser.fullName,
+                        isAdmin: savedUser.isAdmin,
+                        isActive: savedUser.isActive,
+                        createdAt: savedUser.createdAt,
+                        updatedAt: savedUser.updatedAt,
+                        createdBy: savedUser.createdBy,
+                        updatedBy: savedUser.updatedBy
+                    )
+                    // Note: app_users table doesn't have client_id column
+                    _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser, includeClientId: false)
+                }
+
+                // Sync to local database
+                if user != nil {
+                    try await sdk.userRepository.update(user: savedUser)
+                } else {
+                    try await sdk.userRepository.insert(user: savedUser)
                 }
 
                 await MainActor.run {

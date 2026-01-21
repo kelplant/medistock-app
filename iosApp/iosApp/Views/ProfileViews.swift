@@ -232,7 +232,7 @@ struct ChangePasswordView: View {
 
         Task {
             do {
-                // 1. Get current user from local database
+                // 1. Get current user from local database (needed for password verification)
                 guard let user = try await sdk.userRepository.getById(id: session.userId) else {
                     throw PasswordChangeError.userNotFound
                 }
@@ -247,7 +247,12 @@ struct ChangePasswordView: View {
                     throw PasswordChangeError.hashingFailed
                 }
 
-                // 4. Update local database first (offline-first)
+                // 4. Online-first: update Supabase first if configured
+                if SupabaseClient.shared.isConfigured {
+                    try await syncPasswordToSupabase(hashedPassword: hashedPassword)
+                }
+
+                // 5. Sync to local database
                 let updatedUser = User(
                     id: user.id,
                     username: user.username,
@@ -261,17 +266,6 @@ struct ChangePasswordView: View {
                     updatedBy: session.userId
                 )
                 try await sdk.userRepository.update(user: updatedUser)
-
-                // 5. Sync to Supabase if configured (non-blocking, errors logged but not shown)
-                if SupabaseClient.shared.isConfigured {
-                    Task {
-                        do {
-                            try await syncPasswordToSupabase(hashedPassword: hashedPassword)
-                        } catch {
-                            print("Warning: Failed to sync password to Supabase: \(error). Will sync on next sync cycle.")
-                        }
-                    }
-                }
 
                 await MainActor.run {
                     isLoading = false
