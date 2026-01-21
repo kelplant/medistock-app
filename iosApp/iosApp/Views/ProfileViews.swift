@@ -122,7 +122,7 @@ struct ProfileMenuView: View {
                 }
 
                 Section {
-                    NavigationLink(destination: ChangePasswordView(session: session)) {
+                    NavigationLink(destination: ChangePasswordView(sdk: sdk, session: session)) {
                         Label("Changer le mot de passe", systemImage: "key")
                     }
                 }
@@ -159,6 +159,7 @@ struct ProfileMenuView: View {
 
 // MARK: - Change Password View
 struct ChangePasswordView: View {
+    let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
     @Environment(\.dismiss) private var dismiss
 
@@ -231,9 +232,45 @@ struct ChangePasswordView: View {
 
         Task {
             do {
-                // Update password via Supabase if configured
+                // 1. Get current user from local database
+                guard let user = try await sdk.userRepository.getById(id: session.userId) else {
+                    throw PasswordChangeError.userNotFound
+                }
+
+                // 2. Verify current password using BCrypt
+                guard PasswordHasher.shared.verifyPassword(currentPassword, storedPassword: user.password) else {
+                    throw PasswordChangeError.incorrectPassword
+                }
+
+                // 3. Hash new password with BCrypt
+                guard let hashedPassword = PasswordHasher.shared.hashPassword(newPassword) else {
+                    throw PasswordChangeError.hashingFailed
+                }
+
+                // 4. Update local database first (offline-first)
+                let updatedUser = User(
+                    id: user.id,
+                    username: user.username,
+                    password: hashedPassword,
+                    fullName: user.fullName,
+                    isAdmin: user.isAdmin,
+                    isActive: user.isActive,
+                    createdAt: user.createdAt,
+                    updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
+                    createdBy: user.createdBy,
+                    updatedBy: session.userId
+                )
+                try await sdk.userRepository.update(user: updatedUser)
+
+                // 5. Sync to Supabase if configured (non-blocking, errors logged but not shown)
                 if SupabaseClient.shared.isConfigured {
-                    try await updatePasswordOnSupabase()
+                    Task {
+                        do {
+                            try await syncPasswordToSupabase(hashedPassword: hashedPassword)
+                        } catch {
+                            print("Warning: Failed to sync password to Supabase: \(error). Will sync on next sync cycle.")
+                        }
+                    }
                 }
 
                 await MainActor.run {
@@ -257,17 +294,14 @@ struct ChangePasswordView: View {
         }
     }
 
-    private func updatePasswordOnSupabase() async throws {
-        // Build update request
+    private func syncPasswordToSupabase(hashedPassword: String) async throws {
         guard let baseUrl = SupabaseClient.shared.supabaseUrl,
               let apiKey = SupabaseClient.shared.supabaseKey else {
-            throw SupabaseError.notConfigured
+            return
         }
 
         let urlString = "\(baseUrl)/rest/v1/app_users?id=eq.\(session.userId)"
-        guard let url = URL(string: urlString) else {
-            throw SupabaseError.invalidURL
-        }
+        guard let url = URL(string: urlString) else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "PATCH"
@@ -276,7 +310,7 @@ struct ChangePasswordView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: Any] = [
-            "password": newPassword,
+            "password": hashedPassword,
             "updated_at": Int64(Date().timeIntervalSince1970 * 1000),
             "updated_by": session.userId
         ]
@@ -287,6 +321,24 @@ struct ChangePasswordView: View {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             throw SupabaseError.serverError(statusCode: (response as? HTTPURLResponse)?.statusCode ?? 500)
+        }
+    }
+}
+
+// MARK: - Password Change Errors
+enum PasswordChangeError: LocalizedError {
+    case userNotFound
+    case incorrectPassword
+    case hashingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .userNotFound:
+            return "Utilisateur non trouvé"
+        case .incorrectPassword:
+            return "Mot de passe actuel incorrect"
+        case .hashingFailed:
+            return "Erreur lors du hachage du mot de passe"
         }
     }
 }

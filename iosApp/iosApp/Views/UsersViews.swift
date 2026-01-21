@@ -297,22 +297,29 @@ struct UserEditorView: View {
                     savedUser = newUser
                 }
 
-                // Push to Supabase if configured
+                // Local save succeeded - now sync to Supabase in background (non-blocking)
                 // Note: app_users table doesn't have client_id column
                 if SupabaseClient.shared.isConfigured {
-                    let remoteUser = RemoteUser(
-                        id: savedUser.id,
-                        username: savedUser.username,
-                        password: savedUser.password,
-                        fullName: savedUser.fullName,
-                        isAdmin: savedUser.isAdmin,
-                        isActive: savedUser.isActive,
-                        createdAt: savedUser.createdAt,
-                        updatedAt: savedUser.updatedAt,
-                        createdBy: savedUser.createdBy,
-                        updatedBy: savedUser.updatedBy
-                    )
-                    _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser, includeClientId: false)
+                    let userToSync = savedUser
+                    Task {
+                        do {
+                            let remoteUser = RemoteUser(
+                                id: userToSync.id,
+                                username: userToSync.username,
+                                password: userToSync.password,
+                                fullName: userToSync.fullName,
+                                isAdmin: userToSync.isAdmin,
+                                isActive: userToSync.isActive,
+                                createdAt: userToSync.createdAt,
+                                updatedAt: userToSync.updatedAt,
+                                createdBy: userToSync.createdBy,
+                                updatedBy: userToSync.updatedBy
+                            )
+                            _ = try await SupabaseClient.shared.upsert(into: "app_users", record: remoteUser, includeClientId: false)
+                        } catch {
+                            print("Warning: Failed to sync user to Supabase: \(error). Will sync on next sync cycle.")
+                        }
+                    }
                 }
 
                 await MainActor.run {
