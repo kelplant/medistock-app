@@ -65,27 +65,28 @@ struct SitesView: View {
     @MainActor
     private func loadSites() async {
         errorMessage = nil
-        sdk.siteRepository.getAll { result, error in
-            DispatchQueue.main.async {
-                if let error {
-                    errorMessage = "Erreur lors du chargement: \(error.localizedDescription)"
-                    sites = []
-                    return
-                }
-                sites = result as? [Site] ?? []
-            }
+        do {
+            let result = try await sdk.siteRepository.getAll()
+            sites = result
+        } catch {
+            errorMessage = "Erreur lors du chargement: \(error.localizedDescription)"
+            sites = []
         }
     }
 
     private func addSite(name: String) {
-        let newSite = sdk.createSite(name: name)
-        sdk.siteRepository.insert(site: newSite) { _, error in
-            DispatchQueue.main.async {
-                if let error {
+        let newSite = sdk.createSite(name: name, userId: "ios")
+        Task {
+            await MainActor.run {
+                errorMessage = nil
+            }
+            do {
+                try await sdk.siteRepository.insert(site: newSite)
+                await loadSites()
+            } catch {
+                await MainActor.run {
                     errorMessage = "Erreur lors de l'ajout: \(error.localizedDescription)"
-                    return
                 }
-                Task { await loadSites() }
             }
         }
     }
@@ -158,26 +159,20 @@ struct ProductsView: View {
     @MainActor
     private func loadProducts() async {
         errorMessage = nil
-        sdk.siteRepository.getAll { siteResult, siteError in
-            DispatchQueue.main.async {
-                if let siteError {
-                    errorMessage = "Erreur lors du chargement des sites: \(siteError.localizedDescription)"
-                    sites = []
-                } else {
-                    sites = siteResult as? [Site] ?? []
-                }
-            }
+        do {
+            let siteResult = try await sdk.siteRepository.getAll()
+            sites = siteResult
+        } catch {
+            errorMessage = "Erreur lors du chargement des sites: \(error.localizedDescription)"
+            sites = []
         }
 
-        sdk.productRepository.getAll { result, error in
-            DispatchQueue.main.async {
-                if let error {
-                    errorMessage = "Erreur lors du chargement: \(error.localizedDescription)"
-                    products = []
-                    return
-                }
-                products = result as? [Product] ?? []
-            }
+        do {
+            let result = try await sdk.productRepository.getAll()
+            products = result
+        } catch {
+            errorMessage = "Erreur lors du chargement: \(error.localizedDescription)"
+            products = []
         }
     }
 
@@ -186,15 +181,20 @@ struct ProductsView: View {
             name: name,
             siteId: siteId,
             unit: unit,
-            unitVolume: volume
+            unitVolume: volume,
+            userId: "ios"
         )
-        sdk.productRepository.insert(product: newProduct) { _, error in
-            DispatchQueue.main.async {
-                if let error {
+        Task {
+            await MainActor.run {
+                errorMessage = nil
+            }
+            do {
+                try await sdk.productRepository.insert(product: newProduct)
+                await loadProducts()
+            } catch {
+                await MainActor.run {
                     errorMessage = "Erreur lors de l'ajout: \(error.localizedDescription)"
-                    return
                 }
-                Task { await loadProducts() }
             }
         }
     }
