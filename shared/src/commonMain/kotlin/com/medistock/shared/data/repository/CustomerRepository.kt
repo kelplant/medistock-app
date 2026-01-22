@@ -29,6 +29,7 @@ class CustomerRepository(private val database: MedistockDatabase) {
             email = customer.email,
             address = customer.address,
             notes = customer.notes,
+            site_id = customer.siteId,
             created_at = customer.createdAt,
             updated_at = customer.updatedAt,
             created_by = customer.createdBy,
@@ -43,10 +44,19 @@ class CustomerRepository(private val database: MedistockDatabase) {
             email = customer.email,
             address = customer.address,
             notes = customer.notes,
+            site_id = customer.siteId,
             updated_at = customer.updatedAt,
             updated_by = customer.updatedBy,
             id = customer.id
         )
+    }
+
+    suspend fun getBySite(siteId: String): List<Customer> = withContext(Dispatchers.Default) {
+        queries.getCustomersBySite(siteId).executeAsList().map { it.toModel() }
+    }
+
+    suspend fun search(query: String): List<Customer> = withContext(Dispatchers.Default) {
+        queries.searchCustomers(query, query).executeAsList().map { it.toModel() }
     }
 
     suspend fun delete(id: String) = withContext(Dispatchers.Default) {
@@ -68,6 +78,7 @@ class CustomerRepository(private val database: MedistockDatabase) {
             email = email,
             address = address,
             notes = notes,
+            siteId = site_id,
             createdAt = created_at,
             updatedAt = updated_at,
             createdBy = created_by,

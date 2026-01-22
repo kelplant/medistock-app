@@ -149,10 +149,12 @@ CREATE TABLE customers (
     email TEXT,
     address TEXT,
     notes TEXT,
+    site_id TEXT,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
-    updated_by TEXT NOT NULL DEFAULT ''
+    updated_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (site_id) REFERENCES sites(id)
 );
 
 CREATE TABLE sales (
@@ -514,11 +516,11 @@ getCustomerById:
 SELECT * FROM customers WHERE id = ?;
 
 insertCustomer:
-INSERT INTO customers(id, name, phone, email, address, notes, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO customers(id, name, phone, email, address, notes, site_id, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateCustomer:
-UPDATE customers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE customers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, site_id = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 deleteCustomer:
 DELETE FROM customers WHERE id = ?;
@@ -604,3 +606,197 @@ SELECT * FROM product_prices WHERE product_id = ? AND site_id = ? ORDER BY creat
 insertProductPrice:
 INSERT INTO product_prices(id, product_id, site_id, price, created_at, updated_at, created_by, updated_by)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+-- ============================================
+-- ADDITIONAL QUERIES - Products with Category
+-- ============================================
+
+getProductsWithCategory:
+SELECT p.id, p.name, p.unit, p.category_id, c.name AS category_name,
+       p.margin_type, p.margin_value, p.unit_volume, p.site_id,
+       p.min_stock, p.max_stock, p.description
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+ORDER BY p.name;
+
+getProductsWithCategoryForSite:
+SELECT p.id, p.name, p.unit, p.category_id, c.name AS category_name,
+       p.margin_type, p.margin_value, p.unit_volume, p.site_id,
+       p.min_stock, p.max_stock, p.description
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+WHERE p.site_id = ?
+ORDER BY p.name;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Users
+-- ============================================
+
+getActiveUsers:
+SELECT * FROM app_users WHERE is_active = 1 ORDER BY full_name;
+
+getUserForAuth:
+SELECT * FROM app_users WHERE username = ? AND is_active = 1 LIMIT 1;
+
+deactivateUser:
+UPDATE app_users SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+countActiveAdmins:
+SELECT COUNT(*) FROM app_users WHERE is_admin = 1 AND is_active = 1;
+
+deleteUser:
+DELETE FROM app_users WHERE id = ?;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Sales
+-- ============================================
+
+deleteSale:
+DELETE FROM sales WHERE id = ?;
+
+updateSale:
+UPDATE sales SET customer_name = ?, customer_id = ?, total_amount = ? WHERE id = ?;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Sale Items
+-- ============================================
+
+deleteSaleItemsBySale:
+DELETE FROM sale_items WHERE sale_id = ?;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Sale Batch Allocations
+-- ============================================
+
+deleteSaleBatchAllocationsBySaleItem:
+DELETE FROM sale_batch_allocations WHERE sale_item_id = ?;
+
+getAllSaleBatchAllocations:
+SELECT * FROM sale_batch_allocations;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Purchase Batches
+-- ============================================
+
+getAllBatchesIncludingExhausted:
+SELECT * FROM purchase_batches ORDER BY purchase_date DESC;
+
+getBatchesBySite:
+SELECT * FROM purchase_batches WHERE site_id = ? ORDER BY purchase_date DESC;
+
+deleteBatch:
+DELETE FROM purchase_batches WHERE id = ?;
+
+updateBatch:
+UPDATE purchase_batches SET batch_number = ?, initial_quantity = ?, remaining_quantity = ?, purchase_price = ?, supplier_name = ?, expiry_date = ?, is_exhausted = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Customers
+-- ============================================
+
+getCustomersBySite:
+SELECT * FROM customers WHERE site_id = ? ORDER BY name;
+
+searchCustomers:
+SELECT * FROM customers WHERE name LIKE '%' || ? || '%' OR phone LIKE '%' || ? || '%' ORDER BY name;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Stock Movements
+-- ============================================
+
+getStockMovementsByProductAndSite:
+SELECT * FROM stock_movements WHERE product_id = ? AND site_id = ? ORDER BY created_at DESC;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Current Stock (computed with stock movements)
+-- ============================================
+
+getCurrentStockForSite:
+SELECT
+    p.id AS product_id,
+    p.name AS product_name,
+    p.unit AS unit,
+    COALESCE(c.name, '') AS category_name,
+    s.id AS site_id,
+    s.name AS site_name,
+    COALESCE(
+        SUM(CASE WHEN sm.movement_type = 'in' THEN sm.quantity ELSE 0 END) -
+        SUM(CASE WHEN sm.movement_type = 'out' THEN sm.quantity ELSE 0 END),
+        0
+    ) AS quantity_on_hand,
+    COALESCE(p.min_stock, 0.0) AS min_stock,
+    COALESCE(p.max_stock, 0.0) AS max_stock
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+CROSS JOIN sites s
+LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.site_id = s.id
+WHERE s.id = ?
+GROUP BY p.id, s.id
+ORDER BY p.name;
+
+getCurrentStockAllSites:
+SELECT
+    p.id AS product_id,
+    p.name AS product_name,
+    p.unit AS unit,
+    COALESCE(c.name, '') AS category_name,
+    s.id AS site_id,
+    s.name AS site_name,
+    COALESCE(
+        SUM(CASE WHEN sm.movement_type = 'in' THEN sm.quantity ELSE 0 END) -
+        SUM(CASE WHEN sm.movement_type = 'out' THEN sm.quantity ELSE 0 END),
+        0
+    ) AS quantity_on_hand,
+    COALESCE(p.min_stock, 0.0) AS min_stock,
+    COALESCE(p.max_stock, 0.0) AS max_stock
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+CROSS JOIN sites s
+LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.site_id = s.id
+GROUP BY p.id, s.id
+ORDER BY s.name, p.name;
+
+getCurrentStockForProductAndSite:
+SELECT
+    p.id AS product_id,
+    p.name AS product_name,
+    p.unit AS unit,
+    COALESCE(c.name, '') AS category_name,
+    s.id AS site_id,
+    s.name AS site_name,
+    COALESCE(
+        SUM(CASE WHEN sm.movement_type = 'in' THEN sm.quantity ELSE 0 END) -
+        SUM(CASE WHEN sm.movement_type = 'out' THEN sm.quantity ELSE 0 END),
+        0
+    ) AS quantity_on_hand,
+    COALESCE(p.min_stock, 0.0) AS min_stock,
+    COALESCE(p.max_stock, 0.0) AS max_stock
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+CROSS JOIN sites s
+LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.site_id = s.id
+WHERE p.id = ? AND s.id = ?
+GROUP BY p.id, s.id;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Inventories (detailed)
+-- ============================================
+
+getInventoriesWithDiscrepancy:
+SELECT * FROM inventories WHERE status = 'completed' ORDER BY started_at DESC;
+
+deleteInventory:
+DELETE FROM inventories WHERE id = ?;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Product Transfers
+-- ============================================
+
+getTransfersByFromSite:
+SELECT * FROM product_transfers WHERE from_site_id = ? ORDER BY created_at DESC;
+
+getTransfersByToSite:
+SELECT * FROM product_transfers WHERE to_site_id = ? ORDER BY created_at DESC;
+
+deleteTransfer:
+DELETE FROM product_transfers WHERE id = ?;

@@ -8,17 +8,17 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Category
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Category
 import com.medistock.util.AuthManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class CategoryAddEditActivity : AppCompatActivity() {
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private var categoryId: String? = null
     private var existingCategory: Category? = null
@@ -27,7 +27,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_category_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         val editName = findViewById<EditText>(R.id.editCategoryName)
@@ -39,7 +39,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
             supportActionBar?.title = "Edit Category"
             btnDelete.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
-                val cat = db.categoryDao().getById(categoryId!!).first()
+                val cat = sdk.categoryRepository.getById(categoryId!!)
                 runOnUiThread {
                     if (cat != null) {
                         existingCategory = cat
@@ -60,26 +60,18 @@ class CategoryAddEditActivity : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 val currentUser = authManager.getUsername().ifBlank { "system" }
                 if (categoryId == null) {
-                    db.categoryDao().insert(
-                        Category(
-                            name = name,
-                            createdBy = currentUser,
-                            updatedBy = currentUser
-                        )
-                    )
+                    val newCategory = sdk.createCategory(name = name, userId = currentUser)
+                    sdk.categoryRepository.insert(newCategory)
                 } else {
-                    val createdAt = existingCategory?.createdAt ?: System.currentTimeMillis()
-                    val createdBy = existingCategory?.createdBy?.ifBlank { currentUser } ?: currentUser
-                    db.categoryDao().update(
-                        Category(
-                            id = categoryId!!,
-                            name = name,
-                            createdAt = createdAt,
-                            updatedAt = System.currentTimeMillis(),
-                            createdBy = createdBy,
-                            updatedBy = currentUser
-                        )
+                    val updatedCategory = Category(
+                        id = categoryId!!,
+                        name = name,
+                        createdAt = existingCategory?.createdAt ?: System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                        createdBy = existingCategory?.createdBy?.ifBlank { currentUser } ?: currentUser,
+                        updatedBy = currentUser
                     )
+                    sdk.categoryRepository.update(updatedCategory)
                 }
                 finish()
             }
@@ -105,13 +97,10 @@ class CategoryAddEditActivity : AppCompatActivity() {
         if (categoryId == null) return
 
         CoroutineScope(Dispatchers.IO).launch {
-            val category = db.categoryDao().getById(categoryId!!).first()
-            if (category != null) {
-                db.categoryDao().delete(category)
-                runOnUiThread {
-                    Toast.makeText(this@CategoryAddEditActivity, "Category deleted", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
+            sdk.categoryRepository.delete(categoryId!!)
+            runOnUiThread {
+                Toast.makeText(this@CategoryAddEditActivity, "Category deleted", Toast.LENGTH_SHORT).show()
+                finish()
             }
         }
     }

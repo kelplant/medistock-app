@@ -3,7 +3,7 @@ package com.medistock.ui.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.medistock.data.entities.Category
+import com.medistock.shared.domain.model.Category
 import com.medistock.databinding.ItemCategoryBinding
 
 class CategoryAdapter(

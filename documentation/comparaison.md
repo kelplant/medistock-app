@@ -125,12 +125,38 @@
 
 ## 7. Écarts Critiques à Corriger
 
-| Priorité | Écart | Description | Action recommandée |
-|----------|-------|-------------|-------------------|
-| 🔴 Haute | **Double DB Android** | Android utilise Room ET SQLDelight | Migrer Android vers SQLDelight seul |
-| 🟡 Moyenne | **ConflictResolver** | Android a stratégies, iOS hardcodé | Créer ConflictResolver partagé |
-| 🟡 Moyenne | **Retry strategy** | ExponentialBackoff vs fixed | Partager la stratégie |
-| 🟢 Basse | **DTOs sync** | Légère duplication | Unifier dans shared |
+| Priorité | Écart | Description | Statut |
+|----------|-------|-------------|--------|
+| 🔴 Haute | **Double DB Android** | Android utilise Room ET SQLDelight | ⏳ Migration en cours (voir section 7.1) |
+| ✅ Fait | **ConflictResolver** | Android a stratégies, iOS hardcodé | ✅ ConflictResolver partagé créé |
+| ✅ Fait | **Retry strategy** | ExponentialBackoff vs fixed | ✅ RetryConfiguration partagé créé |
+| ✅ Fait | **DTOs sync** | Légère duplication | ✅ DTOs unifiés dans shared |
+
+### 7.1 Migration Room → SQLDelight (En cours)
+
+**Progrès:**
+- ✅ SQLDelight queries complètes (90+ queries)
+- ✅ Customer model avec siteId
+- ✅ Category Activities migrées (CategoryListActivity, CategoryAddEditActivity)
+- ✅ CategoryAdapter migré vers shared model
+- ✅ MedistockSDK accessible via MedistockApplication.sdk
+
+**Restant à faire:**
+- ⏳ Migrer 11 Adapters restants vers shared models
+- ⏳ Migrer 34 Activities restantes vers MedistockSDK
+- ⏳ Créer modèles partagés manquants: CurrentStock, ProductWithCategory
+- ⏳ Supprimer Room (entities, DAOs, dépendances build.gradle)
+
+**Pattern de migration:**
+```kotlin
+// AVANT (Room)
+db = AppDatabase.getInstance(this)
+val categories = db.categoryDao().getAll().first()
+
+// APRÈS (SQLDelight via MedistockSDK)
+sdk = MedistockApplication.sdk
+val categories = sdk.categoryRepository.getAll()
+```
 
 ---
 

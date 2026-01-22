@@ -184,6 +184,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         email: String? = null,
         address: String? = null,
         notes: String? = null,
+        siteId: String? = null,
         userId: String = "ios"
     ): Customer {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -194,6 +195,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             email = email,
             address = address,
             notes = notes,
+            siteId = siteId,
             createdAt = now,
             updatedAt = now,
             createdBy = userId,
