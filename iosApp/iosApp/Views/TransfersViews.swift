@@ -139,6 +139,8 @@ struct TransfersListView: View {
                     siteId: transfer.fromSiteId,
                     quantity: -transfer.quantity,
                     movementType: "TRANSFER_OUT",
+                    purchasePriceAtMovement: 0.0,
+                    sellingPriceAtMovement: 0.0,
                     referenceId: transfer.id,
                     notes: "Transfert vers \(siteName(for: transfer.toSiteId))",
                     userId: session.username
@@ -150,6 +152,8 @@ struct TransfersListView: View {
                     siteId: transfer.toSiteId,
                     quantity: transfer.quantity,
                     movementType: "TRANSFER_IN",
+                    purchasePriceAtMovement: 0.0,
+                    sellingPriceAtMovement: 0.0,
                     referenceId: transfer.id,
                     notes: "Transfert depuis \(siteName(for: transfer.fromSiteId))",
                     userId: session.username

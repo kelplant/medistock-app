@@ -338,14 +338,15 @@ struct StockMovementRowView: View {
     let siteName: String
 
     var movementTypeLabel: String {
-        switch movement.movementType {
+        let type = movement.movementType ?? movement.type
+        switch type {
         case "PURCHASE": return "Achat"
         case "SALE": return "Vente"
         case "TRANSFER_IN": return "Transfert entrant"
         case "TRANSFER_OUT": return "Transfert sortant"
         case "ADJUSTMENT": return "Ajustement"
         case "INVENTORY": return "Inventaire"
-        default: return movement.movementType
+        default: return type
         }
     }
 
@@ -659,6 +660,8 @@ struct StockMovementCreationView: View {
                 siteId: product.siteId,
                 quantity: finalQuantity,
                 movementType: movementType.movementTypeValue,
+                purchasePriceAtMovement: 0.0,
+                sellingPriceAtMovement: 0.0,
                 referenceId: nil,
                 notes: notes.isEmpty ? nil : notes,
                 userId: userId

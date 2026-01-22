@@ -182,6 +182,13 @@ class SyncStatusManager: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: &$conflictCount)
     }
+
+    /// Refresh counts from the shared repository
+    func refreshFromRepository() {
+        Task {
+            await store.refreshCounts()
+        }
+    }
 }
 
 // MARK: - Supporting Types

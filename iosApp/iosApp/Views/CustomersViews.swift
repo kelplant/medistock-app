@@ -269,6 +269,7 @@ struct CustomerEditorView: View {
                         email: email.isEmpty ? nil : email,
                         address: address.isEmpty ? nil : address,
                         notes: notes.isEmpty ? nil : notes,
+                        siteId: existingCustomer.siteId,
                         createdAt: existingCustomer.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingCustomer.createdBy,
@@ -281,6 +282,7 @@ struct CustomerEditorView: View {
                         email: email.isEmpty ? nil : email,
                         address: address.isEmpty ? nil : address,
                         notes: notes.isEmpty ? nil : notes,
+                        siteId: nil,
                         userId: session.userId
                     )
                 }

@@ -2,7 +2,7 @@ import Foundation
 import shared
 
 /// Represents a pending sync operation in the queue
-/// Mirrors Android's SyncQueueItem entity
+/// Bridges between Swift and shared Kotlin SyncQueueItem
 struct SyncQueueItem: Codable, Identifiable {
     let id: String
     let entityType: EntityType
@@ -17,7 +17,7 @@ struct SyncQueueItem: Codable, Identifiable {
     var lastError: String?
     var lastAttemptAt: Date?
     let createdAt: Date
-    let userId: String
+    let userId: String?
     let siteId: String?
 
     init(
@@ -34,7 +34,7 @@ struct SyncQueueItem: Codable, Identifiable {
         lastError: String? = nil,
         lastAttemptAt: Date? = nil,
         createdAt: Date = Date(),
-        userId: String,
+        userId: String?,
         siteId: String? = nil
     ) {
         self.id = id
@@ -52,6 +52,54 @@ struct SyncQueueItem: Codable, Identifiable {
         self.createdAt = createdAt
         self.userId = userId
         self.siteId = siteId
+    }
+
+    // MARK: - Conversion from shared Kotlin model
+
+    init(from kotlinItem: shared.SyncQueueItem) {
+        self.id = kotlinItem.id
+        self.entityType = EntityType(rawValue: kotlinItem.entityType) ?? .product
+        self.entityId = kotlinItem.entityId
+        self.operation = SyncOperation(from: kotlinItem.operation)
+        self.payload = kotlinItem.payload.data(using: .utf8)
+        self.localVersion = Int(kotlinItem.localVersion)
+        self.remoteVersion = kotlinItem.remoteVersion.map { Int(truncating: $0) }
+        self.lastKnownRemoteUpdatedAt = kotlinItem.lastKnownRemoteUpdatedAt?.int64Value
+        self.status = SyncStatus(from: kotlinItem.status)
+        self.retryCount = Int(kotlinItem.retryCount)
+        self.lastError = kotlinItem.lastError
+        self.lastAttemptAt = kotlinItem.lastAttemptAt.map { Date(timeIntervalSince1970: Double(truncating: $0) / 1000.0) }
+        self.createdAt = Date(timeIntervalSince1970: Double(kotlinItem.createdAt) / 1000.0)
+        self.userId = kotlinItem.userId
+        self.siteId = kotlinItem.siteId
+    }
+
+    // MARK: - Conversion to shared Kotlin model
+
+    func toKotlinModel() -> shared.SyncQueueItem {
+        return shared.SyncQueueItem(
+            id: id,
+            entityType: entityType.rawValue,
+            entityId: entityId,
+            operation: operation.toKotlinOperation(),
+            payload: payloadString ?? "{}",
+            localVersion: Int64(localVersion),
+            remoteVersion: remoteVersion.map { KotlinLong(value: Int64($0)) },
+            lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt.map { KotlinLong(value: $0) },
+            status: status.toKotlinStatus(),
+            retryCount: Int32(retryCount),
+            lastError: lastError,
+            lastAttemptAt: lastAttemptAt.map { KotlinLong(value: Int64($0.timeIntervalSince1970 * 1000)) },
+            createdAt: Int64(createdAt.timeIntervalSince1970 * 1000),
+            userId: userId,
+            siteId: siteId
+        )
+    }
+
+    /// Get payload as string for Kotlin model
+    var payloadString: String? {
+        guard let data = payload else { return nil }
+        return String(data: data, encoding: .utf8)
     }
 }
 
@@ -104,6 +152,23 @@ enum SyncOperation: String, Codable {
     case insert = "INSERT"
     case update = "UPDATE"
     case delete = "DELETE"
+
+    init(from kotlinOp: shared.SyncOperation) {
+        switch kotlinOp {
+        case .insert: self = .insert
+        case .update: self = .update
+        case .delete_: self = .delete
+        default: self = .insert
+        }
+    }
+
+    func toKotlinOperation() -> shared.SyncOperation {
+        switch self {
+        case .insert: return .insert
+        case .update: return .update
+        case .delete: return .delete_
+        }
+    }
 }
 
 enum SyncStatus: String, Codable {
@@ -112,6 +177,27 @@ enum SyncStatus: String, Codable {
     case synced = "SYNCED"
     case conflict = "CONFLICT"
     case failed = "FAILED"
+
+    init(from kotlinStatus: shared.SyncStatus) {
+        switch kotlinStatus {
+        case .pending: self = .pending
+        case .inProgress: self = .inProgress
+        case .synced: self = .synced
+        case .conflict: self = .conflict
+        case .failed: self = .failed
+        default: self = .pending
+        }
+    }
+
+    func toKotlinStatus() -> shared.SyncStatus {
+        switch self {
+        case .pending: return .pending
+        case .inProgress: return .inProgress
+        case .synced: return .synced
+        case .conflict: return .conflict
+        case .failed: return .failed
+        }
+    }
 }
 
 enum ConflictStrategy: String, Codable {

@@ -71,7 +71,8 @@ class SyncQueueProcessor: ObservableObject {
         var conflictCount = 0
 
         while !Task.isCancelled {
-            let batch = store.getPendingItems(limit: SyncConfiguration.batchSize)
+            // Use async method to get pending items from shared repository
+            let batch = await store.getPendingItemsAsync(limit: SyncConfiguration.batchSize)
 
             if batch.isEmpty {
                 break
@@ -81,26 +82,26 @@ class SyncQueueProcessor: ObservableObject {
                 guard !Task.isCancelled else { break }
 
                 // Mark as in progress
-                store.updateStatus(id: item.id, status: .inProgress)
+                await store.updateStatusAsync(id: item.id, status: .inProgress)
 
                 let result = await processItem(item)
 
                 switch result {
                 case .success:
-                    store.updateStatus(id: item.id, status: .synced)
+                    await store.updateStatusAsync(id: item.id, status: .synced)
                     successCount += 1
 
                 case .conflict(_, _):
-                    store.updateStatus(id: item.id, status: .conflict)
+                    await store.updateStatusAsync(id: item.id, status: .conflict)
                     conflictCount += 1
 
                 case .retry(let error):
                     if item.retryCount >= SyncConfiguration.maxRetries {
-                        store.updateStatus(id: item.id, status: .failed, error: error.localizedDescription)
+                        await store.updateStatusAsync(id: item.id, status: .failed, error: error.localizedDescription)
                         failedCount += 1
                     } else {
                         // Schedule retry with backoff
-                        store.updateStatus(id: item.id, status: .pending, error: error.localizedDescription)
+                        await store.updateStatusAsync(id: item.id, status: .pending, error: error.localizedDescription)
                         let delay = SyncConfiguration.backoffDelay(for: item.retryCount)
                         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     }
@@ -126,6 +127,9 @@ class SyncQueueProcessor: ObservableObject {
 
         // Cleanup synced items
         store.removeSynced()
+
+        // Refresh counts after cleanup
+        await store.refreshCounts()
 
         await MainActor.run {
             state = ProcessorState(

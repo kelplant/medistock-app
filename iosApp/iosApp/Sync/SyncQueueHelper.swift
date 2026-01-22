@@ -2,16 +2,109 @@ import Foundation
 import shared
 
 /// Helper for enqueuing sync operations with smart deduplication
-/// Mirrors Android's SyncQueueHelper
+/// Uses the shared SyncEnqueueService for cross-platform consistency
 class SyncQueueHelper {
     static let shared = SyncQueueHelper()
 
     private let store = SyncQueueStore.shared
     private let encoder = JSONEncoder()
 
+    private var syncEnqueueService: SyncEnqueueService {
+        SDKProvider.shared.syncEnqueueService
+    }
+
     private init() {}
 
-    // MARK: - Generic Enqueue Methods
+    // MARK: - Generic Enqueue Methods using Shared Service
+
+    /// Enqueue an INSERT operation using shared service
+    func enqueueInsertAsync<T: Encodable>(
+        entityType: EntityType,
+        entityId: String,
+        entity: T,
+        userId: String?,
+        siteId: String? = nil
+    ) async {
+        do {
+            guard let payload = try? encoder.encode(entity),
+                  let payloadString = String(data: payload, encoding: .utf8) else {
+                print("[SyncQueueHelper] Error encoding payload for INSERT")
+                return
+            }
+
+            try await syncEnqueueService.enqueueInsert(
+                entityType: entityType.rawValue,
+                entityId: entityId,
+                payload: payloadString,
+                userId: userId,
+                siteId: siteId
+            )
+            await store.loadFromRepository()
+            print("[SyncQueueHelper] Enqueued INSERT for \(entityType.rawValue) \(entityId)")
+        } catch {
+            print("[SyncQueueHelper] Error enqueuing INSERT: \(error)")
+        }
+    }
+
+    /// Enqueue an UPDATE operation using shared service
+    func enqueueUpdateAsync<T: Encodable>(
+        entityType: EntityType,
+        entityId: String,
+        entity: T,
+        userId: String?,
+        siteId: String? = nil,
+        localVersion: Int64 = 1,
+        lastKnownRemoteUpdatedAt: Int64? = nil
+    ) async {
+        do {
+            guard let payload = try? encoder.encode(entity),
+                  let payloadString = String(data: payload, encoding: .utf8) else {
+                print("[SyncQueueHelper] Error encoding payload for UPDATE")
+                return
+            }
+
+            try await syncEnqueueService.enqueueUpdate(
+                entityType: entityType.rawValue,
+                entityId: entityId,
+                payload: payloadString,
+                localVersion: localVersion,
+                lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt.map { KotlinLong(value: $0) },
+                userId: userId,
+                siteId: siteId
+            )
+            await store.loadFromRepository()
+            print("[SyncQueueHelper] Enqueued UPDATE for \(entityType.rawValue) \(entityId)")
+        } catch {
+            print("[SyncQueueHelper] Error enqueuing UPDATE: \(error)")
+        }
+    }
+
+    /// Enqueue a DELETE operation using shared service
+    func enqueueDeleteAsync(
+        entityType: EntityType,
+        entityId: String,
+        userId: String?,
+        siteId: String? = nil,
+        localVersion: Int64 = 0,
+        lastKnownRemoteUpdatedAt: Int64? = nil
+    ) async {
+        do {
+            try await syncEnqueueService.enqueueDelete(
+                entityType: entityType.rawValue,
+                entityId: entityId,
+                localVersion: localVersion,
+                lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt.map { KotlinLong(value: $0) },
+                userId: userId,
+                siteId: siteId
+            )
+            await store.loadFromRepository()
+            print("[SyncQueueHelper] Enqueued DELETE for \(entityType.rawValue) \(entityId)")
+        } catch {
+            print("[SyncQueueHelper] Error enqueuing DELETE: \(error)")
+        }
+    }
+
+    // MARK: - Legacy Synchronous Methods (for backward compatibility)
 
     /// Enqueue an INSERT operation
     func enqueueInsert<T: Encodable>(
@@ -21,19 +114,15 @@ class SyncQueueHelper {
         userId: String,
         siteId: String? = nil
     ) {
-        let payload = try? encoder.encode(entity)
-
-        let item = SyncQueueItem(
-            entityType: entityType,
-            entityId: entityId,
-            operation: .insert,
-            payload: payload,
-            userId: userId,
-            siteId: siteId
-        )
-
-        store.enqueue(item)
-        print("[SyncQueueHelper] Enqueued INSERT for \(entityType.rawValue) \(entityId)")
+        Task {
+            await enqueueInsertAsync(
+                entityType: entityType,
+                entityId: entityId,
+                entity: entity,
+                userId: userId,
+                siteId: siteId
+            )
+        }
     }
 
     /// Enqueue an UPDATE operation with smart deduplication
@@ -45,72 +134,16 @@ class SyncQueueHelper {
         siteId: String? = nil,
         lastKnownRemoteUpdatedAt: Int64? = nil
     ) {
-        let payload = try? encoder.encode(entity)
-
-        // Check for existing operation
-        if let existing = store.findExisting(entityType: entityType, entityId: entityId) {
-            switch existing.operation {
-            case .insert:
-                // INSERT + UPDATE = Keep INSERT with updated payload
-                var updated = existing
-                store.remove(id: existing.id)
-                let newItem = SyncQueueItem(
-                    id: existing.id,
-                    entityType: entityType,
-                    entityId: entityId,
-                    operation: .insert,
-                    payload: payload,
-                    localVersion: existing.localVersion,
-                    remoteVersion: existing.remoteVersion,
-                    lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt ?? existing.lastKnownRemoteUpdatedAt,
-                    createdAt: existing.createdAt,
-                    userId: userId,
-                    siteId: siteId
-                )
-                store.enqueue(newItem)
-                print("[SyncQueueHelper] Updated INSERT payload for \(entityType.rawValue) \(entityId)")
-                return
-
-            case .update:
-                // UPDATE + UPDATE = Replace with latest
-                store.remove(id: existing.id)
-                let newItem = SyncQueueItem(
-                    id: existing.id,
-                    entityType: entityType,
-                    entityId: entityId,
-                    operation: .update,
-                    payload: payload,
-                    localVersion: existing.localVersion + 1,
-                    remoteVersion: existing.remoteVersion,
-                    lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt ?? existing.lastKnownRemoteUpdatedAt,
-                    createdAt: existing.createdAt,
-                    userId: userId,
-                    siteId: siteId
-                )
-                store.enqueue(newItem)
-                print("[SyncQueueHelper] Replaced UPDATE for \(entityType.rawValue) \(entityId)")
-                return
-
-            case .delete:
-                // DELETE + UPDATE = Ignore UPDATE (DELETE takes precedence)
-                print("[SyncQueueHelper] Ignoring UPDATE after DELETE for \(entityType.rawValue) \(entityId)")
-                return
-            }
+        Task {
+            await enqueueUpdateAsync(
+                entityType: entityType,
+                entityId: entityId,
+                entity: entity,
+                userId: userId,
+                siteId: siteId,
+                lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt
+            )
         }
-
-        // No existing operation - create new UPDATE
-        let item = SyncQueueItem(
-            entityType: entityType,
-            entityId: entityId,
-            operation: .update,
-            payload: payload,
-            lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt,
-            userId: userId,
-            siteId: siteId
-        )
-
-        store.enqueue(item)
-        print("[SyncQueueHelper] Enqueued UPDATE for \(entityType.rawValue) \(entityId)")
     }
 
     /// Enqueue a DELETE operation with cleanup of obsolete operations
@@ -120,32 +153,14 @@ class SyncQueueHelper {
         userId: String,
         siteId: String? = nil
     ) {
-        // Check for existing operation
-        if let existing = store.findExisting(entityType: entityType, entityId: entityId) {
-            switch existing.operation {
-            case .insert:
-                // INSERT + DELETE = Cancel both (entity was never synced)
-                store.remove(id: existing.id)
-                print("[SyncQueueHelper] Cancelled INSERT+DELETE for \(entityType.rawValue) \(entityId)")
-                return
-
-            case .update, .delete:
-                // Remove existing and add DELETE
-                store.removeObsoleteBeforeDelete(entityType: entityType, entityId: entityId)
-            }
+        Task {
+            await enqueueDeleteAsync(
+                entityType: entityType,
+                entityId: entityId,
+                userId: userId,
+                siteId: siteId
+            )
         }
-
-        let item = SyncQueueItem(
-            entityType: entityType,
-            entityId: entityId,
-            operation: .delete,
-            payload: nil,
-            userId: userId,
-            siteId: siteId
-        )
-
-        store.enqueue(item)
-        print("[SyncQueueHelper] Enqueued DELETE for \(entityType.rawValue) \(entityId)")
     }
 
     // MARK: - Entity-Specific Methods
@@ -233,5 +248,35 @@ class SyncQueueHelper {
     func enqueueUserUpdate(_ user: User, userId: String, lastKnownRemoteUpdatedAt: Int64? = nil) {
         let dto = UserDTO(from: user)
         enqueueUpdate(entityType: .user, entityId: user.id, entity: dto, userId: userId, lastKnownRemoteUpdatedAt: lastKnownRemoteUpdatedAt)
+    }
+
+    // MARK: - Query Methods (using shared service)
+
+    func getPendingCount() async -> Int {
+        do {
+            return Int(try await syncEnqueueService.getPendingCount())
+        } catch {
+            return 0
+        }
+    }
+
+    func getConflictCount() async -> Int {
+        do {
+            return Int(try await syncEnqueueService.getConflictCount())
+        } catch {
+            return 0
+        }
+    }
+
+    func hasPendingOperations(entityType: EntityType, entityId: String) async -> Bool {
+        do {
+            let result = try await syncEnqueueService.hasPendingOperations(
+                entityType: entityType.rawValue,
+                entityId: entityId
+            )
+            return result.boolValue
+        } catch {
+            return false
+        }
     }
 }

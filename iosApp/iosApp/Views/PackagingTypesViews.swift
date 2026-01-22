@@ -264,6 +264,9 @@ struct PackagingTypeEditorView: View {
                         level1Name: trimmedLevel1,
                         level2Name: hasLevel2 && !trimmedLevel2.isEmpty ? trimmedLevel2 : nil,
                         level2Quantity: level2Qty,
+                        defaultConversionFactor: existing.defaultConversionFactor,
+                        isActive: existing.isActive,
+                        displayOrder: existing.displayOrder,
                         createdAt: existing.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existing.createdBy,
@@ -275,6 +278,9 @@ struct PackagingTypeEditorView: View {
                         level1Name: trimmedLevel1,
                         level2Name: hasLevel2 && !trimmedLevel2.isEmpty ? trimmedLevel2 : nil,
                         level2Quantity: level2Qty,
+                        defaultConversionFactor: nil,
+                        isActive: true,
+                        displayOrder: 0,
                         userId: session.userId
                     )
                 }

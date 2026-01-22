@@ -90,6 +90,9 @@ struct PackagingTypeDTO: Codable {
     let level1Name: String
     let level2Name: String?
     let level2Quantity: Int32?
+    let defaultConversionFactor: Double?
+    let isActive: Bool
+    let displayOrder: Int32
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -101,6 +104,9 @@ struct PackagingTypeDTO: Codable {
         case level1Name = "level1_name"
         case level2Name = "level2_name"
         case level2Quantity = "level2_quantity"
+        case defaultConversionFactor = "default_conversion_factor"
+        case isActive = "is_active"
+        case displayOrder = "display_order"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -114,6 +120,9 @@ struct PackagingTypeDTO: Codable {
         self.level1Name = packagingType.level1Name
         self.level2Name = packagingType.level2Name
         self.level2Quantity = packagingType.level2Quantity?.int32Value
+        self.defaultConversionFactor = packagingType.defaultConversionFactor?.doubleValue
+        self.isActive = packagingType.isActive
+        self.displayOrder = packagingType.displayOrder
         self.createdAt = packagingType.createdAt
         self.updatedAt = packagingType.updatedAt
         self.createdBy = packagingType.createdBy
@@ -128,6 +137,9 @@ struct PackagingTypeDTO: Codable {
             level1Name: level1Name,
             level2Name: level2Name,
             level2Quantity: level2Quantity.map { KotlinInt(int: $0) },
+            defaultConversionFactor: defaultConversionFactor.map { KotlinDouble(double: $0) },
+            isActive: isActive,
+            displayOrder: displayOrder,
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,
@@ -229,6 +241,7 @@ struct CustomerDTO: Codable {
     let email: String?
     let address: String?
     let notes: String?
+    let siteId: String?
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -237,6 +250,7 @@ struct CustomerDTO: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, phone, email, address, notes
+        case siteId = "site_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -251,6 +265,7 @@ struct CustomerDTO: Codable {
         self.email = customer.email
         self.address = customer.address
         self.notes = customer.notes
+        self.siteId = customer.siteId
         self.createdAt = customer.createdAt
         self.updatedAt = customer.updatedAt
         self.createdBy = customer.createdBy
@@ -266,6 +281,7 @@ struct CustomerDTO: Codable {
             email: email,
             address: address,
             notes: notes,
+            siteId: siteId,
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,
@@ -473,26 +489,26 @@ struct SaleItemDTO: Codable {
     let id: String
     let saleId: String
     let productId: String
+    let productName: String?
+    let unit: String?
     let quantity: Double
     let unitPrice: Double
     let totalPrice: Double
     let createdAt: Int64
-    let updatedAt: Int64
     let createdBy: String
-    let updatedBy: String
     var clientId: String?
 
     enum CodingKeys: String, CodingKey {
         case id
         case saleId = "sale_id"
         case productId = "product_id"
+        case productName = "product_name"
+        case unit
         case quantity
         case unitPrice = "unit_price"
         case totalPrice = "total_price"
         case createdAt = "created_at"
-        case updatedAt = "updated_at"
         case createdBy = "created_by"
-        case updatedBy = "updated_by"
         case clientId = "client_id"
     }
 
@@ -500,13 +516,13 @@ struct SaleItemDTO: Codable {
         self.id = item.id
         self.saleId = item.saleId
         self.productId = item.productId
+        self.productName = item.productName
+        self.unit = item.unit
         self.quantity = item.quantity
         self.unitPrice = item.unitPrice
         self.totalPrice = item.totalPrice
-        self.createdAt = Int64(Date().timeIntervalSince1970 * 1000)
-        self.updatedAt = Int64(Date().timeIntervalSince1970 * 1000)
-        self.createdBy = ""
-        self.updatedBy = ""
+        self.createdAt = item.createdAt
+        self.createdBy = item.createdBy
         self.clientId = SyncClientId.current
     }
 
@@ -515,9 +531,13 @@ struct SaleItemDTO: Codable {
             id: id,
             saleId: saleId,
             productId: productId,
+            productName: productName ?? "",
+            unit: unit ?? "",
             quantity: quantity,
             unitPrice: unitPrice,
-            totalPrice: totalPrice
+            totalPrice: totalPrice,
+            createdAt: createdAt,
+            createdBy: createdBy
         )
     }
 }
