@@ -28,7 +28,7 @@ class SyncQueueHelper {
         do {
             guard let payload = try? encoder.encode(entity),
                   let payloadString = String(data: payload, encoding: .utf8) else {
-                print("[SyncQueueHelper] Error encoding payload for INSERT")
+                debugLog("SyncQueueHelper", "Error encoding payload for INSERT")
                 return
             }
 
@@ -40,9 +40,9 @@ class SyncQueueHelper {
                 siteId: siteId
             )
             await store.loadFromRepository()
-            print("[SyncQueueHelper] Enqueued INSERT for \(entityType.rawValue) \(entityId)")
+            debugLog("SyncQueueHelper", "Enqueued INSERT for \(entityType.rawValue) \(entityId)")
         } catch {
-            print("[SyncQueueHelper] Error enqueuing INSERT: \(error)")
+            debugLog("SyncQueueHelper", "Error enqueuing INSERT: \(error)")
         }
     }
 
@@ -59,7 +59,7 @@ class SyncQueueHelper {
         do {
             guard let payload = try? encoder.encode(entity),
                   let payloadString = String(data: payload, encoding: .utf8) else {
-                print("[SyncQueueHelper] Error encoding payload for UPDATE")
+                debugLog("SyncQueueHelper", "Error encoding payload for UPDATE")
                 return
             }
 
@@ -73,9 +73,9 @@ class SyncQueueHelper {
                 siteId: siteId
             )
             await store.loadFromRepository()
-            print("[SyncQueueHelper] Enqueued UPDATE for \(entityType.rawValue) \(entityId)")
+            debugLog("SyncQueueHelper", "Enqueued UPDATE for \(entityType.rawValue) \(entityId)")
         } catch {
-            print("[SyncQueueHelper] Error enqueuing UPDATE: \(error)")
+            debugLog("SyncQueueHelper", "Error enqueuing UPDATE: \(error)")
         }
     }
 
@@ -98,9 +98,9 @@ class SyncQueueHelper {
                 siteId: siteId
             )
             await store.loadFromRepository()
-            print("[SyncQueueHelper] Enqueued DELETE for \(entityType.rawValue) \(entityId)")
+            debugLog("SyncQueueHelper", "Enqueued DELETE for \(entityType.rawValue) \(entityId)")
         } catch {
-            print("[SyncQueueHelper] Error enqueuing DELETE: \(error)")
+            debugLog("SyncQueueHelper", "Error enqueuing DELETE: \(error)")
         }
     }
 

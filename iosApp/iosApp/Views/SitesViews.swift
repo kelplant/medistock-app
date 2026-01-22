@@ -94,7 +94,7 @@ struct SitesListView: View {
                     try? await sdk.siteRepository.upsert(site: dto.toEntity())
                 }
             } catch {
-                print("[SitesListView] Failed to fetch from Supabase: \(error)")
+                debugLog("SitesListView", "Failed to fetch from Supabase: \(error)")
                 // Continue to local fetch
             }
         }

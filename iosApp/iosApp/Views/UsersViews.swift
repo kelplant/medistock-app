@@ -101,7 +101,7 @@ struct UsersListView: View {
                     try? await sdk.userRepository.upsert(user: dto.toEntity())
                 }
             } catch {
-                print("[UsersListView] Failed to sync users from Supabase: \(error)")
+                debugLog("UsersListView", "Failed to sync users from Supabase: \(error)")
             }
         }
 
@@ -326,7 +326,7 @@ struct UserEditorView: View {
                         try await SupabaseService.shared.upsert(into: "app_users", record: dto)
                         savedOnline = true
                     } catch {
-                        print("[UserEditorView] Failed to save to Supabase: \(error)")
+                        debugLog("UserEditorView", "Failed to save to Supabase: \(error)")
                     }
                 }
 

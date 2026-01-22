@@ -91,7 +91,7 @@ struct PurchasesListView: View {
                     try? await sdk.purchaseBatchRepository.upsert(batch: dto.toEntity())
                 }
             } catch {
-                print("[PurchasesListView] Failed to sync purchase batches from Supabase: \(error)")
+                debugLog("PurchasesListView", "Failed to sync purchase batches from Supabase: \(error)")
             }
         }
 
@@ -340,7 +340,7 @@ struct PurchaseEditorView: View {
                 // Show warnings if any (non-blocking)
                 if !success.warnings.isEmpty {
                     for warning in success.warnings {
-                        print("[PurchaseEditorView] Warning: \(warning)")
+                        debugLog("PurchaseEditorView", "Warning: \(warning)")
                     }
                 }
 
@@ -355,7 +355,7 @@ struct PurchaseEditorView: View {
                         try await SupabaseService.shared.upsert(into: "stock_movements", record: movementDTO)
                         savedOnline = true
                     } catch {
-                        print("[PurchaseEditorView] Failed to save to Supabase: \(error)")
+                        debugLog("PurchaseEditorView", "Failed to save to Supabase: \(error)")
                     }
                 }
 

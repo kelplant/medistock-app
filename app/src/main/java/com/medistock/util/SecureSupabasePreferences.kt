@@ -2,7 +2,6 @@ package com.medistock.util
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.util.UUID
@@ -70,7 +69,7 @@ class SecureSupabasePreferences(context: Context) {
         val legacyConfigured = legacyPreferences.getBoolean(KEY_CONFIGURED, false)
 
         if (!legacyUrl.isNullOrEmpty() && !legacyKey.isNullOrEmpty()) {
-            Log.i(TAG, "Migrating credentials from legacy storage to encrypted storage")
+            DebugConfig.i(TAG, "Migrating credentials from legacy storage to encrypted storage")
 
             securePreferences.edit()
                 .putString(KEY_URL, legacyUrl)
@@ -84,7 +83,7 @@ class SecureSupabasePreferences(context: Context) {
             // Clear legacy preferences
             legacyPreferences.edit().clear().apply()
 
-            Log.i(TAG, "Migration complete, legacy storage cleared")
+            DebugConfig.i(TAG, "Migration complete, legacy storage cleared")
         } else {
             // No legacy data, just mark as migrated
             securePreferences.edit().putBoolean(KEY_MIGRATED, true).apply()
@@ -97,7 +96,7 @@ class SecureSupabasePreferences(context: Context) {
             .putString(KEY_API_KEY, apiKey)
             .putBoolean(KEY_CONFIGURED, true)
             .apply()
-        Log.d(TAG, "Supabase config saved securely")
+        DebugConfig.d(TAG, "Supabase config saved securely")
     }
 
     fun getSupabaseUrl(): String {
@@ -144,6 +143,6 @@ class SecureSupabasePreferences(context: Context) {
             .remove(KEY_API_KEY)
             .putBoolean(KEY_CONFIGURED, false)
             .apply()
-        Log.d(TAG, "Supabase configuration cleared")
+        DebugConfig.d(TAG, "Supabase configuration cleared")
     }
 }

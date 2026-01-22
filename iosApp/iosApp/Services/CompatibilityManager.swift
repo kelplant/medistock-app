@@ -70,12 +70,12 @@ class CompatibilityManager: ObservableObject {
 
             // Log the result
             let info = SharedCompatibilityChecker.shared.formatCompatibilityInfo(result: result)
-            print("[CompatibilityManager] \(info)")
+            debugLog("CompatibilityManager", "\(info)")
 
             compatibilityResult = result
             return result
         } catch {
-            print("[CompatibilityManager] Error checking compatibility: \(error)")
+            debugLog("CompatibilityManager", "Error checking compatibility: \(error)")
             let result = SharedCompatibilityResult.Unknown(reason: error.localizedDescription)
             compatibilityResult = result
             return result

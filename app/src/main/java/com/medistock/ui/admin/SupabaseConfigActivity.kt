@@ -3,6 +3,7 @@ package com.medistock.ui.admin
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import com.medistock.util.DebugConfig
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
@@ -334,7 +335,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
                     Realtime.Status.CONNECTED -> "Realtime connecté" to true
                     Realtime.Status.CONNECTING -> "Connexion Realtime..." to null
                     else -> {
-                        Log.w(TAG, "Etat Realtime: $status")
+                        DebugConfig.w(TAG, "Etat Realtime: $status")
                         "Realtime déconnecté" to false
                     }
                 }

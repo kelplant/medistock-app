@@ -402,7 +402,7 @@ struct TransferEditorView: View {
                     if !success.warnings.isEmpty {
                         for warning in success.warnings {
                             if let stockWarning = warning as? BusinessWarning.InsufficientStock {
-                                print("[TransferEditorView] Warning: Insufficient stock for transfer: requested \(stockWarning.requested), available \(stockWarning.available)")
+                                debugLog("TransferEditorView", "Warning: Insufficient stock for transfer: requested \(stockWarning.requested), available \(stockWarning.available)")
                             }
                         }
                     }
@@ -414,7 +414,7 @@ struct TransferEditorView: View {
                             let transferDTO = ProductTransferDTO(from: transferResult.transfer)
                             try await SupabaseService.shared.upsert(into: "product_transfers", record: transferDTO)
                         } catch {
-                            print("[TransferEditorView] Failed to save to Supabase: \(error)")
+                            debugLog("TransferEditorView", "Failed to save to Supabase: \(error)")
                         }
                     }
 

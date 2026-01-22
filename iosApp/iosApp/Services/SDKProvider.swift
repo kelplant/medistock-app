@@ -14,7 +14,7 @@ class SDKProvider {
     /// Call this in MedistockApp before any sync services are used
     func configure(sdk: MedistockSDK) {
         self.sdk = sdk
-        print("[SDKProvider] SDK configured")
+        debugLog("SDKProvider", "SDK configured")
     }
 
     /// Get the sync queue repository

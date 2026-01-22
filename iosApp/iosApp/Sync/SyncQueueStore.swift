@@ -30,9 +30,9 @@ class SyncQueueStore: ObservableObject {
             do {
                 try await repository.insert(item: item.toKotlinModel())
                 await loadFromRepository()
-                print("[SyncQueueStore] Enqueued item: \(item.entityType.rawValue) \(item.entityId)")
+                debugLog("SyncQueueStore", "Enqueued item: \(item.entityType.rawValue) \(item.entityId)")
             } catch {
-                print("[SyncQueueStore] Error enqueueing item: \(error)")
+                debugLog("SyncQueueStore", "Error enqueueing item: \(error)")
             }
         }
     }
@@ -44,7 +44,7 @@ class SyncQueueStore: ObservableObject {
                 try await repository.update(item: item.toKotlinModel())
                 await loadFromRepository()
             } catch {
-                print("[SyncQueueStore] Error updating item: \(error)")
+                debugLog("SyncQueueStore", "Error updating item: \(error)")
             }
         }
     }
@@ -56,7 +56,7 @@ class SyncQueueStore: ObservableObject {
                 try await repository.deleteById(id: id)
                 await loadFromRepository()
             } catch {
-                print("[SyncQueueStore] Error removing item: \(error)")
+                debugLog("SyncQueueStore", "Error removing item: \(error)")
             }
         }
     }
@@ -68,7 +68,7 @@ class SyncQueueStore: ObservableObject {
                 try await repository.deleteSynced()
                 await loadFromRepository()
             } catch {
-                print("[SyncQueueStore] Error removing synced items: \(error)")
+                debugLog("SyncQueueStore", "Error removing synced items: \(error)")
             }
         }
     }
@@ -88,7 +88,7 @@ class SyncQueueStore: ObservableObject {
             let kotlinItems = try await repository.getPendingBatch(limit: Int32(limit))
             return kotlinItems.map { SyncQueueItem(from: $0 as! shared.SyncQueueItem) }
         } catch {
-            print("[SyncQueueStore] Error getting pending batch: \(error)")
+            debugLog("SyncQueueStore", "Error getting pending batch: \(error)")
             return []
         }
     }
@@ -119,7 +119,7 @@ class SyncQueueStore: ObservableObject {
             }
             return nil
         } catch {
-            print("[SyncQueueStore] Error finding existing: \(error)")
+            debugLog("SyncQueueStore", "Error finding existing: \(error)")
             return nil
         }
     }
@@ -134,7 +134,7 @@ class SyncQueueStore: ObservableObject {
                 )
                 await loadFromRepository()
             } catch {
-                print("[SyncQueueStore] Error removing obsolete: \(error)")
+                debugLog("SyncQueueStore", "Error removing obsolete: \(error)")
             }
         }
     }
@@ -161,7 +161,7 @@ class SyncQueueStore: ObservableObject {
             }
             await loadFromRepository()
         } catch {
-            print("[SyncQueueStore] Error updating status: \(error)")
+            debugLog("SyncQueueStore", "Error updating status: \(error)")
         }
     }
 
@@ -176,7 +176,7 @@ class SyncQueueStore: ObservableObject {
                 try await repository.deleteByStatus(status: .inProgress)
                 await loadFromRepository()
             } catch {
-                print("[SyncQueueStore] Error clearing all: \(error)")
+                debugLog("SyncQueueStore", "Error clearing all: \(error)")
             }
         }
     }
@@ -206,7 +206,7 @@ class SyncQueueStore: ObservableObject {
             self.pendingCount = Int(try await repository.getPendingCount())
             self.conflictCount = Int(try await repository.getConflictCount())
         } catch {
-            print("[SyncQueueStore] Error loading from repository: \(error)")
+            debugLog("SyncQueueStore", "Error loading from repository: \(error)")
         }
     }
 
@@ -217,7 +217,7 @@ class SyncQueueStore: ObservableObject {
             self.pendingCount = Int(try await repository.getPendingCount())
             self.conflictCount = Int(try await repository.getConflictCount())
         } catch {
-            print("[SyncQueueStore] Error refreshing counts: \(error)")
+            debugLog("SyncQueueStore", "Error refreshing counts: \(error)")
         }
     }
 }

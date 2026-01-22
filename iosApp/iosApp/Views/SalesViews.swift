@@ -94,7 +94,7 @@ struct SalesListView: View {
                     try? await sdk.saleRepository.upsert(sale: dto.toEntity())
                 }
             } catch {
-                print("[SalesListView] Failed to sync sales from Supabase: \(error)")
+                debugLog("SalesListView", "Failed to sync sales from Supabase: \(error)")
             }
         }
 
@@ -446,7 +446,7 @@ struct SaleEditorView: View {
                 if !success.warnings.isEmpty {
                     for warning in success.warnings {
                         if let stockWarning = warning as? BusinessWarning.InsufficientStock {
-                            print("[SaleEditorView] Warning: Insufficient stock for product \(stockWarning.productId): requested \(stockWarning.requested), available \(stockWarning.available)")
+                            debugLog("SaleEditorView", "Warning: Insufficient stock for product \(stockWarning.productId): requested \(stockWarning.requested), available \(stockWarning.available)")
                         }
                     }
                 }
@@ -464,7 +464,7 @@ struct SaleEditorView: View {
                         }
                         savedOnline = true
                     } catch {
-                        print("[SaleEditorView] Failed to save to Supabase: \(error)")
+                        debugLog("SaleEditorView", "Failed to save to Supabase: \(error)")
                     }
                 }
 

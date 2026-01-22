@@ -104,7 +104,7 @@ struct CustomersListView: View {
                     try? await sdk.customerRepository.upsert(customer: dto.toEntity())
                 }
             } catch {
-                print("[CustomersListView] Failed to sync customers from Supabase: \(error)")
+                debugLog("CustomersListView", "Failed to sync customers from Supabase: \(error)")
             }
         }
 

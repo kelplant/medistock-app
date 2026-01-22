@@ -1,7 +1,7 @@
 package com.medistock.data.realtime
 
 import android.content.Context
-import android.util.Log
+import com.medistock.util.DebugConfig
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.util.SecureSupabasePreferences
 import io.github.jan.supabase.realtime.PostgresAction
@@ -24,11 +24,11 @@ object RealtimeSyncService {
         if (!isRealtimeEnabled(context)) {
             return
         }
-        Log.d("RealtimeSyncService", "Realtime sync started")
+        DebugConfig.d("RealtimeSyncService", "Realtime sync started")
     }
 
     fun stop() {
-        Log.d("RealtimeSyncService", "Realtime sync stopped")
+        DebugConfig.d("RealtimeSyncService", "Realtime sync stopped")
     }
 
     fun isRealtimeEnabled(context: Context): Boolean {

@@ -29,7 +29,7 @@ class SupabaseService {
 
     func configure(url: String, anonKey: String) {
         guard let supabaseURL = URL(string: url) else {
-            print("[SupabaseService] Invalid URL: \(url)")
+            debugLog("SupabaseService", "Invalid URL: \(url)")
             return
         }
 
@@ -42,13 +42,13 @@ class SupabaseService {
         keychain.save(url, for: .supabaseUrl)
         keychain.save(anonKey, for: .supabaseAnonKey)
 
-        print("[SupabaseService] Configured with URL: \(url)")
+        debugLog("SupabaseService", "Configured with URL: \(url)")
     }
 
     func disconnect() {
         client = nil
         keychain.clearAll()
-        print("[SupabaseService] Disconnected")
+        debugLog("SupabaseService", "Disconnected")
     }
 
     /// Returns the stored configuration if available
@@ -80,7 +80,7 @@ class SupabaseService {
         if keychain.hasStoredCredentials {
             // Already have Keychain data, just clean up UserDefaults
             UserDefaults.standard.removeObject(forKey: legacyConfigKey)
-            print("[SupabaseService] Cleaned up legacy UserDefaults (already migrated)")
+            debugLog("SupabaseService", "Cleaned up legacy UserDefaults (already migrated)")
             return
         }
 
@@ -91,7 +91,7 @@ class SupabaseService {
         // Remove from UserDefaults
         UserDefaults.standard.removeObject(forKey: legacyConfigKey)
 
-        print("[SupabaseService] Migrated credentials from UserDefaults to Keychain")
+        debugLog("SupabaseService", "Migrated credentials from UserDefaults to Keychain")
     }
 
     // MARK: - Database Operations

@@ -95,7 +95,7 @@ struct PackagingTypesListView: View {
                     try? await sdk.packagingTypeRepository.upsert(packagingType: dto.toEntity())
                 }
             } catch {
-                print("[PackagingTypesListView] Failed to sync packaging types from Supabase: \(error)")
+                debugLog("PackagingTypesListView", "Failed to sync packaging types from Supabase: \(error)")
             }
         }
 

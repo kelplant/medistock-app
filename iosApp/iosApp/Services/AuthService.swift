@@ -118,7 +118,7 @@ class AuthService {
             return .success(user: user)
 
         } catch {
-            print("[AuthService] Supabase authentication failed: \(error)")
+            debugLog("AuthService", "Supabase authentication failed: \(error)")
             return .networkError(error.localizedDescription)
         }
     }
@@ -145,9 +145,9 @@ class AuthService {
         do {
             // Use upsert (INSERT OR REPLACE) to handle both new and existing records
             try await sdk.userRepository.upsert(user: userDTO.toEntity())
-            print("[AuthService] User synced to local: \(userDTO.username)")
+            debugLog("AuthService", "User synced to local: \(userDTO.username)")
         } catch {
-            print("[AuthService] Failed to sync user to local: \(error)")
+            debugLog("AuthService", "Failed to sync user to local: \(error)")
         }
     }
 }

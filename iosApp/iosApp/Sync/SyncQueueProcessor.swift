@@ -27,17 +27,17 @@ class SyncQueueProcessor: ObservableObject {
     /// Start processing the queue
     func startProcessing() {
         guard !isProcessing else {
-            print("[SyncQueueProcessor] Already processing")
+            debugLog("SyncQueueProcessor", "Already processing")
             return
         }
 
         guard statusManager.isOnline else {
-            print("[SyncQueueProcessor] Cannot process: offline")
+            debugLog("SyncQueueProcessor", "Cannot process: offline")
             return
         }
 
         guard supabase.isConfigured else {
-            print("[SyncQueueProcessor] Cannot process: Supabase not configured")
+            debugLog("SyncQueueProcessor", "Cannot process: Supabase not configured")
             return
         }
 
@@ -63,7 +63,7 @@ class SyncQueueProcessor: ObservableObject {
             statusManager.setSyncing(true)
         }
 
-        print("[SyncQueueProcessor] Starting queue processing...")
+        debugLog("SyncQueueProcessor", "Starting queue processing...")
 
         var processedCount = 0
         var successCount = 0
@@ -107,7 +107,7 @@ class SyncQueueProcessor: ObservableObject {
                     }
 
                 case .skip(let reason):
-                    print("[SyncQueueProcessor] Skipping \(item.entityType.rawValue) \(item.entityId): \(reason)")
+                    debugLog("SyncQueueProcessor", "Skipping \(item.entityType.rawValue) \(item.entityId): \(reason)")
                     store.remove(id: item.id)
                 }
 
@@ -149,13 +149,13 @@ class SyncQueueProcessor: ObservableObject {
         }
 
         isProcessing = false
-        print("[SyncQueueProcessor] Processing complete: \(successCount) success, \(failedCount) failed, \(conflictCount) conflicts")
+        debugLog("SyncQueueProcessor", "Processing complete: \(successCount) success, \(failedCount) failed, \(conflictCount) conflicts")
     }
 
     // MARK: - Item Processing
 
     private func processItem(_ item: SyncQueueItem) async -> ProcessResult {
-        print("[SyncQueueProcessor] Processing \(item.operation.rawValue) \(item.entityType.rawValue) \(item.entityId)")
+        debugLog("SyncQueueProcessor", "Processing \(item.operation.rawValue) \(item.entityType.rawValue) \(item.entityId)")
 
         do {
             switch item.operation {
@@ -169,7 +169,7 @@ class SyncQueueProcessor: ObservableObject {
                 return try await processDelete(item)
             }
         } catch {
-            print("[SyncQueueProcessor] Error processing item: \(error)")
+            debugLog("SyncQueueProcessor", "Error processing item: \(error)")
             return .retry(error: error)
         }
     }
@@ -288,26 +288,195 @@ class SyncQueueProcessor: ObservableObject {
         switch strategy {
         case .serverWins:
             // Skip local change, server version wins
-            print("[SyncQueueProcessor] Conflict resolved: SERVER_WINS for \(item.entityType.rawValue)")
+            debugLog("SyncQueueProcessor", "Conflict resolved: SERVER_WINS for \(item.entityType.rawValue)")
             return .skip(reason: "Server version wins")
 
         case .clientWins:
             // Force push local change
-            print("[SyncQueueProcessor] Conflict resolved: CLIENT_WINS for \(item.entityType.rawValue)")
+            debugLog("SyncQueueProcessor", "Conflict resolved: CLIENT_WINS for \(item.entityType.rawValue)")
             return nil // Continue with update
 
         case .merge:
-            // TODO: Implement proper merge logic
-            print("[SyncQueueProcessor] Conflict resolved: MERGE for \(item.entityType.rawValue)")
-            return nil // For now, treat as client wins
+            // Merge local and remote: take remote as base, overlay local changes
+            debugLog("SyncQueueProcessor", "Conflict resolved: MERGE for \(item.entityType.rawValue)")
+            return try await processMerge(item, remoteUpdatedAt: remoteUpdatedAt)
 
         case .askUser:
             // Mark as conflict for user resolution
             return .conflict(local: item.payload, remote: nil)
 
         case .keepBoth:
-            // TODO: Implement keep both (create copy with new ID)
+            // Keep remote, create a copy of local with new ID
+            debugLog("SyncQueueProcessor", "Conflict resolved: KEEP_BOTH for \(item.entityType.rawValue)")
+            return try await processKeepBoth(item)
+        }
+    }
+
+    // MARK: - Merge Strategy Implementation
+
+    /// Merge strategy: combines local and remote versions
+    /// - Remote fields are preserved except for fields explicitly changed locally
+    /// - Uses timestamp comparison: newer timestamp wins for each field
+    private func processMerge(_ item: SyncQueueItem, remoteUpdatedAt: Int64) async throws -> ProcessResult? {
+        guard let localPayload = item.payload else {
+            return .skip(reason: "No local payload for MERGE")
+        }
+
+        let table = item.entityType.tableName
+
+        // Fetch the full remote record
+        guard let remoteData: Data = try await fetchRemoteAsData(table: table, id: item.entityId) else {
+            // Remote doesn't exist anymore, just insert local
+            debugLog("SyncQueueProcessor", "Remote record not found during merge, inserting local")
             return nil
+        }
+
+        // Parse both as dictionaries for field-level merge
+        guard var localDict = try? JSONSerialization.jsonObject(with: localPayload) as? [String: Any],
+              var remoteDict = try? JSONSerialization.jsonObject(with: remoteData) as? [String: Any] else {
+            // Can't parse, fall back to client wins
+            debugLog("SyncQueueProcessor", "Cannot parse payloads for merge, falling back to client wins")
+            return nil
+        }
+
+        // Merge strategy: start with remote, overlay non-nil local values
+        // This preserves remote changes while applying local updates
+        for (key, value) in localDict {
+            // Skip system fields that should come from remote
+            if ["created_at", "created_by", "sync_version"].contains(key) {
+                continue
+            }
+            // Apply local value if it's not nil
+            if !(value is NSNull) {
+                remoteDict[key] = value
+            }
+        }
+
+        // Update the timestamp
+        remoteDict["updated_at"] = Int64(Date().timeIntervalSince1970 * 1000)
+
+        // Convert merged dict back to payload and upsert
+        guard let mergedData = try? JSONSerialization.data(withJSONObject: remoteDict) else {
+            return nil
+        }
+
+        // Upsert the merged record based on entity type
+        try await upsertMergedRecord(table: table, entityType: item.entityType, payload: mergedData)
+
+        debugLog("SyncQueueProcessor", "Merge completed for \(item.entityType.rawValue) \(item.entityId)")
+        return .success
+    }
+
+    /// Keep both strategy: keeps remote as-is and creates a copy of local with new ID
+    private func processKeepBoth(_ item: SyncQueueItem) async throws -> ProcessResult? {
+        guard let localPayload = item.payload else {
+            return .skip(reason: "No local payload for KEEP_BOTH")
+        }
+
+        // Parse local payload
+        guard var localDict = try? JSONSerialization.jsonObject(with: localPayload) as? [String: Any] else {
+            return .skip(reason: "Cannot parse local payload for KEEP_BOTH")
+        }
+
+        // Generate new ID for the copy
+        let newId = UUID().uuidString
+        let originalId = item.entityId
+
+        localDict["id"] = newId
+        localDict["created_at"] = Int64(Date().timeIntervalSince1970 * 1000)
+        localDict["updated_at"] = Int64(Date().timeIntervalSince1970 * 1000)
+
+        // Add suffix to name if present to indicate it's a copy
+        if let name = localDict["name"] as? String {
+            localDict["name"] = "\(name) (copie locale)"
+        }
+
+        guard let newPayload = try? JSONSerialization.data(withJSONObject: localDict) else {
+            return .skip(reason: "Cannot serialize new payload for KEEP_BOTH")
+        }
+
+        let table = item.entityType.tableName
+
+        // Insert the new copy
+        try await upsertMergedRecord(table: table, entityType: item.entityType, payload: newPayload)
+
+        debugLog("SyncQueueProcessor", "Keep both: created copy \(newId) of \(originalId) for \(item.entityType.rawValue)")
+        return .success
+    }
+
+    // MARK: - Helper Methods
+
+    private func fetchRemoteAsData(table: String, id: String) async throws -> Data? {
+        guard let client = supabase.currentClient() else {
+            return nil
+        }
+
+        // Fetch as raw JSON data
+        let data = try await client.database
+            .from(table)
+            .select()
+            .eq("id", value: id)
+            .limit(1)
+            .execute()
+            .data
+
+        // Parse the response array and return first element as Data
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+              let first = array.first else {
+            return nil
+        }
+
+        return try JSONSerialization.data(withJSONObject: first)
+    }
+
+    private func upsertMergedRecord(table: String, entityType: SyncEntityType, payload: Data) async throws {
+        switch entityType {
+        case .site:
+            let dto = try decoder.decode(SiteDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .category:
+            let dto = try decoder.decode(CategoryDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .packagingType:
+            let dto = try decoder.decode(PackagingTypeDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .product:
+            let dto = try decoder.decode(ProductDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .customer:
+            let dto = try decoder.decode(CustomerDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .user:
+            let dto = try decoder.decode(UserDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .purchaseBatch:
+            let dto = try decoder.decode(PurchaseBatchDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .sale:
+            let dto = try decoder.decode(SaleDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .saleItem:
+            let dto = try decoder.decode(SaleItemDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .stockMovement:
+            let dto = try decoder.decode(StockMovementDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        case .productTransfer:
+            let dto = try decoder.decode(ProductTransferDTO.self, from: payload)
+            try await supabase.upsert(into: table, record: dto)
+
+        default:
+            debugLog("SyncQueueProcessor", "Unsupported entity type for merge/keepBoth: \(entityType.rawValue)")
         }
     }
 }

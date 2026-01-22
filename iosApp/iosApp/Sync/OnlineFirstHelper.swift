@@ -32,7 +32,7 @@ class OnlineFirstHelper {
                     try? await syncToLocal(dto)
                 }
             } catch {
-                print("[OnlineFirstHelper] Remote fetch failed for \(table): \(error)")
+                debugLog("OnlineFirstHelper", "Remote fetch failed for \(table): \(error)")
                 // Continue to local fetch
             }
         }
@@ -65,7 +65,7 @@ class OnlineFirstHelper {
                 try await supabase.upsert(into: table, record: dto)
                 savedOnline = true
             } catch {
-                print("[OnlineFirstHelper] Remote save failed for \(table): \(error)")
+                debugLog("OnlineFirstHelper", "Remote save failed for \(table): \(error)")
                 // Continue to local save and queue
             }
         }
@@ -112,7 +112,7 @@ class OnlineFirstHelper {
                 try await supabase.delete(from: table, id: entityId)
                 deletedOnline = true
             } catch {
-                print("[OnlineFirstHelper] Remote delete failed for \(table): \(error)")
+                debugLog("OnlineFirstHelper", "Remote delete failed for \(table): \(error)")
             }
         }
 

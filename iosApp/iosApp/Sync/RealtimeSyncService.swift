@@ -30,12 +30,12 @@ class RealtimeSyncService: ObservableObject {
     /// Start listening to realtime changes
     func start(sdk: MedistockSDK) {
         guard supabase.isConfigured else {
-            print("[RealtimeSyncService] Cannot start: Supabase not configured")
+            debugLog("RealtimeSyncService", "Cannot start: Supabase not configured")
             return
         }
 
         guard let client = supabase.realtimeClient else {
-            print("[RealtimeSyncService] Cannot start: No Supabase client")
+            debugLog("RealtimeSyncService", "Cannot start: No Supabase client")
             return
         }
 
@@ -53,7 +53,7 @@ class RealtimeSyncService: ObservableObject {
         subscribeToTable("stock_movements", sdk: sdk)
 
         isConnected = true
-        print("[RealtimeSyncService] Started listening to realtime changes")
+        debugLog("RealtimeSyncService", "Started listening to realtime changes")
     }
 
     /// Stop listening to realtime changes
@@ -66,7 +66,7 @@ class RealtimeSyncService: ObservableObject {
         }
 
         isConnected = false
-        print("[RealtimeSyncService] Stopped listening to realtime changes")
+        debugLog("RealtimeSyncService", "Stopped listening to realtime changes")
     }
 
     // MARK: - Private Methods
@@ -125,7 +125,7 @@ class RealtimeSyncService: ObservableObject {
         if let clientIdValue = record["client_id"],
            case .string(let clientId) = clientIdValue,
            clientId == SyncClientId.current {
-            print("[RealtimeSyncService] Ignoring own change for \(table)")
+            debugLog("RealtimeSyncService", "Ignoring own change for \(table)")
             return
         }
 
@@ -133,7 +133,7 @@ class RealtimeSyncService: ObservableObject {
             lastEventAt = Date()
         }
 
-        print("[RealtimeSyncService] Received \(action) for \(table)")
+        debugLog("RealtimeSyncService", "Received \(action) for \(table)")
 
         // Apply change to local database
         do {
@@ -157,10 +157,10 @@ class RealtimeSyncService: ObservableObject {
             case "stock_movements":
                 try await handleStockMovementChange(action: action, record: record, sdk: sdk)
             default:
-                print("[RealtimeSyncService] Unknown table: \(table)")
+                debugLog("RealtimeSyncService", "Unknown table: \(table)")
             }
         } catch {
-            print("[RealtimeSyncService] Error handling change: \(error)")
+            debugLog("RealtimeSyncService", "Error handling change: \(error)")
         }
     }
 

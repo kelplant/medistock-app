@@ -129,7 +129,7 @@ struct HomeView: View {
                     try? await sdk.siteRepository.upsert(site: dto.toEntity())
                 }
             } catch {
-                print("[HomeView] Failed to fetch sites from Supabase: \(error)")
+                debugLog("HomeView", "Failed to fetch sites from Supabase: \(error)")
             }
         }
 
@@ -389,7 +389,7 @@ struct SiteSelectorView: View {
                     try? await sdk.siteRepository.upsert(site: dto.toEntity())
                 }
             } catch {
-                print("[SiteSelectorView] Failed to fetch sites from Supabase: \(error)")
+                debugLog("SiteSelectorView", "Failed to fetch sites from Supabase: \(error)")
             }
         }
 

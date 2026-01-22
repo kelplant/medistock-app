@@ -25,7 +25,7 @@ class KeychainService {
     @discardableResult
     func save(_ value: String, for key: KeychainKey) -> Bool {
         guard let data = value.data(using: .utf8) else {
-            print("[KeychainService] Failed to encode value for key: \(key.rawValue)")
+            debugLog("KeychainService", "Failed to encode value for key: \(key.rawValue)")
             return false
         }
 
@@ -44,10 +44,10 @@ class KeychainService {
         let status = SecItemAdd(query as CFDictionary, nil)
 
         if status == errSecSuccess {
-            print("[KeychainService] Saved value for key: \(key.rawValue)")
+            debugLog("KeychainService", "Saved value for key: \(key.rawValue)")
             return true
         } else {
-            print("[KeychainService] Failed to save value for key: \(key.rawValue), status: \(status)")
+            debugLog("KeychainService", "Failed to save value for key: \(key.rawValue), status: \(status)")
             return false
         }
     }
@@ -71,7 +71,7 @@ class KeychainService {
               let data = result as? Data,
               let value = String(data: data, encoding: .utf8) else {
             if status != errSecItemNotFound {
-                print("[KeychainService] Failed to get value for key: \(key.rawValue), status: \(status)")
+                debugLog("KeychainService", "Failed to get value for key: \(key.rawValue), status: \(status)")
             }
             return nil
         }
@@ -97,7 +97,7 @@ class KeychainService {
     func clearAll() {
         delete(.supabaseUrl)
         delete(.supabaseAnonKey)
-        print("[KeychainService] Cleared all credentials")
+        debugLog("KeychainService", "Cleared all credentials")
     }
 
     /// Check if Supabase credentials are stored

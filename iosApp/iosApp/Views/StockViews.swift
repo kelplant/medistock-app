@@ -628,7 +628,7 @@ struct StockMovementCreationView: View {
                 }
             } catch {
                 // If we can't check stock, proceed anyway
-                print("[StockMovementCreation] Could not check stock: \(error)")
+                debugLog("StockMovementCreation", "Could not check stock: \(error)")
             }
         }
 

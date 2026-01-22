@@ -94,7 +94,7 @@ struct CategoriesListView: View {
                     try? await sdk.categoryRepository.upsert(category: dto.toEntity())
                 }
             } catch {
-                print("[CategoriesListView] Failed to fetch from Supabase: \(error)")
+                debugLog("CategoriesListView", "Failed to fetch from Supabase: \(error)")
             }
         }
 

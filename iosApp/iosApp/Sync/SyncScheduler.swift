@@ -49,7 +49,7 @@ class SyncScheduler: ObservableObject {
             triggerImmediate(reason: "App started")
         }
 
-        print("[SyncScheduler] Started")
+        debugLog("SyncScheduler", "Started")
     }
 
     /// Stop the sync scheduler
@@ -60,22 +60,22 @@ class SyncScheduler: ObservableObject {
         realtimeService.stop()
         queueProcessor.stopProcessing()
 
-        print("[SyncScheduler] Stopped")
+        debugLog("SyncScheduler", "Stopped")
     }
 
     /// Trigger an immediate sync
     func triggerImmediate(reason: String = "Manual trigger") {
         guard isRunning, let sdk = sdk else {
-            print("[SyncScheduler] Cannot trigger sync: not running or no SDK")
+            debugLog("SyncScheduler", "Cannot trigger sync: not running or no SDK")
             return
         }
 
         guard statusManager.isOnline else {
-            print("[SyncScheduler] Cannot trigger sync: offline")
+            debugLog("SyncScheduler", "Cannot trigger sync: offline")
             return
         }
 
-        print("[SyncScheduler] Triggering immediate sync: \(reason)")
+        debugLog("SyncScheduler", "Triggering immediate sync: \(reason)")
 
         Task {
             await syncManager.fullSync(sdk: sdk)
@@ -111,9 +111,9 @@ class SyncScheduler: ObservableObject {
 
         do {
             try BGTaskScheduler.shared.submit(request)
-            print("[SyncScheduler] Background sync scheduled")
+            debugLog("SyncScheduler", "Background sync scheduled")
         } catch {
-            print("[SyncScheduler] Failed to schedule background sync: \(error)")
+            debugLog("SyncScheduler", "Failed to schedule background sync: \(error)")
         }
     }
 
@@ -140,7 +140,7 @@ class SyncScheduler: ObservableObject {
 
     private func setupNetworkCallbacks() {
         statusManager.onNetworkAvailable = { [weak self] in
-            print("[SyncScheduler] Network available - triggering sync")
+            debugLog("SyncScheduler", "Network available - triggering sync")
             self?.triggerImmediate(reason: "Network reconnected")
 
             // Restart realtime if needed
@@ -150,7 +150,7 @@ class SyncScheduler: ObservableObject {
         }
 
         statusManager.onNetworkLost = { [weak self] in
-            print("[SyncScheduler] Network lost - stopping realtime")
+            debugLog("SyncScheduler", "Network lost - stopping realtime")
             self?.realtimeService.stop()
         }
     }
@@ -162,7 +162,7 @@ class SyncScheduler: ObservableObject {
             guard let self = self else { return }
             guard self.statusManager.isOnline else { return }
             guard self.statusManager.needsSync() else {
-                print("[SyncScheduler] No pending changes, skipping periodic sync")
+                debugLog("SyncScheduler", "No pending changes, skipping periodic sync")
                 return
             }
 

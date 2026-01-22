@@ -117,7 +117,7 @@ struct ProductsListView: View {
                     try? await sdk.productRepository.upsert(product: dto.toEntity())
                 }
             } catch {
-                print("[ProductsListView] Failed to sync from Supabase: \(error)")
+                debugLog("ProductsListView", "Failed to sync from Supabase: \(error)")
             }
         }
 
