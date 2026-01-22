@@ -9,26 +9,28 @@ appId: com.medistock.ios
 
 - waitForAnimationToEnd
 
-- tapOn: "Nom d'utilisateur"
+- tapOn: "Username"
 - inputText: "admin"
 
-- tapOn: "Mot de passe"
+- tapOn: "Password"
 - inputText: "admin"
 
-- tapOn: "Se connecter"
+- tapOn:
+    text: "Login"
+    index: 1
 
 - waitForAnimationToEnd:
     timeout: 10000
 
 # Verify we're on the home screen
 - assertVisible: "MediStock"
-- assertVisible: "Opérations"
+- assertVisible: "Operations"
 
 - takeScreenshot: "ios_transfer_home"
 
 # ========== TEST: Navigate to Transfers screen ==========
 - tapOn:
-    text: "Transferts"
+    text: "Transfer Products"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:

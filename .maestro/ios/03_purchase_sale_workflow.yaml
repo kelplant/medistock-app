@@ -9,32 +9,34 @@ appId: com.medistock.ios
 
 - waitForAnimationToEnd
 
-- tapOn: "Nom d'utilisateur"
+- tapOn: "Username"
 - inputText: "admin"
 
-- tapOn: "Mot de passe"
+- tapOn: "Password"
 - inputText: "admin"
 
-- tapOn: "Se connecter"
+- tapOn:
+    text: "Login"
+    index: 1
 
 - waitForAnimationToEnd:
     timeout: 10000
 
 # Verify we're on the home screen
 - assertVisible: "MediStock"
-- assertVisible: "Opérations"
+- assertVisible: "Operations"
 
 - takeScreenshot: "ios_workflow_home"
 
 # ========== TEST: Verify main menu items visible ==========
-- assertVisible: "Achats"
-- assertVisible: "Ventes"
+- assertVisible: "Purchase Products"
+- assertVisible: "Sell Products"
 
 - takeScreenshot: "ios_workflow_menu_visible"
 
 # ========== STEP 1: Navigate to Purchases screen ==========
 - tapOn:
-    text: "Achats"
+    text: "Purchase Products"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:

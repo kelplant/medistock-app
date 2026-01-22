@@ -40,20 +40,20 @@ struct StockListView: View {
                 Section {
                     EmptyStateView(
                         icon: "chart.bar",
-                        title: "Aucun stock",
-                        message: "Effectuez des achats pour voir votre stock."
+                        title: "No stock",
+                        message: "Make purchases to see your stock."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
                 // Summary
-                Section(header: Text("Résumé")) {
+                Section(header: Text("Summary")) {
                     HStack {
                         VStack {
                             Text("\(stockItems.count)")
                                 .font(.title)
                                 .fontWeight(.bold)
-                            Text("Produits")
+                            Text("Products")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -63,7 +63,7 @@ struct StockListView: View {
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.red)
-                            Text("Ruptures")
+                            Text("Out of stock")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -73,7 +73,7 @@ struct StockListView: View {
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.orange)
-                            Text("Stock bas")
+                            Text("Low stock")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -82,7 +82,7 @@ struct StockListView: View {
                 }
 
                 // Stock list
-                Section(header: Text("Stock par produit")) {
+                Section(header: Text("Stock by product")) {
                     ForEach(filteredItems, id: \.productId) { item in
                         StockItemRowView(item: item)
                     }
@@ -91,7 +91,7 @@ struct StockListView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Stock")
-        .searchable(text: $searchText, prompt: "Rechercher un produit")
+        .searchable(text: $searchText, prompt: "Search products")
         .refreshable {
             await loadData()
         }
@@ -119,7 +119,7 @@ struct StockListView: View {
                 }
 
                 let stock = allStock.first { $0.productId == product.id && $0.siteId == product.siteId }
-                let siteName = sites.first { $0.id == product.siteId }?.name ?? "Inconnu"
+                let siteName = sites.first { $0.id == product.siteId }?.name ?? "Unknown"
 
                 // Get batches for expiry info
                 let productBatches = batches.filter { $0.productId == product.id && !$0.isExhausted }
@@ -146,7 +146,7 @@ struct StockListView: View {
                 return a.productName < b.productName
             }
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
@@ -196,7 +196,7 @@ struct StockItemRowView: View {
             if let expiry = item.nearestExpiryDate {
                 HStack {
                     Image(systemName: "calendar.badge.exclamationmark")
-                    Text("Exp. proche: \(formatDate(expiry))")
+                    Text("Nearest exp.: \(formatDate(expiry))")
                 }
                 .font(.caption)
                 .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
@@ -257,13 +257,13 @@ struct StockMovementsListView: View {
                 Section {
                     EmptyStateView(
                         icon: "arrow.up.arrow.down",
-                        title: "Aucun mouvement",
-                        message: "Les mouvements de stock apparaîtront ici."
+                        title: "No movements",
+                        message: "Stock movements will appear here."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(movements.count) mouvement(s)")) {
+                Section(header: Text("\(movements.count) movement(s)")) {
                     ForEach(movements, id: \.id) { movement in
                         StockMovementRowView(
                             movement: movement,
@@ -275,7 +275,7 @@ struct StockMovementsListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Mouvements de stock")
+        .navigationTitle("Stock Movements")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -317,17 +317,17 @@ struct StockMovementsListView: View {
             products = try await productsResult
             sites = try await sitesResult
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Produit inconnu"
+        products.first { $0.id == productId }?.name ?? "Unknown product"
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Site inconnu"
+        sites.first { $0.id == siteId }?.name ?? "Unknown site"
     }
 }
 
@@ -340,12 +340,12 @@ struct StockMovementRowView: View {
     var movementTypeLabel: String {
         let type = movement.movementType ?? movement.type
         switch type {
-        case "PURCHASE": return "Achat"
-        case "SALE": return "Vente"
-        case "TRANSFER_IN": return "Transfert entrant"
-        case "TRANSFER_OUT": return "Transfert sortant"
-        case "ADJUSTMENT": return "Ajustement"
-        case "INVENTORY": return "Inventaire"
+        case "PURCHASE": return "Purchase"
+        case "SALE": return "Sale"
+        case "TRANSFER_IN": return "Transfer in"
+        case "TRANSFER_OUT": return "Transfer out"
+        case "ADJUSTMENT": return "Adjustment"
+        case "INVENTORY": return "Inventory"
         default: return type
         }
     }
@@ -423,8 +423,8 @@ struct StockMovementCreationView: View {
     @State private var warningMessage: String = ""
 
     enum MovementTypeOption: String, CaseIterable {
-        case stockIn = "Entrée"
-        case stockOut = "Sortie"
+        case stockIn = "Stock In"
+        case stockOut = "Stock Out"
 
         var movementTypeValue: String {
             switch self {
@@ -468,9 +468,9 @@ struct StockMovementCreationView: View {
                     }
                 } else {
                     // Product selection
-                    Section(header: Text("Produit")) {
-                        Picker("Sélectionner un produit", selection: $selectedProduct) {
-                            Text("Choisir un produit").tag(nil as Product?)
+                    Section(header: Text("Product")) {
+                        Picker("Select a product", selection: $selectedProduct) {
+                            Text("Choose a product").tag(nil as Product?)
                             ForEach(products, id: \.id) { product in
                                 Text("\(product.name) (\(product.unit))")
                                     .tag(product as Product?)
@@ -480,7 +480,7 @@ struct StockMovementCreationView: View {
                     }
 
                     // Movement type
-                    Section(header: Text("Type de mouvement")) {
+                    Section(header: Text("Movement type")) {
                         Picker("Type", selection: $movementType) {
                             ForEach(MovementTypeOption.allCases, id: \.self) { type in
                                 Label(type.rawValue, systemImage: type.icon)
@@ -491,9 +491,9 @@ struct StockMovementCreationView: View {
                     }
 
                     // Quantity
-                    Section(header: Text("Quantité")) {
+                    Section(header: Text("Quantity")) {
                         HStack {
-                            TextField("Quantité", text: $quantity)
+                            TextField("Quantity", text: $quantity)
                                 .keyboardType(.decimalPad)
 
                             if let product = selectedProduct {
@@ -504,13 +504,13 @@ struct StockMovementCreationView: View {
                     }
 
                     // Notes (optional)
-                    Section(header: Text("Notes (optionnel)")) {
+                    Section(header: Text("Notes (optional)")) {
                         TextEditor(text: $notes)
                             .frame(minHeight: 60)
                             .overlay(
                                 Group {
                                     if notes.isEmpty {
-                                        Text("Ajouter une note...")
+                                        Text("Add a note...")
                                             .foregroundColor(.secondary)
                                             .padding(.horizontal, 4)
                                             .padding(.vertical, 8)
@@ -522,7 +522,7 @@ struct StockMovementCreationView: View {
 
                     // Preview
                     if let product = selectedProduct, let qty = Double(quantity.replacingOccurrences(of: ",", with: ".")), qty > 0 {
-                        Section(header: Text("Aperçu")) {
+                        Section(header: Text("Preview")) {
                             HStack {
                                 Image(systemName: movementType.icon)
                                     .foregroundColor(movementType.color)
@@ -536,16 +536,16 @@ struct StockMovementCreationView: View {
                     }
                 }
             }
-            .navigationTitle("Mouvement de stock")
+            .navigationTitle("Stock Movement")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annuler") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Enregistrer") {
+                    Button("Save") {
                         Task {
                             await saveMovement()
                         }
@@ -556,13 +556,13 @@ struct StockMovementCreationView: View {
             .task {
                 await loadProducts()
             }
-            .alert("Attention", isPresented: $showingWarning) {
-                Button("Continuer", role: .destructive) {
+            .alert("Warning", isPresented: $showingWarning) {
+                Button("Continue", role: .destructive) {
                     Task {
                         await performSave()
                     }
                 }
-                Button("Annuler", role: .cancel) {}
+                Button("Cancel", role: .cancel) {}
             } message: {
                 Text(warningMessage)
             }
@@ -570,7 +570,7 @@ struct StockMovementCreationView: View {
                 if isSaving {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
-                    ProgressView("Enregistrement...")
+                    ProgressView("Saving...")
                         .padding()
                         .background(Color(.systemBackground))
                         .cornerRadius(10)
@@ -601,7 +601,7 @@ struct StockMovementCreationView: View {
                 products = allProducts
             }
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
@@ -622,7 +622,7 @@ struct StockMovementCreationView: View {
                 let stockLevel = currentStock?.totalStock ?? 0
 
                 if stockLevel < qty {
-                    warningMessage = "Le stock actuel (\(String(format: "%.1f", stockLevel)) \(product.unit)) est inférieur à la quantité demandée (\(String(format: "%.1f", qty)) \(product.unit)).\n\nLe stock deviendra négatif. Voulez-vous continuer ?"
+                    warningMessage = "Current stock (\(String(format: "%.1f", stockLevel)) \(product.unit)) is less than the requested quantity (\(String(format: "%.1f", qty)) \(product.unit)).\n\nStock will become negative. Do you want to continue?"
                     showingWarning = true
                     return
                 }
@@ -681,7 +681,7 @@ struct StockMovementCreationView: View {
 
             dismiss()
         } catch {
-            errorMessage = "Erreur lors de l'enregistrement: \(error.localizedDescription)"
+            errorMessage = "Error saving: \(error.localizedDescription)"
         }
 
         isSaving = false

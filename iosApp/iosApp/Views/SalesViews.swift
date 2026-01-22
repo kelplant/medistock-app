@@ -37,13 +37,13 @@ struct SalesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "cart",
-                        title: "Aucune vente",
-                        message: "Enregistrez votre premiere vente."
+                        title: "No sales",
+                        message: "Record your first sale."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(sales.count) vente(s)")) {
+                Section(header: Text("\(sales.count) sale(s)")) {
                     ForEach(sales, id: \.id) { sale in
                         SaleRowView(sale: sale, siteName: siteName(for: sale.siteId))
                             .contentShape(Rectangle())
@@ -55,7 +55,7 @@ struct SalesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Ventes")
+        .navigationTitle("Sales")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -110,13 +110,13 @@ struct SalesListView: View {
                 sales = sales.filter { $0.siteId == siteId }
             }
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Site inconnu"
+        sites.first { $0.id == siteId }?.name ?? "Unknown site"
     }
 }
 
@@ -169,9 +169,9 @@ struct SaleDetailView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Informations")) {
+                Section(header: Text("Information")) {
                     LabeledContentCompat {
-                        Text("Client")
+                        Text("Customer")
                     } content: {
                         Text(sale.customerName)
                     }
@@ -188,13 +188,13 @@ struct SaleDetailView: View {
                 }
 
                 if let items = saleWithItems?.items, !items.isEmpty {
-                    Section(header: Text("Articles (\(items.count))")) {
+                    Section(header: Text("Items (\(items.count))")) {
                         ForEach(items, id: \.id) { item in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(productName(for: item.productId))
                                     .font(.headline)
                                 HStack {
-                                    Text("Qte: \(String(format: "%.1f", item.quantity))")
+                                    Text("Qty: \(String(format: "%.1f", item.quantity))")
                                     Spacer()
                                     Text("\(String(format: "%.2f", item.unitPrice)) EUR x \(String(format: "%.1f", item.quantity))")
                                     Text("= \(String(format: "%.2f", item.totalPrice)) EUR")
@@ -208,10 +208,10 @@ struct SaleDetailView: View {
                     }
                 }
             }
-            .navigationTitle("Detail de la vente")
+            .navigationTitle("Sale Details")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Fermer") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
             }
             .task {
@@ -235,7 +235,7 @@ struct SaleDetailView: View {
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Produit inconnu"
+        products.first { $0.id == productId }?.name ?? "Unknown product"
     }
 
     private func formatDate<T: TimestampConvertible>(_ timestamp: T) -> String {
@@ -282,18 +282,18 @@ struct SaleEditorView: View {
             Form {
                 Section(header: Text("Site")) {
                     Picker("Site", selection: $selectedSiteId) {
-                        Text("Selectionner").tag("")
+                        Text("Select").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Client")) {
-                    TextField("Nom du client", text: $customerName)
+                Section(header: Text("Customer")) {
+                    TextField("Customer name", text: $customerName)
                     if !customers.isEmpty {
-                        Picker("Ou selectionner", selection: $selectedCustomerId) {
-                            Text("Client occasionnel").tag("")
+                        Picker("Or select", selection: $selectedCustomerId) {
+                            Text("Walk-in customer").tag("")
                             ForEach(customers, id: \.id) { customer in
                                 Text(customer.name).tag(customer.id)
                             }
@@ -307,7 +307,7 @@ struct SaleEditorView: View {
                 }
 
                 Section(header: HStack {
-                    Text("Articles")
+                    Text("Items")
                     Spacer()
                     Button(action: { showAddItem = true }) {
                         Image(systemName: "plus.circle")
@@ -315,7 +315,7 @@ struct SaleEditorView: View {
                     .disabled(selectedSiteId.isEmpty)
                 }) {
                     if saleItems.isEmpty {
-                        Text("Ajoutez des articles a la vente")
+                        Text("Add items to the sale")
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(saleItems.indices, id: \.self) { index in
@@ -324,7 +324,7 @@ struct SaleEditorView: View {
                                 Text(item.productName)
                                     .font(.headline)
                                 HStack {
-                                    Text("Qte: \(String(format: "%.1f", item.quantity))")
+                                    Text("Qty: \(String(format: "%.1f", item.quantity))")
                                     Text("x \(String(format: "%.2f", item.unitPrice)) EUR")
                                     Spacer()
                                     Text("\(String(format: "%.2f", item.totalPrice)) EUR")
@@ -356,13 +356,13 @@ struct SaleEditorView: View {
                     }
                 }
             }
-            .navigationTitle("Nouvelle vente")
+            .navigationTitle("New Sale")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Enregistrer") {
+                    Button("Save") {
                         saveSale()
                     }
                     .disabled(!canSave || isSaving)
@@ -403,7 +403,7 @@ struct SaleEditorView: View {
 
             selectedSiteId = defaultSiteId ?? sites.first?.id ?? ""
         } catch {
-            errorMessage = "Erreur lors du chargement"
+            errorMessage = "Error loading data"
         }
     }
 
@@ -494,7 +494,7 @@ struct SaleEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }
@@ -542,9 +542,9 @@ struct SaleItemEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Produit")) {
-                    Picker("Produit", selection: $selectedProductId) {
-                        Text("Selectionner").tag("")
+                Section(header: Text("Product")) {
+                    Picker("Product", selection: $selectedProductId) {
+                        Text("Select").tag("")
                         ForEach(products, id: \.id) { product in
                             Text(product.name).tag(product.id)
                         }
@@ -557,26 +557,26 @@ struct SaleItemEditorView: View {
 
                     if !selectedProductId.isEmpty {
                         LabeledContentCompat {
-                            Text("Stock disponible")
+                            Text("Available stock")
                         } content: {
                             Text(String(format: "%.1f", availableStock))
                         }
                     }
                 }
 
-                Section(header: Text("Quantite et Prix")) {
-                    TextField("Quantite", text: $quantityText)
+                Section(header: Text("Quantity and Price")) {
+                    TextField("Quantity", text: $quantityText)
                         .keyboardType(.decimalPad)
-                    TextField("Prix unitaire", text: $priceText)
+                    TextField("Unit price", text: $priceText)
                         .keyboardType(.decimalPad)
                 }
 
                 if let product = selectedProduct {
-                    Section(header: Text("Resume")) {
+                    Section(header: Text("Summary")) {
                         let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         let price = Double(priceText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         LabeledContentCompat {
-                            Text("Produit")
+                            Text("Product")
                         } content: {
                             Text(product.name)
                         }
@@ -588,13 +588,13 @@ struct SaleItemEditorView: View {
                     }
                 }
             }
-            .navigationTitle("Ajouter un article")
+            .navigationTitle("Add Item")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Ajouter") {
+                    Button("Add") {
                         addItem()
                     }
                     .disabled(!canAdd)

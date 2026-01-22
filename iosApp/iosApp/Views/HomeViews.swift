@@ -23,12 +23,12 @@ struct HomeView: View {
             }
 
             // Site selector section
-            Section(header: Text("Site actuel")) {
+            Section(header: Text("Current Site")) {
                 Button(action: { showSiteSelector = true }) {
                     HStack {
                         Image(systemName: "building.2")
                             .foregroundColor(.accentColor)
-                        Text(selectedSite?.name ?? "Sélectionner un site")
+                        Text(selectedSite?.name ?? "Select a site")
                             .foregroundColor(selectedSite == nil ? .secondary : .primary)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -38,34 +38,34 @@ struct HomeView: View {
             }
 
             // Main operations - with permission checks
-            Section(header: Text("Opérations")) {
+            Section(header: Text("Operations")) {
                 if permissions.canView(.purchases) {
                     NavigationLink(destination: PurchasesListView(sdk: sdk, session: session, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "shippingbox.fill", title: "Achats", color: .blue)
+                        HomeMenuRow(icon: "shippingbox.fill", title: "Purchase Products", color: .blue)
                     }
                 }
 
                 if permissions.canView(.sales) {
                     NavigationLink(destination: SalesListView(sdk: sdk, session: session, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "cart.fill", title: "Ventes", color: .green)
+                        HomeMenuRow(icon: "cart.fill", title: "Sell Products", color: .green)
                     }
                 }
 
                 if permissions.canView(.transfers) {
                     NavigationLink(destination: TransfersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "arrow.left.arrow.right", title: "Transferts", color: .orange)
+                        HomeMenuRow(icon: "arrow.left.arrow.right", title: "Transfer Products", color: .orange)
                     }
                 }
 
                 if permissions.canView(.stock) {
                     NavigationLink(destination: StockListView(sdk: sdk, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "chart.bar.fill", title: "Stock", color: .purple)
+                        HomeMenuRow(icon: "chart.bar.fill", title: "View Stock", color: .purple)
                     }
                 }
 
                 if permissions.canView(.inventory) {
                     NavigationLink(destination: InventoryListView(sdk: sdk, session: session, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "list.clipboard.fill", title: "Inventaire", color: .teal)
+                        HomeMenuRow(icon: "list.clipboard.fill", title: "Inventory Stock", color: .teal)
                     }
                 }
             }
@@ -204,23 +204,23 @@ struct SyncStatusBannerView: View {
 
     private var statusTitle: String {
         if !syncStatus.isOnline {
-            return "Mode hors ligne"
+            return "Offline Mode"
         } else if syncStatus.conflictCount > 0 {
-            return "Conflits détectés"
+            return "Conflicts Detected"
         } else if syncStatus.pendingCount > 0 {
-            return "Modifications en attente"
+            return "Pending Changes"
         } else {
-            return "Synchronisé"
+            return "Synchronized"
         }
     }
 
     private var statusSubtitle: String {
         if !syncStatus.isOnline {
-            return "Les modifications seront synchronisées automatiquement"
+            return "Changes will sync automatically when online"
         } else if syncStatus.conflictCount > 0 {
-            return "\(syncStatus.conflictCount) conflit(s) à résoudre"
+            return "\(syncStatus.conflictCount) conflict(s) to resolve"
         } else if syncStatus.pendingCount > 0 {
-            return "\(syncStatus.pendingCount) modification(s)"
+            return "\(syncStatus.pendingCount) pending change(s)"
         } else {
             return syncStatus.statusSummary
         }
@@ -261,38 +261,38 @@ struct AdminMenuView: View {
 
     var body: some View {
         List {
-            Section(header: Text("Gestion")) {
+            Section(header: Text("Management")) {
                 if permissions.canView(.sites) {
                     NavigationLink(destination: SitesListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "building.2.fill", title: "Sites", color: .blue)
+                        HomeMenuRow(icon: "building.2.fill", title: "Site Management", color: .blue)
                     }
                     .accessibilityIdentifier("sites-link")
                 }
 
                 if permissions.canView(.products) {
                     NavigationLink(destination: ProductsListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "cube.box.fill", title: "Produits", color: .green)
+                        HomeMenuRow(icon: "cube.box.fill", title: "Manage Products", color: .green)
                     }
                     .accessibilityIdentifier("products-link")
                 }
 
                 if permissions.canView(.categories) {
                     NavigationLink(destination: CategoriesListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "folder.fill", title: "Catégories", color: .orange)
+                        HomeMenuRow(icon: "folder.fill", title: "Manage Categories", color: .orange)
                     }
                     .accessibilityIdentifier("categories-link")
                 }
 
                 if permissions.canView(.customers) {
                     NavigationLink(destination: CustomersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "person.2.fill", title: "Clients", color: .purple)
+                        HomeMenuRow(icon: "person.2.fill", title: "Manage Customers", color: .purple)
                     }
                     .accessibilityIdentifier("customers-link")
                 }
 
                 if permissions.canView(.packagingTypes) {
                     NavigationLink(destination: PackagingTypesListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "shippingbox", title: "Conditionnements", color: .teal)
+                        HomeMenuRow(icon: "shippingbox", title: "Packaging Types", color: .teal)
                     }
                     .accessibilityIdentifier("packaging-types-link")
                 }
@@ -300,24 +300,24 @@ struct AdminMenuView: View {
 
             // Users section
             if permissions.canView(.users) {
-                Section(header: Text("Utilisateurs")) {
+                Section(header: Text("Users")) {
                     NavigationLink(destination: UsersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "person.3.fill", title: "Utilisateurs", color: .indigo)
+                        HomeMenuRow(icon: "person.3.fill", title: "User Management", color: .indigo)
                     }
                 }
             }
 
             if permissions.canView(.stock) || permissions.canView(.audit) {
-                Section(header: Text("Historique")) {
+                Section(header: Text("History")) {
                     if permissions.canView(.stock) {
                         NavigationLink(destination: StockMovementsListView(sdk: sdk)) {
-                            HomeMenuRow(icon: "arrow.up.arrow.down", title: "Mouvements de stock", color: .cyan)
+                            HomeMenuRow(icon: "arrow.up.arrow.down", title: "Stock Movement", color: .cyan)
                         }
                     }
 
                     if permissions.canView(.audit) {
                         NavigationLink(destination: AuditHistoryListView(sdk: sdk)) {
-                            HomeMenuRow(icon: "clock.arrow.circlepath", title: "Historique des audits", color: .brown)
+                            HomeMenuRow(icon: "clock.arrow.circlepath", title: "Audit History", color: .brown)
                         }
                     }
                 }
@@ -325,7 +325,7 @@ struct AdminMenuView: View {
 
             Section(header: Text("Configuration")) {
                 NavigationLink(destination: SupabaseConfigView(sdk: sdk)) {
-                    HomeMenuRow(icon: "server.rack", title: "Configuration Supabase", color: .mint)
+                    HomeMenuRow(icon: "server.rack", title: "Supabase Configuration", color: .mint)
                 }
             }
         }
@@ -349,7 +349,7 @@ struct SiteSelectorView: View {
                 if isLoading {
                     ProgressView()
                 } else if sites.isEmpty {
-                    Text("Aucun site disponible")
+                    Text("No sites available")
                         .foregroundColor(.secondary)
                 } else {
                     ForEach(sites, id: \.id) { site in
@@ -370,10 +370,10 @@ struct SiteSelectorView: View {
                     }
                 }
             }
-            .navigationTitle("Sélectionner un site")
+            .navigationTitle("Select a Site")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Fermer") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
             }
             .task {

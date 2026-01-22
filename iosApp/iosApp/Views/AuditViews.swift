@@ -12,12 +12,12 @@ struct AuditHistoryListView: View {
     @State private var selectedFilter: String = "all"
 
     let tableFilters = [
-        ("all", "Tout"),
-        ("products", "Produits"),
-        ("sales", "Ventes"),
-        ("purchase_batches", "Achats"),
+        ("all", "All"),
+        ("products", "Products"),
+        ("sales", "Sales"),
+        ("purchase_batches", "Purchases"),
         ("sites", "Sites"),
-        ("app_users", "Utilisateurs")
+        ("app_users", "Users")
     ]
 
     var filteredEntries: [AuditEntry] {
@@ -38,7 +38,7 @@ struct AuditHistoryListView: View {
 
             // Filter
             Section {
-                Picker("Filtrer par", selection: $selectedFilter) {
+                Picker("Filter by", selection: $selectedFilter) {
                     ForEach(tableFilters, id: \.0) { filter in
                         Text(filter.1).tag(filter.0)
                     }
@@ -58,13 +58,13 @@ struct AuditHistoryListView: View {
                 Section {
                     EmptyStateView(
                         icon: "clock.arrow.circlepath",
-                        title: "Aucun historique",
-                        message: "L'historique des modifications apparaîtra ici."
+                        title: "No history",
+                        message: "Change history will appear here."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(filteredEntries.count) entrée(s)")) {
+                Section(header: Text("\(filteredEntries.count) entry(ies)")) {
                     ForEach(filteredEntries, id: \.id) { entry in
                         AuditEntryRowView(entry: entry)
                     }
@@ -72,7 +72,7 @@ struct AuditHistoryListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Historique des audits")
+        .navigationTitle("Audit History")
         .refreshable {
             await loadData()
         }
@@ -88,7 +88,7 @@ struct AuditHistoryListView: View {
         do {
             auditEntries = try await sdk.auditRepository.getAll(limit: 200)
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
@@ -109,27 +109,27 @@ struct AuditEntryRowView: View {
 
     var actionLabel: String {
         switch entry.action.lowercased() {
-        case "insert", "create": return "Création"
-        case "update": return "Modification"
-        case "delete": return "Suppression"
+        case "insert", "create": return "Created"
+        case "update": return "Updated"
+        case "delete": return "Deleted"
         default: return entry.action
         }
     }
 
     var tableLabel: String {
         switch entry.tableName {
-        case "products": return "Produit"
+        case "products": return "Product"
         case "sites": return "Site"
-        case "categories": return "Catégorie"
-        case "sales": return "Vente"
-        case "sale_items": return "Article de vente"
-        case "purchase_batches": return "Lot d'achat"
-        case "app_users": return "Utilisateur"
-        case "customers": return "Client"
-        case "product_transfers": return "Transfert"
-        case "stock_movements": return "Mouvement de stock"
-        case "inventories": return "Inventaire"
-        case "packaging_types": return "Conditionnement"
+        case "categories": return "Category"
+        case "sales": return "Sale"
+        case "sale_items": return "Sale item"
+        case "purchase_batches": return "Purchase batch"
+        case "app_users": return "User"
+        case "customers": return "Customer"
+        case "product_transfers": return "Transfer"
+        case "stock_movements": return "Stock movement"
+        case "inventories": return "Inventory"
+        case "packaging_types": return "Packaging type"
         default: return entry.tableName
         }
     }
@@ -160,12 +160,12 @@ struct AuditEntryRowView: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
 
-            Text("Par: \(entry.userId)")
+            Text("By: \(entry.userId)")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
             if let newValues = entry.newValues, !newValues.isEmpty {
-                DisclosureGroup("Détails") {
+                DisclosureGroup("Details") {
                     Text(newValues)
                         .font(.caption2)
                         .foregroundColor(.secondary)

@@ -44,13 +44,13 @@ struct ProductsListView: View {
                 Section {
                     EmptyStateView(
                         icon: "cube.box",
-                        title: "Aucun produit",
-                        message: "Ajoutez votre premier produit pour commencer."
+                        title: "No products",
+                        message: "Add your first product to get started."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(filteredProducts.count) produit(s)")) {
+                Section(header: Text("\(filteredProducts.count) product(s)")) {
                     ForEach(filteredProducts, id: \.id) { product in
                         ProductRowView(product: product, siteName: siteName(for: product.siteId), categoryName: categoryName(for: product.categoryId))
                             .contentShape(Rectangle())
@@ -63,8 +63,8 @@ struct ProductsListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Produits")
-        .searchable(text: $searchText, prompt: "Rechercher un produit")
+        .navigationTitle("Products")
+        .searchable(text: $searchText, prompt: "Search products")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -131,13 +131,13 @@ struct ProductsListView: View {
             categories = try await categoriesResult
             products = try await productsResult
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Inconnu"
+        sites.first { $0.id == siteId }?.name ?? "Unknown"
     }
 
     private func categoryName(for categoryId: String?) -> String? {
@@ -160,7 +160,7 @@ struct ProductsListView: View {
                     }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
+                        errorMessage = "Error deleting: \(error.localizedDescription)"
                     }
                 }
             }
@@ -187,7 +187,7 @@ struct ProductRowView: View {
             }
             .font(.subheadline)
             .foregroundColor(.secondary)
-            Text("Unité: \(product.unit) • Volume: \(String(format: "%.2f", product.unitVolume))")
+            Text("Unit: \(product.unit) • Volume: \(String(format: "%.2f", product.unitVolume))")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -207,7 +207,7 @@ struct ProductEditorView: View {
     @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
-    @State private var unit: String = "unité"
+    @State private var unit: String = "unit"
     @State private var volumeText: String = "1"
     @State private var selectedSiteId: String = ""
     @State private var selectedCategoryId: String = ""
@@ -220,17 +220,17 @@ struct ProductEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Informations")) {
-                    TextField("Nom du produit", text: $name)
-                    TextField("Unité (ex: comprimé, ml, boîte)", text: $unit)
-                    TextField("Volume unitaire", text: $volumeText)
+                Section(header: Text("Information")) {
+                    TextField("Product name", text: $name)
+                    TextField("Unit (e.g., tablet, ml, box)", text: $unit)
+                    TextField("Unit volume", text: $volumeText)
                         .keyboardType(.decimalPad)
-                    TextField("Description (optionnel)", text: $description)
+                    TextField("Description (optional)", text: $description)
                 }
 
                 Section(header: Text("Site")) {
                     if sites.isEmpty {
-                        Text("Ajoutez d'abord un site.")
+                        Text("Add a site first.")
                             .foregroundColor(.secondary)
                     } else {
                         Picker("Site", selection: $selectedSiteId) {
@@ -241,9 +241,9 @@ struct ProductEditorView: View {
                     }
                 }
 
-                Section(header: Text("Catégorie")) {
-                    Picker("Catégorie", selection: $selectedCategoryId) {
-                        Text("Aucune").tag("")
+                Section(header: Text("Category")) {
+                    Picker("Category", selection: $selectedCategoryId) {
+                        Text("None").tag("")
                         ForEach(categories, id: \.id) { category in
                             Text(category.name).tag(category.id)
                         }
@@ -257,13 +257,13 @@ struct ProductEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Modifier le produit" : "Nouveau produit")
+            .navigationTitle(isEditing ? "Edit Product" : "New Product")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Enregistrer" : "Ajouter") {
+                    Button(isEditing ? "Save" : "Add") {
                         saveProduct()
                     }
                     .disabled(!canSave || isSaving)
@@ -305,7 +305,7 @@ struct ProductEditorView: View {
                     savedProduct = Product(
                         id: existingProduct.id,
                         name: trimmedName,
-                        unit: trimmedUnit.isEmpty ? "unité" : trimmedUnit,
+                        unit: trimmedUnit.isEmpty ? "unit" : trimmedUnit,
                         unitVolume: volume,
                         packagingTypeId: existingProduct.packagingTypeId,
                         selectedLevel: existingProduct.selectedLevel,
@@ -326,7 +326,7 @@ struct ProductEditorView: View {
                     savedProduct = sdk.createProduct(
                         name: trimmedName,
                         siteId: selectedSiteId,
-                        unit: trimmedUnit.isEmpty ? "unité" : trimmedUnit,
+                        unit: trimmedUnit.isEmpty ? "unit" : trimmedUnit,
                         unitVolume: volume,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
                         userId: session.userId
@@ -358,7 +358,7 @@ struct ProductEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }

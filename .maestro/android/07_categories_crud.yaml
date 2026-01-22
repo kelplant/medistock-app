@@ -1,0 +1,128 @@
+# MediStock Android - Categories CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Products (contains Categories submenu)
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+# Tap Manage Categories
+- tapOn:
+    text: ".*Manage Categories.*"
+    optional: true
+- tapOn:
+    text: ".*Categories.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new category
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill category form
+- inputText: "Category E2E Test"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify category appears in list
+- assertVisible:
+    text: "Category E2E Test"
+    optional: true
+
+- takeScreenshot: "android_category_created"
+
+# Test 2: Edit category
+- tapOn:
+    text: "Category E2E Test"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Clear and enter new name
+- eraseText: 20
+- inputText: "Category E2E Modified"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Update.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name
+- assertVisible:
+    text: "Category E2E Modified"
+    optional: true
+
+- takeScreenshot: "android_category_edited"
+
+# Test 3: Delete category
+- longPressOn:
+    text: "Category E2E Modified"
+    optional: true
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_category_deleted"

@@ -9,26 +9,28 @@ appId: com.medistock.ios
 
 - waitForAnimationToEnd
 
-- tapOn: "Nom d'utilisateur"
+- tapOn: "Username"
 - inputText: "admin"
 
-- tapOn: "Mot de passe"
+- tapOn: "Password"
 - inputText: "admin"
 
-- tapOn: "Se connecter"
+- tapOn:
+    text: "Login"
+    index: 1
 
 - waitForAnimationToEnd:
     timeout: 10000
 
 # Verify we're on the home screen
 - assertVisible: "MediStock"
-- assertVisible: "Opérations"
+- assertVisible: "Operations"
 
 - takeScreenshot: "ios_inventory_home"
 
 # ========== TEST: Navigate to Inventory screen ==========
 - tapOn:
-    text: "Inventaire"
+    text: "Inventory Stock"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:

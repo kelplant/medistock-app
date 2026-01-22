@@ -35,8 +35,8 @@ struct TransfersListView: View {
                 Section {
                     EmptyStateView(
                         icon: "arrow.left.arrow.right",
-                        title: "Aucun transfert",
-                        message: "Créez un transfert pour déplacer des produits entre sites."
+                        title: "No transfers",
+                        message: "Create a transfer to move products between sites."
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -44,7 +44,7 @@ struct TransfersListView: View {
                 // Pending transfers
                 let pending = transfers.filter { $0.status == "pending" }
                 if !pending.isEmpty {
-                    Section(header: Text("En attente (\(pending.count))")) {
+                    Section(header: Text("Pending (\(pending.count))")) {
                         ForEach(pending, id: \.id) { transfer in
                             TransferRowView(
                                 transfer: transfer,
@@ -60,7 +60,7 @@ struct TransfersListView: View {
                 // Completed transfers
                 let completed = transfers.filter { $0.status == "completed" }
                 if !completed.isEmpty {
-                    Section(header: Text("Terminés (\(completed.count))")) {
+                    Section(header: Text("Completed (\(completed.count))")) {
                         ForEach(completed, id: \.id) { transfer in
                             TransferRowView(
                                 transfer: transfer,
@@ -75,7 +75,7 @@ struct TransfersListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Transferts")
+        .navigationTitle("Transfers")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -109,17 +109,17 @@ struct TransfersListView: View {
             products = try await productsResult
             sites = try await sitesResult
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Produit inconnu"
+        products.first { $0.id == productId }?.name ?? "Unknown product"
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Site inconnu"
+        sites.first { $0.id == siteId }?.name ?? "Unknown site"
     }
 
     private func completeTransfer(_ transfer: ProductTransfer) {
@@ -142,7 +142,7 @@ struct TransfersListView: View {
                     purchasePriceAtMovement: 0.0,
                     sellingPriceAtMovement: 0.0,
                     referenceId: transfer.id,
-                    notes: "Transfert vers \(siteName(for: transfer.toSiteId))",
+                    notes: "Transfer to \(siteName(for: transfer.toSiteId))",
                     userId: session.username
                 )
                 try await sdk.stockMovementRepository.insert(movement: movementOut)
@@ -155,7 +155,7 @@ struct TransfersListView: View {
                     purchasePriceAtMovement: 0.0,
                     sellingPriceAtMovement: 0.0,
                     referenceId: transfer.id,
-                    notes: "Transfert depuis \(siteName(for: transfer.fromSiteId))",
+                    notes: "Transfer from \(siteName(for: transfer.fromSiteId))",
                     userId: session.username
                 )
                 try await sdk.stockMovementRepository.insert(movement: movementIn)
@@ -163,7 +163,7 @@ struct TransfersListView: View {
                 await loadData()
             } catch {
                 await MainActor.run {
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }
@@ -200,7 +200,7 @@ struct TransferRowView: View {
             .foregroundColor(.secondary)
 
             HStack {
-                Text(transfer.status == "completed" ? "Terminé" : "En attente")
+                Text(transfer.status == "completed" ? "Completed" : "Pending")
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
@@ -223,7 +223,7 @@ struct TransferRowView: View {
 
             if let onComplete = onComplete, transfer.status == "pending" {
                 Button(action: onComplete) {
-                    Text("Valider le transfert")
+                    Text("Complete transfer")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                 }
@@ -278,28 +278,28 @@ struct TransferEditorView: View {
         NavigationView {
             Form {
                 Section(header: Text("Sites")) {
-                    Picker("Site d'origine", selection: $fromSiteId) {
-                        Text("Sélectionner").tag("")
+                    Picker("Source site", selection: $fromSiteId) {
+                        Text("Select").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
 
-                    Picker("Site de destination", selection: $toSiteId) {
-                        Text("Sélectionner").tag("")
+                    Picker("Destination site", selection: $toSiteId) {
+                        Text("Select").tag("")
                         ForEach(sites.filter { $0.id != fromSiteId }, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Produit")) {
+                Section(header: Text("Product")) {
                     if filteredProducts.isEmpty {
-                        Text("Sélectionnez d'abord un site d'origine")
+                        Text("Select a source site first")
                             .foregroundColor(.secondary)
                     } else {
-                        Picker("Produit", selection: $selectedProductId) {
-                            Text("Sélectionner").tag("")
+                        Picker("Product", selection: $selectedProductId) {
+                            Text("Select").tag("")
                             ForEach(filteredProducts, id: \.id) { product in
                                 Text(product.name).tag(product.id)
                             }
@@ -307,7 +307,7 @@ struct TransferEditorView: View {
 
                         if !selectedProductId.isEmpty {
                             LabeledContentCompat {
-                                Text("Stock disponible")
+                                Text("Available stock")
                             } content: {
                                 Text(String(format: "%.1f", availableStock))
                             }
@@ -315,12 +315,12 @@ struct TransferEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantité")) {
-                    TextField("Quantité à transférer", text: $quantityText)
+                Section(header: Text("Quantity")) {
+                    TextField("Quantity to transfer", text: $quantityText)
                         .keyboardType(.decimalPad)
                 }
 
-                Section(header: Text("Notes (optionnel)")) {
+                Section(header: Text("Notes (optional)")) {
                     TextField("Notes", text: $notes)
                 }
 
@@ -331,13 +331,13 @@ struct TransferEditorView: View {
                     }
                 }
             }
-            .navigationTitle("Nouveau transfert")
+            .navigationTitle("New Transfer")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Créer") {
+                    Button("Create") {
                         saveTransfer()
                     }
                     .disabled(!canSave || isSaving)
@@ -432,7 +432,7 @@ struct TransferEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }
