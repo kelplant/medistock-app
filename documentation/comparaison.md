@@ -36,35 +36,35 @@
 | Catégories | ✅ CategoryListActivity/AddEdit | ✅ CategoriesListView/CategoryEditorView | ✅ |
 | Produits | ✅ ProductListActivity/AddEdit | ✅ ProductsListView/ProductEditorView | ✅ |
 | Achats (création) | ✅ PurchaseActivity | ✅ PurchaseEditorView | ✅ |
-| **Achats (liste)** | ❌ **MANQUANT** | ✅ PurchasesListView | ⚠️ |
+| Achats (liste) | ✅ PurchaseListActivity | ✅ PurchasesListView | ✅ |
 | Ventes | ✅ SaleListActivity/SaleActivity | ✅ SalesListView/SaleEditorView | ✅ |
 | Transferts | ✅ TransferListActivity/TransferActivity | ✅ TransfersListView/TransferEditorView | ✅ |
 | Inventaires (création) | ✅ InventoryActivity | ✅ InventoryEditorView | ✅ |
-| **Inventaires (liste)** | ❌ **MANQUANT** | ✅ InventoryListView | ⚠️ |
+| Inventaires (liste) | ✅ InventoryListActivity | ✅ InventoryListView | ✅ |
 | Mouvements stock | ✅ StockMovementListActivity/Activity | ✅ StockMovementsListView/CreationView | ✅ |
 | Utilisateurs | ✅ UserListActivity/AddEdit | ✅ UsersListView/UserEditorView | ✅ |
-| **Clients (liste)** | ❌ **MANQUANT** | ✅ CustomersListView | 🔴 |
-| **Clients (CRUD)** | ❌ **MANQUANT** | ✅ CustomerEditorView | 🔴 |
+| Clients (liste) | ✅ CustomerListActivity | ✅ CustomersListView | ✅ |
+| Clients (CRUD) | ✅ CustomerAddEditActivity | ✅ CustomerEditorView | ✅ |
 | Packaging types | ✅ PackagingTypeListActivity/AddEdit | ✅ PackagingTypesListView/EditorView | ✅ |
 | Config Supabase | ✅ SupabaseConfigActivity | ✅ SupabaseConfigView | ✅ |
-| **Menu Profil** | ❌ **MANQUANT** | ✅ ProfileMenuView | 🟡 |
+| Menu Profil | ✅ ProfileActivity | ✅ ProfileMenuView | ✅ |
 | Permissions utilisateur | ⚠️ Intégré dans UserAddEdit | ✅ UserPermissionsEditView | ⚠️ |
 
 ### Métriques détaillées
 
 | Métrique | Android | iOS | Notes |
 |----------|---------|-----|-------|
-| **Écrans principaux** | 30 Activities | 36 Views principales | iOS +6 écrans |
-| **Vues Row/Cell** | ~15 Adapters | 12 RowViews | Architecture différente |
+| **Écrans principaux** | 36 Activities | 36 Views principales | ✅ Parité atteinte |
+| **Vues Row/Cell** | ~17 Adapters | 12 RowViews | Architecture différente |
 | **Vues utilitaires** | Intégrées | 9 (BadgeView, EmptyState, etc.) | iOS plus modulaire |
 
-### Écrans manquants sur Android (à créer) 🔴
+### Écrans récemment ajoutés sur Android ✅
 
-1. **CustomerListActivity** - Gestion de la liste des clients
-2. **CustomerAddEditActivity** - Création/édition de clients
-3. **PurchaseListActivity** - Historique des achats
-4. **InventoryListActivity** - Liste des inventaires passés
-5. **ProfileActivity** ou intégration dans Settings - Menu profil utilisateur
+1. **CustomerListActivity** - Gestion de la liste des clients avec recherche
+2. **CustomerAddEditActivity** - Création/édition de clients (nom, téléphone, adresse, notes)
+3. **PurchaseListActivity** - Historique des achats avec filtrage (All/Active/Exhausted)
+4. **InventoryListActivity** - Liste des inventaires passés avec filtrage par écarts
+5. **ProfileActivity** - Menu profil utilisateur (info, change password, logout)
 
 ---
 
@@ -159,7 +159,7 @@
 │  │ 17 entities   │  │        │  │ (via shared)  │  │
 │  └───────────────┘  │        │  └───────────────┘  │
 │  ┌───────────────┐  │        │  ┌───────────────┐  │
-│  │ 30 Activities │  │        │  │ 39 SwiftUI    │  │
+│  │ 36 Activities │  │        │  │ 39 SwiftUI    │  │
 │  │ 6 ViewModels  │  │        │  │ Views         │  │
 │  └───────────────┘  │        │  └───────────────┘  │
 │  ┌───────────────┐  │        │  ┌───────────────┐  │
@@ -185,11 +185,11 @@
 ## 10. Métriques de Code
 
 ### Android
-- **Activities** : 30
+- **Activities** : 36
 - **ViewModels** : 6
 - **Room Entities** : 17
 - **Room DAOs** : 17
-- **Adapters** : ~15
+- **Adapters** : ~17 (dont PurchaseBatchAdapter, InventoryAdapter)
 
 ### iOS
 - **SwiftUI Views** : 39

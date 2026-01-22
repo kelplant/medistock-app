@@ -46,7 +46,9 @@
         <activity android:name=".ui.sales.SaleListActivity" android:exported="false" />
         <activity android:name=".ui.sales.SaleActivity" android:exported="false" />
         <activity android:name=".ui.purchase.PurchaseActivity" android:exported="false" />
+        <activity android:name=".ui.purchase.PurchaseListActivity" android:exported="false" />
         <activity android:name=".ui.inventory.InventoryActivity" android:exported="false" />
+        <activity android:name=".ui.inventory.InventoryListActivity" android:exported="false" />
         <activity android:name=".ui.admin.AdminActivity" android:exported="false" />
         <activity android:name=".ui.admin.AuditHistoryActivity" android:exported="false" />
         <activity android:name=".ui.admin.SupabaseConfigActivity" android:exported="false" />
@@ -59,6 +61,9 @@
         <activity android:name=".ui.packaging.PackagingTypeAddEditActivity" android:exported="false" />
         <activity android:name=".ui.transfer.TransferListActivity" android:exported="false" />
         <activity android:name=".ui.transfer.TransferActivity" android:exported="false" />
+        <activity android:name=".ui.customer.CustomerListActivity" android:exported="false" />
+        <activity android:name=".ui.customer.CustomerAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.profile.ProfileActivity" android:exported="false" />
 
         <!-- FileProvider pour partager les APK de mise à jour -->
         <provider
