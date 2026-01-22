@@ -33,7 +33,7 @@ class StockMovementListActivity : AppCompatActivity() {
             }
             val items = movements.map {
                 val productName = products[it.productId]?.name ?: "Unknown"
-                "Product: $productName, Type: ${it.movementType}, Qty: ${it.quantity}, Date: ${java.util.Date(it.createdAt)}"
+                "Product: $productName, Type: ${it.type}, Qty: ${it.quantity}, Date: ${java.util.Date(it.date)}"
             }
             listView.adapter = ArrayAdapter(this@StockMovementListActivity, android.R.layout.simple_list_item_1, items)
         }

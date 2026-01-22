@@ -61,15 +61,20 @@ class StockMovementActivity : AppCompatActivity() {
                     val siteId = PrefsHelper.getActiveSiteId(this@StockMovementActivity)
                     if (!siteId.isNullOrBlank()) {
                         val currentUser = authManager.getUsername().ifBlank { "system" }
+                        val now = System.currentTimeMillis()
                         val movement = StockMovement(
                             id = UUID.randomUUID().toString(),
                             productId = product.id,
                             siteId = siteId,
                             quantity = quantityInBaseUnit,
+                            type = type,
+                            date = now,
+                            purchasePriceAtMovement = 0.0,
+                            sellingPriceAtMovement = 0.0,
                             movementType = type,
                             referenceId = null,
                             notes = "Manual stock movement",
-                            createdAt = System.currentTimeMillis(),
+                            createdAt = now,
                             createdBy = currentUser
                         )
                         withContext(Dispatchers.IO) {

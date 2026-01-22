@@ -65,8 +65,13 @@ CREATE TABLE products (
 CREATE TABLE product_prices (
     id TEXT NOT NULL PRIMARY KEY,
     product_id TEXT NOT NULL,
-    site_id TEXT NOT NULL,
-    price REAL NOT NULL,
+    effective_date INTEGER NOT NULL DEFAULT 0,
+    purchase_price REAL NOT NULL DEFAULT 0,
+    selling_price REAL NOT NULL DEFAULT 0,
+    source TEXT NOT NULL DEFAULT 'manual',
+    -- Legacy fields for backward compatibility
+    site_id TEXT,
+    price REAL,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
@@ -104,7 +109,12 @@ CREATE TABLE stock_movements (
     product_id TEXT NOT NULL,
     site_id TEXT NOT NULL,
     quantity REAL NOT NULL,
-    movement_type TEXT NOT NULL,
+    type TEXT NOT NULL,
+    date INTEGER NOT NULL DEFAULT 0,
+    purchase_price_at_movement REAL NOT NULL DEFAULT 0,
+    selling_price_at_movement REAL NOT NULL DEFAULT 0,
+    -- Legacy field for backward compatibility
+    movement_type TEXT,
     reference_id TEXT,
     notes TEXT,
     created_at INTEGER NOT NULL DEFAULT 0,
@@ -216,8 +226,13 @@ CREATE TABLE sale_batch_allocations (
     id TEXT NOT NULL PRIMARY KEY,
     sale_item_id TEXT NOT NULL,
     batch_id TEXT NOT NULL,
-    quantity REAL NOT NULL,
-    unit_cost REAL NOT NULL,
+    quantity_allocated REAL NOT NULL,
+    purchase_price_at_allocation REAL NOT NULL,
+    -- Legacy fields for backward compatibility
+    quantity REAL,
+    unit_cost REAL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (sale_item_id) REFERENCES sale_items(id),
     FOREIGN KEY (batch_id) REFERENCES purchase_batches(id)
 );
@@ -588,8 +603,8 @@ getStockMovementsBySite:
 SELECT * FROM stock_movements WHERE site_id = ? ORDER BY created_at DESC;
 
 insertStockMovement:
-INSERT INTO stock_movements(id, product_id, site_id, quantity, movement_type, reference_id, notes, created_at, created_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO stock_movements(id, product_id, site_id, quantity, type, date, purchase_price_at_movement, selling_price_at_movement, movement_type, reference_id, notes, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- ============================================
 -- QUERIES - Product Transfers
@@ -639,8 +654,8 @@ getSaleBatchAllocationsBySaleItem:
 SELECT * FROM sale_batch_allocations WHERE sale_item_id = ?;
 
 insertSaleBatchAllocation:
-INSERT INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity, unit_cost)
-VALUES (?, ?, ?, ?, ?);
+INSERT INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, quantity, unit_cost, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- ============================================
 -- QUERIES - Product Prices
@@ -650,11 +665,14 @@ getProductPricesByProduct:
 SELECT * FROM product_prices WHERE product_id = ? ORDER BY created_at DESC;
 
 getLatestProductPrice:
-SELECT * FROM product_prices WHERE product_id = ? AND site_id = ? ORDER BY created_at DESC LIMIT 1;
+SELECT * FROM product_prices WHERE product_id = ? ORDER BY effective_date DESC LIMIT 1;
+
+getLatestProductPriceBySite:
+SELECT * FROM product_prices WHERE product_id = ? AND site_id = ? ORDER BY effective_date DESC LIMIT 1;
 
 insertProductPrice:
-INSERT INTO product_prices(id, product_id, site_id, price, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO product_prices(id, product_id, effective_date, purchase_price, selling_price, source, site_id, price, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- ============================================
 -- ADDITIONAL QUERIES - Products with Category

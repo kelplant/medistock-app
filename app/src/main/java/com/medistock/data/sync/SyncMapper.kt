@@ -320,10 +320,11 @@ object SyncMapper {
         productId = productId,
         siteId = siteId,
         quantity = quantity,
-        movementType = type,
+        type = type,
+        date = date,
         purchasePriceAtMovement = purchasePriceAtMovement,
         sellingPriceAtMovement = sellingPriceAtMovement,
-        date = date,
+        movementType = type, // Legacy field
         createdAt = createdAt,
         createdBy = createdBy
     )
@@ -333,10 +334,10 @@ object SyncMapper {
         productId = productId,
         siteId = siteId,
         quantity = quantity,
-        type = movementType,
-        purchasePriceAtMovement = purchasePriceAtMovement ?: 0.0,
-        sellingPriceAtMovement = sellingPriceAtMovement ?: 0.0,
-        date = date ?: createdAt,
+        type = type,
+        purchasePriceAtMovement = purchasePriceAtMovement,
+        sellingPriceAtMovement = sellingPriceAtMovement,
+        date = date,
         createdAt = createdAt,
         createdBy = createdBy
     )

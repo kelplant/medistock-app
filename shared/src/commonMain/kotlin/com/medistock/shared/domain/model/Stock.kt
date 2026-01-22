@@ -40,7 +40,12 @@ data class StockMovement(
     val productId: String,
     val siteId: String,
     val quantity: Double,
-    val movementType: String,
+    val type: String, // "in" or "out"
+    val date: Long,
+    val purchasePriceAtMovement: Double = 0.0,
+    val sellingPriceAtMovement: Double = 0.0,
+    // Legacy field for backward compatibility
+    val movementType: String? = null,
     val referenceId: String? = null,
     val notes: String? = null,
     val createdAt: Long = 0,

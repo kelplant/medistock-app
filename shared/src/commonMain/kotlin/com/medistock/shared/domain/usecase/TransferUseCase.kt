@@ -145,6 +145,10 @@ class TransferUseCase(
             productId = input.productId,
             siteId = input.fromSiteId,
             quantity = -input.quantity, // Negative (out)
+            type = MovementType.TRANSFER_OUT,
+            date = now,
+            purchasePriceAtMovement = 0.0,
+            sellingPriceAtMovement = 0.0,
             movementType = MovementType.TRANSFER_OUT,
             referenceId = transfer.id,
             notes = "Transfert vers ${toSite.name}",
@@ -157,6 +161,10 @@ class TransferUseCase(
             productId = input.productId,
             siteId = input.toSiteId,
             quantity = input.quantity, // Positive (in)
+            type = MovementType.TRANSFER_IN,
+            date = now,
+            purchasePriceAtMovement = 0.0,
+            sellingPriceAtMovement = 0.0,
             movementType = MovementType.TRANSFER_IN,
             referenceId = transfer.id,
             notes = "Transfert depuis ${fromSite.name}",

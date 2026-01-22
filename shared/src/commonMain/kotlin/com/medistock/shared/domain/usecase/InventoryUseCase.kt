@@ -162,6 +162,10 @@ class InventoryUseCase(
                     productId = countInput.productId,
                     siteId = input.siteId,
                     quantity = discrepancy, // Positive or negative
+                    type = movementType,
+                    date = now,
+                    purchasePriceAtMovement = 0.0,
+                    sellingPriceAtMovement = 0.0,
                     movementType = movementType,
                     referenceId = inventory.id,
                     notes = countInput.reason ?: "Ajustement inventaire: ${if (discrepancy > 0) "surplus" else "manque"}",

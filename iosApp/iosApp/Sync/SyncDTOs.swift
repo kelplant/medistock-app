@@ -527,12 +527,14 @@ struct StockMovementDTO: Codable {
     let productId: String
     let siteId: String
     let quantity: Double
-    let movementType: String
+    let type: String
+    let date: Int64
     let purchasePriceAtMovement: Double
     let sellingPriceAtMovement: Double
+    // Legacy field for backward compatibility
+    let movementType: String?
     let referenceId: String?
     let notes: String?
-    let movementDate: Int64
     let createdAt: Int64
     let createdBy: String
     var clientId: String?
@@ -542,12 +544,13 @@ struct StockMovementDTO: Codable {
         case productId = "product_id"
         case siteId = "site_id"
         case quantity
-        case movementType = "type"
+        case type
+        case date
         case purchasePriceAtMovement = "purchase_price_at_movement"
         case sellingPriceAtMovement = "selling_price_at_movement"
+        case movementType = "movement_type"
         case referenceId = "reference_id"
         case notes
-        case movementDate = "date"
         case createdAt = "created_at"
         case createdBy = "created_by"
         case clientId = "client_id"
@@ -558,12 +561,13 @@ struct StockMovementDTO: Codable {
         self.productId = movement.productId
         self.siteId = movement.siteId
         self.quantity = movement.quantity
-        self.movementType = movement.movementType
-        self.purchasePriceAtMovement = 0.0
-        self.sellingPriceAtMovement = 0.0
+        self.type = movement.type
+        self.date = movement.date
+        self.purchasePriceAtMovement = movement.purchasePriceAtMovement
+        self.sellingPriceAtMovement = movement.sellingPriceAtMovement
+        self.movementType = movement.movementType ?? movement.type
         self.referenceId = movement.referenceId
         self.notes = movement.notes
-        self.movementDate = movement.createdAt
         self.createdAt = movement.createdAt
         self.createdBy = movement.createdBy
         self.clientId = SyncClientId.current
@@ -575,6 +579,10 @@ struct StockMovementDTO: Codable {
             productId: productId,
             siteId: siteId,
             quantity: quantity,
+            type: type,
+            date: date,
+            purchasePriceAtMovement: purchasePriceAtMovement,
+            sellingPriceAtMovement: sellingPriceAtMovement,
             movementType: movementType,
             referenceId: referenceId,
             notes: notes,

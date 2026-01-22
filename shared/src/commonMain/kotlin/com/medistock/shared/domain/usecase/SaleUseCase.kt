@@ -173,6 +173,10 @@ class SaleUseCase(
                 productId = itemInput.productId,
                 siteId = input.siteId,
                 quantity = -itemInput.quantity, // Negative for sale (out)
+                type = MovementType.SALE,
+                date = now,
+                purchasePriceAtMovement = if (allocationResult.totalAllocated > 0) allocationResult.totalCost / allocationResult.totalAllocated else 0.0,
+                sellingPriceAtMovement = itemInput.unitPrice,
                 movementType = MovementType.SALE,
                 referenceId = sale.id,
                 notes = "Vente: ${input.customerName}",
@@ -213,8 +217,12 @@ class SaleUseCase(
                             id = generateId("allocation"),
                             saleItemId = processed.saleItem.id,
                             batchId = allocation.batchId,
+                            quantityAllocated = allocation.quantity,
+                            purchasePriceAtAllocation = allocation.unitCost,
                             quantity = allocation.quantity,
-                            unitCost = allocation.unitCost
+                            unitCost = allocation.unitCost,
+                            createdAt = now,
+                            createdBy = input.userId
                         )
                     )
                 }
