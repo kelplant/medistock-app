@@ -152,6 +152,8 @@ class RealtimeSyncService: ObservableObject {
                 try await handlePurchaseBatchChange(action: action, record: record, sdk: sdk)
             case "sales":
                 try await handleSaleChange(action: action, record: record, sdk: sdk)
+            case "sale_items":
+                try await handleSaleItemChange(action: action, record: record, sdk: sdk)
             case "stock_movements":
                 try await handleStockMovementChange(action: action, record: record, sdk: sdk)
             default:
@@ -279,6 +281,20 @@ class RealtimeSyncService: ObservableObject {
             // Sales need items too - will be handled by sale_items changes
             try await sdk.saleRepository.insertSaleWithItems(sale: entity, items: [])
         case .update, .delete:
+            break
+        }
+    }
+
+    private func handleSaleItemChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
+        guard let dto = try? decodeRecord(SaleItemDTO.self, from: record) else { return }
+        let entity = dto.toEntity()
+
+        switch action {
+        case .insert:
+            // Insert sale item - the parent sale should already exist
+            try await sdk.saleRepository.insertSaleItem(item: entity)
+        case .update, .delete:
+            // Sale items are typically not updated or deleted after creation
             break
         }
     }
