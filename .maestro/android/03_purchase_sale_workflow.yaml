@@ -35,7 +35,7 @@ appId: com.medistock
       notVisible: ".*Site.*"
     commands:
       - tapOn:
-          contentDescription: ".*ajouter.*"
+          id: ".*ajouter.*"
           optional: true
       - waitForAnimationToEnd
       - inputText: "Pharmacie Test"
@@ -58,7 +58,7 @@ appId: com.medistock
       notVisible: ".*Paracetamol.*"
     commands:
       - tapOn:
-          contentDescription: ".*ajouter.*"
+          id: ".*ajouter.*"
           optional: true
       - waitForAnimationToEnd
       - tapOn:
@@ -84,7 +84,7 @@ appId: com.medistock
 
 # Add new purchase
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 - tapOn:
     id: ".*fab.*"
@@ -159,7 +159,7 @@ appId: com.medistock
 
 # Add new sale
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 - tapOn:
     id: ".*fab.*"

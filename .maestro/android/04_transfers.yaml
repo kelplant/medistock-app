@@ -35,7 +35,7 @@ appId: com.medistock
       notVisible: ".*Entrepôt.*"
     commands:
       - tapOn:
-          contentDescription: ".*ajouter.*"
+          id: ".*ajouter.*"
           optional: true
       - waitForAnimationToEnd
       - inputText: "Entrepôt Central"
@@ -50,7 +50,7 @@ appId: com.medistock
       notVisible: ".*Pharmacie.*"
     commands:
       - tapOn:
-          contentDescription: ".*ajouter.*"
+          id: ".*ajouter.*"
           optional: true
       - waitForAnimationToEnd
       - inputText: "Pharmacie Test"
@@ -75,7 +75,7 @@ appId: com.medistock
       notVisible: ".*Transfer Test.*"
     commands:
       - tapOn:
-          contentDescription: ".*ajouter.*"
+          id: ".*ajouter.*"
           optional: true
       - waitForAnimationToEnd
       - tapOn:
@@ -97,7 +97,7 @@ appId: com.medistock
 - waitForAnimationToEnd
 
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 
 - waitForAnimationToEnd
@@ -136,7 +136,7 @@ appId: com.medistock
 - waitForAnimationToEnd
 
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 
 - waitForAnimationToEnd

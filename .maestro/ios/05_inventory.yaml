@@ -1,6 +1,6 @@
 # MediStock iOS - Inventory Tests
 # Tests stock counting and adjustment
-appId: com.medistock.iosApp
+appId: com.medistock.ios
 ---
 
 # Setup: Login
@@ -107,7 +107,7 @@ appId: com.medistock.iosApp
 - tapOn:
     text: ".*Quantité.*"
     optional: true
-- clearText
+- eraseText: 100
 - inputText: "85"
 
 # Save count
