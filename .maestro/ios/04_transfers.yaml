@@ -13,7 +13,7 @@ appId: com.medistock.ios
 - inputText: "admin"
 
 - tapOn: "Mot de passe"
-- inputText: "admin123"
+- inputText: "admin"
 
 - tapOn: "Se connecter"
 

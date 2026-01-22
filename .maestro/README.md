@@ -82,7 +82,7 @@ Les tests utilisent des variables qui peuvent être personnalisées :
 | Variable | Valeur par défaut | Description |
 |----------|-------------------|-------------|
 | TEST_USERNAME | admin | Nom d'utilisateur pour les tests |
-| TEST_PASSWORD | admin123 | Mot de passe pour les tests |
+| TEST_PASSWORD | admin | Mot de passe pour les tests |
 | TEST_SITE | Site Test | Nom du site de test |
 | TEST_PRODUCT | Produit Test | Nom du produit de test |
 

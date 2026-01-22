@@ -19,7 +19,7 @@ appId: com.medistock.ios
 
 # Enter password
 - tapOn: "Mot de passe"
-- inputText: "admin123"
+- inputText: "admin"
 
 # Tap login button
 - tapOn: "Se connecter"

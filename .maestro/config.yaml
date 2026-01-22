@@ -11,7 +11,7 @@ flows:
 # Test variables (can be overridden via CLI)
 env:
   TEST_USERNAME: admin
-  TEST_PASSWORD: admin123
+  TEST_PASSWORD: admin
   TEST_SITE: "Site Test"
   TEST_PRODUCT: "Produit Test"
   TEST_CATEGORY: "Catégorie Test"

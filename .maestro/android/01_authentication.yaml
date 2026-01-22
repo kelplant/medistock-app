@@ -20,7 +20,7 @@ appId: com.medistock
 # Enter password
 - tapOn:
     id: "com.medistock:id/editPassword"
-- inputText: "admin123"
+- inputText: "admin"
 
 # Tap login button
 - tapOn:

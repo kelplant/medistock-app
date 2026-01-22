@@ -15,7 +15,7 @@ appId: com.medistock
 
 - tapOn:
     id: "com.medistock:id/editPassword"
-- inputText: "admin123"
+- inputText: "admin"
 
 - tapOn:
     id: "com.medistock:id/btnLogin"
