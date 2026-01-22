@@ -43,6 +43,28 @@ class StockMovementRepository(private val database: MedistockDatabase) {
         )
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a stock movement.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(movement: StockMovement) = withContext(Dispatchers.Default) {
+        queries.upsertStockMovement(
+            id = movement.id,
+            product_id = movement.productId,
+            site_id = movement.siteId,
+            quantity = movement.quantity,
+            type = movement.type,
+            date = movement.date,
+            purchase_price_at_movement = movement.purchasePriceAtMovement,
+            selling_price_at_movement = movement.sellingPriceAtMovement,
+            movement_type = movement.movementType ?: movement.type,
+            reference_id = movement.referenceId,
+            notes = movement.notes,
+            created_at = movement.createdAt,
+            created_by = movement.createdBy
+        )
+    }
+
     fun observeAll(): Flow<List<StockMovement>> {
         return queries.getAllStockMovements()
             .asFlow()

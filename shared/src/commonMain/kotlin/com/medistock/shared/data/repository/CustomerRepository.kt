@@ -63,6 +63,26 @@ class CustomerRepository(private val database: MedistockDatabase) {
         queries.deleteCustomer(id)
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a customer.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(customer: Customer) = withContext(Dispatchers.Default) {
+        queries.upsertCustomer(
+            id = customer.id,
+            name = customer.name,
+            phone = customer.phone,
+            email = customer.email,
+            address = customer.address,
+            notes = customer.notes,
+            site_id = customer.siteId,
+            created_at = customer.createdAt,
+            updated_at = customer.updatedAt,
+            created_by = customer.createdBy,
+            updated_by = customer.updatedBy
+        )
+    }
+
     fun observeAll(): Flow<List<Customer>> {
         return queries.getAllCustomers()
             .asFlow()

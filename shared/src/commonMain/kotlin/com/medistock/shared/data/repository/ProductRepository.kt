@@ -73,6 +73,33 @@ class ProductRepository(private val database: MedistockDatabase) {
         queries.deleteProduct(id)
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a product.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(product: Product) = withContext(Dispatchers.Default) {
+        queries.upsertProduct(
+            id = product.id,
+            name = product.name,
+            unit = product.unit,
+            unit_volume = product.unitVolume,
+            packaging_type_id = product.packagingTypeId,
+            selected_level = product.selectedLevel?.toLong(),
+            conversion_factor = product.conversionFactor,
+            category_id = product.categoryId,
+            margin_type = product.marginType,
+            margin_value = product.marginValue,
+            description = product.description,
+            site_id = product.siteId,
+            min_stock = product.minStock,
+            max_stock = product.maxStock,
+            created_at = product.createdAt,
+            updated_at = product.updatedAt,
+            created_by = product.createdBy,
+            updated_by = product.updatedBy
+        )
+    }
+
     fun observeAll(): Flow<List<Product>> {
         return queries.getAllProducts()
             .asFlow()

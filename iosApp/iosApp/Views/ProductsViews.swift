@@ -99,40 +99,22 @@ struct ProductsListView: View {
         // Online-first: try Supabase first, then sync to local
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
-                // Sync sites
+                // Sync sites (upsert handles both new and existing records)
                 let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
                 for dto in remoteSites {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.siteRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.siteRepository.update(site: entity)
-                    } else {
-                        try? await sdk.siteRepository.insert(site: entity)
-                    }
+                    try? await sdk.siteRepository.upsert(site: dto.toEntity())
                 }
 
                 // Sync categories
                 let remoteCategories: [CategoryDTO] = try await SupabaseService.shared.fetchAll(from: "categories")
                 for dto in remoteCategories {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.categoryRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.categoryRepository.update(category: entity)
-                    } else {
-                        try? await sdk.categoryRepository.insert(category: entity)
-                    }
+                    try? await sdk.categoryRepository.upsert(category: dto.toEntity())
                 }
 
                 // Sync products
                 let remoteProducts: [ProductDTO] = try await SupabaseService.shared.fetchAll(from: "products")
                 for dto in remoteProducts {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.productRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.productRepository.update(product: entity)
-                    } else {
-                        try? await sdk.productRepository.insert(product: entity)
-                    }
+                    try? await sdk.productRepository.upsert(product: dto.toEntity())
                 }
             } catch {
                 print("[ProductsListView] Failed to sync from Supabase: \(error)")

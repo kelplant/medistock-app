@@ -85,22 +85,10 @@ struct PurchasesListView: View {
         // Online-first: try Supabase first, then sync to local
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
-                // Sync purchase batches from Supabase
+                // Sync purchase batches from Supabase using upsert (INSERT OR REPLACE)
                 let remoteBatches: [PurchaseBatchDTO] = try await SupabaseService.shared.fetchAll(from: "purchase_batches")
                 for dto in remoteBatches {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.purchaseBatchRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.purchaseBatchRepository.updateQuantity(
-                            id: dto.id,
-                            remainingQuantity: dto.remainingQuantity,
-                            isExhausted: dto.isExhausted,
-                            updatedAt: dto.updatedAt,
-                            updatedBy: dto.updatedBy
-                        )
-                    } else {
-                        try? await sdk.purchaseBatchRepository.insert(batch: entity)
-                    }
+                    try? await sdk.purchaseBatchRepository.upsert(batch: dto.toEntity())
                 }
             } catch {
                 print("[PurchasesListView] Failed to sync purchase batches from Supabase: \(error)")

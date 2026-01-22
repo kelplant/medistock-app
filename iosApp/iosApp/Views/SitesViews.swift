@@ -89,15 +89,9 @@ struct SitesListView: View {
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
                 let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
-                // Sync to local database
+                // Sync to local database using upsert (INSERT OR REPLACE)
                 for dto in remoteSites {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.siteRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.siteRepository.update(site: entity)
-                    } else {
-                        try? await sdk.siteRepository.insert(site: entity)
-                    }
+                    try? await sdk.siteRepository.upsert(site: dto.toEntity())
                 }
             } catch {
                 print("[SitesListView] Failed to fetch from Supabase: \(error)")

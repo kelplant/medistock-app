@@ -189,8 +189,8 @@ class SyncManager(
             val remoteSites = siteRepo.getAllSites()
             remoteSites.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.siteRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.siteRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Site: ${dto.name}", e)
                 }
@@ -223,8 +223,8 @@ class SyncManager(
             val remoteTypes = packagingTypeRepo.getAllPackagingTypes()
             remoteTypes.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.packagingTypeRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.packagingTypeRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("PackagingType: ${dto.name}", e)
                 }
@@ -257,8 +257,8 @@ class SyncManager(
             val remoteCategories = categoryRepo.getAllCategories()
             remoteCategories.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.categoryRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.categoryRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Category: ${dto.name}", e)
                 }
@@ -291,8 +291,8 @@ class SyncManager(
             val remoteProducts = productRepo.getAllProducts()
             remoteProducts.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.productRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.productRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Product: ${dto.name}", e)
                 }
@@ -325,8 +325,8 @@ class SyncManager(
             val remoteCustomers = customerRepo.getAllCustomers()
             remoteCustomers.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.customerRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.customerRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Customer: ${dto.name}", e)
                 }
@@ -359,8 +359,8 @@ class SyncManager(
             val remoteUsers = userRepo.getAllUsers()
             remoteUsers.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.userRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.userRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("User: ${dto.username}", e)
                 }
@@ -393,8 +393,8 @@ class SyncManager(
             val remotePermissions = userPermissionRepo.getAllPermissions()
             remotePermissions.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.userPermissionRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.userPermissionRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Permission: ${dto.module}", e)
                 }
@@ -427,8 +427,8 @@ class SyncManager(
             val remoteBatches = purchaseBatchRepo.getAllBatches()
             remoteBatches.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.purchaseBatchRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.purchaseBatchRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Batch: ${dto.batchNumber ?: dto.id}", e)
                 }
@@ -475,15 +475,13 @@ class SyncManager(
 
             remoteSales.forEach { saleDto ->
                 try {
-                    // Insert sale
-                    val saleModel = saleDto.toModel()
-                    sdk.saleRepository.insert(saleModel)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.saleRepository.upsert(saleDto.toModel())
 
-                    // Insert sale items
+                    // Upsert sale items
                     val items = itemsBySale[saleDto.id] ?: emptyList()
                     items.forEach { itemDto ->
-                        val itemModel = itemDto.toModel()
-                        sdk.saleRepository.insertSaleItem(itemModel)
+                        sdk.saleRepository.upsertSaleItem(itemDto.toModel())
                     }
                 } catch (e: Exception) {
                     onError?.invoke("Sale: ${saleDto.id}", e)
@@ -517,8 +515,8 @@ class SyncManager(
             val remoteMovements = stockMovementRepo.getAllMovements()
             remoteMovements.forEach { dto ->
                 try {
-                    val model = dto.toModel()
-                    sdk.stockMovementRepository.insert(model)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.stockMovementRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Movement: ${dto.id}", e)
                 }

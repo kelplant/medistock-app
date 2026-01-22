@@ -143,13 +143,8 @@ class AuthService {
     /// Sync user to local database
     private func syncUserToLocal(_ userDTO: UserDTO, sdk: MedistockSDK) async {
         do {
-            let localUser = userDTO.toEntity()
-            let existing = try? await sdk.userRepository.getById(id: userDTO.id)
-            if existing != nil {
-                try await sdk.userRepository.update(user: localUser)
-            } else {
-                try await sdk.userRepository.insert(user: localUser)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.userRepository.upsert(user: userDTO.toEntity())
             print("[AuthService] User synced to local: \(userDTO.username)")
         } catch {
             print("[AuthService] Failed to sync user to local: \(error)")

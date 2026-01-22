@@ -89,15 +89,9 @@ struct CategoriesListView: View {
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
                 let remoteCategories: [CategoryDTO] = try await SupabaseService.shared.fetchAll(from: "categories")
-                // Sync to local database
+                // Sync to local database using upsert (INSERT OR REPLACE)
                 for dto in remoteCategories {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.categoryRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.categoryRepository.update(category: entity)
-                    } else {
-                        try? await sdk.categoryRepository.insert(category: entity)
-                    }
+                    try? await sdk.categoryRepository.upsert(category: dto.toEntity())
                 }
             } catch {
                 print("[CategoriesListView] Failed to fetch from Supabase: \(error)")

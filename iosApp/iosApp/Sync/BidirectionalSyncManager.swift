@@ -143,14 +143,8 @@ class BidirectionalSyncManager: ObservableObject {
             // Skip if this change came from this client
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            let existing = try? await sdk.siteRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.siteRepository.update(site: entity)
-            } else {
-                try? await sdk.siteRepository.insert(site: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.siteRepository.upsert(site: dto.toEntity())
         }
     }
 
@@ -160,14 +154,8 @@ class BidirectionalSyncManager: ObservableObject {
         for dto in remoteCategories {
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            let existing = try? await sdk.categoryRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.categoryRepository.update(category: entity)
-            } else {
-                try? await sdk.categoryRepository.insert(category: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.categoryRepository.upsert(category: dto.toEntity())
         }
     }
 
@@ -177,14 +165,8 @@ class BidirectionalSyncManager: ObservableObject {
         for dto in remoteTypes {
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            let existing = try? await sdk.packagingTypeRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.packagingTypeRepository.update(packagingType: entity)
-            } else {
-                try? await sdk.packagingTypeRepository.insert(packagingType: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.packagingTypeRepository.upsert(packagingType: dto.toEntity())
         }
     }
 
@@ -194,14 +176,8 @@ class BidirectionalSyncManager: ObservableObject {
         for dto in remoteProducts {
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            let existing = try? await sdk.productRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.productRepository.update(product: entity)
-            } else {
-                try? await sdk.productRepository.insert(product: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.productRepository.upsert(product: dto.toEntity())
         }
     }
 
@@ -209,14 +185,8 @@ class BidirectionalSyncManager: ObservableObject {
         let remoteUsers: [UserDTO] = try await supabase.fetchAll(from: "app_users")
 
         for dto in remoteUsers {
-            let entity = dto.toEntity()
-            let existing = try? await sdk.userRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.userRepository.update(user: entity)
-            } else {
-                try? await sdk.userRepository.insert(user: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.userRepository.upsert(user: dto.toEntity())
         }
     }
 
@@ -226,14 +196,8 @@ class BidirectionalSyncManager: ObservableObject {
         for dto in remoteCustomers {
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            let existing = try? await sdk.customerRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.customerRepository.update(customer: entity)
-            } else {
-                try? await sdk.customerRepository.insert(customer: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.customerRepository.upsert(customer: dto.toEntity())
         }
     }
 
@@ -243,20 +207,8 @@ class BidirectionalSyncManager: ObservableObject {
         for dto in remoteBatches {
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            let existing = try? await sdk.purchaseBatchRepository.getById(id: dto.id)
-
-            if existing != nil {
-                try? await sdk.purchaseBatchRepository.updateQuantity(
-                    id: dto.id,
-                    remainingQuantity: dto.remainingQuantity,
-                    isExhausted: dto.isExhausted,
-                    updatedAt: dto.updatedAt,
-                    updatedBy: dto.updatedBy
-                )
-            } else {
-                try? await sdk.purchaseBatchRepository.insert(batch: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.purchaseBatchRepository.upsert(batch: dto.toEntity())
         }
     }
 
@@ -264,18 +216,18 @@ class BidirectionalSyncManager: ObservableObject {
         let remoteSales: [SaleDTO] = try await supabase.fetchAll(from: "sales")
         let remoteSaleItems: [SaleItemDTO] = try await supabase.fetchAll(from: "sale_items")
 
-        let itemsBySale = Dictionary(grouping: remoteSaleItems) { $0.saleId }
-
         for saleDto in remoteSales {
             if saleDto.clientId == SyncClientId.current { continue }
 
-            let saleEntity = saleDto.toEntity()
-            let existing = try? await sdk.saleRepository.getById(id: saleDto.id)
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.saleRepository.upsert(sale: saleDto.toEntity())
+        }
 
-            if existing == nil {
-                let items = (itemsBySale[saleDto.id] ?? []).map { $0.toEntity() }
-                try? await sdk.saleRepository.insertSaleWithItems(sale: saleEntity, items: items)
-            }
+        // Upsert sale items separately
+        for itemDto in remoteSaleItems {
+            if itemDto.clientId == SyncClientId.current { continue }
+
+            try? await sdk.saleRepository.upsertSaleItem(item: itemDto.toEntity())
         }
     }
 
@@ -285,9 +237,8 @@ class BidirectionalSyncManager: ObservableObject {
         for dto in remoteMovements {
             if dto.clientId == SyncClientId.current { continue }
 
-            let entity = dto.toEntity()
-            // Stock movements are append-only
-            try? await sdk.stockMovementRepository.insert(movement: entity)
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try? await sdk.stockMovementRepository.upsert(movement: dto.toEntity())
         }
     }
 

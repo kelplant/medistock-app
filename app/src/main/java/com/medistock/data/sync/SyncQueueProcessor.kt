@@ -349,26 +349,27 @@ class SyncQueueProcessor(
      * Applique les données du serveur localement
      */
     private suspend fun applyToLocal(entityType: String, entityId: String, remoteData: String) {
+        // Use upsert (INSERT OR REPLACE) to handle both new and existing records
         when (entityType) {
             "Product" -> {
                 val dto = json.decodeFromString<ProductDto>(remoteData)
-                sdk.productRepository.insert(dto.toModel())
+                sdk.productRepository.upsert(dto.toModel())
             }
             "Category" -> {
                 val dto = json.decodeFromString<CategoryDto>(remoteData)
-                sdk.categoryRepository.insert(dto.toModel())
+                sdk.categoryRepository.upsert(dto.toModel())
             }
             "Site" -> {
                 val dto = json.decodeFromString<SiteDto>(remoteData)
-                sdk.siteRepository.insert(dto.toModel())
+                sdk.siteRepository.upsert(dto.toModel())
             }
             "Customer" -> {
                 val dto = json.decodeFromString<CustomerDto>(remoteData)
-                sdk.customerRepository.insert(dto.toModel())
+                sdk.customerRepository.upsert(dto.toModel())
             }
             "PackagingType" -> {
                 val dto = json.decodeFromString<PackagingTypeDto>(remoteData)
-                sdk.packagingTypeRepository.insert(dto.toModel())
+                sdk.packagingTypeRepository.upsert(dto.toModel())
             }
         }
     }

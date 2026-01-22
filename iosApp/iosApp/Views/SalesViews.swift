@@ -89,12 +89,9 @@ struct SalesListView: View {
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
                 let remoteSales: [SaleDTO] = try await SupabaseService.shared.fetchAll(from: "sales")
+                // Sync to local database using upsert (INSERT OR REPLACE)
                 for dto in remoteSales {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.saleRepository.getById(id: dto.id)
-                    if existing == nil {
-                        try? await sdk.saleRepository.insertSaleWithItems(sale: entity, items: [])
-                    }
+                    try? await sdk.saleRepository.upsert(sale: dto.toEntity())
                 }
             } catch {
                 print("[SalesListView] Failed to sync sales from Supabase: \(error)")

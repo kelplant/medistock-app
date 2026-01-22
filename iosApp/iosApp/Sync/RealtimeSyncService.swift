@@ -168,16 +168,11 @@ class RealtimeSyncService: ObservableObject {
 
     private func handleSiteChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(SiteDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
         case .insert, .update:
-            let existing = try? await sdk.siteRepository.getById(id: dto.id)
-            if existing != nil {
-                try await sdk.siteRepository.update(site: entity)
-            } else {
-                try await sdk.siteRepository.insert(site: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.siteRepository.upsert(site: dto.toEntity())
         case .delete:
             // Sites typically aren't deleted, but handle it
             break
@@ -186,16 +181,11 @@ class RealtimeSyncService: ObservableObject {
 
     private func handleCategoryChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(CategoryDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
         case .insert, .update:
-            let existing = try? await sdk.categoryRepository.getById(id: dto.id)
-            if existing != nil {
-                try await sdk.categoryRepository.update(category: entity)
-            } else {
-                try await sdk.categoryRepository.insert(category: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.categoryRepository.upsert(category: dto.toEntity())
         case .delete:
             break
         }
@@ -203,16 +193,11 @@ class RealtimeSyncService: ObservableObject {
 
     private func handlePackagingTypeChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(PackagingTypeDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
         case .insert, .update:
-            let existing = try? await sdk.packagingTypeRepository.getById(id: dto.id)
-            if existing != nil {
-                try await sdk.packagingTypeRepository.update(packagingType: entity)
-            } else {
-                try await sdk.packagingTypeRepository.insert(packagingType: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.packagingTypeRepository.upsert(packagingType: dto.toEntity())
         case .delete:
             break
         }
@@ -220,16 +205,11 @@ class RealtimeSyncService: ObservableObject {
 
     private func handleProductChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(ProductDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
         case .insert, .update:
-            let existing = try? await sdk.productRepository.getById(id: dto.id)
-            if existing != nil {
-                try await sdk.productRepository.update(product: entity)
-            } else {
-                try await sdk.productRepository.insert(product: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.productRepository.upsert(product: dto.toEntity())
         case .delete:
             try await sdk.productRepository.delete(id: dto.id)
         }
@@ -237,16 +217,11 @@ class RealtimeSyncService: ObservableObject {
 
     private func handleCustomerChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(CustomerDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
         case .insert, .update:
-            let existing = try? await sdk.customerRepository.getById(id: dto.id)
-            if existing != nil {
-                try await sdk.customerRepository.update(customer: entity)
-            } else {
-                try await sdk.customerRepository.insert(customer: entity)
-            }
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.customerRepository.upsert(customer: dto.toEntity())
         case .delete:
             break
         }
@@ -254,19 +229,11 @@ class RealtimeSyncService: ObservableObject {
 
     private func handlePurchaseBatchChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(PurchaseBatchDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
-        case .insert:
-            try await sdk.purchaseBatchRepository.insert(batch: entity)
-        case .update:
-            try await sdk.purchaseBatchRepository.updateQuantity(
-                id: dto.id,
-                remainingQuantity: dto.remainingQuantity,
-                isExhausted: dto.isExhausted,
-                updatedAt: dto.updatedAt,
-                updatedBy: dto.updatedBy
-            )
+        case .insert, .update:
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.purchaseBatchRepository.upsert(batch: dto.toEntity())
         case .delete:
             break
         }
@@ -274,39 +241,36 @@ class RealtimeSyncService: ObservableObject {
 
     private func handleSaleChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(SaleDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
-        case .insert:
-            // Sales need items too - will be handled by sale_items changes
-            try await sdk.saleRepository.insertSaleWithItems(sale: entity, items: [])
-        case .update, .delete:
+        case .insert, .update:
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.saleRepository.upsert(sale: dto.toEntity())
+        case .delete:
             break
         }
     }
 
     private func handleSaleItemChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(SaleItemDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
-        case .insert:
-            // Insert sale item - the parent sale should already exist
-            try await sdk.saleRepository.insertSaleItem(item: entity)
-        case .update, .delete:
-            // Sale items are typically not updated or deleted after creation
+        case .insert, .update:
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.saleRepository.upsertSaleItem(item: dto.toEntity())
+        case .delete:
             break
         }
     }
 
     private func handleStockMovementChange(action: ChangeAction, record: [String: AnyJSON], sdk: MedistockSDK) async throws {
         guard let dto = try? decodeRecord(StockMovementDTO.self, from: record) else { return }
-        let entity = dto.toEntity()
 
         switch action {
-        case .insert:
-            try await sdk.stockMovementRepository.insert(movement: entity)
-        case .update, .delete:
+        case .insert, .update:
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+            try await sdk.stockMovementRepository.upsert(movement: dto.toEntity())
+        case .delete:
             // Stock movements are append-only
             break
         }

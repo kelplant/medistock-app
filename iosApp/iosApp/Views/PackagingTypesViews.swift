@@ -90,14 +90,9 @@ struct PackagingTypesListView: View {
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
                 let remoteTypes: [PackagingTypeDTO] = try await SupabaseService.shared.fetchAll(from: "packaging_types")
+                // Sync to local database using upsert (INSERT OR REPLACE)
                 for dto in remoteTypes {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.packagingTypeRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.packagingTypeRepository.update(packagingType: entity)
-                    } else {
-                        try? await sdk.packagingTypeRepository.insert(packagingType: entity)
-                    }
+                    try? await sdk.packagingTypeRepository.upsert(packagingType: dto.toEntity())
                 }
             } catch {
                 print("[PackagingTypesListView] Failed to sync packaging types from Supabase: \(error)")

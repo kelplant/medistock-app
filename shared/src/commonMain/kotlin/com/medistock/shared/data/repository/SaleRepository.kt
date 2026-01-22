@@ -151,6 +151,42 @@ class SaleRepository(private val database: MedistockDatabase) {
         queries.getSaleItemsBySale(saleId).executeAsList().map { it.toModel() }
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a sale.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(sale: Sale) = withContext(Dispatchers.Default) {
+        queries.upsertSale(
+            id = sale.id,
+            customer_name = sale.customerName,
+            customer_id = sale.customerId,
+            date = sale.date,
+            total_amount = sale.totalAmount,
+            site_id = sale.siteId,
+            created_at = sale.createdAt,
+            created_by = sale.createdBy
+        )
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a sale item.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsertSaleItem(item: SaleItem) = withContext(Dispatchers.Default) {
+        queries.upsertSaleItem(
+            id = item.id,
+            sale_id = item.saleId,
+            product_id = item.productId,
+            product_name = item.productName,
+            unit = item.unit,
+            quantity = item.quantity,
+            unit_price = item.unitPrice,
+            total_price = item.totalPrice,
+            created_at = item.createdAt,
+            created_by = item.createdBy
+        )
+    }
+
     private fun com.medistock.shared.db.Sales.toModel(): Sale {
         return Sale(
             id = id,

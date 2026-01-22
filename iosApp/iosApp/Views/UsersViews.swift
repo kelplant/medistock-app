@@ -96,14 +96,9 @@ struct UsersListView: View {
         if syncStatus.isOnline && SupabaseService.shared.isConfigured {
             do {
                 let remoteUsers: [UserDTO] = try await SupabaseService.shared.fetchAll(from: "app_users")
+                // Sync to local database using upsert (INSERT OR REPLACE)
                 for dto in remoteUsers {
-                    let entity = dto.toEntity()
-                    let existing = try? await sdk.userRepository.getById(id: dto.id)
-                    if existing != nil {
-                        try? await sdk.userRepository.update(user: entity)
-                    } else {
-                        try? await sdk.userRepository.insert(user: entity)
-                    }
+                    try? await sdk.userRepository.upsert(user: dto.toEntity())
                 }
             } catch {
                 print("[UsersListView] Failed to sync users from Supabase: \(error)")

@@ -57,6 +57,27 @@ class PackagingTypeRepository(private val database: MedistockDatabase) {
         queries.deletePackagingType(id)
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a packaging type.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(packagingType: PackagingType) = withContext(Dispatchers.Default) {
+        queries.upsertPackagingType(
+            id = packagingType.id,
+            name = packagingType.name,
+            level1_name = packagingType.level1Name,
+            level2_name = packagingType.level2Name,
+            level2_quantity = packagingType.level2Quantity?.toLong(),
+            default_conversion_factor = packagingType.defaultConversionFactor,
+            is_active = if (packagingType.isActive) 1L else 0L,
+            display_order = packagingType.displayOrder.toLong(),
+            created_at = packagingType.createdAt,
+            updated_at = packagingType.updatedAt,
+            created_by = packagingType.createdBy,
+            updated_by = packagingType.updatedBy
+        )
+    }
+
     suspend fun getActive(): List<PackagingType> = withContext(Dispatchers.Default) {
         queries.getActivePackagingTypes().executeAsList().map { it.toModel() }
     }
