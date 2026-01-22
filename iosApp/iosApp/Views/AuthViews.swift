@@ -21,21 +21,21 @@ struct LoginView: View {
                 .frame(width: 80, height: 80)
                 .foregroundColor(.accentColor)
 
-            Text("MediStock")
+            Text(Localized.appName)
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
-            Text("Login")
+            Text(Localized.loginTitle)
                 .font(.headline)
                 .foregroundColor(.secondary)
 
             VStack(spacing: 12) {
-                TextField("Username", text: $username)
+                TextField(Localized.username, text: $username)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)
 
-                SecureField("Password", text: $password)
+                SecureField(Localized.password, text: $password)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -52,7 +52,7 @@ struct LoginView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("Login")
+                    Text(Localized.login)
                 }
             }
             .buttonStyle(.borderedProminent)

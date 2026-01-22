@@ -265,6 +265,7 @@ struct CustomerEditorView: View {
                         address: address.isEmpty ? nil : address,
                         notes: notes.isEmpty ? nil : notes,
                         siteId: existingCustomer.siteId,
+                        isActive: existingCustomer.isActive,
                         createdAt: existingCustomer.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingCustomer.createdBy,

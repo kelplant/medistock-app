@@ -213,6 +213,7 @@ struct CategoryEditorView: View {
                     savedCategory = shared.Category(
                         id: existingCategory.id,
                         name: trimmedName,
+                        isActive: existingCategory.isActive,
                         createdAt: existingCategory.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingCategory.createdBy,

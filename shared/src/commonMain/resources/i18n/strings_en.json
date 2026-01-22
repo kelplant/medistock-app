@@ -1,0 +1,298 @@
+{
+  "_comment": "MediStock i18n - English (Default)",
+  "_instructions": "To translate: 1) Copy this file as strings_xx.json (e.g., strings_fr.json), 2) Translate all values, 3) Keep {param} placeholders unchanged",
+
+  "common": {
+    "appName": "MediStock",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "retry": "Retry",
+    "noData": "No data available",
+    "required": "Required"
+  },
+
+  "auth": {
+    "loginTitle": "Login",
+    "username": "Username",
+    "password": "Password",
+    "login": "Log in",
+    "logout": "Log out",
+    "logoutConfirm": "Are you sure you want to log out?",
+    "loginError": "Login failed",
+    "loginErrorInvalidCredentials": "Invalid username or password",
+    "welcomeBack": "Welcome back, {name}!"
+  },
+
+  "home": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "todaySales": "Today's Sales",
+    "lowStock": "Low Stock",
+    "pendingTransfers": "Pending Transfers"
+  },
+
+  "sites": {
+    "sites": "Sites",
+    "site": "Site",
+    "siteName": "Site Name",
+    "addSite": "Add Site",
+    "editSite": "Edit Site",
+    "deleteSite": "Delete Site",
+    "deleteSiteConfirm": "Are you sure you want to delete this site?",
+    "siteDeleted": "Site deleted",
+    "siteDeactivated": "Site deactivated",
+    "noSites": "No sites found",
+    "selectSite": "Select a site",
+    "allSites": "All Sites"
+  },
+
+  "categories": {
+    "categories": "Categories",
+    "category": "Category",
+    "categoryName": "Category Name",
+    "addCategory": "Add Category",
+    "editCategory": "Edit Category",
+    "deleteCategory": "Delete Category",
+    "deleteCategoryConfirm": "Are you sure you want to delete this category?",
+    "categoryDeleted": "Category deleted",
+    "categoryDeactivated": "Category deactivated",
+    "noCategories": "No categories found",
+    "selectCategory": "Select a category",
+    "allCategories": "All Categories",
+    "uncategorized": "Uncategorized"
+  },
+
+  "products": {
+    "products": "Products",
+    "product": "Product",
+    "productName": "Product Name",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "deleteProduct": "Delete Product",
+    "deleteProductConfirm": "Are you sure you want to delete this product?",
+    "productDeleted": "Product deleted",
+    "productDeactivated": "Product deactivated",
+    "noProducts": "No products found",
+    "selectProduct": "Select a product",
+    "unit": "Unit",
+    "unitVolume": "Unit Volume",
+    "description": "Description",
+    "minStock": "Minimum Stock",
+    "maxStock": "Maximum Stock",
+    "currentStock": "Current Stock",
+    "price": "Price",
+    "purchasePrice": "Purchase Price",
+    "sellingPrice": "Selling Price",
+    "margin": "Margin",
+    "marginType": "Margin Type",
+    "marginValue": "Margin Value"
+  },
+
+  "customers": {
+    "customers": "Customers",
+    "customer": "Customer",
+    "customerName": "Customer Name",
+    "addCustomer": "Add Customer",
+    "editCustomer": "Edit Customer",
+    "deleteCustomer": "Delete Customer",
+    "deleteCustomerConfirm": "Are you sure you want to delete this customer?",
+    "customerDeleted": "Customer deleted",
+    "customerDeactivated": "Customer deactivated",
+    "noCustomers": "No customers found",
+    "selectCustomer": "Select a customer",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "notes": "Notes",
+    "walkInCustomer": "Walk-in Customer"
+  },
+
+  "purchases": {
+    "purchases": "Purchases",
+    "purchase": "Purchase",
+    "addPurchase": "Add Purchase",
+    "purchaseHistory": "Purchase History",
+    "supplier": "Supplier",
+    "supplierName": "Supplier Name",
+    "batchNumber": "Batch Number",
+    "purchaseDate": "Purchase Date",
+    "expiryDate": "Expiry Date",
+    "quantity": "Quantity",
+    "initialQuantity": "Initial Quantity",
+    "remainingQuantity": "Remaining Quantity",
+    "totalAmount": "Total Amount",
+    "purchaseRecorded": "Purchase recorded"
+  },
+
+  "sales": {
+    "sales": "Sales",
+    "sale": "Sale",
+    "newSale": "New Sale",
+    "saleHistory": "Sales History",
+    "saleDate": "Sale Date",
+    "saleTotal": "Sale Total",
+    "saleItems": "Sale Items",
+    "addItem": "Add Item",
+    "removeItem": "Remove Item",
+    "unitPrice": "Unit Price",
+    "itemTotal": "Item Total",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "grandTotal": "Grand Total",
+    "completeSale": "Complete Sale",
+    "saleCompleted": "Sale completed",
+    "noSaleItems": "No items in sale",
+    "insufficientStock": "Insufficient stock for {product}: {available} available, {requested} requested"
+  },
+
+  "inventory": {
+    "inventory": "Inventory",
+    "inventoryCount": "Inventory Count",
+    "startInventory": "Start Inventory",
+    "completeInventory": "Complete Inventory",
+    "inventoryInProgress": "Inventory in Progress",
+    "theoreticalQuantity": "Theoretical Quantity",
+    "countedQuantity": "Counted Quantity",
+    "discrepancy": "Discrepancy",
+    "reason": "Reason",
+    "inventoryCompleted": "Inventory completed"
+  },
+
+  "transfers": {
+    "transfers": "Transfers",
+    "transfer": "Transfer",
+    "newTransfer": "New Transfer",
+    "transferHistory": "Transfer History",
+    "fromSite": "From Site",
+    "toSite": "To Site",
+    "transferStatus": "Transfer Status",
+    "transferPending": "Pending",
+    "transferCompleted": "Completed",
+    "transferCancelled": "Cancelled",
+    "completeTransfer": "Complete Transfer",
+    "cancelTransfer": "Cancel Transfer"
+  },
+
+  "stock": {
+    "stock": "Stock",
+    "stockMovements": "Stock Movements",
+    "stockIn": "Stock In",
+    "stockOut": "Stock Out",
+    "stockAdjustment": "Stock Adjustment",
+    "movementType": "Movement Type",
+    "movementDate": "Movement Date"
+  },
+
+  "reports": {
+    "reports": "Reports",
+    "salesReport": "Sales Report",
+    "stockReport": "Stock Report",
+    "profitReport": "Profit Report",
+    "exportReport": "Export Report",
+    "dateRange": "Date Range",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "generateReport": "Generate Report"
+  },
+
+  "settings": {
+    "settings": "Settings",
+    "language": "Language",
+    "selectLanguage": "Select Language",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "systemDefault": "System Default",
+    "about": "About",
+    "version": "Version",
+    "syncSettings": "Sync Settings",
+    "lastSync": "Last Sync",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "syncSuccess": "Sync completed",
+    "syncError": "Sync failed"
+  },
+
+  "users": {
+    "users": "Users",
+    "user": "User",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "deleteUser": "Delete User",
+    "fullName": "Full Name",
+    "role": "Role",
+    "admin": "Administrator",
+    "permissions": "Permissions",
+    "canView": "Can View",
+    "canCreate": "Can Create",
+    "canEdit": "Can Edit",
+    "canDelete": "Can Delete"
+  },
+
+  "packagingTypes": {
+    "packagingTypes": "Packaging Types",
+    "packagingType": "Packaging Type",
+    "addPackagingType": "Add Packaging Type",
+    "editPackagingType": "Edit Packaging Type",
+    "level1Name": "Level 1 Name",
+    "level2Name": "Level 2 Name",
+    "level2Quantity": "Level 2 Quantity",
+    "conversionFactor": "Conversion Factor"
+  },
+
+  "validation": {
+    "fieldRequired": "{field} is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "valueTooShort": "{field} must be at least {min} characters",
+    "valueTooLong": "{field} must not exceed {max} characters",
+    "valueMustBePositive": "Value must be positive",
+    "passwordTooShort": "Password must be at least 6 characters"
+  },
+
+  "referentialIntegrity": {
+    "cannotDelete": "Cannot delete",
+    "entityInUse": "This {entity} is used in {count} records",
+    "deactivateInstead": "Would you like to deactivate it instead?",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "showInactive": "Show Inactive",
+    "hideInactive": "Hide Inactive",
+    "inactive": "Inactive",
+    "active": "Active"
+  },
+
+  "dateTime": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year",
+    "dateFormat": "MM/dd/yyyy",
+    "timeFormat": "HH:mm"
+  },
+
+  "currency": {
+    "currencySymbol": "$",
+    "currencyFormat": "{symbol}{amount}",
+    "decimalSeparator": ".",
+    "thousandsSeparator": ","
+  }
+}
