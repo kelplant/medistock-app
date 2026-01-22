@@ -6,9 +6,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Site
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Site
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.stock.StockListActivity
@@ -21,14 +22,13 @@ import com.medistock.util.AppUpdateManager
 import com.medistock.util.PrefsHelper
 import com.medistock.util.UpdateCheckResult
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var authManager: AuthManager
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private var sites: List<Site> = emptyList()
     private var currentSite: Site? = null
 
@@ -36,7 +36,7 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         authManager = AuthManager.getInstance(this)
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         // Check if user is logged in
         if (!authManager.isLoggedIn()) {
@@ -89,7 +89,7 @@ class HomeActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 sites = withContext(Dispatchers.IO) {
-                    db.siteDao().getAll().first()
+                    sdk.siteRepository.getAll()
                 }
 
                 if (sites.isNotEmpty()) {
