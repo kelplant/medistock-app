@@ -1,7 +1,22 @@
 package com.medistock.data.sync
 
 import com.medistock.data.entities.*
-import com.medistock.data.remote.dto.*
+import com.medistock.shared.data.dto.CategoryDto
+import com.medistock.shared.data.dto.CustomerDto
+import com.medistock.shared.data.dto.PackagingTypeDto
+import com.medistock.shared.data.dto.ProductDto
+import com.medistock.shared.data.dto.ProductTransferDto
+import com.medistock.shared.data.dto.PurchaseBatchDto
+import com.medistock.shared.data.dto.SaleDto
+import com.medistock.shared.data.dto.SaleItemDto
+import com.medistock.shared.data.dto.SaleBatchAllocationDto
+import com.medistock.shared.data.dto.SiteDto
+import com.medistock.shared.data.dto.StockMovementDto
+import com.medistock.shared.data.dto.UserDto
+import com.medistock.shared.data.dto.UserPermissionDto
+
+// Typealias for backward compatibility
+typealias AppUserDto = UserDto
 
 /**
  * Mapper pour convertir entre les entités Room (local) et les DTOs Supabase (remote)
@@ -102,7 +117,9 @@ object SyncMapper {
         notes = notes,
         siteId = siteId,
         createdAt = createdAt,
-        createdBy = createdBy
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
     )
 
     fun CustomerDto.toEntity(): Customer = Customer(
@@ -111,9 +128,11 @@ object SyncMapper {
         phone = phone,
         address = address,
         notes = notes,
-        siteId = siteId,
+        siteId = siteId ?: "",
         createdAt = createdAt,
-        createdBy = createdBy
+        updatedAt = updatedAt,
+        createdBy = createdBy,
+        updatedBy = updatedBy
     )
 
     // ==================== PackagingType ====================
@@ -237,8 +256,8 @@ object SyncMapper {
         productName = productName,
         unit = unit,
         quantity = quantity,
-        pricePerUnit = pricePerUnit,
-        subtotal = subtotal,
+        unitPrice = pricePerUnit,
+        totalPrice = subtotal,
         createdAt = createdAt,
         createdBy = createdBy
     )
@@ -247,13 +266,13 @@ object SyncMapper {
         id = id,
         saleId = saleId,
         productId = productId,
-        productName = productName,
-        unit = unit,
+        productName = productName ?: "",
+        unit = unit ?: "",
         quantity = quantity,
-        pricePerUnit = pricePerUnit,
-        subtotal = subtotal,
-        createdAt = createdAt,
-        createdBy = createdBy
+        pricePerUnit = unitPrice,
+        subtotal = totalPrice,
+        createdAt = createdAt ?: System.currentTimeMillis(),
+        createdBy = createdBy ?: ""
     )
 
     // ==================== PurchaseBatch ====================
@@ -301,7 +320,7 @@ object SyncMapper {
         productId = productId,
         siteId = siteId,
         quantity = quantity,
-        type = type,
+        movementType = type,
         purchasePriceAtMovement = purchasePriceAtMovement,
         sellingPriceAtMovement = sellingPriceAtMovement,
         date = date,
@@ -314,10 +333,10 @@ object SyncMapper {
         productId = productId,
         siteId = siteId,
         quantity = quantity,
-        type = type,
-        purchasePriceAtMovement = purchasePriceAtMovement,
-        sellingPriceAtMovement = sellingPriceAtMovement,
-        date = date,
+        type = movementType,
+        purchasePriceAtMovement = purchasePriceAtMovement ?: 0.0,
+        sellingPriceAtMovement = sellingPriceAtMovement ?: 0.0,
+        date = date ?: createdAt,
         createdAt = createdAt,
         createdBy = createdBy
     )

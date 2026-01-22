@@ -1,4 +1,5 @@
 import Foundation
+import shared
 
 /// Represents a pending sync operation in the queue
 /// Mirrors Android's SyncQueueItem entity
@@ -93,17 +94,9 @@ enum EntityType: String, Codable, CaseIterable {
     }
 
     /// Conflict resolution strategy for this entity type
+    /// Now uses the shared module's ConflictResolver for consistency
     var conflictStrategy: ConflictStrategy {
-        switch self {
-        case .product, .category, .site, .packagingType, .purchaseBatch, .user, .userPermission:
-            return .serverWins
-        case .sale, .saleItem:
-            return .clientWins
-        case .stockMovement, .customer, .transfer:
-            return .merge
-        case .inventoryCount, .inventoryItem:
-            return .askUser
-        }
+        SharedConflictResolver.getStrategy(for: self.rawValue)
     }
 }
 
@@ -127,19 +120,85 @@ enum ConflictStrategy: String, Codable {
     case merge = "MERGE"
     case askUser = "ASK_USER"
     case keepBoth = "KEEP_BOTH"
+
+    /// Convert from shared module's ConflictResolution
+    init(from sharedResolution: ConflictResolution) {
+        switch sharedResolution {
+        case .remoteWins:
+            self = .serverWins
+        case .localWins:
+            self = .clientWins
+        case .merge:
+            self = .merge
+        case .askUser:
+            self = .askUser
+        case .keepBoth:
+            self = .keepBoth
+        default:
+            self = .serverWins
+        }
+    }
+
+    /// Convert to shared module's ConflictResolution
+    var toSharedResolution: ConflictResolution {
+        switch self {
+        case .serverWins:
+            return .remoteWins
+        case .clientWins:
+            return .localWins
+        case .merge:
+            return .merge
+        case .askUser:
+            return .askUser
+        case .keepBoth:
+            return .keepBoth
+        }
+    }
+}
+
+// MARK: - Shared Conflict Resolver Access
+
+enum SharedConflictResolver {
+    private static let resolver = ConflictResolver()
+
+    static func getStrategy(for entityType: String) -> ConflictStrategy {
+        let sharedStrategy = resolver.getStrategy(entityType: entityType)
+        return ConflictStrategy(from: sharedStrategy)
+    }
+
+    static func detectConflict(lastKnownRemoteUpdatedAt: Int64?, remoteUpdatedAt: Int64?) -> Bool {
+        let lastKnown: KotlinLong? = lastKnownRemoteUpdatedAt.map { KotlinLong(value: $0) }
+        let remote: KotlinLong? = remoteUpdatedAt.map { KotlinLong(value: $0) }
+        return resolver.detectConflict(lastKnownRemoteUpdatedAt: lastKnown, remoteUpdatedAt: remote)
+    }
 }
 
 // MARK: - Sync Configuration
+// Now delegates to shared module's RetryConfiguration
 
 struct SyncConfiguration {
-    static let maxRetries = 5
-    static let backoffDelays: [TimeInterval] = [1, 2, 4, 8, 16] // seconds
-    static let batchSize = 10
-    static let syncInterval: TimeInterval = 30 // seconds
+    // Get configuration from shared module
+    private static let sharedConfig = RetryConfiguration.companion.DEFAULT
+
+    static var maxRetries: Int {
+        Int(sharedConfig.maxRetries)
+    }
+
+    static var batchSize: Int {
+        Int(sharedConfig.batchSize)
+    }
+
+    static var syncInterval: TimeInterval {
+        Double(sharedConfig.syncIntervalMs) / 1000.0
+    }
 
     static func backoffDelay(for retryCount: Int) -> TimeInterval {
-        let index = min(retryCount, backoffDelays.count - 1)
-        return backoffDelays[index]
+        Double(sharedConfig.getDelayMs(retryCount: Int32(retryCount))) / 1000.0
+    }
+
+    // Legacy backoff delays for reference (now computed from shared config)
+    static var backoffDelays: [TimeInterval] {
+        sharedConfig.backoffDelaysMs.map { Double(truncating: $0) / 1000.0 }
     }
 }
 

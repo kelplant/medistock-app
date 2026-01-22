@@ -5,9 +5,18 @@ import com.medistock.data.dao.SyncQueueDao
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.*
 import com.medistock.data.remote.SupabaseClientProvider
-import com.medistock.data.remote.dto.*
+import com.medistock.shared.data.dto.ProductDto
+import com.medistock.shared.data.dto.CategoryDto
+import com.medistock.shared.data.dto.SiteDto
+import com.medistock.shared.data.dto.CustomerDto
+import com.medistock.shared.data.dto.PackagingTypeDto
 import com.medistock.data.remote.repository.*
 import com.medistock.data.sync.SyncMapper.toEntity
+import com.medistock.shared.domain.sync.ConflictResolution
+import com.medistock.shared.domain.sync.ConflictResolver
+import com.medistock.shared.domain.sync.FieldDifference
+import com.medistock.shared.domain.sync.RetryConfiguration
+import com.medistock.shared.domain.sync.UserConflict
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -29,20 +38,14 @@ class SyncQueueProcessor(
 ) {
     companion object {
         private const val TAG = "SyncQueueProcessor"
-
-        /** Nombre maximum de retries avant échec permanent */
-        const val MAX_RETRIES = 5
-
-        /** Délais de backoff en millisecondes: 1s, 2s, 4s, 8s, 16s */
-        private val BACKOFF_DELAYS = listOf(1000L, 2000L, 4000L, 8000L, 16000L)
-
-        /** Taille du batch de traitement */
-        const val BATCH_SIZE = 10
     }
+
+    // Configuration de retry partagée (depuis le module shared)
+    private val retryConfig = RetryConfiguration.DEFAULT
 
     private val database = AppDatabase.getInstance(context)
     private val syncQueueDao: SyncQueueDao by lazy { database.syncQueueDao() }
-    private val conflictResolver = ConflictResolver()
+    private val conflictResolver = ConflictResolver()  // Utilise désormais com.medistock.shared.domain.sync.ConflictResolver
 
     // Repositories Supabase
     private val productRepo by lazy { ProductSupabaseRepository() }
@@ -109,7 +112,7 @@ class SyncQueueProcessor(
             var totalConflicts = 0
 
             while (hasMore && isActive()) {
-                val batch = syncQueueDao.getPendingBatch(BATCH_SIZE)
+                val batch = syncQueueDao.getPendingBatch(retryConfig.batchSize)
 
                 if (batch.isEmpty()) {
                     hasMore = false
@@ -132,7 +135,7 @@ class SyncQueueProcessor(
                             syncQueueDao.updateStatus(item.id, SyncStatus.CONFLICT)
                         }
                         is ProcessResult.Retry -> {
-                            if (item.retryCount >= MAX_RETRIES) {
+                            if (item.retryCount >= retryConfig.maxRetries) {
                                 totalFailed++
                                 syncQueueDao.updateStatusWithRetry(
                                     item.id,
@@ -148,7 +151,7 @@ class SyncQueueProcessor(
                                     result.error
                                 )
                                 // Attendre avec backoff avant de réessayer
-                                delay(getBackoffDelay(item.retryCount))
+                                delay(retryConfig.getDelayMs(item.retryCount))
                             }
                         }
                         is ProcessResult.Skip -> {
@@ -203,8 +206,8 @@ class SyncQueueProcessor(
             val remoteData = fetchRemoteEntity(item.entityType, item.entityId)
             val remoteUpdatedAt = extractUpdatedAt(remoteData)
 
-            // Détecter les conflits
-            if (conflictResolver.detectConflict(item, remoteUpdatedAt, null)) {
+            // Détecter les conflits (utilise désormais la signature du module shared)
+            if (conflictResolver.detectConflict(item.lastKnownRemoteUpdatedAt, remoteUpdatedAt)) {
                 val resolution = conflictResolver.resolve(
                     entityType = item.entityType,
                     localPayload = item.payload,
@@ -227,22 +230,22 @@ class SyncQueueProcessor(
                     }
                     ConflictResolution.MERGE -> {
                         // Appliquer la version fusionnée
-                        if (resolution.mergedPayload != null) {
-                            applyMergedToRemote(item, resolution.mergedPayload)
+                        resolution.mergedPayload?.let { payload ->
+                            applyMergedToRemote(item, payload)
                         }
                     }
                     ConflictResolution.ASK_USER -> {
                         // Marquer pour intervention utilisateur
+                        // Utilise les types partagés UserConflict et FieldDifference
                         emitEvent(SyncEvent.ConflictDetected(
-                            UserConflict(
+                            conflictResolver.createUserConflict(
                                 queueItemId = item.id,
                                 entityType = item.entityType,
                                 entityId = item.entityId,
                                 localPayload = item.payload,
-                                remotePayload = remoteData ?: "",
+                                remotePayload = remoteData,
                                 localUpdatedAt = item.createdAt,
-                                remoteUpdatedAt = remoteUpdatedAt ?: 0L,
-                                fieldDifferences = computeFieldDifferences(item.payload, remoteData)
+                                remoteUpdatedAt = remoteUpdatedAt ?: 0L
                             )
                         ))
                         return ProcessResult.Conflict(resolution.message ?: "Conflit détecté")
@@ -397,36 +400,8 @@ class SyncQueueProcessor(
         return laterDelete && item.operation != SyncOperation.DELETE
     }
 
-    /**
-     * Calcule les différences entre deux payloads JSON
-     */
-    private fun computeFieldDifferences(localJson: String, remoteJson: String?): List<FieldDifference> {
-        if (remoteJson == null) return emptyList()
-
-        return try {
-            val local = Json.parseToJsonElement(localJson).jsonObject
-            val remote = Json.parseToJsonElement(remoteJson).jsonObject
-
-            val differences = mutableListOf<FieldDifference>()
-            val allKeys = (local.keys + remote.keys).toSet()
-
-            for (key in allKeys) {
-                val localValue = local[key]?.toString()
-                val remoteValue = remote[key]?.toString()
-                if (localValue != remoteValue) {
-                    differences.add(FieldDifference(key, localValue, remoteValue))
-                }
-            }
-
-            differences
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private fun getBackoffDelay(retryCount: Int): Long {
-        return BACKOFF_DELAYS.getOrElse(retryCount) { BACKOFF_DELAYS.last() }
-    }
+    // computeFieldDifferences et getBackoffDelay sont maintenant dans le module shared
+    // (ConflictResolver.computeFieldDifferences et RetryConfiguration.getDelayMs)
 
     private fun canProcess(): Boolean {
         return NetworkStatus.isOnline(context) && SupabaseClientProvider.isConfigured(context)

@@ -4,6 +4,9 @@ import com.medistock.data.entities.*
 import kotlinx.serialization.json.*
 
 /**
+ * @deprecated Utilisez [com.medistock.shared.domain.sync.ConflictResolver] du module partagé.
+ * Cette classe est conservée temporairement pour compatibilité mais sera supprimée dans une version future.
+ *
  * Résout les conflits de synchronisation selon le type d'entité.
  *
  * Stratégies par type d'entité:
@@ -16,6 +19,7 @@ import kotlinx.serialization.json.*
  * - Customer: Merge - Fusionner les infos clients
  * - User, UserPermission: Server Wins - Sécurité
  */
+@Deprecated("Utilisez com.medistock.shared.domain.sync.ConflictResolver", ReplaceWith("com.medistock.shared.domain.sync.ConflictResolver"))
 class ConflictResolver {
 
     companion object {

@@ -233,6 +233,103 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 ---
 
+## Phase 7 — Unification Base de Données Android (3-4 semaines)
+
+> But : Supprimer la duplication Room/SQLDelight sur Android pour utiliser exclusivement SQLDelight via le module shared.
+
+### 7.1. Audit et mapping Room → SQLDelight ⏳
+
+- [ ] Lister toutes les entités Room (17) et leurs équivalents SQLDelight
+- [ ] Identifier les différences de schéma entre Room et SQLDelight
+- [ ] Documenter les requêtes DAO spécifiques à migrer
+
+### 7.2. Migration des DAOs Android ⏳
+
+- [ ] Créer des wrappers Kotlin pour les repositories shared si nécessaire
+- [ ] Migrer les usages de `AppDatabase` vers `MedistockSDK` repositories
+- [ ] Supprimer les entités Room une par une (approche incrémentale)
+
+### 7.3. Migration des données existantes ⏳
+
+- [ ] Créer un script de migration Room → SQLDelight pour les données existantes
+- [ ] Tester la migration sur différents scénarios (fresh install, upgrade)
+- [ ] Gérer le versioning de la base SQLDelight
+
+### 7.4. Nettoyage ⏳
+
+- [ ] Supprimer les fichiers Room (`data/entities/`, `data/db/`)
+- [ ] Supprimer les dépendances Room du `build.gradle`
+- [ ] Mettre à jour les tests Android
+
+### Livrables
+- Android utilise exclusivement SQLDelight via shared
+- Pas de duplication de schéma de base de données
+- Tests de non-régression validés
+
+---
+
+## Phase 8 — Consolidation Sync (2-3 semaines) ✅ PARTIELLEMENT TERMINÉE
+
+> But : Unifier les stratégies de synchronisation entre Android et iOS.
+
+### 8.1. ConflictResolver partagé ✅
+
+- ✅ Créé `ConflictResolver` class dans `shared/domain/sync/`
+- ✅ Implémenté les stratégies : `REMOTE_WINS`, `LOCAL_WINS`, `MERGE`, `ASK_USER`, `KEEP_BOTH`
+- ✅ Stratégies configurées par type d'entité (Products=RemoteWins, Sales=LocalWins, etc.)
+- ✅ Android `SyncQueueProcessor` utilise `com.medistock.shared.domain.sync.ConflictResolver`
+- ✅ iOS `EntityType.conflictStrategy` délègue à `SharedConflictResolver`
+- ✅ Ancien `ConflictResolver.kt` Android marqué `@Deprecated`
+
+### 8.2. RetryStrategy partagée ✅
+
+- ✅ Créé `RetryConfiguration` dans shared avec backoff exponentiel
+- ✅ Paramètres : `maxRetries=5`, `backoffDelaysMs=[1s,2s,4s,8s,16s]`, `batchSize=10`
+- ✅ Android utilise `RetryConfiguration.DEFAULT` via `retryConfig`
+- ✅ iOS `SyncConfiguration` délègue à `RetryConfiguration.companion.DEFAULT`
+
+### 8.3. DTOs Sync unifiés ✅
+
+- ✅ Créé 13 DTOs dans `shared/data/dto/` avec sérialisation snake_case
+- ✅ Tests unitaires de sérialisation/désérialisation (`DtoTests.kt`)
+- ⚠️ Android utilise encore ses propres DTOs dans `data/remote/dto/` (migration partielle)
+- ⚠️ iOS utilise encore `SyncDTOs.swift` (migration partielle)
+
+### 8.4. SyncStatusManager partagé ⏳
+
+- [ ] Évaluer si `SyncStatusManager` doit être dans shared
+- [ ] Si oui, créer une interface commune avec implémentations platform-specific
+
+### Livrables ✅
+- ✅ ConflictResolver et RetryStrategy partagés
+- ✅ Tests unitaires pour les nouvelles classes shared (`SyncInfrastructureTests.kt`)
+- ⚠️ Migration DTOs à finaliser (utiliser shared DTOs dans Android/iOS)
+
+---
+
+## Phase 9 — Tests de Parité (1-2 semaines)
+
+> But : Garantir que les deux applications produisent les mêmes résultats pour les mêmes inputs.
+
+### 9.1. Tests d'intégration shared ⏳
+
+- [ ] Créer une suite de tests d'intégration dans shared
+- [ ] Tester les UseCases avec des scénarios métier complets
+- [ ] Vérifier les edge cases (stock négatif, conflits, etc.)
+
+### 9.2. Tests de non-régression ⏳
+
+- [ ] Documenter les scénarios de test manuels critiques
+- [ ] Créer des tests UI automatisés si possible (Espresso/XCTest)
+- [ ] Établir une checklist de validation avant release
+
+### Livrables
+- Suite de tests d'intégration complète
+- Documentation des scénarios de test
+- CI/CD avec tests automatisés
+
+---
+
 ## Critères de sortie globaux
 
 - ✅ Toutes les opérations métier passent par `shared` (UseCases)
@@ -240,6 +337,9 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ Auth / permissions identiques Android et iOS
 - ✅ Règle "stock négatif autorisé" appliquée partout (`BusinessWarning.InsufficientStock`)
 - ✅ Parité UI complète (écrans stock + version blocking)
+- ⏳ Base de données unique (SQLDelight) sur Android
+- ⏳ Stratégies de sync unifiées (ConflictResolver, RetryStrategy)
+- ⏳ Tests de parité Android/iOS
 
 ---
 
@@ -254,6 +354,10 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 4 - UX iOS | ✅ Terminée | Stock movements + version blocking |
 | Phase 5 - Durcissement Android | ✅ Terminée | ViewModels migrés |
 | Phase 6 - Consolidation Services | ✅ Terminée | PermissionService + SyncOrchestrator |
+| Phase 7 - Unification DB Android | ⏳ À faire | Supprimer Room, utiliser SQLDelight seul |
+| Phase 8 - Consolidation Sync | ✅ Partiellement | ConflictResolver ✅, RetryStrategy ✅, DTOs ⚠️ |
+| Phase 9 - Tests de Parité | ⏳ À faire | Tests d'intégration Android/iOS |
+| Phase 10 - Parité Écrans Android | ⏳ À faire | Clients, Liste Achats, Liste Inventaires |
 
 **Dernière mise à jour :** 22 Janvier 2026
 
@@ -269,3 +373,80 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ iOS : Keychain Services (`KeychainService.swift`)
 - ✅ Android : EncryptedSharedPreferences (`SecureSupabasePreferences.kt`)
 - ✅ Migration automatique transparente
+
+---
+
+## Annexes
+
+### Document de comparaison Android/iOS
+Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts entre les implémentations Android et iOS.
+
+### Priorités des écarts identifiés
+
+| Priorité | Écart | Phase | Statut |
+|----------|-------|-------|--------|
+| 🔴 Haute | Double DB Android (Room + SQLDelight) | Phase 7 | ⏳ À faire |
+| 🔴 Haute | Écrans Clients manquants Android | Phase 10 | ⏳ À faire |
+| 🟡 Moyenne | ConflictResolver non partagé | Phase 8 | ✅ Fait |
+| 🟡 Moyenne | RetryStrategy différente | Phase 8 | ✅ Fait |
+| 🟡 Moyenne | Liste Achats manquante Android | Phase 10 | ⏳ À faire |
+| 🟡 Moyenne | Liste Inventaires manquante Android | Phase 10 | ⏳ À faire |
+| 🟢 Basse | DTOs sync partiellement dupliqués | Phase 8 | ⚠️ Partiel |
+| 🟢 Basse | Menu Profil manquant Android | Phase 10 | ⏳ À faire |
+
+---
+
+## Phase 10 — Parité Écrans Android (2-3 semaines) ⏳ À FAIRE
+
+> But : Ajouter les écrans manquants sur Android pour atteindre la parité fonctionnelle avec iOS.
+
+### 10.1. Gestion des Clients 🔴 PRIORITAIRE
+
+**Écrans à créer :**
+- [ ] `CustomerListActivity` - Liste des clients avec recherche
+- [ ] `CustomerAddEditActivity` - Création/édition de client
+- [ ] `CustomerAdapter` - Adapter pour RecyclerView
+
+**Fonctionnalités requises :**
+- Liste avec recherche par nom/téléphone
+- CRUD complet (via CustomerRepository shared)
+- Filtrage par site si pertinent
+- Sync avec Supabase
+
+### 10.2. Liste des Achats 🟡
+
+**Écrans à créer :**
+- [ ] `PurchaseListActivity` - Historique des achats
+- [ ] `PurchaseAdapter` - Adapter pour RecyclerView
+
+**Fonctionnalités requises :**
+- Liste des achats triés par date
+- Filtrage par produit/fournisseur
+- Détail d'un achat existant
+
+### 10.3. Liste des Inventaires 🟡
+
+**Écrans à créer :**
+- [ ] `InventoryListActivity` - Liste des inventaires passés
+- [ ] `InventoryAdapter` - Adapter pour RecyclerView
+
+**Fonctionnalités requises :**
+- Historique des inventaires
+- Statut (en cours, terminé)
+- Navigation vers détail/édition
+
+### 10.4. Menu Profil 🟢
+
+**Options :**
+- [ ] Option A : Créer `ProfileActivity` dédiée
+- [ ] Option B : Intégrer dans `SettingsActivity` existante
+
+**Fonctionnalités requises :**
+- Informations utilisateur connecté
+- Changement de mot de passe (existe déjà)
+- Déconnexion
+
+### Livrables
+- Parité fonctionnelle écrans Android/iOS
+- Tests manuels de validation
+- Documentation mise à jour
