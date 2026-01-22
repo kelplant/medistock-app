@@ -7,19 +7,21 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Customer
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Customer
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class CustomerAddEditActivity : AppCompatActivity() {
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private var customerId: String? = null
     private var existingCustomer: Customer? = null
@@ -28,7 +30,7 @@ class CustomerAddEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_customer_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         val editName = findViewById<TextInputEditText>(R.id.editCustomerName)
@@ -42,16 +44,16 @@ class CustomerAddEditActivity : AppCompatActivity() {
         if (customerId != null) {
             supportActionBar?.title = "Edit Customer"
             btnDelete.visibility = View.VISIBLE
-            CoroutineScope(Dispatchers.IO).launch {
-                val customer = db.customerDao().getById(customerId!!).first()
-                runOnUiThread {
-                    if (customer != null) {
-                        existingCustomer = customer
-                        editName.setText(customer.name)
-                        editPhone.setText(customer.phone ?: "")
-                        editAddress.setText(customer.address ?: "")
-                        editNotes.setText(customer.notes ?: "")
-                    }
+            lifecycleScope.launch {
+                val customer = withContext(Dispatchers.IO) {
+                    sdk.customerRepository.getById(customerId!!)
+                }
+                if (customer != null) {
+                    existingCustomer = customer
+                    editName.setText(customer.name)
+                    editPhone.setText(customer.phone ?: "")
+                    editAddress.setText(customer.address ?: "")
+                    editNotes.setText(customer.notes ?: "")
                 }
             }
         } else {
@@ -69,29 +71,31 @@ class CustomerAddEditActivity : AppCompatActivity() {
             val address = editAddress.text.toString().trim().takeIf { it.isNotBlank() }
             val notes = editNotes.text.toString().trim().takeIf { it.isNotBlank() }
 
-            CoroutineScope(Dispatchers.IO).launch {
+            lifecycleScope.launch {
                 val currentUser = authManager.getUsername().ifBlank { "system" }
                 val siteId = existingCustomer?.siteId
                     ?: PrefsHelper.getActiveSiteId(this@CustomerAddEditActivity)
                     ?: ""
 
-                if (customerId == null) {
-                    db.customerDao().insert(
-                        Customer(
+                withContext(Dispatchers.IO) {
+                    if (customerId == null) {
+                        val newCustomer = Customer(
+                            id = UUID.randomUUID().toString(),
                             name = name,
                             phone = phone,
                             address = address,
                             notes = notes,
                             siteId = siteId,
+                            createdAt = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis(),
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                    )
-                } else {
-                    val createdAt = existingCustomer?.createdAt ?: System.currentTimeMillis()
-                    val createdBy = existingCustomer?.createdBy?.ifBlank { currentUser } ?: currentUser
-                    db.customerDao().update(
-                        Customer(
+                        sdk.customerRepository.insert(newCustomer)
+                    } else {
+                        val createdAt = existingCustomer?.createdAt ?: System.currentTimeMillis()
+                        val createdBy = existingCustomer?.createdBy?.ifBlank { currentUser } ?: currentUser
+                        val updatedCustomer = Customer(
                             id = customerId!!,
                             name = name,
                             phone = phone,
@@ -103,7 +107,8 @@ class CustomerAddEditActivity : AppCompatActivity() {
                             createdBy = createdBy,
                             updatedBy = currentUser
                         )
-                    )
+                        sdk.customerRepository.update(updatedCustomer)
+                    }
                 }
                 finish()
             }
@@ -128,15 +133,12 @@ class CustomerAddEditActivity : AppCompatActivity() {
     private fun deleteCustomer() {
         if (customerId == null) return
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val customer = db.customerDao().getById(customerId!!).first()
-            if (customer != null) {
-                db.customerDao().delete(customer)
-                runOnUiThread {
-                    Toast.makeText(this@CustomerAddEditActivity, "Customer deleted", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                sdk.customerRepository.delete(customerId!!)
             }
+            Toast.makeText(this@CustomerAddEditActivity, "Customer deleted", Toast.LENGTH_SHORT).show()
+            finish()
         }
     }
 
