@@ -8,6 +8,7 @@ import com.medistock.shared.domain.model.*
 import com.medistock.shared.domain.permission.PermissionService
 import com.medistock.shared.domain.sync.ConflictResolver
 import com.medistock.shared.domain.sync.RetryConfiguration
+import com.medistock.shared.domain.sync.SyncEnqueueService
 import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.shared.domain.usecase.*
 import kotlinx.datetime.Clock
@@ -46,6 +47,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val syncOrchestrator: SyncOrchestrator by lazy { SyncOrchestrator() }
     val conflictResolver: ConflictResolver by lazy { ConflictResolver() }
     val retryConfiguration: RetryConfiguration by lazy { RetryConfiguration.DEFAULT }
+    val syncEnqueueService: SyncEnqueueService by lazy { SyncEnqueueService(syncQueueRepository) }
 
     /**
      * Create an AuthService with a platform-specific PasswordVerifier.
