@@ -2,6 +2,8 @@ package com.medistock.shared
 
 import com.medistock.shared.data.repository.*
 import com.medistock.shared.db.MedistockDatabase
+import com.medistock.shared.domain.auth.AuthService
+import com.medistock.shared.domain.auth.PasswordVerifier
 import com.medistock.shared.domain.model.*
 import com.medistock.shared.domain.usecase.*
 import kotlinx.datetime.Clock
@@ -31,6 +33,21 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val stockRepository: StockRepository by lazy { StockRepository(database) }
     val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
     val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
+
+    /**
+     * Create an AuthService with a platform-specific PasswordVerifier.
+     * Call this method once at app startup with your platform's BCrypt implementation.
+     *
+     * Example (Android):
+     * ```
+     * val authService = sdk.createAuthService(object : PasswordVerifier {
+     *     override fun verify(plain: String, hashed: String) = BCrypt.verify(plain, hashed)
+     * })
+     * ```
+     */
+    fun createAuthService(passwordVerifier: PasswordVerifier): AuthService {
+        return AuthService(userRepository, passwordVerifier)
+    }
 
     // UseCases - Business logic layer
     val purchaseUseCase: PurchaseUseCase by lazy {

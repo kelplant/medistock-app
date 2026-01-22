@@ -1,14 +1,49 @@
 import Foundation
 import shared
 
-/// Authentication result
-enum AuthResult {
+/// Local authentication result (for backward compatibility and extended cases)
+enum LocalAuthResult {
     case success(user: UserDTO)
     case invalidCredentials
     case userInactive
     case userNotFound
     case networkError(String)
     case notConfigured
+
+    /// Convert from shared AuthResult
+    static func from(_ sharedResult: shared.AuthResult, toDTO: ((shared.User) -> UserDTO)? = nil) -> LocalAuthResult {
+        switch sharedResult {
+        case let success as shared.AuthResult.Success:
+            if let converter = toDTO {
+                return .success(user: converter(success.user))
+            } else {
+                return .success(user: UserDTO(from: success.user))
+            }
+        case is shared.AuthResult.InvalidCredentials:
+            return .invalidCredentials
+        case is shared.AuthResult.UserInactive:
+            return .userInactive
+        case is shared.AuthResult.UserNotFound:
+            return .userNotFound
+        case let error as shared.AuthResult.Error:
+            return .networkError(error.message)
+        default:
+            return .networkError("Unknown error")
+        }
+    }
+}
+
+/// Backward compatibility alias
+typealias AuthResult = LocalAuthResult
+
+/// iOS implementation of PasswordVerifier for shared AuthService
+class SwiftPasswordVerifier: shared.PasswordVerifier {
+    static let instance = SwiftPasswordVerifier()
+    private init() {}
+
+    func verify(plainPassword: String, hashedPassword: String) -> Bool {
+        return PasswordHasher.shared.verifyPassword(plainPassword, storedPassword: hashedPassword)
+    }
 }
 
 /// Authentication service that properly validates credentials
@@ -19,7 +54,18 @@ class AuthService {
     private let supabase = SupabaseService.shared
     private let statusManager = SyncStatusManager.shared
 
+    /// Shared auth service for local authentication (lazy initialized)
+    private var sharedAuthService: shared.AuthService?
+
     private init() {}
+
+    /// Get or create the shared AuthService
+    private func getSharedAuthService(sdk: MedistockSDK) -> shared.AuthService {
+        if sharedAuthService == nil {
+            sharedAuthService = sdk.createAuthService(passwordVerifier: SwiftPasswordVerifier.instance)
+        }
+        return sharedAuthService!
+    }
 
     /// Authenticate user with username and password
     func authenticate(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
@@ -77,30 +123,18 @@ class AuthService {
         }
     }
 
-    /// Authenticate using local SDK database
+    /// Authenticate using local SDK database via shared AuthService
     private func authenticateLocally(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
+        let authService = getSharedAuthService(sdk: sdk)
+
         do {
-            // Use the SDK to get user by username
-            let user = try await sdk.userRepository.getByUsername(username: username)
+            // Use shared AuthService for authentication
+            let result = try await authService.authenticate(username: username, password: password)
 
-            guard let user = user else {
-                return .userNotFound
+            // Convert shared AuthResult to local AuthResult
+            return LocalAuthResult.from(result) { sharedUser in
+                UserDTO(from: sharedUser)
             }
-
-            // Check if user is active
-            guard user.isActive else {
-                return .userInactive
-            }
-
-            // Validate password using BCrypt
-            guard PasswordHasher.shared.verifyPassword(password, storedPassword: user.password) else {
-                return .invalidCredentials
-            }
-
-            // Convert to UserDTO format for consistency
-            let userDTO = UserDTO(from: user)
-
-            return .success(user: userDTO)
         } catch {
             return .networkError(error.localizedDescription)
         }

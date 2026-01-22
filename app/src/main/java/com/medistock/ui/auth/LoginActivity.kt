@@ -19,6 +19,10 @@ import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.HomeActivity
 import com.medistock.ui.admin.SupabaseConfigActivity
+import com.medistock.shared.domain.auth.AuthResult
+import com.medistock.shared.domain.auth.AuthService
+import com.medistock.shared.domain.auth.PasswordVerifier
+import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
 import com.medistock.util.Modules
 import com.medistock.util.PasswordHasher
@@ -35,6 +39,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
+/**
+ * Android implementation of PasswordVerifier using BCrypt.
+ */
+private object AndroidPasswordVerifier : PasswordVerifier {
+    override fun verify(plainPassword: String, hashedPassword: String): Boolean {
+        return PasswordHasher.verifyPassword(plainPassword, hashedPassword)
+    }
+}
+
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var editUsername: TextInputEditText
@@ -45,6 +58,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnSupabaseConfig: Button
     private lateinit var authManager: AuthManager
     private lateinit var db: AppDatabase
+    private lateinit var sharedAuthService: AuthService
     private var realtimeJob: kotlinx.coroutines.Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +68,7 @@ class LoginActivity : AppCompatActivity() {
         // Initialize
         authManager = AuthManager.getInstance(this)
         db = AppDatabase.getInstance(this)
+        sharedAuthService = MedistockApplication.sdk.createAuthService(AndroidPasswordVerifier)
 
         // Initialize views
         editUsername = findViewById(R.id.editUsername)
@@ -109,31 +124,49 @@ class LoginActivity : AppCompatActivity() {
         val password = editPassword.text.toString()
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError("Please fill in all fields")
+            showError("Veuillez remplir tous les champs")
             return
         }
 
         lifecycleScope.launch {
             try {
-                val user = withContext(Dispatchers.IO) {
-                    val u = db.userDao().getUserForAuth(username)
+                // Use shared AuthService for authentication
+                val result = sharedAuthService.authenticate(username, password)
 
-                    // Verify password using BCrypt
-                    if (u != null && PasswordHasher.verifyPassword(password, u.password)) {
-                        u
-                    } else {
-                        null
+                when (result) {
+                    is AuthResult.Success -> {
+                        // Convert shared User to local User entity for AuthManager
+                        val sharedUser = result.user
+                        val localUser = User(
+                            id = sharedUser.id,
+                            username = sharedUser.username,
+                            password = sharedUser.password,
+                            fullName = sharedUser.fullName,
+                            isAdmin = sharedUser.isAdmin,
+                            isActive = sharedUser.isActive,
+                            createdAt = sharedUser.createdAt,
+                            updatedAt = sharedUser.updatedAt,
+                            createdBy = sharedUser.createdBy,
+                            updatedBy = sharedUser.updatedBy
+                        )
+                        authManager.login(localUser)
+                        navigateToHome()
+                    }
+                    is AuthResult.InvalidCredentials -> {
+                        showError("Nom d'utilisateur ou mot de passe incorrect")
+                    }
+                    is AuthResult.UserNotFound -> {
+                        showError("Utilisateur non trouvé")
+                    }
+                    is AuthResult.UserInactive -> {
+                        showError("Ce compte est désactivé")
+                    }
+                    is AuthResult.Error -> {
+                        showError("Erreur: ${result.message}")
                     }
                 }
-
-                if (user != null) {
-                    authManager.login(user)
-                    navigateToHome()
-                } else {
-                    showError("Incorrect username or password")
-                }
             } catch (e: Exception) {
-                showError("Connection error: ${e.message}")
+                showError("Erreur de connexion: ${e.message}")
             }
         }
     }
