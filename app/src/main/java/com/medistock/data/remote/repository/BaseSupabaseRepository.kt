@@ -18,6 +18,11 @@ abstract class BaseSupabaseRepository(
 ) {
     val supabase = SupabaseClientProvider.client
 
+    companion object {
+        /** Set to true to enable debug logging for Supabase operations */
+        var DEBUG = false
+    }
+
     /**
      * Récupère tous les enregistrements
      */
@@ -70,10 +75,14 @@ abstract class BaseSupabaseRepository(
      * Utilise la clé primaire 'id' pour détecter les conflits
      */
     suspend inline fun <reified R : Any> upsert(item: R): R {
+        if (DEBUG) println("🔄 Upsert to $tableName: $item")
         val payload = withClientId(item)
-        return supabase.from(tableName).upsert(payload) {
+        if (DEBUG) println("🔄 Payload with client_id: $payload")
+        val result = supabase.from(tableName).upsert(payload) {
             select()
-        }.decodeSingle()
+        }.decodeSingle<R>()
+        if (DEBUG) println("✅ Upsert result from $tableName: $result")
+        return result
     }
 
     /**
@@ -88,16 +97,21 @@ abstract class BaseSupabaseRepository(
     }
 
     @PublishedApi
-    internal inline fun <reified R : Any> withClientId(item: R): Any {
-        val currentClientId = SupabaseClientProvider.getClientId() ?: return item
-        val element = runCatching { Json.encodeToJsonElement(item) }.getOrNull()
-        val baseObject = element?.jsonObject ?: return item
+    internal inline fun <reified R : Any> withClientId(item: R): JsonObject {
+        val element = Json.encodeToJsonElement(item)
+        val baseObject = element.jsonObject
 
-        return JsonObject(
-            buildMap {
-                baseObject.forEach { (key, value) -> put(key, value) }
-                put("client_id", Json.encodeToJsonElement(currentClientId))
-            }
-        )
+        val currentClientId = SupabaseClientProvider.getClientId()
+
+        return if (currentClientId != null) {
+            JsonObject(
+                buildMap {
+                    baseObject.forEach { (key, value) -> put(key, value) }
+                    put("client_id", Json.encodeToJsonElement(currentClientId))
+                }
+            )
+        } else {
+            baseObject
+        }
     }
 }

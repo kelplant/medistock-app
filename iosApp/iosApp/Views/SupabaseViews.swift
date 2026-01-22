@@ -7,14 +7,18 @@ struct SupabaseConfigView: View {
     let sdk: MedistockSDK
 
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var projectUrl: String = ""
     @State private var anonKey: String = ""
     @State private var isSaving = false
+    @State private var isSyncing = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var syncMessage: String?
+    @State private var hasExistingKey: Bool = false
 
-    private let urlKey = "medistock_supabase_url"
-    private let keyKey = "medistock_supabase_key"
+    private let supabase = SupabaseService.shared
+    private let maskedKey = "••••••••••••••••••••••••••••••••"
 
     var body: some View {
         NavigationView {
@@ -34,9 +38,24 @@ struct SupabaseConfigView: View {
                         Text("Anon Key")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        SecureField("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", text: $anonKey)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
+                        if hasExistingKey && anonKey.isEmpty {
+                            HStack {
+                                Text(maskedKey)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button("Modifier") {
+                                    hasExistingKey = false
+                                }
+                                .font(.caption)
+                            }
+                            .padding(8)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(6)
+                        } else {
+                            SecureField("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", text: $anonKey)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                        }
                     }
                 }
 
@@ -53,7 +72,7 @@ struct SupabaseConfigView: View {
                             Spacer()
                         }
                     }
-                    .disabled(projectUrl.isEmpty || anonKey.isEmpty || isSaving)
+                    .disabled(projectUrl.isEmpty || (!hasExistingKey && anonKey.isEmpty) || isSaving)
                 }
 
                 if showSuccess {
@@ -74,6 +93,39 @@ struct SupabaseConfigView: View {
                     }
                 }
 
+                Section(header: Text("Synchronisation")) {
+                    Button(action: performSync) {
+                        HStack {
+                            Spacer()
+                            if isSyncing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                Text("Synchronisation...")
+                            } else {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                Text("Synchroniser les données")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(!supabase.isConfigured || isSyncing)
+
+                    if let syncMessage {
+                        Text(syncMessage)
+                            .font(.caption)
+                            .foregroundColor(syncMessage.contains("Erreur") ? .red : .green)
+                    }
+
+                    if let lastSync = syncStatus.lastSyncInfo.timestamp {
+                        LabeledContentCompat {
+                            Text("Dernière sync")
+                        } content: {
+                            Text(lastSync, style: .relative)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
                 Section(header: Text("Informations")) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Comment obtenir ces informations:")
@@ -90,17 +142,42 @@ struct SupabaseConfigView: View {
 
                 Section(header: Text("État actuel")) {
                     LabeledContentCompat {
-                        Text("URL configurée")
+                        Text("Configuré")
                     } content: {
-                        Text(UserDefaults.standard.string(forKey: urlKey)?.isEmpty == false ? "Oui" : "Non")
-                            .foregroundColor(UserDefaults.standard.string(forKey: urlKey)?.isEmpty == false ? .green : .red)
+                        Text(supabase.isConfigured ? "Oui" : "Non")
+                            .foregroundColor(supabase.isConfigured ? .green : .red)
                     }
                     LabeledContentCompat {
-                        Text("Clé configurée")
+                        Text("Connexion")
                     } content: {
-                        Text(UserDefaults.standard.string(forKey: keyKey)?.isEmpty == false ? "Oui" : "Non")
-                            .foregroundColor(UserDefaults.standard.string(forKey: keyKey)?.isEmpty == false ? .green : .red)
+                        HStack {
+                            Circle()
+                                .fill(syncStatus.isOnline ? Color.green : Color.orange)
+                                .frame(width: 8, height: 8)
+                            Text(syncStatus.isOnline ? "En ligne" : "Hors ligne")
+                                .foregroundColor(syncStatus.isOnline ? .green : .orange)
+                        }
                     }
+                    if syncStatus.pendingCount > 0 {
+                        LabeledContentCompat {
+                            Text("En attente")
+                        } content: {
+                            Text("\(syncStatus.pendingCount) modification(s)")
+                                .foregroundColor(.orange)
+                        }
+                    }
+                }
+
+                Section {
+                    Button(action: testConnection) {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "network")
+                            Text("Tester la connexion")
+                            Spacer()
+                        }
+                    }
+                    .disabled(!supabase.isConfigured)
                 }
 
                 Section {
@@ -126,8 +203,16 @@ struct SupabaseConfigView: View {
     }
 
     private func loadConfig() {
-        projectUrl = UserDefaults.standard.string(forKey: urlKey) ?? ""
-        anonKey = UserDefaults.standard.string(forKey: keyKey) ?? ""
+        if let config = supabase.getStoredConfig() {
+            projectUrl = config.url
+            // Don't load the actual key - just mark that we have one
+            hasExistingKey = true
+            anonKey = ""
+        } else {
+            projectUrl = ""
+            anonKey = ""
+            hasExistingKey = false
+        }
     }
 
     private func saveConfig() {
@@ -142,9 +227,29 @@ struct SupabaseConfigView: View {
             return
         }
 
-        // Save to UserDefaults
-        UserDefaults.standard.set(projectUrl, forKey: urlKey)
-        UserDefaults.standard.set(anonKey, forKey: keyKey)
+        // Determine the key to use
+        let keyToSave: String
+        if !anonKey.isEmpty {
+            // User entered a new key
+            keyToSave = anonKey
+        } else if hasExistingKey, let existingConfig = supabase.getStoredConfig() {
+            // Use existing key
+            keyToSave = existingConfig.anonKey
+        } else {
+            errorMessage = "La clé Anon est requise"
+            isSaving = false
+            return
+        }
+
+        // Save configuration
+        supabase.configure(url: projectUrl, anonKey: keyToSave)
+
+        // Update state
+        hasExistingKey = true
+        anonKey = ""
+
+        // Start sync scheduler after configuration
+        SyncScheduler.shared.start(sdk: sdk)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
@@ -153,11 +258,55 @@ struct SupabaseConfigView: View {
     }
 
     private func clearConfig() {
-        UserDefaults.standard.removeObject(forKey: urlKey)
-        UserDefaults.standard.removeObject(forKey: keyKey)
+        // Stop sync services
+        SyncScheduler.shared.stop()
+        RealtimeSyncService.shared.stop()
+
+        // Clear stored configuration via SupabaseService
+        supabase.disconnect()
+
         projectUrl = ""
         anonKey = ""
+        hasExistingKey = false
         showSuccess = false
         errorMessage = nil
+        syncMessage = nil
+    }
+
+    private func performSync() {
+        isSyncing = true
+        syncMessage = nil
+
+        Task {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
+
+            await MainActor.run {
+                isSyncing = false
+                if let error = syncStatus.lastSyncInfo.error {
+                    syncMessage = "Erreur: \(error)"
+                } else {
+                    syncMessage = "Synchronisation réussie!"
+                }
+            }
+        }
+    }
+
+    private func testConnection() {
+        errorMessage = nil
+        syncMessage = nil
+
+        Task {
+            do {
+                // Try to fetch a small amount of data to test connection
+                let _: [SiteDTO] = try await supabase.fetchAll(from: "sites")
+                await MainActor.run {
+                    syncMessage = "Connexion réussie!"
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Erreur de connexion: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 }

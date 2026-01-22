@@ -2,13 +2,22 @@ package com.medistock.shared
 
 import com.medistock.shared.data.repository.*
 import com.medistock.shared.db.MedistockDatabase
+import com.medistock.shared.domain.audit.AuditService
+import com.medistock.shared.domain.auth.AuthService
+import com.medistock.shared.domain.auth.PasswordVerifier
 import com.medistock.shared.domain.model.*
+import com.medistock.shared.domain.permission.PermissionService
+import com.medistock.shared.domain.sync.ConflictResolver
+import com.medistock.shared.domain.sync.RetryConfiguration
+import com.medistock.shared.domain.sync.SyncEnqueueService
+import com.medistock.shared.domain.sync.SyncOrchestrator
+import com.medistock.shared.domain.usecase.*
 import kotlinx.datetime.Clock
 import kotlin.random.Random
 
 /**
  * Main entry point for the MediStock shared SDK
- * This class provides access to all repositories and shared business logic
+ * This class provides access to all repositories, UseCases, and shared business logic
  */
 class MedistockSDK(driverFactory: DatabaseDriverFactory) {
 
@@ -26,8 +35,82 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val productTransferRepository: ProductTransferRepository by lazy { ProductTransferRepository(database) }
     val packagingTypeRepository: PackagingTypeRepository by lazy { PackagingTypeRepository(database) }
     val inventoryRepository: InventoryRepository by lazy { InventoryRepository(database) }
+    val inventoryItemRepository: InventoryItemRepository by lazy { InventoryItemRepository(database) }
     val auditRepository: AuditRepository by lazy { AuditRepository(database) }
     val stockRepository: StockRepository by lazy { StockRepository(database) }
+    val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
+    val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
+    val productPriceRepository: ProductPriceRepository by lazy { ProductPriceRepository(database) }
+    val syncQueueRepository: SyncQueueRepository by lazy { SyncQueueRepository(database) }
+
+    // Services - Shared business services
+    val permissionService: PermissionService by lazy { PermissionService(userPermissionRepository) }
+    val syncOrchestrator: SyncOrchestrator by lazy { SyncOrchestrator() }
+    val conflictResolver: ConflictResolver by lazy { ConflictResolver() }
+    val retryConfiguration: RetryConfiguration by lazy { RetryConfiguration.DEFAULT }
+    val syncEnqueueService: SyncEnqueueService by lazy { SyncEnqueueService(syncQueueRepository) }
+    val auditService: AuditService by lazy { AuditService(auditRepository) }
+
+    /**
+     * Create an AuthService with a platform-specific PasswordVerifier.
+     * Call this method once at app startup with your platform's BCrypt implementation.
+     *
+     * Example (Android):
+     * ```
+     * val authService = sdk.createAuthService(object : PasswordVerifier {
+     *     override fun verify(plain: String, hashed: String) = BCrypt.verify(plain, hashed)
+     * })
+     * ```
+     */
+    fun createAuthService(passwordVerifier: PasswordVerifier): AuthService {
+        return AuthService(userRepository, passwordVerifier)
+    }
+
+    // UseCases - Business logic layer
+    val purchaseUseCase: PurchaseUseCase by lazy {
+        PurchaseUseCase(
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository
+        )
+    }
+
+    val saleUseCase: SaleUseCase by lazy {
+        SaleUseCase(
+            saleRepository = saleRepository,
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository,
+            saleBatchAllocationRepository = saleBatchAllocationRepository
+        )
+    }
+
+    val transferUseCase: TransferUseCase by lazy {
+        TransferUseCase(
+            productTransferRepository = productTransferRepository,
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository
+        )
+    }
+
+    val inventoryUseCase: InventoryUseCase by lazy {
+        InventoryUseCase(
+            inventoryRepository = inventoryRepository,
+            purchaseBatchRepository = purchaseBatchRepository,
+            stockMovementRepository = stockMovementRepository,
+            productRepository = productRepository,
+            siteRepository = siteRepository,
+            auditRepository = auditRepository,
+            stockRepository = stockRepository
+        )
+    }
 
     // Platform info
     val platformName: String = getPlatform().name
@@ -108,6 +191,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         email: String? = null,
         address: String? = null,
         notes: String? = null,
+        siteId: String? = null,
         userId: String = "ios"
     ): Customer {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -118,6 +202,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             email = email,
             address = address,
             notes = notes,
+            siteId = siteId,
             createdAt = now,
             updatedAt = now,
             createdBy = userId,
@@ -178,16 +263,24 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     fun createSaleItem(
         saleId: String,
         productId: String,
+        productName: String = "",
+        unit: String = "",
         quantity: Double,
-        unitPrice: Double
+        unitPrice: Double,
+        userId: String = "ios"
     ): SaleItem {
+        val now = Clock.System.now().toEpochMilliseconds()
         return SaleItem(
             id = generateId(prefix = "saleitem"),
             saleId = saleId,
             productId = productId,
+            productName = productName,
+            unit = unit,
             quantity = quantity,
             unitPrice = unitPrice,
-            totalPrice = quantity * unitPrice
+            totalPrice = quantity * unitPrice,
+            createdAt = now,
+            createdBy = userId
         )
     }
 
@@ -220,6 +313,8 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         siteId: String,
         quantity: Double,
         movementType: String,
+        purchasePriceAtMovement: Double = 0.0,
+        sellingPriceAtMovement: Double = 0.0,
         referenceId: String? = null,
         notes: String? = null,
         userId: String = "ios"
@@ -230,6 +325,10 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             productId = productId,
             siteId = siteId,
             quantity = quantity,
+            type = movementType,
+            date = now,
+            purchasePriceAtMovement = purchasePriceAtMovement,
+            sellingPriceAtMovement = sellingPriceAtMovement,
             movementType = movementType,
             referenceId = referenceId,
             notes = notes,
@@ -243,6 +342,9 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         level1Name: String,
         level2Name: String? = null,
         level2Quantity: Int? = null,
+        defaultConversionFactor: Double? = null,
+        isActive: Boolean = true,
+        displayOrder: Int = 0,
         userId: String = "ios"
     ): PackagingType {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -252,6 +354,9 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             level1Name = level1Name,
             level2Name = level2Name,
             level2Quantity = level2Quantity,
+            defaultConversionFactor = defaultConversionFactor,
+            isActive = isActive,
+            displayOrder = displayOrder,
             createdAt = now,
             updatedAt = now,
             createdBy = userId,
@@ -294,6 +399,61 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             newValues = newValues,
             userId = userId,
             timestamp = now
+        )
+    }
+
+    fun createUserPermission(
+        userId: String,
+        module: Module,
+        canView: Boolean = false,
+        canCreate: Boolean = false,
+        canEdit: Boolean = false,
+        canDelete: Boolean = false,
+        createdBy: String = "system"
+    ): UserPermission {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return UserPermission(
+            id = generateId(prefix = "permission"),
+            userId = userId,
+            module = module.name,
+            canView = canView,
+            canCreate = canCreate,
+            canEdit = canEdit,
+            canDelete = canDelete,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = createdBy,
+            updatedBy = createdBy
+        )
+    }
+
+    fun createSyncQueueItem(
+        entityType: String,
+        entityId: String,
+        operation: SyncOperation,
+        payload: String,
+        localVersion: Long = 1,
+        lastKnownRemoteUpdatedAt: Long? = null,
+        userId: String? = null,
+        siteId: String? = null
+    ): SyncQueueItem {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return SyncQueueItem(
+            id = generateId(prefix = "sync"),
+            entityType = entityType,
+            entityId = entityId,
+            operation = operation,
+            payload = payload,
+            localVersion = localVersion,
+            remoteVersion = null,
+            lastKnownRemoteUpdatedAt = lastKnownRemoteUpdatedAt,
+            status = SyncStatus.PENDING,
+            retryCount = 0,
+            lastError = null,
+            lastAttemptAt = null,
+            createdAt = now,
+            userId = userId,
+            siteId = siteId
         )
     }
 

@@ -9,20 +9,27 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.*
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Customer
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.Sale
+import com.medistock.shared.domain.model.SaleItem
+import com.medistock.shared.domain.model.Site
+import com.medistock.shared.domain.model.SaleBatchAllocation
+import com.medistock.shared.domain.model.StockMovement
 import com.medistock.ui.adapters.SaleItemAdapter
+import java.util.UUID
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SaleActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var spinnerSite: Spinner
     private lateinit var recyclerSaleItems: RecyclerView
@@ -45,7 +52,7 @@ class SaleActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sale)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
         selectedSiteId = PrefsHelper.getActiveSiteId(this)
         editingSaleId = intent.getStringExtra("SALE_ID")?.takeIf { it.isNotBlank() }
@@ -103,7 +110,7 @@ class SaleActivity : AppCompatActivity() {
 
     private fun loadSites() {
         lifecycleScope.launch(Dispatchers.IO) {
-            sites = db.siteDao().getAll().first()
+            sites = sdk.siteRepository.getAll()
             withContext(Dispatchers.Main) {
                 val siteNames = sites.map { it.name }
                 val adapter = ArrayAdapter(
@@ -126,21 +133,21 @@ class SaleActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getAll().first()
+            products = sdk.productRepository.getAll()
         }
     }
 
     private fun loadStockForSite() {
         lifecycleScope.launch(Dispatchers.IO) {
             val siteId = selectedSiteId ?: return@launch
-            val stockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
+            val stockItems = sdk.stockRepository.getCurrentStockForSite(siteId)
             currentStock = stockItems.associate { it.productId to it.quantityOnHand }
         }
     }
 
     private fun loadExistingSale(saleId: String) {
         lifecycleScope.launch(Dispatchers.IO) {
-            val saleWithItems = db.saleDao().getSaleWithItems(saleId).first()
+            val saleWithItems = sdk.saleRepository.getSaleWithItems(saleId)
             saleWithItems?.let { swi ->
                 existingSale = swi.sale
                 withContext(Dispatchers.Main) {
@@ -190,7 +197,7 @@ class SaleActivity : AppCompatActivity() {
 
                     // Load suggested price
                     lifecycleScope.launch(Dispatchers.IO) {
-                        val latestPrice = db.productPriceDao().getLatestPrice(selectedProduct!!.id).first()
+                        val latestPrice = sdk.productPriceRepository.getLatestPrice(selectedProduct!!.id)
                         withContext(Dispatchers.Main) {
                             if (latestPrice != null) {
                                 editPrice.setText(String.format("%.2f", latestPrice.sellingPrice))
@@ -241,13 +248,14 @@ class SaleActivity : AppCompatActivity() {
 
                 // Add item to the list
                 val saleItem = SaleItem(
+                    id = UUID.randomUUID().toString(),
                     saleId = editingSaleId ?: "",
                     productId = product.id,
                     productName = product.name,
                     unit = product.unit,
                     quantity = quantity,
-                    pricePerUnit = price,
-                    subtotal = quantity * price
+                    unitPrice = price,
+                    totalPrice = quantity * price
                 )
                 saleItemAdapter.addItem(saleItem)
                 updateTotal()
@@ -286,10 +294,9 @@ class SaleActivity : AppCompatActivity() {
         // Load customers
         lifecycleScope.launch(Dispatchers.IO) {
             val siteId = selectedSiteId ?: return@launch
-            db.customerDao().getAllForSite(siteId).collect { customers ->
-                withContext(Dispatchers.Main) {
-                    customerAdapter.submitList(customers)
-                }
+            val customers = sdk.customerRepository.getBySite(siteId)
+            withContext(Dispatchers.Main) {
+                customerAdapter.submitList(customers)
             }
         }
 
@@ -299,23 +306,15 @@ class SaleActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 val query = s.toString().trim()
-                if (query.isNotEmpty()) {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val siteId = selectedSiteId ?: return@launch
-                        db.customerDao().search(siteId, query).collect { customers ->
-                            withContext(Dispatchers.Main) {
-                                customerAdapter.submitList(customers)
-                            }
-                        }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val siteId = selectedSiteId ?: return@launch
+                    val customers = if (query.isNotEmpty()) {
+                        sdk.customerRepository.search(query).filter { it.siteId == siteId }
+                    } else {
+                        sdk.customerRepository.getBySite(siteId)
                     }
-                } else {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val siteId = selectedSiteId ?: return@launch
-                        db.customerDao().getAllForSite(siteId).collect { customers ->
-                            withContext(Dispatchers.Main) {
-                                customerAdapter.submitList(customers)
-                            }
-                        }
+                    withContext(Dispatchers.Main) {
+                        customerAdapter.submitList(customers)
                     }
                 }
             }
@@ -332,10 +331,9 @@ class SaleActivity : AppCompatActivity() {
         // Reload customers with new adapter
         lifecycleScope.launch(Dispatchers.IO) {
             val siteId = selectedSiteId ?: return@launch
-            db.customerDao().getAllForSite(siteId).collect { customers ->
-                withContext(Dispatchers.Main) {
-                    finalAdapter.submitList(customers)
-                }
+            val customers = sdk.customerRepository.getBySite(siteId)
+            withContext(Dispatchers.Main) {
+                finalAdapter.submitList(customers)
             }
         }
 
@@ -370,19 +368,18 @@ class SaleActivity : AppCompatActivity() {
 
                 lifecycleScope.launch(Dispatchers.IO) {
                     val currentUser = authManager.getUsername().ifBlank { "system" }
-                    val customer = Customer(
+                    val customer = sdk.createCustomer(
                         name = name,
                         phone = phone.ifEmpty { null },
                         address = address.ifEmpty { null },
                         notes = notes.ifEmpty { null },
-                        siteId = selectedSiteId ?: "",
-                        createdBy = currentUser
+                        siteId = selectedSiteId,
+                        userId = currentUser
                     )
-                    db.customerDao().insert(customer)
-                    val savedCustomer = customer
+                    sdk.customerRepository.insert(customer)
 
                     withContext(Dispatchers.Main) {
-                        selectedCustomer = savedCustomer
+                        selectedCustomer = customer
                         editCustomerName.setText(name)
                         Toast.makeText(
                             this@SaleActivity,
@@ -412,12 +409,16 @@ class SaleActivity : AppCompatActivity() {
     private suspend fun allocateBatchesFIFO(
         productId: String,
         siteId: String,
-        quantityNeeded: Double
+        quantityNeeded: Double,
+        currentUser: String
     ): Pair<List<SaleBatchAllocation>, Double> {
-        val batches = db.purchaseBatchDao().getAvailableBatchesFIFOSync(productId, siteId)
+        // Get available batches ordered by purchase date (FIFO) - already filtered by is_exhausted=0
+        val batches = sdk.purchaseBatchRepository.getByProductAndSite(productId, siteId)
+            .sortedBy { it.purchaseDate }
         val allocations = mutableListOf<SaleBatchAllocation>()
         var remainingQty = quantityNeeded
         var totalCost = 0.0
+        val now = System.currentTimeMillis()
 
         for (batch in batches) {
             if (remainingQty <= 0) break
@@ -427,10 +428,13 @@ class SaleActivity : AppCompatActivity() {
             // Create allocation (saleItemId will be set later)
             allocations.add(
                 SaleBatchAllocation(
+                    id = UUID.randomUUID().toString(),
                     saleItemId = "", // Will be updated after sale item is created
                     batchId = batch.id,
                     quantityAllocated = qtyToTake,
-                    purchasePriceAtAllocation = batch.purchasePrice
+                    purchasePriceAtAllocation = batch.purchasePrice,
+                    createdAt = now,
+                    createdBy = currentUser
                 )
             )
 
@@ -439,7 +443,8 @@ class SaleActivity : AppCompatActivity() {
 
             // Update batch remaining quantity
             val newRemainingQty = batch.remainingQuantity - qtyToTake
-            db.purchaseBatchDao().updateRemainingQuantity(batch.id, newRemainingQty, System.currentTimeMillis())
+            val isExhausted = newRemainingQty <= 0
+            sdk.purchaseBatchRepository.updateQuantity(batch.id, newRemainingQty, isExhausted, now, currentUser)
 
             remainingQty -= qtyToTake
         }
@@ -455,21 +460,22 @@ class SaleActivity : AppCompatActivity() {
     /**
      * Reverses batch allocations when editing/deleting a sale.
      */
-    private suspend fun reverseBatchAllocations(saleItemId: String) {
-        val allocations = db.saleBatchAllocationDao().getAllocationsForSaleItem(saleItemId).first()
+    private suspend fun reverseBatchAllocations(saleItemId: String, currentUser: String) {
+        val allocations = sdk.saleBatchAllocationRepository.getBySaleItem(saleItemId)
+        val now = System.currentTimeMillis()
 
         for (allocation in allocations) {
             // Get current batch
-            val batch = db.purchaseBatchDao().getById(allocation.batchId).first()
+            val batch = sdk.purchaseBatchRepository.getById(allocation.batchId)
             batch?.let {
                 // Add back the quantity
                 val newRemainingQty = it.remainingQuantity + allocation.quantityAllocated
-                db.purchaseBatchDao().updateRemainingQuantity(it.id, newRemainingQty, System.currentTimeMillis())
+                sdk.purchaseBatchRepository.updateQuantity(it.id, newRemainingQty, false, now, currentUser)
             }
         }
 
         // Delete allocations
-        db.saleBatchAllocationDao().deleteAllForSaleItem(saleItemId)
+        sdk.saleBatchAllocationRepository.deleteForSaleItem(saleItemId)
     }
 
     private fun saveSale() {
@@ -500,35 +506,36 @@ class SaleActivity : AppCompatActivity() {
                     val updatedSale = existingSale!!.copy(
                         customerName = customerName,
                         customerId = selectedCustomer?.id,
-                        totalAmount = totalAmount,
-                        siteId = selectedSiteId ?: ""
+                        totalAmount = totalAmount
                     )
-                    db.saleDao().update(updatedSale)
+                    sdk.saleRepository.update(updatedSale)
 
                     // Get old items BEFORE deleting them
-                    val oldItems = db.saleItemDao().getItemsForSale(editingSaleId!!).first()
+                    val oldItems = sdk.saleRepository.getItemsForSale(editingSaleId!!)
 
                     // Reverse old batch allocations and stock movements
                     oldItems.forEach { oldItem ->
                         // Reverse batch allocations
-                        reverseBatchAllocations(oldItem.id)
+                        reverseBatchAllocations(oldItem.id, currentUser)
 
                         // Reverse stock movement
                         val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
                             productId = oldItem.productId,
-                            type = "in",
-                            quantity = oldItem.quantity,
-                            date = currentTime,
                             siteId = selectedSiteId ?: "",
+                            quantity = oldItem.quantity,
+                            type = "in",
+                            date = currentTime,
                             purchasePriceAtMovement = 0.0,
-                            sellingPriceAtMovement = oldItem.pricePerUnit,
+                            sellingPriceAtMovement = oldItem.unitPrice,
+                            createdAt = currentTime,
                             createdBy = currentUser
                         )
-                        db.stockMovementDao().insert(movement)
+                        sdk.stockMovementRepository.insert(movement)
                     }
 
                     // Delete old sale items AFTER reversing
-                    db.saleItemDao().deleteAllForSale(editingSaleId!!)
+                    sdk.saleRepository.deleteItemsForSale(editingSaleId!!)
 
                     // Insert new sale items with FIFO batch allocation
                     saleItemAdapter.getItems().forEach { item ->
@@ -536,33 +543,46 @@ class SaleActivity : AppCompatActivity() {
                         val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
                             item.productId,
                             selectedSiteId ?: "",
-                            item.quantity
+                            item.quantity,
+                            currentUser
                         )
 
                         // Insert sale item
-                        val newItem = item.copy(saleId = editingSaleId!!)
-                        db.saleItemDao().insert(newItem)
-                        val saleItemId = newItem.id
+                        val newItem = SaleItem(
+                            id = item.id,
+                            saleId = editingSaleId!!,
+                            productId = item.productId,
+                            productName = item.productName,
+                            unit = item.unit,
+                            quantity = item.quantity,
+                            unitPrice = item.unitPrice,
+                            totalPrice = item.totalPrice,
+                            createdAt = currentTime,
+                            createdBy = currentUser
+                        )
+                        sdk.saleRepository.insertSaleItem(newItem)
 
                         // Insert batch allocations with correct saleItemId
                         allocations.forEach { allocation ->
-                            db.saleBatchAllocationDao().insert(
-                                allocation.copy(saleItemId = saleItemId)
+                            sdk.saleBatchAllocationRepository.insert(
+                                allocation.copy(saleItemId = newItem.id)
                             )
                         }
 
                         // Create stock movement with actual purchase price
                         val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
                             productId = item.productId,
-                            type = "out",
-                            quantity = item.quantity,
-                            date = currentTime,
                             siteId = selectedSiteId ?: "",
+                            quantity = item.quantity,
+                            type = "out",
+                            date = currentTime,
                             purchasePriceAtMovement = avgPurchasePrice,
-                            sellingPriceAtMovement = item.pricePerUnit,
+                            sellingPriceAtMovement = item.unitPrice,
+                            createdAt = currentTime,
                             createdBy = currentUser
                         )
-                        db.stockMovementDao().insert(movement)
+                        sdk.stockMovementRepository.insert(movement)
                     }
 
                     withContext(Dispatchers.Main) {
@@ -575,15 +595,14 @@ class SaleActivity : AppCompatActivity() {
                     }
                 } else {
                     // Create new sale
-                    val sale = Sale(
+                    val sale = sdk.createSale(
                         customerName = customerName,
-                        customerId = selectedCustomer?.id,
-                        date = currentTime,
-                        totalAmount = totalAmount,
                         siteId = selectedSiteId ?: "",
-                        createdBy = currentUser
+                        totalAmount = totalAmount,
+                        customerId = selectedCustomer?.id,
+                        userId = currentUser
                     )
-                    db.saleDao().insert(sale)
+                    sdk.saleRepository.insert(sale)
                     val saleId = sale.id
 
                     // Insert sale items with FIFO batch allocation
@@ -592,33 +611,43 @@ class SaleActivity : AppCompatActivity() {
                         val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
                             item.productId,
                             selectedSiteId ?: "",
-                            item.quantity
+                            item.quantity,
+                            currentUser
                         )
 
                         // Insert sale item
-                        val newItem = item.copy(saleId = saleId)
-                        db.saleItemDao().insert(newItem)
-                        val saleItemId = newItem.id
+                        val newItem = sdk.createSaleItem(
+                            saleId = saleId,
+                            productId = item.productId,
+                            productName = item.productName,
+                            unit = item.unit,
+                            quantity = item.quantity,
+                            unitPrice = item.unitPrice,
+                            userId = currentUser
+                        )
+                        sdk.saleRepository.insertSaleItem(newItem)
 
                         // Insert batch allocations with correct saleItemId
                         allocations.forEach { allocation ->
-                            db.saleBatchAllocationDao().insert(
-                                allocation.copy(saleItemId = saleItemId)
+                            sdk.saleBatchAllocationRepository.insert(
+                                allocation.copy(saleItemId = newItem.id)
                             )
                         }
 
                         // Create stock movement with actual purchase price
                         val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
                             productId = item.productId,
-                            type = "out",
-                            quantity = item.quantity,
-                            date = currentTime,
                             siteId = selectedSiteId ?: "",
+                            quantity = item.quantity,
+                            type = "out",
+                            date = currentTime,
                             purchasePriceAtMovement = avgPurchasePrice,
-                            sellingPriceAtMovement = item.pricePerUnit,
+                            sellingPriceAtMovement = item.unitPrice,
+                            createdAt = currentTime,
                             createdBy = currentUser
                         )
-                        db.stockMovementDao().insert(movement)
+                        sdk.stockMovementRepository.insert(movement)
                     }
 
                     withContext(Dispatchers.Main) {

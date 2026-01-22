@@ -5,17 +5,21 @@ import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.*
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
-import kotlinx.coroutines.flow.first
+import com.medistock.util.PrefsHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class StockMovementActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private var products: List<Product> = emptyList()
 
@@ -24,7 +28,7 @@ class StockMovementActivity : AppCompatActivity() {
         setContentView(R.layout.activity_stock_movement)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         val productSpinner = findViewById<Spinner>(R.id.spinnerProduct)
@@ -35,7 +39,9 @@ class StockMovementActivity : AppCompatActivity() {
         typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("in", "out"))
 
         lifecycleScope.launch {
-            products = db.productDao().getAll().first()
+            products = withContext(Dispatchers.IO) {
+                sdk.productRepository.getAll()
+            }
             productSpinner.adapter = ArrayAdapter(
                 this@StockMovementActivity,
                 android.R.layout.simple_spinner_item,
@@ -50,27 +56,37 @@ class StockMovementActivity : AppCompatActivity() {
 
             if (selectedProductIndex >= 0 && quantity != null) {
                 val product = products[selectedProductIndex]
-                val quantityInBaseUnit = quantity * product.unitVolume
+                val quantityInBaseUnit = quantity * (product.unitVolume ?: 1.0)
                 lifecycleScope.launch {
-                    val latestPrice = db.productPriceDao().getLatestPrice(product.id).first()
-                    if (latestPrice != null) {
-                        val siteId = com.medistock.util.PrefsHelper.getActiveSiteId(this@StockMovementActivity)
-                        if (!siteId.isNullOrBlank()) {
-                            val currentUser = authManager.getUsername().ifBlank { "system" }
-                            db.stockMovementDao().insert(
-                                StockMovement(
-                                    productId = product.id,
-                                    type = type,
-                                    quantity = quantityInBaseUnit,
-                                    date = System.currentTimeMillis(),
-                                    purchasePriceAtMovement = latestPrice.purchasePrice,
-                                    sellingPriceAtMovement = latestPrice.sellingPrice,
-                                    siteId = siteId,
-                                    createdBy = currentUser
-                                )
-                            )
-                            finish()
+                    val siteId = PrefsHelper.getActiveSiteId(this@StockMovementActivity)
+                    if (!siteId.isNullOrBlank()) {
+                        val currentUser = authManager.getUsername().ifBlank { "system" }
+                        val now = System.currentTimeMillis()
+                        val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
+                            productId = product.id,
+                            siteId = siteId,
+                            quantity = quantityInBaseUnit,
+                            type = type,
+                            date = now,
+                            purchasePriceAtMovement = 0.0,
+                            sellingPriceAtMovement = 0.0,
+                            movementType = type,
+                            referenceId = null,
+                            notes = "Manual stock movement",
+                            createdAt = now,
+                            createdBy = currentUser
+                        )
+                        withContext(Dispatchers.IO) {
+                            sdk.stockMovementRepository.insert(movement)
                         }
+                        finish()
+                    } else {
+                        Toast.makeText(
+                            this@StockMovementActivity,
+                            "Please select a site first",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }

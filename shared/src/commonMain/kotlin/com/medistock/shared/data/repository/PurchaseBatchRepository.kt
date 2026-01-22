@@ -29,6 +29,12 @@ class PurchaseBatchRepository(private val database: MedistockDatabase) {
         queries.getBatchesByProductAndSite(productId, siteId).executeAsList().map { it.toModel() }
     }
 
+    suspend fun getBySite(siteId: String): List<PurchaseBatch> = withContext(Dispatchers.Default) {
+        queries.getAllBatches().executeAsList()
+            .filter { it.site_id == siteId }
+            .map { it.toModel() }
+    }
+
     suspend fun insert(batch: PurchaseBatch) = withContext(Dispatchers.Default) {
         queries.insertBatch(
             id = batch.id,
@@ -56,6 +62,30 @@ class PurchaseBatchRepository(private val database: MedistockDatabase) {
             updated_at = updatedAt,
             updated_by = updatedBy,
             id = id
+        )
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a purchase batch.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(batch: PurchaseBatch) = withContext(Dispatchers.Default) {
+        queries.upsertPurchaseBatch(
+            id = batch.id,
+            product_id = batch.productId,
+            site_id = batch.siteId,
+            batch_number = batch.batchNumber,
+            purchase_date = batch.purchaseDate,
+            initial_quantity = batch.initialQuantity,
+            remaining_quantity = batch.remainingQuantity,
+            purchase_price = batch.purchasePrice,
+            supplier_name = batch.supplierName,
+            expiry_date = batch.expiryDate,
+            is_exhausted = if (batch.isExhausted) 1L else 0L,
+            created_at = batch.createdAt,
+            updated_at = batch.updatedAt,
+            created_by = batch.createdBy,
+            updated_by = batch.updatedBy
         )
     }
 

@@ -2,14 +2,14 @@ package com.medistock.data.sync
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.SyncStatus
+import com.medistock.MedistockApplication
+import com.medistock.shared.data.repository.SyncQueueRepository
+import com.medistock.shared.domain.model.SyncStatus
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -51,8 +51,7 @@ class SyncStatusManager private constructor(private val context: Context) {
         }
     }
 
-    private val database = AppDatabase.getInstance(context)
-    private val syncQueueDao by lazy { database.syncQueueDao() }
+    private val syncQueueRepository: SyncQueueRepository = MedistockApplication.sdk.syncQueueRepository
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val prefs: SharedPreferences by lazy {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -61,11 +60,13 @@ class SyncStatusManager private constructor(private val context: Context) {
     // ==================== Observable States ====================
 
     /** Nombre de modifications en attente de sync */
-    val pendingCount: StateFlow<Int> = syncQueueDao.observePendingCount()
+    val pendingCount: StateFlow<Int> = syncQueueRepository.observePending()
+        .map { it.size }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0)
 
     /** Nombre de conflits à résoudre */
-    val conflictCount: StateFlow<Int> = syncQueueDao.observeConflictCount()
+    val conflictCount: StateFlow<Int> = syncQueueRepository.observeConflicts()
+        .map { it.size }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0)
 
     /** État de connexion */
@@ -159,14 +160,14 @@ class SyncStatusManager private constructor(private val context: Context) {
      * Vérifie si une sync est nécessaire (modifications en attente)
      */
     suspend fun needsSync(): Boolean {
-        return syncQueueDao.getPendingCount() > 0
+        return syncQueueRepository.getPendingCount() > 0
     }
 
     /**
      * Vérifie s'il y a des conflits à résoudre
      */
     suspend fun hasConflicts(): Boolean {
-        return syncQueueDao.getCountByStatus(SyncStatus.CONFLICT) > 0
+        return syncQueueRepository.getConflictCount() > 0
     }
 
     /**

@@ -6,6 +6,7 @@ import shared
 struct CustomersListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var customers: [Customer] = []
     @State private var isLoading = true
@@ -81,6 +82,7 @@ struct CustomersListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadCustomers()
         }
         .task {
@@ -92,6 +94,21 @@ struct CustomersListView: View {
     private func loadCustomers() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                let remoteCustomers: [CustomerDTO] = try await SupabaseService.shared.fetchAll(from: "customers")
+                // Sync to local database using upsert (INSERT OR REPLACE)
+                for dto in remoteCustomers {
+                    try? await sdk.customerRepository.upsert(customer: dto.toEntity())
+                }
+            } catch {
+                debugLog("CustomersListView", "Failed to sync customers from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             customers = try await sdk.customerRepository.getAll()
         } catch {
@@ -106,10 +123,17 @@ struct CustomersListView: View {
         Task {
             for customer in customersToDelete {
                 do {
-                    try await sdk.customerRepository.delete(id: customer.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "customers",
+                        entityType: .customer,
+                        entityId: customer.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.customerRepository.delete(id: customer.id)
+                    }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression"
+                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
                     }
                 }
             }
@@ -156,6 +180,7 @@ struct CustomerEditorView: View {
     let customer: Customer?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var phone: String = ""
@@ -228,30 +253,51 @@ struct CustomerEditorView: View {
 
         Task {
             do {
+                let isNew = customer == nil
+                var savedCustomer: Customer
+
                 if let existingCustomer = customer {
-                    let updated = Customer(
+                    savedCustomer = Customer(
                         id: existingCustomer.id,
                         name: trimmedName,
                         phone: phone.isEmpty ? nil : phone,
                         email: email.isEmpty ? nil : email,
                         address: address.isEmpty ? nil : address,
                         notes: notes.isEmpty ? nil : notes,
+                        siteId: existingCustomer.siteId,
                         createdAt: existingCustomer.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingCustomer.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
-                    try await sdk.customerRepository.update(customer: updated)
                 } else {
-                    let newCustomer = sdk.createCustomer(
+                    savedCustomer = sdk.createCustomer(
                         name: trimmedName,
                         phone: phone.isEmpty ? nil : phone,
                         email: email.isEmpty ? nil : email,
                         address: address.isEmpty ? nil : address,
                         notes: notes.isEmpty ? nil : notes,
-                        userId: session.username
+                        siteId: nil,
+                        userId: session.userId
                     )
-                    try await sdk.customerRepository.insert(customer: newCustomer)
+                }
+
+                let dto = CustomerDTO(from: savedCustomer)
+
+                try await OnlineFirstHelper.shared.save(
+                    table: "customers",
+                    dto: dto,
+                    entityType: .customer,
+                    entityId: savedCustomer.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: customer?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.customerRepository.insert(customer: savedCustomer)
+                    } else {
+                        try await sdk.customerRepository.update(customer: savedCustomer)
+                    }
                 }
 
                 await MainActor.run {

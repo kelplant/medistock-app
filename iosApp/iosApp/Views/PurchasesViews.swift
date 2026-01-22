@@ -7,6 +7,7 @@ struct PurchasesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
     let siteId: String?
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var batches: [PurchaseBatch] = []
     @State private var products: [Product] = []
@@ -68,6 +69,7 @@ struct PurchasesListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadData()
         }
         .task {
@@ -79,6 +81,21 @@ struct PurchasesListView: View {
     private func loadData() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                // Sync purchase batches from Supabase using upsert (INSERT OR REPLACE)
+                let remoteBatches: [PurchaseBatchDTO] = try await SupabaseService.shared.fetchAll(from: "purchase_batches")
+                for dto in remoteBatches {
+                    try? await sdk.purchaseBatchRepository.upsert(batch: dto.toEntity())
+                }
+            } catch {
+                debugLog("PurchasesListView", "Failed to sync purchase batches from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             async let batchesResult = sdk.purchaseBatchRepository.getAll()
             async let productsResult = sdk.productRepository.getAll()
@@ -120,7 +137,7 @@ struct PurchaseBatchRowView: View {
                     .font(.headline)
                 Spacer()
                 if batch.isExhausted {
-                    Text("Épuisé")
+                    Text("Epuise")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
@@ -131,16 +148,16 @@ struct PurchaseBatchRowView: View {
             }
 
             HStack {
-                Text("Qté restante: \(String(format: "%.1f", batch.remainingQuantity))/\(String(format: "%.1f", batch.initialQuantity))")
+                Text("Qte restante: \(String(format: "%.1f", batch.remainingQuantity))/\(String(format: "%.1f", batch.initialQuantity))")
                 Spacer()
-                Text("Prix: \(String(format: "%.2f", batch.purchasePrice)) €")
+                Text("Prix: \(String(format: "%.2f", batch.purchasePrice)) EUR")
             }
             .font(.subheadline)
 
             HStack {
                 Text("Site: \(siteName)")
                 if !batch.supplierName.isEmpty {
-                    Text("• \(batch.supplierName)")
+                    Text("- \(batch.supplierName)")
                 }
             }
             .font(.caption)
@@ -149,7 +166,7 @@ struct PurchaseBatchRowView: View {
             HStack {
                 Text("Date: \(formatDate(batch.purchaseDate))")
                 if let expiry = batch.expiryDate {
-                    Text("• Exp: \(formatDate(expiry))")
+                    Text("- Exp: \(formatDate(expiry))")
                         .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
                 }
             }
@@ -188,6 +205,7 @@ struct PurchaseEditorView: View {
     let defaultSiteId: String?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var selectedProductId: String = ""
     @State private var selectedSiteId: String = ""
@@ -212,7 +230,7 @@ struct PurchaseEditorView: View {
             Form {
                 Section(header: Text("Site")) {
                     Picker("Site", selection: $selectedSiteId) {
-                        Text("Sélectionner").tag("")
+                        Text("Selectionner").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
@@ -225,7 +243,7 @@ struct PurchaseEditorView: View {
                             .foregroundColor(.secondary)
                     } else {
                         Picker("Produit", selection: $selectedProductId) {
-                            Text("Sélectionner").tag("")
+                            Text("Selectionner").tag("")
                             ForEach(filteredProducts, id: \.id) { product in
                                 Text(product.name).tag(product.id)
                             }
@@ -233,8 +251,8 @@ struct PurchaseEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantité et Prix")) {
-                    TextField("Quantité", text: $quantityText)
+                Section(header: Text("Quantite et Prix")) {
+                    TextField("Quantite", text: $quantityText)
                         .keyboardType(.decimalPad)
                     TextField("Prix d'achat unitaire", text: $priceText)
                         .keyboardType(.decimalPad)
@@ -242,7 +260,7 @@ struct PurchaseEditorView: View {
 
                 Section(header: Text("Fournisseur")) {
                     TextField("Nom du fournisseur", text: $supplierName)
-                    TextField("Numéro de lot (optionnel)", text: $batchNumber)
+                    TextField("Numero de lot (optionnel)", text: $batchNumber)
                 }
 
                 Section(header: Text("Date d'expiration")) {
@@ -298,35 +316,78 @@ struct PurchaseEditorView: View {
         errorMessage = nil
 
         Task {
-            do {
-                let batch = sdk.createPurchaseBatch(
-                    productId: selectedProductId,
-                    siteId: selectedSiteId,
-                    quantity: quantity,
-                    purchasePrice: price,
-                    supplierName: supplierName,
-                    batchNumber: batchNumber.isEmpty ? nil : batchNumber,
-                    expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
-                    userId: session.username
-                )
-                try await sdk.purchaseBatchRepository.insert(batch: batch)
+            // Use PurchaseUseCase for business logic
+            let input = PurchaseInput(
+                productId: selectedProductId,
+                siteId: selectedSiteId,
+                quantity: quantity,
+                purchasePrice: price,
+                supplierName: supplierName,
+                batchNumber: batchNumber.isEmpty ? nil : batchNumber,
+                expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
+                userId: session.userId
+            )
 
-                // Create stock movement
-                let movement = sdk.createStockMovement(
-                    productId: selectedProductId,
-                    siteId: selectedSiteId,
-                    quantity: quantity,
-                    movementType: "PURCHASE",
-                    referenceId: batch.id,
-                    notes: "Achat - Lot: \(batchNumber.isEmpty ? batch.id : batchNumber)",
-                    userId: session.username
-                )
-                try await sdk.stockMovementRepository.insert(movement: movement)
+            do {
+                let result = try await sdk.purchaseUseCase.execute(input: input)
+
+                // Handle result
+                if let success = result as? UseCaseResultSuccess<PurchaseResult>,
+               let purchaseResult = success.data {
+                let batch = purchaseResult.purchaseBatch
+                let movement = purchaseResult.stockMovement
+
+                // Show warnings if any (non-blocking)
+                if !success.warnings.isEmpty {
+                    for warning in success.warnings {
+                        debugLog("PurchaseEditorView", "Warning: \(warning)")
+                    }
+                }
+
+                // Sync to Supabase
+                let batchDTO = PurchaseBatchDTO(from: batch)
+                let movementDTO = StockMovementDTO(from: movement)
+
+                var savedOnline = false
+                if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+                    do {
+                        try await SupabaseService.shared.upsert(into: "purchase_batches", record: batchDTO)
+                        try await SupabaseService.shared.upsert(into: "stock_movements", record: movementDTO)
+                        savedOnline = true
+                    } catch {
+                        debugLog("PurchaseEditorView", "Failed to save to Supabase: \(error)")
+                    }
+                }
+
+                // Queue for sync if not saved online
+                if !savedOnline {
+                    SyncQueueHelper.shared.enqueueInsert(
+                        entityType: .purchaseBatch,
+                        entityId: batch.id,
+                        entity: batchDTO,
+                        userId: session.userId,
+                        siteId: selectedSiteId
+                    )
+                    SyncQueueHelper.shared.enqueueInsert(
+                        entityType: .stockMovement,
+                        entityId: movement.id,
+                        entity: movementDTO,
+                        userId: session.userId,
+                        siteId: selectedSiteId
+                    )
+                }
 
                 await MainActor.run {
                     onSave()
                     dismiss()
                 }
+
+            } else if let error = result as? UseCaseResultError {
+                await MainActor.run {
+                    isSaving = false
+                    errorMessage = error.error.message
+                }
+            }
             } catch {
                 await MainActor.run {
                     isSaving = false

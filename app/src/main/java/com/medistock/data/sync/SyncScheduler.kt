@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Build
-import android.util.Log
+import com.medistock.util.DebugConfig
 import androidx.annotation.RequiresApi
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -15,7 +15,7 @@ import androidx.work.workDataOf
 import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.util.NetworkStatus
-import com.medistock.util.SupabasePreferences
+import com.medistock.util.SecureSupabasePreferences
 import java.util.concurrent.TimeUnit
 
 object SyncScheduler {
@@ -33,7 +33,7 @@ object SyncScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             registerNetworkCallback(appContext)
         } else {
-            Log.w(TAG, "Skipping network callback registration: API < 24")
+            DebugConfig.w(TAG, "Skipping network callback registration: API < 24")
         }
 
         if (SupabaseClientProvider.isConfigured(appContext) && NetworkStatus.isOnline(appContext)) {
@@ -111,16 +111,16 @@ object SyncScheduler {
 
 
         networkCallbackRegistered = true
-        Log.d(TAG, "Network callback registered for auto sync")
+        DebugConfig.d(TAG, "Network callback registered for auto sync")
     }
 
     private fun updateSyncMode(context: Context, isOnline: Boolean) {
-        val preferences = SupabasePreferences(context)
+        val preferences = SecureSupabasePreferences(context)
         val configured = SupabaseClientProvider.isConfigured(context)
         val mode = if (configured && isOnline) {
-            SupabasePreferences.SyncMode.REALTIME
+            SecureSupabasePreferences.SyncMode.REALTIME
         } else {
-            SupabasePreferences.SyncMode.LOCAL
+            SecureSupabasePreferences.SyncMode.LOCAL
         }
         preferences.setSyncMode(mode)
     }

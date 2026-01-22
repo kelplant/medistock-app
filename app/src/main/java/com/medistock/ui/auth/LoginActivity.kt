@@ -11,16 +11,19 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.User
-import com.medistock.data.entities.UserPermission
-import com.medistock.data.migration.CompatibilityResult
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.User
+import com.medistock.shared.domain.model.UserPermission
+import com.medistock.shared.domain.compatibility.CompatibilityResult
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.HomeActivity
 import com.medistock.ui.admin.SupabaseConfigActivity
+import com.medistock.shared.domain.auth.AuthResult
+import com.medistock.shared.domain.auth.AuthService
+import com.medistock.shared.domain.auth.PasswordVerifier
+import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
-import com.medistock.util.Modules
 import com.medistock.util.PasswordHasher
 import com.medistock.util.PasswordMigration
 import com.medistock.util.AppUpdateManager
@@ -34,6 +37,16 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.UUID
+
+/**
+ * Android implementation of PasswordVerifier using BCrypt.
+ */
+private object AndroidPasswordVerifier : PasswordVerifier {
+    override fun verify(plainPassword: String, hashedPassword: String): Boolean {
+        return PasswordHasher.verifyPassword(plainPassword, hashedPassword)
+    }
+}
 
 class LoginActivity : AppCompatActivity() {
 
@@ -44,7 +57,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvRealtimeBadge: TextView
     private lateinit var btnSupabaseConfig: Button
     private lateinit var authManager: AuthManager
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
+    private lateinit var sharedAuthService: AuthService
     private var realtimeJob: kotlinx.coroutines.Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +67,8 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize
         authManager = AuthManager.getInstance(this)
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
+        sharedAuthService = sdk.createAuthService(AndroidPasswordVerifier)
 
         // Initialize views
         editUsername = findViewById(R.id.editUsername)
@@ -109,70 +124,82 @@ class LoginActivity : AppCompatActivity() {
         val password = editPassword.text.toString()
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError("Please fill in all fields")
+            showError("Veuillez remplir tous les champs")
             return
         }
 
         lifecycleScope.launch {
             try {
-                val user = withContext(Dispatchers.IO) {
-                    val u = db.userDao().getUserForAuth(username)
+                // Use shared AuthService for authentication
+                val result = sharedAuthService.authenticate(username, password)
 
-                    // Verify password using BCrypt
-                    if (u != null && PasswordHasher.verifyPassword(password, u.password)) {
-                        u
-                    } else {
-                        null
+                when (result) {
+                    is AuthResult.Success -> {
+                        authManager.login(result.user)
+                        navigateToHome()
+                    }
+                    is AuthResult.InvalidCredentials -> {
+                        showError("Nom d'utilisateur ou mot de passe incorrect")
+                    }
+                    is AuthResult.UserNotFound -> {
+                        showError("Utilisateur non trouvé")
+                    }
+                    is AuthResult.UserInactive -> {
+                        showError("Ce compte est désactivé")
+                    }
+                    is AuthResult.Error -> {
+                        showError("Erreur: ${result.message}")
                     }
                 }
-
-                if (user != null) {
-                    authManager.login(user)
-                    navigateToHome()
-                } else {
-                    showError("Incorrect username or password")
-                }
             } catch (e: Exception) {
-                showError("Connection error: ${e.message}")
+                showError("Erreur de connexion: ${e.message}")
             }
         }
     }
 
     private suspend fun createDefaultAdminIfNeeded() {
         withContext(Dispatchers.IO) {
-            val userCount = db.userDao().getAllUsers().size
-            if (userCount == 0) {
+            val users = sdk.userRepository.getAll()
+            if (users.isEmpty()) {
                 // Create default admin user
+                val currentTime = System.currentTimeMillis()
+                val adminUserId = UUID.randomUUID().toString()
                 val adminUser = User(
+                    id = adminUserId,
                     username = "admin",
                     password = PasswordHasher.hashPassword("admin"),
                     fullName = "Administrator",
                     isAdmin = true,
                     isActive = true,
+                    createdAt = currentTime,
+                    updatedAt = currentTime,
                     createdBy = "system",
                     updatedBy = "system"
                 )
-                db.userDao().insertUser(adminUser)
+                sdk.userRepository.insert(adminUser)
 
                 // Give admin all permissions (though admin check bypasses this)
                 val modules = listOf(
-                    Modules.STOCK, Modules.SALES, Modules.PURCHASES,
-                    Modules.INVENTORY, Modules.ADMIN, Modules.PRODUCTS,
-                    Modules.SITES, Modules.CATEGORIES, Modules.USERS
+                    Module.STOCK, Module.SALES, Module.PURCHASES,
+                    Module.INVENTORY, Module.ADMIN, Module.PRODUCTS,
+                    Module.SITES, Module.CATEGORIES, Module.USERS
                 )
-                val permissions = modules.map { module ->
-                    UserPermission(
-                        userId = adminUser.id,
-                        module = module,
+                modules.forEach { module ->
+                    val permission = UserPermission(
+                        id = UUID.randomUUID().toString(),
+                        userId = adminUserId,
+                        module = module.name,
                         canView = true,
                         canCreate = true,
                         canEdit = true,
                         canDelete = true,
+                        createdAt = currentTime,
+                        updatedAt = currentTime,
                         createdBy = "system",
                         updatedBy = "system"
                     )
+                    sdk.userPermissionRepository.insert(permission)
                 }
-                db.userPermissionDao().insertPermissions(permissions)
             }
         }
     }

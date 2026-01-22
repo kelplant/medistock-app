@@ -61,6 +61,29 @@ class UserRepository(private val database: MedistockDatabase) {
         )
     }
 
+    suspend fun countActiveAdmins(): Long = withContext(Dispatchers.Default) {
+        queries.countActiveAdmins().executeAsOne()
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a user.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(user: User) = withContext(Dispatchers.Default) {
+        queries.upsertUser(
+            id = user.id,
+            username = user.username,
+            password = user.password,
+            full_name = user.fullName,
+            is_admin = if (user.isAdmin) 1L else 0L,
+            is_active = if (user.isActive) 1L else 0L,
+            created_at = user.createdAt,
+            updated_at = user.updatedAt,
+            created_by = user.createdBy,
+            updated_by = user.updatedBy
+        )
+    }
+
     fun observeAll(): Flow<List<User>> {
         return queries.getAllUsers()
             .asFlow()

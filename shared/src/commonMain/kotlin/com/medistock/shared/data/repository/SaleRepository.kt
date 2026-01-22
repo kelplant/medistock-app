@@ -51,9 +51,13 @@ class SaleRepository(private val database: MedistockDatabase) {
             id = item.id,
             sale_id = item.saleId,
             product_id = item.productId,
+            product_name = item.productName,
+            unit = item.unit,
             quantity = item.quantity,
             unit_price = item.unitPrice,
-            total_price = item.totalPrice
+            total_price = item.totalPrice,
+            created_at = item.createdAt,
+            created_by = item.createdBy
         )
     }
 
@@ -74,9 +78,13 @@ class SaleRepository(private val database: MedistockDatabase) {
                     id = item.id,
                     sale_id = item.saleId,
                     product_id = item.productId,
+                    product_name = item.productName,
+                    unit = item.unit,
                     quantity = item.quantity,
                     unit_price = item.unitPrice,
-                    total_price = item.totalPrice
+                    total_price = item.totalPrice,
+                    created_at = item.createdAt,
+                    created_by = item.createdBy
                 )
             }
         }
@@ -94,6 +102,89 @@ class SaleRepository(private val database: MedistockDatabase) {
             .asFlow()
             .mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toModel() } }
+    }
+
+    suspend fun getAllWithItemsForSite(siteId: String): List<SaleWithItems> = withContext(Dispatchers.Default) {
+        val sales = queries.getSalesBySite(siteId).executeAsList().map { it.toModel() }
+        sales.map { sale ->
+            val items = queries.getSaleItemsBySale(sale.id).executeAsList().map { it.toModel() }
+            SaleWithItems(sale, items)
+        }
+    }
+
+    fun observeAllWithItemsForSite(siteId: String): Flow<List<SaleWithItems>> {
+        return queries.getSalesBySite(siteId)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { salesList ->
+                salesList.map { saleDb ->
+                    val sale = saleDb.toModel()
+                    val items = queries.getSaleItemsBySale(sale.id).executeAsList().map { it.toModel() }
+                    SaleWithItems(sale, items)
+                }
+            }
+    }
+
+    suspend fun delete(saleId: String) = withContext(Dispatchers.Default) {
+        database.transaction {
+            // First delete sale items
+            queries.deleteSaleItemsBySale(saleId)
+            // Then delete the sale
+            queries.deleteSale(saleId)
+        }
+    }
+
+    suspend fun update(sale: Sale) = withContext(Dispatchers.Default) {
+        queries.updateSale(
+            customer_name = sale.customerName,
+            customer_id = sale.customerId,
+            total_amount = sale.totalAmount,
+            id = sale.id
+        )
+    }
+
+    suspend fun deleteItemsForSale(saleId: String) = withContext(Dispatchers.Default) {
+        queries.deleteSaleItemsBySale(saleId)
+    }
+
+    suspend fun getItemsForSale(saleId: String): List<SaleItem> = withContext(Dispatchers.Default) {
+        queries.getSaleItemsBySale(saleId).executeAsList().map { it.toModel() }
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a sale.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(sale: Sale) = withContext(Dispatchers.Default) {
+        queries.upsertSale(
+            id = sale.id,
+            customer_name = sale.customerName,
+            customer_id = sale.customerId,
+            date = sale.date,
+            total_amount = sale.totalAmount,
+            site_id = sale.siteId,
+            created_at = sale.createdAt,
+            created_by = sale.createdBy
+        )
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a sale item.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsertSaleItem(item: SaleItem) = withContext(Dispatchers.Default) {
+        queries.upsertSaleItem(
+            id = item.id,
+            sale_id = item.saleId,
+            product_id = item.productId,
+            product_name = item.productName,
+            unit = item.unit,
+            quantity = item.quantity,
+            unit_price = item.unitPrice,
+            total_price = item.totalPrice,
+            created_at = item.createdAt,
+            created_by = item.createdBy
+        )
     }
 
     private fun com.medistock.shared.db.Sales.toModel(): Sale {
@@ -114,9 +205,13 @@ class SaleRepository(private val database: MedistockDatabase) {
             id = id,
             saleId = sale_id,
             productId = product_id,
+            productName = product_name,
+            unit = unit,
             quantity = quantity,
             unitPrice = unit_price,
-            totalPrice = total_price
+            totalPrice = total_price,
+            createdAt = created_at,
+            createdBy = created_by
         )
     }
 }

@@ -1,26 +1,27 @@
 package com.medistock.data.sync
 
 import android.content.Context
-import com.medistock.data.db.AppDatabase
+import com.medistock.MedistockApplication
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.remote.repository.*
-import com.medistock.data.sync.SyncMapper.toDto
-import com.medistock.data.sync.SyncMapper.toEntity
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.data.dto.*
+import com.medistock.shared.domain.sync.SyncDirection
+import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Gestionnaire de synchronisation bidirectionnelle entre Room (local) et Supabase (remote)
+ * Gestionnaire de synchronisation bidirectionnelle entre SQLDelight (local) et Supabase (remote)
  */
 class SyncManager(
     private val context: Context
 ) {
-    private val database = AppDatabase.getInstance(context)
+    private val sdk: MedistockSDK = MedistockApplication.sdk
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val orchestrator = SyncOrchestrator()
 
     // Repositories Supabase
     private val productRepo by lazy { ProductSupabaseRepository() }
@@ -28,9 +29,15 @@ class SyncManager(
     private val siteRepo by lazy { SiteSupabaseRepository() }
     private val customerRepo by lazy { CustomerSupabaseRepository() }
     private val packagingTypeRepo by lazy { PackagingTypeSupabaseRepository() }
+    private val userRepo by lazy { UserSupabaseRepository() }
+    private val userPermissionRepo by lazy { UserPermissionSupabaseRepository() }
+    private val saleRepo by lazy { SaleSupabaseRepository() }
+    private val saleItemRepo by lazy { SaleItemSupabaseRepository() }
+    private val purchaseBatchRepo by lazy { PurchaseBatchSupabaseRepository() }
+    private val stockMovementRepo by lazy { StockMovementSupabaseRepository() }
 
     /**
-     * Synchronise toutes les données de Room vers Supabase
+     * Synchronise toutes les données de SQLDelight vers Supabase
      * À utiliser lors de la première connexion ou pour une sync complète
      */
     suspend fun syncLocalToRemote(
@@ -68,14 +75,34 @@ class SyncManager(
             onProgress?.invoke("Synchronisation des clients...")
             syncCustomersToRemote(onError)
 
-            onProgress?.invoke("Synchronisation terminée ✅")
+            // 6. Users
+            onProgress?.invoke("Synchronisation des utilisateurs...")
+            syncUsersToRemote(onError)
+
+            // 7. User Permissions
+            onProgress?.invoke("Synchronisation des permissions...")
+            syncUserPermissionsToRemote(onError)
+
+            // 8. Purchase Batches
+            onProgress?.invoke("Synchronisation des achats...")
+            syncPurchaseBatchesToRemote(onError)
+
+            // 9. Sales and Sale Items
+            onProgress?.invoke("Synchronisation des ventes...")
+            syncSalesToRemote(onError)
+
+            // 10. Stock Movements
+            onProgress?.invoke("Synchronisation des mouvements de stock...")
+            syncStockMovementsToRemote(onError)
+
+            onProgress?.invoke(orchestrator.getCompletionMessage(SyncDirection.LOCAL_TO_REMOTE))
         } catch (e: Exception) {
             onError?.invoke("Sync générale", e)
         }
     }
 
     /**
-     * Synchronise toutes les données de Supabase vers Room
+     * Synchronise toutes les données de Supabase vers SQLDelight
      * Pour récupérer les données d'autres appareils
      */
     suspend fun syncRemoteToLocal(
@@ -113,7 +140,27 @@ class SyncManager(
             onProgress?.invoke("Récupération des clients...")
             syncCustomersFromRemote(onError)
 
-            onProgress?.invoke("Récupération terminée ✅")
+            // 6. Users
+            onProgress?.invoke("Récupération des utilisateurs...")
+            syncUsersFromRemote(onError)
+
+            // 7. User Permissions
+            onProgress?.invoke("Récupération des permissions...")
+            syncUserPermissionsFromRemote(onError)
+
+            // 8. Purchase Batches
+            onProgress?.invoke("Récupération des achats...")
+            syncPurchaseBatchesFromRemote(onError)
+
+            // 9. Sales and Sale Items
+            onProgress?.invoke("Récupération des ventes...")
+            syncSalesFromRemote(onError)
+
+            // 10. Stock Movements
+            onProgress?.invoke("Récupération des mouvements de stock...")
+            syncStockMovementsFromRemote(onError)
+
+            onProgress?.invoke(orchestrator.getCompletionMessage(SyncDirection.REMOTE_TO_LOCAL))
         } catch (e: Exception) {
             onError?.invoke("Sync générale", e)
         }
@@ -123,11 +170,10 @@ class SyncManager(
 
     private suspend fun syncSitesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localSites = database.siteDao().getAll().firstOrNull() ?: emptyList()
+            val localSites = sdk.siteRepository.getAll()
             localSites.forEach { site ->
                 try {
-                    val dto = site.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = SiteDto.fromModel(site)
                     siteRepo.upsertSite(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Site: ${site.name}", e)
@@ -143,8 +189,8 @@ class SyncManager(
             val remoteSites = siteRepo.getAllSites()
             remoteSites.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.siteDao().insert(entity)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.siteRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Site: ${dto.name}", e)
                 }
@@ -158,11 +204,10 @@ class SyncManager(
 
     private suspend fun syncPackagingTypesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localTypes = database.packagingTypeDao().getAll().firstOrNull() ?: emptyList()
+            val localTypes = sdk.packagingTypeRepository.getAll()
             localTypes.forEach { type ->
                 try {
-                    val dto = type.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = PackagingTypeDto.fromModel(type)
                     packagingTypeRepo.upsertPackagingType(dto)
                 } catch (e: Exception) {
                     onError?.invoke("PackagingType: ${type.name}", e)
@@ -178,8 +223,8 @@ class SyncManager(
             val remoteTypes = packagingTypeRepo.getAllPackagingTypes()
             remoteTypes.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.packagingTypeDao().insert(entity)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.packagingTypeRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("PackagingType: ${dto.name}", e)
                 }
@@ -193,11 +238,10 @@ class SyncManager(
 
     private suspend fun syncCategoriesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localCategories = database.categoryDao().getAll().firstOrNull() ?: emptyList()
+            val localCategories = sdk.categoryRepository.getAll()
             localCategories.forEach { category ->
                 try {
-                    val dto = category.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = CategoryDto.fromModel(category)
                     categoryRepo.upsertCategory(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Category: ${category.name}", e)
@@ -213,8 +257,8 @@ class SyncManager(
             val remoteCategories = categoryRepo.getAllCategories()
             remoteCategories.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.categoryDao().insert(entity)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.categoryRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Category: ${dto.name}", e)
                 }
@@ -228,11 +272,10 @@ class SyncManager(
 
     private suspend fun syncProductsToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localProducts = database.productDao().getAll().firstOrNull() ?: emptyList()
+            val localProducts = sdk.productRepository.getAll()
             localProducts.forEach { product ->
                 try {
-                    val dto = product.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = ProductDto.fromModel(product)
                     productRepo.upsertProduct(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Product: ${product.name}", e)
@@ -248,8 +291,8 @@ class SyncManager(
             val remoteProducts = productRepo.getAllProducts()
             remoteProducts.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.productDao().insert(entity)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.productRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Product: ${dto.name}", e)
                 }
@@ -263,11 +306,10 @@ class SyncManager(
 
     private suspend fun syncCustomersToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localCustomers = database.customerDao().getAll().firstOrNull() ?: emptyList()
+            val localCustomers = sdk.customerRepository.getAll()
             localCustomers.forEach { customer ->
                 try {
-                    val dto = customer.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = CustomerDto.fromModel(customer)
                     customerRepo.upsertCustomer(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Customer: ${customer.name}", e)
@@ -283,8 +325,8 @@ class SyncManager(
             val remoteCustomers = customerRepo.getAllCustomers()
             remoteCustomers.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.customerDao().insert(entity)
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.customerRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("Customer: ${dto.name}", e)
                 }
@@ -294,10 +336,200 @@ class SyncManager(
         }
     }
 
+    // ==================== Synchronisation Users ====================
+
+    private suspend fun syncUsersToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localUsers = sdk.userRepository.getAll()
+            localUsers.forEach { user ->
+                try {
+                    val dto = UserDto.fromModel(user)
+                    userRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("User: ${user.username}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Users", e)
+        }
+    }
+
+    private suspend fun syncUsersFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteUsers = userRepo.getAllUsers()
+            remoteUsers.forEach { dto ->
+                try {
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.userRepository.upsert(dto.toModel())
+                } catch (e: Exception) {
+                    onError?.invoke("User: ${dto.username}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Users", e)
+        }
+    }
+
+    // ==================== Synchronisation User Permissions ====================
+
+    private suspend fun syncUserPermissionsToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localPermissions = sdk.userPermissionRepository.getAll()
+            localPermissions.forEach { permission ->
+                try {
+                    val dto = UserPermissionDto.fromModel(permission)
+                    userPermissionRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("Permission: ${permission.module}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Permissions", e)
+        }
+    }
+
+    private suspend fun syncUserPermissionsFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remotePermissions = userPermissionRepo.getAllPermissions()
+            remotePermissions.forEach { dto ->
+                try {
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.userPermissionRepository.upsert(dto.toModel())
+                } catch (e: Exception) {
+                    onError?.invoke("Permission: ${dto.module}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Permissions", e)
+        }
+    }
+
+    // ==================== Synchronisation Purchase Batches ====================
+
+    private suspend fun syncPurchaseBatchesToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localBatches = sdk.purchaseBatchRepository.getAll()
+            localBatches.forEach { batch ->
+                try {
+                    val dto = PurchaseBatchDto.fromModel(batch)
+                    purchaseBatchRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("Batch: ${batch.batchNumber ?: batch.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Purchase Batches", e)
+        }
+    }
+
+    private suspend fun syncPurchaseBatchesFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteBatches = purchaseBatchRepo.getAllBatches()
+            remoteBatches.forEach { dto ->
+                try {
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.purchaseBatchRepository.upsert(dto.toModel())
+                } catch (e: Exception) {
+                    onError?.invoke("Batch: ${dto.batchNumber ?: dto.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Purchase Batches", e)
+        }
+    }
+
+    // ==================== Synchronisation Sales ====================
+
+    private suspend fun syncSalesToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localSales = sdk.saleRepository.getAll()
+            localSales.forEach { sale ->
+                try {
+                    // Upsert sale
+                    val saleDto = SaleDto.fromModel(sale)
+                    saleRepo.upsert(saleDto)
+
+                    // Sync sale items for this sale
+                    val saleItems = sdk.saleRepository.getItemsForSale(sale.id)
+                    saleItems.forEach { item: com.medistock.shared.domain.model.SaleItem ->
+                        val itemDto = SaleItemDto.fromModel(item)
+                        saleItemRepo.upsert(itemDto)
+                    }
+                } catch (e: Exception) {
+                    onError?.invoke("Sale: ${sale.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Sales", e)
+        }
+    }
+
+    private suspend fun syncSalesFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            // Fetch all sales
+            val remoteSales = saleRepo.getAllSales()
+            // Fetch all sale items
+            val remoteSaleItems = saleItemRepo.getAllSaleItems()
+            // Group items by sale_id
+            val itemsBySale = remoteSaleItems.groupBy { it.saleId }
+
+            remoteSales.forEach { saleDto ->
+                try {
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.saleRepository.upsert(saleDto.toModel())
+
+                    // Upsert sale items
+                    val items = itemsBySale[saleDto.id] ?: emptyList()
+                    items.forEach { itemDto ->
+                        sdk.saleRepository.upsertSaleItem(itemDto.toModel())
+                    }
+                } catch (e: Exception) {
+                    onError?.invoke("Sale: ${saleDto.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Sales", e)
+        }
+    }
+
+    // ==================== Synchronisation Stock Movements ====================
+
+    private suspend fun syncStockMovementsToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localMovements = sdk.stockMovementRepository.getAll()
+            localMovements.forEach { movement ->
+                try {
+                    val dto = StockMovementDto.fromModel(movement)
+                    stockMovementRepo.upsert(dto)
+                } catch (e: Exception) {
+                    onError?.invoke("Movement: ${movement.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Stock Movements", e)
+        }
+    }
+
+    private suspend fun syncStockMovementsFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteMovements = stockMovementRepo.getAllMovements()
+            remoteMovements.forEach { dto ->
+                try {
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
+                    sdk.stockMovementRepository.upsert(dto.toModel())
+                } catch (e: Exception) {
+                    onError?.invoke("Movement: ${dto.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            onError?.invoke("Stock Movements", e)
+        }
+    }
+
     /**
      * Synchronisation bidirectionnelle complète
      * 1. Envoie les données locales vers Supabase
-     * 2. Récupère les données de Supabase vers Room
+     * 2. Récupère les données de Supabase vers SQLDelight
      */
     suspend fun fullSync(
         onProgress: ((String) -> Unit)? = null,

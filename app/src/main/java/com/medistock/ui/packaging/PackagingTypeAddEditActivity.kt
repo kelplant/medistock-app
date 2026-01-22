@@ -6,8 +6,9 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.entities.PackagingType
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
 import com.medistock.util.AuthManager
 
@@ -150,17 +151,15 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
         val createdBy = existingPackagingType?.createdBy?.ifBlank { currentUser } ?: currentUser
 
         val packagingType = if (packagingTypeId == null) {
-            PackagingType(
+            // Create new packaging type using SDK factory method
+            MedistockApplication.sdk.createPackagingType(
                 name = name,
                 level1Name = level1Name,
                 level2Name = level2Name,
                 defaultConversionFactor = conversionFactor,
                 isActive = isActive,
                 displayOrder = existingPackagingType?.displayOrder ?: 0,
-                createdAt = createdAt,
-                updatedAt = System.currentTimeMillis(),
-                createdBy = createdBy,
-                updatedBy = currentUser
+                userId = currentUser
             )
         } else {
             PackagingType(

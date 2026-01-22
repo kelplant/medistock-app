@@ -1,13 +1,22 @@
 package com.medistock.data.sync
 
 import android.content.Context
-import com.medistock.data.dao.SyncQueueDao
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.*
+import com.medistock.MedistockApplication
 import com.medistock.data.remote.SupabaseClientProvider
-import com.medistock.data.remote.dto.*
+import com.medistock.shared.data.dto.ProductDto
+import com.medistock.shared.data.dto.CategoryDto
+import com.medistock.shared.data.dto.SiteDto
+import com.medistock.shared.data.dto.CustomerDto
+import com.medistock.shared.data.dto.PackagingTypeDto
+import com.medistock.shared.data.repository.SyncQueueRepository
 import com.medistock.data.remote.repository.*
-import com.medistock.data.sync.SyncMapper.toEntity
+import com.medistock.shared.domain.model.SyncOperation
+import com.medistock.shared.domain.model.SyncQueueItem
+import com.medistock.shared.domain.model.SyncStatus
+import com.medistock.shared.domain.sync.ConflictResolution
+import com.medistock.shared.domain.sync.ConflictResolver
+import com.medistock.shared.domain.sync.RetryConfiguration
+import com.medistock.shared.domain.sync.UserConflict
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -29,19 +38,13 @@ class SyncQueueProcessor(
 ) {
     companion object {
         private const val TAG = "SyncQueueProcessor"
-
-        /** Nombre maximum de retries avant échec permanent */
-        const val MAX_RETRIES = 5
-
-        /** Délais de backoff en millisecondes: 1s, 2s, 4s, 8s, 16s */
-        private val BACKOFF_DELAYS = listOf(1000L, 2000L, 4000L, 8000L, 16000L)
-
-        /** Taille du batch de traitement */
-        const val BATCH_SIZE = 10
     }
 
-    private val database = AppDatabase.getInstance(context)
-    private val syncQueueDao: SyncQueueDao by lazy { database.syncQueueDao() }
+    // Configuration de retry partagée (depuis le module shared)
+    private val retryConfig = RetryConfiguration.DEFAULT
+
+    private val sdk = MedistockApplication.sdk
+    private val syncQueueRepository: SyncQueueRepository = sdk.syncQueueRepository
     private val conflictResolver = ConflictResolver()
 
     // Repositories Supabase
@@ -109,7 +112,7 @@ class SyncQueueProcessor(
             var totalConflicts = 0
 
             while (hasMore && isActive()) {
-                val batch = syncQueueDao.getPendingBatch(BATCH_SIZE)
+                val batch = syncQueueRepository.getPendingBatch(retryConfig.batchSize)
 
                 if (batch.isEmpty()) {
                     hasMore = false
@@ -125,35 +128,35 @@ class SyncQueueProcessor(
                     when (result) {
                         is ProcessResult.Success -> {
                             totalSuccess++
-                            syncQueueDao.deleteById(item.id)
+                            syncQueueRepository.deleteById(item.id)
                         }
                         is ProcessResult.Conflict -> {
                             totalConflicts++
-                            syncQueueDao.updateStatus(item.id, SyncStatus.CONFLICT)
+                            syncQueueRepository.updateStatus(item.id, SyncStatus.CONFLICT)
                         }
                         is ProcessResult.Retry -> {
-                            if (item.retryCount >= MAX_RETRIES) {
+                            if (item.retryCount >= retryConfig.maxRetries) {
                                 totalFailed++
-                                syncQueueDao.updateStatusWithRetry(
+                                syncQueueRepository.updateStatusWithRetry(
                                     item.id,
                                     SyncStatus.FAILED,
                                     System.currentTimeMillis(),
                                     result.error
                                 )
                             } else {
-                                syncQueueDao.updateStatusWithRetry(
+                                syncQueueRepository.updateStatusWithRetry(
                                     item.id,
                                     SyncStatus.PENDING,
                                     System.currentTimeMillis(),
                                     result.error
                                 )
                                 // Attendre avec backoff avant de réessayer
-                                delay(getBackoffDelay(item.retryCount))
+                                delay(retryConfig.getDelayMs(item.retryCount))
                             }
                         }
                         is ProcessResult.Skip -> {
                             // Supprimer les éléments obsolètes
-                            syncQueueDao.deleteById(item.id)
+                            syncQueueRepository.deleteById(item.id)
                         }
                     }
 
@@ -167,7 +170,7 @@ class SyncQueueProcessor(
             }
 
             // Nettoyer les éléments synchronisés
-            syncQueueDao.deleteSynced()
+            syncQueueRepository.deleteSynced()
 
             emitEvent(SyncEvent.ProcessingCompleted(
                 processed = totalProcessed,
@@ -192,7 +195,7 @@ class SyncQueueProcessor(
     private suspend fun processItem(item: SyncQueueItem): ProcessResult {
         return try {
             // Marquer comme en cours
-            syncQueueDao.updateStatus(item.id, SyncStatus.IN_PROGRESS)
+            syncQueueRepository.updateStatus(item.id, SyncStatus.IN_PROGRESS)
 
             // Vérifier si l'opération est toujours pertinente
             if (isOperationObsolete(item)) {
@@ -204,7 +207,7 @@ class SyncQueueProcessor(
             val remoteUpdatedAt = extractUpdatedAt(remoteData)
 
             // Détecter les conflits
-            if (conflictResolver.detectConflict(item, remoteUpdatedAt, null)) {
+            if (conflictResolver.detectConflict(item.lastKnownRemoteUpdatedAt, remoteUpdatedAt)) {
                 val resolution = conflictResolver.resolve(
                     entityType = item.entityType,
                     localPayload = item.payload,
@@ -215,45 +218,38 @@ class SyncQueueProcessor(
 
                 when (resolution.resolution) {
                     ConflictResolution.LOCAL_WINS -> {
-                        // Appliquer la version locale
                         applyToRemote(item)
                     }
                     ConflictResolution.REMOTE_WINS -> {
-                        // Ignorer l'opération locale, appliquer le remote en local
                         if (remoteData != null) {
                             applyToLocal(item.entityType, item.entityId, remoteData)
                         }
                         return ProcessResult.Success
                     }
                     ConflictResolution.MERGE -> {
-                        // Appliquer la version fusionnée
-                        if (resolution.mergedPayload != null) {
-                            applyMergedToRemote(item, resolution.mergedPayload)
+                        resolution.mergedPayload?.let { payload ->
+                            applyMergedToRemote(item, payload)
                         }
                     }
                     ConflictResolution.ASK_USER -> {
-                        // Marquer pour intervention utilisateur
                         emitEvent(SyncEvent.ConflictDetected(
-                            UserConflict(
+                            conflictResolver.createUserConflict(
                                 queueItemId = item.id,
                                 entityType = item.entityType,
                                 entityId = item.entityId,
                                 localPayload = item.payload,
-                                remotePayload = remoteData ?: "",
+                                remotePayload = remoteData,
                                 localUpdatedAt = item.createdAt,
-                                remoteUpdatedAt = remoteUpdatedAt ?: 0L,
-                                fieldDifferences = computeFieldDifferences(item.payload, remoteData)
+                                remoteUpdatedAt = remoteUpdatedAt ?: 0L
                             )
                         ))
                         return ProcessResult.Conflict(resolution.message ?: "Conflit détecté")
                     }
                     ConflictResolution.KEEP_BOTH -> {
-                        // Créer une copie avec nouvel ID
                         createCopyOnRemote(item)
                     }
                 }
             } else {
-                // Pas de conflit, appliquer normalement
                 applyToRemote(item)
             }
 
@@ -302,7 +298,6 @@ class SyncQueueProcessor(
     }
 
     private suspend fun updateOnRemote(item: SyncQueueItem) {
-        // Upsert gère à la fois insert et update
         insertToRemote(item)
     }
 
@@ -323,7 +318,6 @@ class SyncQueueProcessor(
     }
 
     private suspend fun createCopyOnRemote(item: SyncQueueItem) {
-        // Créer une copie avec un nouvel ID
         val newId = java.util.UUID.randomUUID().toString()
         val modifiedPayload = item.payload.replace(
             "\"id\":\"${item.entityId}\"",
@@ -355,18 +349,28 @@ class SyncQueueProcessor(
      * Applique les données du serveur localement
      */
     private suspend fun applyToLocal(entityType: String, entityId: String, remoteData: String) {
-        // Cette méthode applique les données du serveur à la base locale
-        // Implémentation dépend du type d'entité
+        // Use upsert (INSERT OR REPLACE) to handle both new and existing records
         when (entityType) {
             "Product" -> {
                 val dto = json.decodeFromString<ProductDto>(remoteData)
-                database.productDao().insert(dto.toEntity())
+                sdk.productRepository.upsert(dto.toModel())
             }
             "Category" -> {
                 val dto = json.decodeFromString<CategoryDto>(remoteData)
-                database.categoryDao().insert(dto.toEntity())
+                sdk.categoryRepository.upsert(dto.toModel())
             }
-            // Ajouter les autres types selon les besoins
+            "Site" -> {
+                val dto = json.decodeFromString<SiteDto>(remoteData)
+                sdk.siteRepository.upsert(dto.toModel())
+            }
+            "Customer" -> {
+                val dto = json.decodeFromString<CustomerDto>(remoteData)
+                sdk.customerRepository.upsert(dto.toModel())
+            }
+            "PackagingType" -> {
+                val dto = json.decodeFromString<PackagingTypeDto>(remoteData)
+                sdk.packagingTypeRepository.upsert(dto.toModel())
+            }
         }
     }
 
@@ -377,10 +381,7 @@ class SyncQueueProcessor(
         if (payload == null) return null
         return try {
             val jsonElement = Json.parseToJsonElement(payload)
-            jsonElement.jsonObject["updated_at"]?.jsonPrimitive?.content?.let {
-                // Parse ISO date to timestamp
-                java.time.Instant.parse(it).toEpochMilli()
-            }
+            jsonElement.jsonObject["updated_at"]?.jsonPrimitive?.content?.toLongOrNull()
         } catch (e: Exception) {
             null
         }
@@ -390,42 +391,10 @@ class SyncQueueProcessor(
      * Vérifie si une opération est devenue obsolète
      */
     private suspend fun isOperationObsolete(item: SyncQueueItem): Boolean {
-        // Vérifier s'il y a une opération DELETE plus récente pour la même entité
-        val laterDelete = syncQueueDao.getByEntity(item.entityType, item.entityId)
+        val laterDelete = syncQueueRepository.getByEntity(item.entityType, item.entityId)
             .any { it.operation == SyncOperation.DELETE && it.createdAt > item.createdAt }
 
         return laterDelete && item.operation != SyncOperation.DELETE
-    }
-
-    /**
-     * Calcule les différences entre deux payloads JSON
-     */
-    private fun computeFieldDifferences(localJson: String, remoteJson: String?): List<FieldDifference> {
-        if (remoteJson == null) return emptyList()
-
-        return try {
-            val local = Json.parseToJsonElement(localJson).jsonObject
-            val remote = Json.parseToJsonElement(remoteJson).jsonObject
-
-            val differences = mutableListOf<FieldDifference>()
-            val allKeys = (local.keys + remote.keys).toSet()
-
-            for (key in allKeys) {
-                val localValue = local[key]?.toString()
-                val remoteValue = remote[key]?.toString()
-                if (localValue != remoteValue) {
-                    differences.add(FieldDifference(key, localValue, remoteValue))
-                }
-            }
-
-            differences
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private fun getBackoffDelay(retryCount: Int): Long {
-        return BACKOFF_DELAYS.getOrElse(retryCount) { BACKOFF_DELAYS.last() }
     }
 
     private fun canProcess(): Boolean {
@@ -444,26 +413,24 @@ class SyncQueueProcessor(
      * Résout manuellement un conflit
      */
     suspend fun resolveConflict(queueItemId: String, resolution: ConflictResolution, mergedPayload: String? = null) {
-        val item = syncQueueDao.getById(queueItemId) ?: return
+        val item = syncQueueRepository.getById(queueItemId) ?: return
 
         when (resolution) {
             ConflictResolution.LOCAL_WINS -> {
                 applyToRemote(item)
-                syncQueueDao.deleteById(queueItemId)
+                syncQueueRepository.deleteById(queueItemId)
             }
             ConflictResolution.REMOTE_WINS -> {
-                // Supprimer l'élément local, le remote est déjà en place
-                syncQueueDao.deleteById(queueItemId)
+                syncQueueRepository.deleteById(queueItemId)
             }
             ConflictResolution.MERGE -> {
                 if (mergedPayload != null) {
                     applyMergedToRemote(item, mergedPayload)
                 }
-                syncQueueDao.deleteById(queueItemId)
+                syncQueueRepository.deleteById(queueItemId)
             }
             else -> {
-                // Pour KEEP_BOTH et autres
-                syncQueueDao.deleteById(queueItemId)
+                syncQueueRepository.deleteById(queueItemId)
             }
         }
     }
@@ -472,7 +439,7 @@ class SyncQueueProcessor(
      * Force le retraitement des éléments en échec
      */
     suspend fun retryFailed() {
-        syncQueueDao.updateAllStatus(SyncStatus.FAILED, SyncStatus.PENDING)
+        syncQueueRepository.updateAllStatus(SyncStatus.FAILED, SyncStatus.PENDING)
         startProcessing()
     }
 }

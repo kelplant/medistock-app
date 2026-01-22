@@ -31,7 +31,33 @@ class StockMovementRepository(private val database: MedistockDatabase) {
             product_id = movement.productId,
             site_id = movement.siteId,
             quantity = movement.quantity,
-            movement_type = movement.movementType,
+            type = movement.type,
+            date = movement.date,
+            purchase_price_at_movement = movement.purchasePriceAtMovement,
+            selling_price_at_movement = movement.sellingPriceAtMovement,
+            movement_type = movement.movementType ?: movement.type, // Legacy field
+            reference_id = movement.referenceId,
+            notes = movement.notes,
+            created_at = movement.createdAt,
+            created_by = movement.createdBy
+        )
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a stock movement.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(movement: StockMovement) = withContext(Dispatchers.Default) {
+        queries.upsertStockMovement(
+            id = movement.id,
+            product_id = movement.productId,
+            site_id = movement.siteId,
+            quantity = movement.quantity,
+            type = movement.type,
+            date = movement.date,
+            purchase_price_at_movement = movement.purchasePriceAtMovement,
+            selling_price_at_movement = movement.sellingPriceAtMovement,
+            movement_type = movement.movementType ?: movement.type,
             reference_id = movement.referenceId,
             notes = movement.notes,
             created_at = movement.createdAt,
@@ -59,6 +85,10 @@ class StockMovementRepository(private val database: MedistockDatabase) {
             productId = product_id,
             siteId = site_id,
             quantity = quantity,
+            type = type,
+            date = date,
+            purchasePriceAtMovement = purchase_price_at_movement,
+            sellingPriceAtMovement = selling_price_at_movement,
             movementType = movement_type,
             referenceId = reference_id,
             notes = notes,

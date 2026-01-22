@@ -7,24 +7,24 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
+import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.SiteAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SiteListActivity : AppCompatActivity() {
     private lateinit var adapter: SiteAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Manage Sites"
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerSites)
         val fabAdd = findViewById<FloatingActionButton>(R.id.fabAddSite)
@@ -49,7 +49,7 @@ class SiteListActivity : AppCompatActivity() {
 
     private fun loadSites() {
         CoroutineScope(Dispatchers.IO).launch {
-            val sites = db.siteDao().getAll().first()
+            val sites = sdk.siteRepository.getAll()
             runOnUiThread { adapter.submitList(sites) }
         }
     }

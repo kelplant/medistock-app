@@ -45,6 +45,21 @@ class SiteRepository(private val database: MedistockDatabase) {
         queries.deleteSite(id)
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a site.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(site: Site) = withContext(Dispatchers.Default) {
+        queries.upsertSite(
+            id = site.id,
+            name = site.name,
+            created_at = site.createdAt,
+            updated_at = site.updatedAt,
+            created_by = site.createdBy,
+            updated_by = site.updatedBy
+        )
+    }
+
     fun observeAll(): Flow<List<Site>> {
         return queries.getAllSites()
             .asFlow()

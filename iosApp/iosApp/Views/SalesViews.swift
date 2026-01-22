@@ -7,6 +7,7 @@ struct SalesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
     let siteId: String?
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
 
     @State private var sales: [Sale] = []
     @State private var sites: [Site] = []
@@ -37,7 +38,7 @@ struct SalesListView: View {
                     EmptyStateView(
                         icon: "cart",
                         title: "Aucune vente",
-                        message: "Enregistrez votre première vente."
+                        message: "Enregistrez votre premiere vente."
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -71,6 +72,7 @@ struct SalesListView: View {
             SaleDetailView(sdk: sdk, sale: sale)
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadData()
         }
         .task {
@@ -82,6 +84,21 @@ struct SalesListView: View {
     private func loadData() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                let remoteSales: [SaleDTO] = try await SupabaseService.shared.fetchAll(from: "sales")
+                // Sync to local database using upsert (INSERT OR REPLACE)
+                for dto in remoteSales {
+                    try? await sdk.saleRepository.upsert(sale: dto.toEntity())
+                }
+            } catch {
+                debugLog("SalesListView", "Failed to sync sales from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             async let salesResult = sdk.saleRepository.getAll()
             async let sitesResult = sdk.siteRepository.getAll()
@@ -114,7 +131,7 @@ struct SaleRowView: View {
                 Text(sale.customerName)
                     .font(.headline)
                 Spacer()
-                Text("\(String(format: "%.2f", sale.totalAmount)) €")
+                Text("\(String(format: "%.2f", sale.totalAmount)) EUR")
                     .font(.headline)
                     .foregroundColor(.green)
             }
@@ -161,7 +178,7 @@ struct SaleDetailView: View {
                     LabeledContentCompat {
                         Text("Total")
                     } content: {
-                        Text(String(format: "%.2f €", sale.totalAmount))
+                        Text(String(format: "%.2f EUR", sale.totalAmount))
                     }
                     LabeledContentCompat {
                         Text("Date")
@@ -177,10 +194,10 @@ struct SaleDetailView: View {
                                 Text(productName(for: item.productId))
                                     .font(.headline)
                                 HStack {
-                                    Text("Qté: \(String(format: "%.1f", item.quantity))")
+                                    Text("Qte: \(String(format: "%.1f", item.quantity))")
                                     Spacer()
-                                    Text("\(String(format: "%.2f", item.unitPrice)) € x \(String(format: "%.1f", item.quantity))")
-                                    Text("= \(String(format: "%.2f", item.totalPrice)) €")
+                                    Text("\(String(format: "%.2f", item.unitPrice)) EUR x \(String(format: "%.1f", item.quantity))")
+                                    Text("= \(String(format: "%.2f", item.totalPrice)) EUR")
                                         .fontWeight(.medium)
                                 }
                                 .font(.subheadline)
@@ -191,7 +208,7 @@ struct SaleDetailView: View {
                     }
                 }
             }
-            .navigationTitle("Détail de la vente")
+            .navigationTitle("Detail de la vente")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Fermer") { dismiss() }
@@ -237,6 +254,7 @@ struct SaleEditorView: View {
     let defaultSiteId: String?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var sites: [Site] = []
     @State private var products: [Product] = []
@@ -264,7 +282,7 @@ struct SaleEditorView: View {
             Form {
                 Section(header: Text("Site")) {
                     Picker("Site", selection: $selectedSiteId) {
-                        Text("Sélectionner").tag("")
+                        Text("Selectionner").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
@@ -274,7 +292,7 @@ struct SaleEditorView: View {
                 Section(header: Text("Client")) {
                     TextField("Nom du client", text: $customerName)
                     if !customers.isEmpty {
-                        Picker("Ou sélectionner", selection: $selectedCustomerId) {
+                        Picker("Ou selectionner", selection: $selectedCustomerId) {
                             Text("Client occasionnel").tag("")
                             ForEach(customers, id: \.id) { customer in
                                 Text(customer.name).tag(customer.id)
@@ -297,7 +315,7 @@ struct SaleEditorView: View {
                     .disabled(selectedSiteId.isEmpty)
                 }) {
                     if saleItems.isEmpty {
-                        Text("Ajoutez des articles à la vente")
+                        Text("Ajoutez des articles a la vente")
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(saleItems.indices, id: \.self) { index in
@@ -306,10 +324,10 @@ struct SaleEditorView: View {
                                 Text(item.productName)
                                     .font(.headline)
                                 HStack {
-                                    Text("Qté: \(String(format: "%.1f", item.quantity))")
-                                    Text("x \(String(format: "%.2f", item.unitPrice)) €")
+                                    Text("Qte: \(String(format: "%.1f", item.quantity))")
+                                    Text("x \(String(format: "%.2f", item.unitPrice)) EUR")
                                     Spacer()
-                                    Text("\(String(format: "%.2f", item.totalPrice)) €")
+                                    Text("\(String(format: "%.2f", item.totalPrice)) EUR")
                                         .fontWeight(.medium)
                                 }
                                 .font(.subheadline)
@@ -324,7 +342,7 @@ struct SaleEditorView: View {
                         Text("Total")
                             .font(.headline)
                         Spacer()
-                        Text("\(String(format: "%.2f", totalAmount)) €")
+                        Text("\(String(format: "%.2f", totalAmount)) EUR")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.green)
@@ -398,80 +416,86 @@ struct SaleEditorView: View {
         errorMessage = nil
 
         Task {
-            do {
-                let sale = sdk.createSale(
-                    customerName: customerName.trimmingCharacters(in: .whitespacesAndNewlines),
-                    siteId: selectedSiteId,
-                    totalAmount: totalAmount,
-                    customerId: selectedCustomerId.isEmpty ? nil : selectedCustomerId,
-                    userId: session.username
+            // Convert sale items to UseCase input format
+            let itemInputs = saleItems.map { draft in
+                SaleItemInput(
+                    productId: draft.productId,
+                    quantity: draft.quantity,
+                    unitPrice: draft.unitPrice
                 )
+            }
 
-                let items = saleItems.map { draft in
-                    sdk.createSaleItem(
-                        saleId: sale.id,
-                        productId: draft.productId,
-                        quantity: draft.quantity,
-                        unitPrice: draft.unitPrice
-                    )
+            // Use SaleUseCase for business logic (handles FIFO allocation, stock movements, etc.)
+            let input = SaleInput(
+                siteId: selectedSiteId,
+                customerName: customerName.trimmingCharacters(in: .whitespacesAndNewlines),
+                customerId: selectedCustomerId.isEmpty ? nil : selectedCustomerId,
+                items: itemInputs,
+                userId: session.userId
+            )
+
+            do {
+                let result = try await sdk.saleUseCase.execute(input: input)
+
+                // Handle result
+                if let success = result as? UseCaseResultSuccess<SaleResult>,
+               let saleResult = success.data {
+                let sale = saleResult.sale
+
+                // Show warnings if any (e.g., insufficient stock - still allowed per business rules)
+                if !success.warnings.isEmpty {
+                    for warning in success.warnings {
+                        if let stockWarning = warning as? BusinessWarning.InsufficientStock {
+                            debugLog("SaleEditorView", "Warning: Insufficient stock for product \(stockWarning.productId): requested \(stockWarning.requested), available \(stockWarning.available)")
+                        }
+                    }
                 }
 
-                try await sdk.saleRepository.insertSaleWithItems(sale: sale, items: items)
+                // Sync to Supabase
+                var savedOnline = false
+                if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+                    do {
+                        let saleDTO = SaleDTO(from: sale)
+                        try await SupabaseService.shared.upsert(into: "sales", record: saleDTO)
 
-                // Create stock movements and update batches (FIFO)
-                for draft in saleItems {
-                    let movement = sdk.createStockMovement(
-                        productId: draft.productId,
-                        siteId: selectedSiteId,
-                        quantity: -draft.quantity,
-                        movementType: "SALE",
-                        referenceId: sale.id,
-                        notes: "Vente à \(customerName)",
-                        userId: session.username
+                        for processedItem in saleResult.items {
+                            let itemDTO = SaleItemDTO(from: processedItem.saleItem)
+                            try await SupabaseService.shared.upsert(into: "sale_items", record: itemDTO)
+                        }
+                        savedOnline = true
+                    } catch {
+                        debugLog("SaleEditorView", "Failed to save to Supabase: \(error)")
+                    }
+                }
+
+                // Queue for sync if not saved online
+                if !savedOnline {
+                    let saleDTO = SaleDTO(from: sale)
+                    SyncQueueHelper.shared.enqueueInsert(
+                        entityType: .sale,
+                        entityId: sale.id,
+                        entity: saleDTO,
+                        userId: session.userId,
+                        siteId: selectedSiteId
                     )
-                    try await sdk.stockMovementRepository.insert(movement: movement)
-
-                    // Deduct from batches (FIFO)
-                    await deductFromBatches(productId: draft.productId, quantity: draft.quantity)
                 }
 
                 await MainActor.run {
                     onSave()
                     dismiss()
                 }
+
+            } else if let error = result as? UseCaseResultError {
+                await MainActor.run {
+                    isSaving = false
+                    errorMessage = error.error.message
+                }
+            }
             } catch {
                 await MainActor.run {
                     isSaving = false
                     errorMessage = "Erreur: \(error.localizedDescription)"
                 }
-            }
-        }
-    }
-
-    private func deductFromBatches(productId: String, quantity: Double) async {
-        var remainingToDeduct = quantity
-        let productBatches = batches
-            .filter { $0.productId == productId && $0.siteId == selectedSiteId && !$0.isExhausted }
-            .sorted { $0.purchaseDate < $1.purchaseDate }
-
-        for batch in productBatches {
-            guard remainingToDeduct > 0 else { break }
-
-            let deductAmount = min(batch.remainingQuantity, remainingToDeduct)
-            let newRemaining = batch.remainingQuantity - deductAmount
-            let isExhausted = newRemaining <= 0
-
-            do {
-                try await sdk.purchaseBatchRepository.updateQuantity(
-                    id: batch.id,
-                    remainingQuantity: newRemaining,
-                    isExhausted: isExhausted,
-                    updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
-                    updatedBy: session.username
-                )
-                remainingToDeduct -= deductAmount
-            } catch {
-                // Continue with next batch
             }
         }
     }
@@ -520,7 +544,7 @@ struct SaleItemEditorView: View {
             Form {
                 Section(header: Text("Produit")) {
                     Picker("Produit", selection: $selectedProductId) {
-                        Text("Sélectionner").tag("")
+                        Text("Selectionner").tag("")
                         ForEach(products, id: \.id) { product in
                             Text(product.name).tag(product.id)
                         }
@@ -540,15 +564,15 @@ struct SaleItemEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantité et Prix")) {
-                    TextField("Quantité", text: $quantityText)
+                Section(header: Text("Quantite et Prix")) {
+                    TextField("Quantite", text: $quantityText)
                         .keyboardType(.decimalPad)
                     TextField("Prix unitaire", text: $priceText)
                         .keyboardType(.decimalPad)
                 }
 
                 if let product = selectedProduct {
-                    Section(header: Text("Résumé")) {
+                    Section(header: Text("Resume")) {
                         let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         let price = Double(priceText.replacingOccurrences(of: ",", with: ".")) ?? 0
                         LabeledContentCompat {
@@ -559,7 +583,7 @@ struct SaleItemEditorView: View {
                         LabeledContentCompat {
                             Text("Total")
                         } content: {
-                            Text(String(format: "%.2f €", qty * price))
+                            Text(String(format: "%.2f EUR", qty * price))
                         }
                     }
                 }
@@ -583,10 +607,19 @@ struct SaleItemEditorView: View {
         guard !selectedProductId.isEmpty,
               let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")),
               let price = Double(priceText.replacingOccurrences(of: ",", with: ".")),
-              qty > 0, price > 0, qty <= availableStock else {
+              qty > 0, price > 0 else {
             return false
         }
+        // Note: We allow sales even with insufficient stock (negative stock allowed per business rules)
+        // The UseCase will generate a warning but not block the sale
         return true
+    }
+
+    private var hasInsufficientStock: Bool {
+        guard let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) else {
+            return false
+        }
+        return qty > availableStock
     }
 
     private func addItem() {

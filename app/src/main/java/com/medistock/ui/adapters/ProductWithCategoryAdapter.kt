@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.ProductWithCategory
+import com.medistock.shared.domain.model.ProductWithCategory
 
 class ProductWithCategoryAdapter(private val products: List<ProductWithCategory>) :
     RecyclerView.Adapter<ProductWithCategoryAdapter.ProductViewHolder>() {

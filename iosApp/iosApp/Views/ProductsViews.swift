@@ -6,6 +6,7 @@ import shared
 struct ProductsListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var products: [Product] = []
     @State private var sites: [Site] = []
     @State private var categories: [shared.Category] = []
@@ -82,6 +83,7 @@ struct ProductsListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadData()
         }
         .task {
@@ -93,6 +95,33 @@ struct ProductsListView: View {
     private func loadData() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                // Sync sites (upsert handles both new and existing records)
+                let remoteSites: [SiteDTO] = try await SupabaseService.shared.fetchAll(from: "sites")
+                for dto in remoteSites {
+                    try? await sdk.siteRepository.upsert(site: dto.toEntity())
+                }
+
+                // Sync categories
+                let remoteCategories: [CategoryDTO] = try await SupabaseService.shared.fetchAll(from: "categories")
+                for dto in remoteCategories {
+                    try? await sdk.categoryRepository.upsert(category: dto.toEntity())
+                }
+
+                // Sync products
+                let remoteProducts: [ProductDTO] = try await SupabaseService.shared.fetchAll(from: "products")
+                for dto in remoteProducts {
+                    try? await sdk.productRepository.upsert(product: dto.toEntity())
+                }
+            } catch {
+                debugLog("ProductsListView", "Failed to sync from Supabase: \(error)")
+            }
+        }
+
+        // Load from local database
         do {
             async let sitesResult = sdk.siteRepository.getAll()
             async let categoriesResult = sdk.categoryRepository.getAll()
@@ -121,10 +150,17 @@ struct ProductsListView: View {
         Task {
             for product in productsToDelete {
                 do {
-                    try await sdk.productRepository.delete(id: product.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "products",
+                        entityType: .product,
+                        entityId: product.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.productRepository.delete(id: product.id)
+                    }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression"
+                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
                     }
                 }
             }
@@ -168,6 +204,7 @@ struct ProductEditorView: View {
     let categories: [shared.Category]
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var unit: String = "unité"
@@ -261,8 +298,11 @@ struct ProductEditorView: View {
 
         Task {
             do {
+                let isNew = product == nil
+                var savedProduct: Product
+
                 if let existingProduct = product {
-                    let updated = Product(
+                    savedProduct = Product(
                         id: existingProduct.id,
                         name: trimmedName,
                         unit: trimmedUnit.isEmpty ? "unité" : trimmedUnit,
@@ -280,20 +320,37 @@ struct ProductEditorView: View {
                         createdAt: existingProduct.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingProduct.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
-                    try await sdk.productRepository.update(product: updated)
                 } else {
-                    let newProduct = sdk.createProduct(
+                    savedProduct = sdk.createProduct(
                         name: trimmedName,
                         siteId: selectedSiteId,
                         unit: trimmedUnit.isEmpty ? "unité" : trimmedUnit,
                         unitVolume: volume,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
-                        userId: session.username
+                        userId: session.userId
                     )
-                    try await sdk.productRepository.insert(product: newProduct)
                 }
+
+                let dto = ProductDTO(from: savedProduct)
+
+                try await OnlineFirstHelper.shared.save(
+                    table: "products",
+                    dto: dto,
+                    entityType: .product,
+                    entityId: savedProduct.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: product?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.productRepository.insert(product: savedProduct)
+                    } else {
+                        try await sdk.productRepository.update(product: savedProduct)
+                    }
+                }
+
                 await MainActor.run {
                     onSave()
                     dismiss()

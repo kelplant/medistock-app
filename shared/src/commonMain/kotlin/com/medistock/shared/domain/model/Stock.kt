@@ -5,8 +5,33 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CurrentStock(
     val productId: String,
+    val productName: String = "",
+    val unit: String = "",
+    val categoryName: String = "",
     val siteId: String,
-    val totalStock: Double
+    val siteName: String = "",
+    val quantityOnHand: Double = 0.0,
+    val minStock: Double = 0.0,
+    val maxStock: Double = 0.0
+) {
+    // Alias for backward compatibility
+    val totalStock: Double get() = quantityOnHand
+}
+
+@Serializable
+data class ProductWithCategory(
+    val id: String,
+    val name: String,
+    val unit: String,
+    val categoryId: String? = null,
+    val categoryName: String? = null,
+    val marginType: String? = null,
+    val marginValue: Double? = null,
+    val unitVolume: Double? = null,
+    val description: String? = null,
+    val siteId: String,
+    val minStock: Double? = null,
+    val maxStock: Double? = null
 )
 
 @Serializable
@@ -15,7 +40,12 @@ data class StockMovement(
     val productId: String,
     val siteId: String,
     val quantity: Double,
-    val movementType: String,
+    val type: String, // "in" or "out"
+    val date: Long,
+    val purchasePriceAtMovement: Double = 0.0,
+    val sellingPriceAtMovement: Double = 0.0,
+    // Legacy field for backward compatibility
+    val movementType: String? = null,
     val referenceId: String? = null,
     val notes: String? = null,
     val createdAt: Long = 0,

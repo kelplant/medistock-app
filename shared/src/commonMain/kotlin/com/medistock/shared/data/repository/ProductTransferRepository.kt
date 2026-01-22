@@ -50,6 +50,30 @@ class ProductTransferRepository(private val database: MedistockDatabase) {
         )
     }
 
+    suspend fun delete(id: String) = withContext(Dispatchers.Default) {
+        queries.deleteTransfer(id)
+    }
+
+    /**
+     * Upsert (INSERT OR REPLACE) a product transfer.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(transfer: ProductTransfer) = withContext(Dispatchers.Default) {
+        queries.upsertProductTransfer(
+            id = transfer.id,
+            product_id = transfer.productId,
+            from_site_id = transfer.fromSiteId,
+            to_site_id = transfer.toSiteId,
+            quantity = transfer.quantity,
+            status = transfer.status,
+            notes = transfer.notes,
+            created_at = transfer.createdAt,
+            updated_at = transfer.updatedAt,
+            created_by = transfer.createdBy,
+            updated_by = transfer.updatedBy
+        )
+    }
+
     fun observeAll(): Flow<List<ProductTransfer>> {
         return queries.getAllTransfers()
             .asFlow()

@@ -45,6 +45,21 @@ class CategoryRepository(private val database: MedistockDatabase) {
         queries.deleteCategory(id)
     }
 
+    /**
+     * Upsert (INSERT OR REPLACE) a category.
+     * Use this for sync operations to handle both new and existing records.
+     */
+    suspend fun upsert(category: Category) = withContext(Dispatchers.Default) {
+        queries.upsertCategory(
+            id = category.id,
+            name = category.name,
+            created_at = category.createdAt,
+            updated_at = category.updatedAt,
+            created_by = category.createdBy,
+            updated_by = category.updatedBy
+        )
+    }
+
     fun observeAll(): Flow<List<Category>> {
         return queries.getAllCategories()
             .asFlow()

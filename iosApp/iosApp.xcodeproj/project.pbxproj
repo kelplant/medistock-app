@@ -11,6 +11,22 @@
 		2152FB062600AC8F00CF470E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB052600AC8F00CF470E /* ContentView.swift */; };
 		2152FB082600AC9000CF470E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2152FB072600AC9000CF470E /* Assets.xcassets */; };
 		82938AF22F203E5A0047A524 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 82938AF12F203E5A0047A524 /* libsqlite3.tbd */; };
+		82938AF52F21675B0047A524 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 82938AF42F21675B0047A524 /* Supabase */; };
+		82938B042F21799A0047A524 /* 2026011702_schema_version.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFE2F21799A0047A524 /* 2026011702_schema_version.sql */; };
+		82938B052F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF92F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql */; };
+		82938B062F21799A0047A524 /* 2025122605_add_product_description.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFA2F21799A0047A524 /* 2025122605_add_product_description.sql */; };
+		82938B072F21799A0047A524 /* 2025122605_transaction_flat_view.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFB2F21799A0047A524 /* 2025122605_transaction_flat_view.sql */; };
+		82938B082F21799A0047A524 /* 2026010501_schema_cleanup.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFC2F21799A0047A524 /* 2026010501_schema_cleanup.sql */; };
+		82938B092F21799A0047A524 /* 2026011701_migration_system.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFD2F21799A0047A524 /* 2026011701_migration_system.sql */; };
+		82938B0A2F21799A0047A524 /* 2025122603_audit_triggers.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF82F21799A0047A524 /* 2025122603_audit_triggers.sql */; };
+		82938B0B2F21799A0047A524 /* 2026011901_remove_audit_triggers.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B002F21799A0047A524 /* 2026011901_remove_audit_triggers.sql */; };
+		82938B0C2F21799A0047A524 /* 2026011801_sync_tracking.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFF2F21799A0047A524 /* 2026011801_sync_tracking.sql */; };
+		82938B0D2F21799A0047A524 /* 2025122602_created_updated_by.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF72F21799A0047A524 /* 2025122602_created_updated_by.sql */; };
+		82938B0E2F21799A0047A524 /* 2026012101_add_client_id.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B012F21799A0047A524 /* 2026012101_add_client_id.sql */; };
+		82938B0F2F21799A0047A524 /* 2025122601_uuid_migration.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF62F21799A0047A524 /* 2025122601_uuid_migration.sql */; };
+		82938B102F21799A0047A524 /* 2026012201_inventory_and_schema_updates.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */; };
+		82938B112F21799A0047A524 /* 2026012202_align_room_schema.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */; };
+		82938B122F21799A0047A524 /* 2026012203_enhance_sync_queue.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */; };
 		A1000001AAAA000100000001 /* AuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001AAAA000000000001 /* AuthViews.swift */; };
 		A1000002AAAA000100000002 /* HomeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002AAAA000000000002 /* HomeViews.swift */; };
 		A1000003AAAA000100000003 /* SitesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003AAAA000000000003 /* SitesViews.swift */; };
@@ -28,6 +44,27 @@
 		A100000FAAAA00010000000F /* SupabaseViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000FAAAA00000000000F /* SupabaseViews.swift */; };
 		A1000010AAAA000100000010 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010AAAA000000000010 /* CommonViews.swift */; };
 		A1000011AAAA000100000011 /* TimestampConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011AAAA000000000011 /* TimestampConvertible.swift */; };
+		A1000012AAAA000100000012 /* Int64Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000012AAAA000000000012 /* Int64Extensions.swift */; };
+		A1000013AAAA000100000013 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013AAAA000000000013 /* ProfileViews.swift */; };
+		A1SVC002BBBB000100000002 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC002BBBB000000000002 /* PermissionManager.swift */; };
+		A1SVC003BBBB000100000003 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC003BBBB000000000003 /* AuthService.swift */; };
+		A1SVC006BBBB000100000006 /* PasswordHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC006BBBB000000000006 /* PasswordHasher.swift */; };
+		A1SVC007BBBB000100000007 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC007BBBB000000000007 /* MigrationManager.swift */; };
+		A1SVC008BBBB000100000008 /* CompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC008BBBB000000000008 /* CompatibilityManager.swift */; };
+		A1SVC009BBBB000100000009 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC009BBBB000000000009 /* KeychainService.swift */; };
+		A1SVC010BBBB000100000010 /* SDKProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC010BBBB000000000010 /* SDKProvider.swift */; };
+		A1000014AAAA000100000014 /* AppUpdateRequiredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */; };
+		A1SYNC01CCCC000100000001 /* SyncQueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC01CCCC000000000001 /* SyncQueueItem.swift */; };
+		A1SYNC02CCCC000100000002 /* SyncQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC02CCCC000000000002 /* SyncQueueStore.swift */; };
+		A1SYNC03CCCC000100000003 /* SyncQueueHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC03CCCC000000000003 /* SyncQueueHelper.swift */; };
+		A1SYNC04CCCC000100000004 /* SyncDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC04CCCC000000000004 /* SyncDTOs.swift */; };
+		A1SYNC05CCCC000100000005 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC05CCCC000000000005 /* SupabaseService.swift */; };
+		A1SYNC06CCCC000100000006 /* SyncQueueProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC06CCCC000000000006 /* SyncQueueProcessor.swift */; };
+		A1SYNC07CCCC000100000007 /* SyncStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC07CCCC000000000007 /* SyncStatusManager.swift */; };
+		A1SYNC08CCCC000100000008 /* BidirectionalSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC08CCCC000000000008 /* BidirectionalSyncManager.swift */; };
+		A1SYNC09CCCC000100000009 /* RealtimeSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC09CCCC000000000009 /* RealtimeSyncService.swift */; };
+		A1SYNC10CCCC000100000010 /* SyncScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC10CCCC000000000010 /* SyncScheduler.swift */; };
+		A1SYNC11CCCC000100000011 /* OnlineFirstHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC11CCCC000000000011 /* OnlineFirstHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +74,18 @@
 		2152FB072600AC9000CF470E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2152FB0C2600AC9000CF470E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		82938AF12F203E5A0047A524 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		82938AF62F21799A0047A524 /* 2025122601_uuid_migration.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122601_uuid_migration.sql; sourceTree = "<group>"; };
+		82938AF72F21799A0047A524 /* 2025122602_created_updated_by.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122602_created_updated_by.sql; sourceTree = "<group>"; };
+		82938AF82F21799A0047A524 /* 2025122603_audit_triggers.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122603_audit_triggers.sql; sourceTree = "<group>"; };
+		82938AF92F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122604_audit_trigger_null_site.sql; sourceTree = "<group>"; };
+		82938AFA2F21799A0047A524 /* 2025122605_add_product_description.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122605_add_product_description.sql; sourceTree = "<group>"; };
+		82938AFB2F21799A0047A524 /* 2025122605_transaction_flat_view.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122605_transaction_flat_view.sql; sourceTree = "<group>"; };
+		82938AFC2F21799A0047A524 /* 2026010501_schema_cleanup.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026010501_schema_cleanup.sql; sourceTree = "<group>"; };
+		82938AFD2F21799A0047A524 /* 2026011701_migration_system.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011701_migration_system.sql; sourceTree = "<group>"; };
+		82938AFE2F21799A0047A524 /* 2026011702_schema_version.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011702_schema_version.sql; sourceTree = "<group>"; };
+		82938AFF2F21799A0047A524 /* 2026011801_sync_tracking.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011801_sync_tracking.sql; sourceTree = "<group>"; };
+		82938B002F21799A0047A524 /* 2026011901_remove_audit_triggers.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011901_remove_audit_triggers.sql; sourceTree = "<group>"; };
+		82938B012F21799A0047A524 /* 2026012101_add_client_id.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012101_add_client_id.sql; sourceTree = "<group>"; };
 		A1000001AAAA000000000001 /* AuthViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViews.swift; sourceTree = "<group>"; };
 		A1000002AAAA000000000002 /* HomeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViews.swift; sourceTree = "<group>"; };
 		A1000003AAAA000000000003 /* SitesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitesViews.swift; sourceTree = "<group>"; };
@@ -54,6 +103,30 @@
 		A100000FAAAA00000000000F /* SupabaseViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseViews.swift; sourceTree = "<group>"; };
 		A1000010AAAA000000000010 /* CommonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
 		A1000011AAAA000000000011 /* TimestampConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampConvertible.swift; sourceTree = "<group>"; };
+		A1000012AAAA000000000012 /* Int64Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Int64Extensions.swift; sourceTree = "<group>"; };
+		A1000013AAAA000000000013 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
+		A1SVC002BBBB000000000002 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
+		A1SVC003BBBB000000000003 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		A1SVC006BBBB000000000006 /* PasswordHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordHasher.swift; sourceTree = "<group>"; };
+		A1SVC007BBBB000000000007 /* MigrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationManager.swift; sourceTree = "<group>"; };
+		A1SYNC01CCCC000000000001 /* SyncQueueItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncQueueItem.swift; sourceTree = "<group>"; };
+		A1SYNC02CCCC000000000002 /* SyncQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncQueueStore.swift; sourceTree = "<group>"; };
+		A1SYNC03CCCC000000000003 /* SyncQueueHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncQueueHelper.swift; sourceTree = "<group>"; };
+		A1SYNC04CCCC000000000004 /* SyncDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncDTOs.swift; sourceTree = "<group>"; };
+		A1SYNC05CCCC000000000005 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		A1SYNC06CCCC000000000006 /* SyncQueueProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncQueueProcessor.swift; sourceTree = "<group>"; };
+		A1SYNC07CCCC000000000007 /* SyncStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusManager.swift; sourceTree = "<group>"; };
+		A1SYNC08CCCC000000000008 /* BidirectionalSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidirectionalSyncManager.swift; sourceTree = "<group>"; };
+		A1SYNC09CCCC000000000009 /* RealtimeSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeSyncService.swift; sourceTree = "<group>"; };
+		A1SYNC10CCCC000000000010 /* SyncScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncScheduler.swift; sourceTree = "<group>"; };
+		A1SYNC11CCCC000000000011 /* OnlineFirstHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineFirstHelper.swift; sourceTree = "<group>"; };
+		A1SVC008BBBB000000000008 /* CompatibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityManager.swift; sourceTree = "<group>"; };
+		A1SVC009BBBB000000000009 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		A1SVC010BBBB000000000010 /* SDKProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKProvider.swift; sourceTree = "<group>"; };
+		A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateRequiredView.swift; sourceTree = "<group>"; };
+		82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012201_inventory_and_schema_updates.sql; sourceTree = "<group>"; };
+		82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012202_align_room_schema.sql; sourceTree = "<group>"; };
+		82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012203_enhance_sync_queue.sql; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +134,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				82938AF52F21675B0047A524 /* Supabase in Frameworks */,
 				82938AF22F203E5A0047A524 /* libsqlite3.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -95,15 +169,89 @@
 		2152FB022600AC8F00CF470E /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				82938B032F21799A0047A524 /* Resources */,
 				2152FB032600AC8F00CF470E /* MedistockApp.swift */,
 				2152FB052600AC8F00CF470E /* ContentView.swift */,
 				A1000011AAAA000000000011 /* TimestampConvertible.swift */,
+				A1000012AAAA000000000012 /* Int64Extensions.swift */,
 				A1VIEWS0000000000000000 /* Views */,
+				A1SVC000BBBB000000000000 /* Services */,
+				A1SYNC00CCCC000000000000 /* Sync */,
 				2152FB072600AC9000CF470E /* Assets.xcassets */,
 				2152FB0C2600AC9000CF470E /* Info.plist */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = iosApp;
+			sourceTree = "<group>";
+		};
+		7555FFB0242A642C00829871 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				82938AF12F203E5A0047A524 /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		82938B022F21799A0047A524 /* migrations */ = {
+			isa = PBXGroup;
+			children = (
+				82938AF62F21799A0047A524 /* 2025122601_uuid_migration.sql */,
+				82938AF72F21799A0047A524 /* 2025122602_created_updated_by.sql */,
+				82938AF82F21799A0047A524 /* 2025122603_audit_triggers.sql */,
+				82938AF92F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql */,
+				82938AFA2F21799A0047A524 /* 2025122605_add_product_description.sql */,
+				82938AFB2F21799A0047A524 /* 2025122605_transaction_flat_view.sql */,
+				82938AFC2F21799A0047A524 /* 2026010501_schema_cleanup.sql */,
+				82938AFD2F21799A0047A524 /* 2026011701_migration_system.sql */,
+				82938AFE2F21799A0047A524 /* 2026011702_schema_version.sql */,
+				82938AFF2F21799A0047A524 /* 2026011801_sync_tracking.sql */,
+				82938B002F21799A0047A524 /* 2026011901_remove_audit_triggers.sql */,
+				82938B012F21799A0047A524 /* 2026012101_add_client_id.sql */,
+				82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */,
+				82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */,
+				82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */,
+			);
+			path = migrations;
+			sourceTree = "<group>";
+		};
+		82938B032F21799A0047A524 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				82938B022F21799A0047A524 /* migrations */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A1SVC000BBBB000000000000 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A1SVC002BBBB000000000002 /* PermissionManager.swift */,
+				A1SVC003BBBB000000000003 /* AuthService.swift */,
+				A1SVC006BBBB000000000006 /* PasswordHasher.swift */,
+				A1SVC007BBBB000000000007 /* MigrationManager.swift */,
+				A1SVC008BBBB000000000008 /* CompatibilityManager.swift */,
+				A1SVC009BBBB000000000009 /* KeychainService.swift */,
+				A1SVC010BBBB000000000010 /* SDKProvider.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A1SYNC00CCCC000000000000 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				A1SYNC01CCCC000000000001 /* SyncQueueItem.swift */,
+				A1SYNC02CCCC000000000002 /* SyncQueueStore.swift */,
+				A1SYNC03CCCC000000000003 /* SyncQueueHelper.swift */,
+				A1SYNC04CCCC000000000004 /* SyncDTOs.swift */,
+				A1SYNC05CCCC000000000005 /* SupabaseService.swift */,
+				A1SYNC06CCCC000000000006 /* SyncQueueProcessor.swift */,
+				A1SYNC07CCCC000000000007 /* SyncStatusManager.swift */,
+				A1SYNC08CCCC000000000008 /* BidirectionalSyncManager.swift */,
+				A1SYNC09CCCC000000000009 /* RealtimeSyncService.swift */,
+				A1SYNC10CCCC000000000010 /* SyncScheduler.swift */,
+				A1SYNC11CCCC000000000011 /* OnlineFirstHelper.swift */,
+			);
+			path = Sync;
 			sourceTree = "<group>";
 		};
 		A1VIEWS0000000000000000 /* Views */ = {
@@ -125,16 +273,10 @@
 				A100000EAAAA00000000000E /* AuditViews.swift */,
 				A100000FAAAA00000000000F /* SupabaseViews.swift */,
 				A1000010AAAA000000000010 /* CommonViews.swift */,
+				A1000013AAAA000000000013 /* ProfileViews.swift */,
+				A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */,
 			);
 			path = Views;
-			sourceTree = "<group>";
-		};
-		7555FFB0242A642C00829871 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				82938AF12F203E5A0047A524 /* libsqlite3.tbd */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -183,6 +325,9 @@
 				fr,
 			);
 			mainGroup = 2152FAF72600AC8F00CF470E;
+			packageReferences = (
+				82938AF32F21675B0047A524 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			productRefGroup = 2152FB012600AC8F00CF470E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -198,6 +343,21 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB082600AC9000CF470E /* Assets.xcassets in Resources */,
+				82938B042F21799A0047A524 /* 2026011702_schema_version.sql in Resources */,
+				82938B052F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql in Resources */,
+				82938B062F21799A0047A524 /* 2025122605_add_product_description.sql in Resources */,
+				82938B072F21799A0047A524 /* 2025122605_transaction_flat_view.sql in Resources */,
+				82938B082F21799A0047A524 /* 2026010501_schema_cleanup.sql in Resources */,
+				82938B092F21799A0047A524 /* 2026011701_migration_system.sql in Resources */,
+				82938B0A2F21799A0047A524 /* 2025122603_audit_triggers.sql in Resources */,
+				82938B0B2F21799A0047A524 /* 2026011901_remove_audit_triggers.sql in Resources */,
+				82938B0C2F21799A0047A524 /* 2026011801_sync_tracking.sql in Resources */,
+				82938B0D2F21799A0047A524 /* 2025122602_created_updated_by.sql in Resources */,
+				82938B0E2F21799A0047A524 /* 2026012101_add_client_id.sql in Resources */,
+				82938B0F2F21799A0047A524 /* 2025122601_uuid_migration.sql in Resources */,
+				82938B102F21799A0047A524 /* 2026012201_inventory_and_schema_updates.sql in Resources */,
+				82938B112F21799A0047A524 /* 2026012202_align_room_schema.sql in Resources */,
+				82938B122F21799A0047A524 /* 2026012203_enhance_sync_queue.sql in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,7 +400,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -268,6 +428,27 @@
 				A100000FAAAA00010000000F /* SupabaseViews.swift in Sources */,
 				A1000010AAAA000100000010 /* CommonViews.swift in Sources */,
 				A1000011AAAA000100000011 /* TimestampConvertible.swift in Sources */,
+				A1000012AAAA000100000012 /* Int64Extensions.swift in Sources */,
+				A1SVC002BBBB000100000002 /* PermissionManager.swift in Sources */,
+				A1SVC003BBBB000100000003 /* AuthService.swift in Sources */,
+				A1000013AAAA000100000013 /* ProfileViews.swift in Sources */,
+				A1SVC006BBBB000100000006 /* PasswordHasher.swift in Sources */,
+				A1SVC007BBBB000100000007 /* MigrationManager.swift in Sources */,
+				A1SVC008BBBB000100000008 /* CompatibilityManager.swift in Sources */,
+				A1SVC009BBBB000100000009 /* KeychainService.swift in Sources */,
+				A1SVC010BBBB000100000010 /* SDKProvider.swift in Sources */,
+				A1000014AAAA000100000014 /* AppUpdateRequiredView.swift in Sources */,
+				A1SYNC01CCCC000100000001 /* SyncQueueItem.swift in Sources */,
+				A1SYNC02CCCC000100000002 /* SyncQueueStore.swift in Sources */,
+				A1SYNC03CCCC000100000003 /* SyncQueueHelper.swift in Sources */,
+				A1SYNC04CCCC000100000004 /* SyncDTOs.swift in Sources */,
+				A1SYNC05CCCC000100000005 /* SupabaseService.swift in Sources */,
+				A1SYNC06CCCC000100000006 /* SyncQueueProcessor.swift in Sources */,
+				A1SYNC07CCCC000100000007 /* SyncStatusManager.swift in Sources */,
+				A1SYNC08CCCC000100000008 /* BidirectionalSyncManager.swift in Sources */,
+				A1SYNC09CCCC000100000009 /* RealtimeSyncService.swift in Sources */,
+				A1SYNC10CCCC000100000010 /* SyncScheduler.swift in Sources */,
+				A1SYNC11CCCC000100000011 /* OnlineFirstHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -466,6 +647,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		82938AF32F21675B0047A524 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.40.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		82938AF42F21675B0047A524 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 82938AF32F21675B0047A524 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2152FAF82600AC8F00CF470E /* Project object */;
 }

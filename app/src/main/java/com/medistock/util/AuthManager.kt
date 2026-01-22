@@ -2,7 +2,7 @@ package com.medistock.util
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.medistock.data.entities.User
+import com.medistock.shared.domain.model.User
 
 /**
  * Manages user authentication and session

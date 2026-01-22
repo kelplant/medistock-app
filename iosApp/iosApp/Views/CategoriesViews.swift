@@ -6,6 +6,7 @@ import shared
 struct CategoriesListView: View {
     let sdk: MedistockSDK
     @ObservedObject var session: SessionManager
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @State private var categories: [shared.Category] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
@@ -71,6 +72,7 @@ struct CategoriesListView: View {
             }
         }
         .refreshable {
+            await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadCategories()
         }
         .task {
@@ -82,6 +84,21 @@ struct CategoriesListView: View {
     private func loadCategories() async {
         isLoading = true
         errorMessage = nil
+
+        // Online-first: try Supabase first, then sync to local
+        if syncStatus.isOnline && SupabaseService.shared.isConfigured {
+            do {
+                let remoteCategories: [CategoryDTO] = try await SupabaseService.shared.fetchAll(from: "categories")
+                // Sync to local database using upsert (INSERT OR REPLACE)
+                for dto in remoteCategories {
+                    try? await sdk.categoryRepository.upsert(category: dto.toEntity())
+                }
+            } catch {
+                debugLog("CategoriesListView", "Failed to fetch from Supabase: \(error)")
+            }
+        }
+
+        // Always return from local database
         do {
             categories = try await sdk.categoryRepository.getAll()
         } catch {
@@ -96,10 +113,17 @@ struct CategoriesListView: View {
         Task {
             for category in categoriesToDelete {
                 do {
-                    try await sdk.categoryRepository.delete(id: category.id)
+                    try await OnlineFirstHelper.shared.delete(
+                        table: "categories",
+                        entityType: .category,
+                        entityId: category.id,
+                        userId: session.userId
+                    ) {
+                        try await sdk.categoryRepository.delete(id: category.id)
+                    }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression"
+                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
                     }
                 }
             }
@@ -131,6 +155,7 @@ struct CategoryEditorView: View {
     let category: shared.Category?
     let onSave: () -> Void
 
+    @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var isSaving = false
@@ -181,20 +206,40 @@ struct CategoryEditorView: View {
 
         Task {
             do {
+                let isNew = category == nil
+                var savedCategory: shared.Category
+
                 if let existingCategory = category {
-                    let updated = shared.Category(
+                    savedCategory = shared.Category(
                         id: existingCategory.id,
                         name: trimmedName,
                         createdAt: existingCategory.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingCategory.createdBy,
-                        updatedBy: session.username
+                        updatedBy: session.userId
                     )
-                    try await sdk.categoryRepository.update(category: updated)
                 } else {
-                    let newCategory = sdk.createCategory(name: trimmedName, userId: session.username)
-                    try await sdk.categoryRepository.insert(category: newCategory)
+                    savedCategory = sdk.createCategory(name: trimmedName, userId: session.userId)
                 }
+
+                let dto = CategoryDTO(from: savedCategory)
+
+                try await OnlineFirstHelper.shared.save(
+                    table: "categories",
+                    dto: dto,
+                    entityType: .category,
+                    entityId: savedCategory.id,
+                    isNew: isNew,
+                    userId: session.userId,
+                    lastKnownRemoteUpdatedAt: category?.updatedAt
+                ) {
+                    if isNew {
+                        try await sdk.categoryRepository.insert(category: savedCategory)
+                    } else {
+                        try await sdk.categoryRepository.update(category: savedCategory)
+                    }
+                }
+
                 await MainActor.run {
                     onSave()
                     dismiss()

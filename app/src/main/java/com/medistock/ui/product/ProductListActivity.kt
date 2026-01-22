@@ -7,25 +7,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
+import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.ProductAdapter
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ProductListActivity : AppCompatActivity() {
     private lateinit var adapter: ProductAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Product Management"
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerProducts)
         val fabAdd = findViewById<FloatingActionButton>(R.id.fabAddProduct)
@@ -52,7 +52,7 @@ class ProductListActivity : AppCompatActivity() {
         val siteId = PrefsHelper.getActiveSiteId(this)
         if (siteId.isNullOrBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
-            val products = db.productDao().getProductsForSite(siteId).first()
+            val products = sdk.productRepository.getBySite(siteId)
             runOnUiThread { adapter.submitList(products) }
         }
     }

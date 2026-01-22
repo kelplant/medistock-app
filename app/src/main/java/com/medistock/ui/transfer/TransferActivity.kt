@@ -9,21 +9,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.*
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.ProductTransfer
+import com.medistock.shared.domain.model.Site
+import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import com.medistock.util.BatchTransferHelper
 import com.medistock.util.InsufficientStockException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class TransferActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var spinnerFromSite: Spinner
     private lateinit var spinnerToSite: Spinner
@@ -44,7 +48,7 @@ class TransferActivity : AppCompatActivity() {
         setContentView(R.layout.activity_transfer)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
         selectedFromSiteId = PrefsHelper.getActiveSiteId(this)
 
@@ -108,7 +112,7 @@ class TransferActivity : AppCompatActivity() {
 
     private fun loadSites() {
         lifecycleScope.launch(Dispatchers.IO) {
-            sites = db.siteDao().getAll().first()
+            sites = sdk.siteRepository.getAll()
             withContext(Dispatchers.Main) {
                 val siteNames = sites.map { it.name }
                 val adapter = ArrayAdapter(
@@ -148,14 +152,14 @@ class TransferActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getAll().first()
+            products = sdk.productRepository.getAll()
         }
     }
 
     private fun loadStockForSite() {
         lifecycleScope.launch(Dispatchers.IO) {
             val siteId = selectedFromSiteId ?: return@launch
-            val stockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
+            val stockItems = sdk.stockRepository.getCurrentStockForSite(siteId)
             currentStock = stockItems.associate { it.productId to it.quantityOnHand }
         }
     }
@@ -163,7 +167,7 @@ class TransferActivity : AppCompatActivity() {
     private fun loadTransferForEdit() {
         lifecycleScope.launch(Dispatchers.IO) {
             val transferIdValue = transferId ?: return@launch
-            val transfer = db.productTransferDao().getById(transferIdValue).first()
+            val transfer = sdk.productTransferRepository.getById(transferIdValue)
             if (transfer != null) {
                 withContext(Dispatchers.Main) {
                     // Set sites
@@ -176,7 +180,7 @@ class TransferActivity : AppCompatActivity() {
                     }
 
                     // Load product info
-                    val product = db.productDao().getById(transfer.productId).first()
+                    val product = sdk.productRepository.getById(transfer.productId)
                     if (product != null) {
                         val item = TransferItem(
                             productId = product.id,
@@ -290,7 +294,7 @@ class TransferActivity : AppCompatActivity() {
             try {
                 val currentTime = System.currentTimeMillis()
                 val currentUser = authManager.getUsername()
-                val batchHelper = BatchTransferHelper(db.purchaseBatchDao())
+                val batchHelper = BatchTransferHelper(sdk.purchaseBatchRepository)
 
                 // Process each transfer item with FIFO batch management
                 transferItemAdapter.getItems().forEach { item ->
@@ -318,68 +322,55 @@ class TransferActivity : AppCompatActivity() {
                     val avgPurchasePrice = batchHelper.calculateAveragePurchasePrice(batchTransfers)
 
                     // Get current selling price
-                    val latestPrice = db.productPriceDao().getLatestPrice(item.productId).first()
+                    val latestPrice = sdk.productPriceRepository.getLatestPrice(item.productId)
                     val sellingPrice = latestPrice?.sellingPrice ?: 0.0
 
                     // Create product transfer record
-                    val productTransfer = if (transferId == null) {
-                        ProductTransfer(
-                            productId = item.productId,
-                            quantity = item.quantity,
-                            fromSiteId = selectedFromSiteId!!,
-                            toSiteId = selectedToSiteId!!,
-                            date = currentTime,
-                            notes = "Transferred ${batchTransfers.size} batch(es)",
-                            createdAt = currentTime,
-                            updatedAt = currentTime,
-                            createdBy = currentUser,
-                            updatedBy = currentUser
-                        )
-                    } else {
-                        ProductTransfer(
-                            id = transferId!!,
-                            productId = item.productId,
-                            quantity = item.quantity,
-                            fromSiteId = selectedFromSiteId!!,
-                            toSiteId = selectedToSiteId!!,
-                            date = currentTime,
-                            notes = "Transferred ${batchTransfers.size} batch(es)",
-                            createdAt = currentTime,
-                            updatedAt = currentTime,
-                            createdBy = currentUser,
-                            updatedBy = currentUser
-                        )
-                    }
+                    val productTransfer = ProductTransfer(
+                        id = transferId ?: UUID.randomUUID().toString(),
+                        productId = item.productId,
+                        quantity = item.quantity,
+                        fromSiteId = selectedFromSiteId!!,
+                        toSiteId = selectedToSiteId!!,
+                        status = "completed",
+                        notes = "Transferred ${batchTransfers.size} batch(es)",
+                        createdAt = currentTime,
+                        updatedAt = currentTime,
+                        createdBy = currentUser,
+                        updatedBy = currentUser
+                    )
 
-                    db.productTransferDao().insert(productTransfer)
+                    sdk.productTransferRepository.insert(productTransfer)
 
                     // Create stock movement for source site (transfer out)
                     val movementOut = StockMovement(
+                        id = UUID.randomUUID().toString(),
                         productId = item.productId,
-                        type = "out",
-                        quantity = item.quantity,
-                        date = currentTime,
                         siteId = selectedFromSiteId!!,
+                        quantity = item.quantity,
+                        type = "out",
+                        date = currentTime,
                         purchasePriceAtMovement = avgPurchasePrice,
                         sellingPriceAtMovement = sellingPrice,
                         createdAt = currentTime,
                         createdBy = currentUser
                     )
-                    db.stockMovementDao().insert(movementOut)
+                    sdk.stockMovementRepository.insert(movementOut)
 
                     // Create stock movement for destination site (transfer in)
                     val movementIn = StockMovement(
+                        id = UUID.randomUUID().toString(),
                         productId = item.productId,
-                        type = "in",
-                        quantity = item.quantity,
-                        date = currentTime,
                         siteId = selectedToSiteId!!,
+                        quantity = item.quantity,
+                        type = "in",
+                        date = currentTime,
                         purchasePriceAtMovement = avgPurchasePrice,
                         sellingPriceAtMovement = sellingPrice,
                         createdAt = currentTime,
                         createdBy = currentUser
                     )
-                    db.stockMovementDao().insert(movementIn)
+                    sdk.stockMovementRepository.insert(movementIn)
                 }
 
                 withContext(Dispatchers.Main) {

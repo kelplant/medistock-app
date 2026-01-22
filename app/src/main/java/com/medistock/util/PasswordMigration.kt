@@ -2,7 +2,7 @@ package com.medistock.util
 
 import android.content.Context
 import androidx.preference.PreferenceManager
-import com.medistock.data.db.AppDatabase
+import com.medistock.MedistockApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -39,20 +39,20 @@ object PasswordMigration {
         }
 
         withContext(Dispatchers.IO) {
-            val db = AppDatabase.getInstance(context)
-            val users = db.userDao().getAllUsers()
+            val userRepository = MedistockApplication.sdk.userRepository
+            val users = userRepository.getAll()
 
             users.forEach { user ->
                 // Check if password is already hashed
                 if (!PasswordHasher.isHashed(user.password)) {
                     // Hash the plain text password
                     val hashedPassword = PasswordHasher.hashPassword(user.password)
-                    val updatedUser = user.copy(
+                    userRepository.updatePassword(
+                        userId = user.id,
                         password = hashedPassword,
                         updatedAt = System.currentTimeMillis(),
                         updatedBy = "password_migration"
                     )
-                    db.userDao().updateUser(updatedUser)
                 }
             }
 

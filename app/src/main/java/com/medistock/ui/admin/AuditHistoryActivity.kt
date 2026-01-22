@@ -74,8 +74,9 @@ class AuditHistoryActivity : AppCompatActivity() {
 
         // Observe total count
         lifecycleScope.launch {
-            viewModel.totalCount.collect { _ ->
+            viewModel.totalCount.collect { count ->
                 // Could be used for pagination info
+                // Total: $count entries
             }
         }
     }

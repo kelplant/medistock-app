@@ -3,17 +3,19 @@ package com.medistock.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.PackagingType
+import com.medistock.MedistockApplication
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.PackagingType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 class PackagingTypeViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
-    private val packagingTypeDao = db.packagingTypeDao()
+    private val sdk: MedistockSDK = MedistockApplication.sdk
+    private val packagingTypeRepo = sdk.packagingTypeRepository
 
     private val _packagingTypes = MutableStateFlow<List<PackagingType>>(emptyList())
     val packagingTypes: StateFlow<List<PackagingType>> = _packagingTypes
@@ -28,7 +30,7 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
 
     fun loadPackagingTypes() {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.getAll().collect { types ->
+            packagingTypeRepo.observeAll().collect { types ->
                 _packagingTypes.value = types
             }
         }
@@ -36,7 +38,7 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
 
     fun loadActivePackagingTypes() {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.getAllActive().collect { types ->
+            packagingTypeRepo.observeActive().collect { types ->
                 _activePackagingTypes.value = types
             }
         }
@@ -44,49 +46,51 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
 
     fun getById(id: String, callback: (PackagingType?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = packagingTypeDao.getByIdSync(id)
+            val result = packagingTypeRepo.getById(id)
             callback(result)
         }
     }
 
     fun insert(packagingType: PackagingType, callback: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.insert(packagingType)
+            packagingTypeRepo.insert(packagingType)
             callback(packagingType.id)
         }
     }
 
     fun update(packagingType: PackagingType, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.update(packagingType)
+            packagingTypeRepo.update(packagingType)
             callback()
         }
     }
 
     fun delete(packagingType: PackagingType, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.delete(packagingType)
+            packagingTypeRepo.delete(packagingType.id)
             callback()
         }
     }
 
     fun deactivate(id: String, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.deactivate(id)
+            val now = Clock.System.now().toEpochMilliseconds()
+            packagingTypeRepo.setActive(id, false, now, "android")
             callback()
         }
     }
 
     fun activate(id: String, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeDao.activate(id)
+            val now = Clock.System.now().toEpochMilliseconds()
+            packagingTypeRepo.setActive(id, true, now, "android")
             callback()
         }
     }
 
     fun isUsedByProducts(packagingTypeId: String, callback: (Boolean) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = packagingTypeDao.isUsedByProducts(packagingTypeId)
+            val result = packagingTypeRepo.isUsedByProducts(packagingTypeId)
             callback(result)
         }
     }
