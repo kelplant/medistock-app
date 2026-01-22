@@ -23,6 +23,12 @@ appId: com.medistock
 - waitForAnimationToEnd:
     timeout: 10000
 
+# Navigate to Administration first
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
 # Navigate to Sites
 - tapOn:
     text: ".*Sites.*"

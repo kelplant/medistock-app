@@ -20,35 +20,54 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 10000
 
+# Navigate to Administration first
+# Scroll down to ensure Administration is fully visible
+- scrollUntilVisible:
+    element:
+      text: "Administration"
+    direction: DOWN
+
+- waitForAnimationToEnd
+
+# Tap Administration row with retry
+- tapOn:
+    text: "Administration"
+    index: 1
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Take screenshot to debug
+- takeScreenshot: "ios_after_admin_tap"
+
 # Navigate to Sites
 - tapOn:
     text: "Sites"
+    retryTapIfNoChange: true
 
 - waitForAnimationToEnd
 
 # Test 1: Create a new site
+# Tap the + button using accessibility label
 - tapOn:
-    text: ".*Ajouter.*"
-    optional: true
-- tapOn:
-    id: ".*add.*"
-    optional: true
+    text: "Ajouter un site"
+    retryTapIfNoChange: true
 
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
 
-# Fill site form
+# The sheet should now be open with "Nouveau site" title
+# Tap on the text field to focus it
 - tapOn:
     text: "Nom du site"
-    optional: true
+
+# Enter site name
 - inputText: "Site E2E Test iOS"
 
-# Save
+# Tap the "Ajouter" button to save
 - tapOn:
-    text: ".*Ajouter.*"
-    optional: true
-- tapOn:
-    text: ".*Enregistrer.*"
-    optional: true
+    text: "Ajouter"
 
 - waitForAnimationToEnd
 
@@ -60,16 +79,24 @@ appId: com.medistock.ios
 # Test 2: Edit site
 - tapOn: "Site E2E Test iOS"
 
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Tap on the text field first to focus it
+- tapOn:
+    text: ".*Nom du site.*"
+    optional: true
+- tapOn:
+    text: "Site E2E Test iOS"
+    optional: true
 
 # Clear and enter new name
-- eraseText: 100
+- eraseText: 50
 - inputText: "Site E2E Modified iOS"
 
 # Save
 - tapOn:
-    text: ".*Enregistrer.*"
-    optional: true
+    text: "Enregistrer"
 
 - waitForAnimationToEnd
 

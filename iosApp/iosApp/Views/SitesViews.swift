@@ -59,6 +59,8 @@ struct SitesListView: View {
                 Button(action: { showAddSheet = true }) {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Ajouter un site")
+                .accessibilityIdentifier("add-site-button")
             }
         }
         .sheet(isPresented: $showAddSheet) {

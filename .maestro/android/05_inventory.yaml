@@ -24,6 +24,12 @@ appId: com.medistock
     timeout: 10000
 
 # ========== PREREQUISITE: Ensure product with stock exists ==========
+# Navigate to Administration first
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: ".*Produits.*"
 
@@ -47,7 +53,11 @@ appId: com.medistock
           optional: true
       - waitForAnimationToEnd
 
+# Go back to home
 - back
+- back
+
+- waitForAnimationToEnd
 
 # Add stock via purchase
 - tapOn:

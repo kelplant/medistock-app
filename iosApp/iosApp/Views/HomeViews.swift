@@ -76,6 +76,7 @@ struct HomeView: View {
                     NavigationLink(destination: AdminMenuView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "gearshape.fill", title: "Administration", color: .gray)
                     }
+                    .accessibilityIdentifier("admin-menu-link")
                 }
             }
         }
@@ -265,30 +266,35 @@ struct AdminMenuView: View {
                     NavigationLink(destination: SitesListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "building.2.fill", title: "Sites", color: .blue)
                     }
+                    .accessibilityIdentifier("sites-link")
                 }
 
                 if permissions.canView(.products) {
                     NavigationLink(destination: ProductsListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "cube.box.fill", title: "Produits", color: .green)
                     }
+                    .accessibilityIdentifier("products-link")
                 }
 
                 if permissions.canView(.categories) {
                     NavigationLink(destination: CategoriesListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "folder.fill", title: "Catégories", color: .orange)
                     }
+                    .accessibilityIdentifier("categories-link")
                 }
 
                 if permissions.canView(.customers) {
                     NavigationLink(destination: CustomersListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "person.2.fill", title: "Clients", color: .purple)
                     }
+                    .accessibilityIdentifier("customers-link")
                 }
 
                 if permissions.canView(.packagingTypes) {
                     NavigationLink(destination: PackagingTypesListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "shippingbox", title: "Conditionnements", color: .teal)
                     }
+                    .accessibilityIdentifier("packaging-types-link")
                 }
             }
 

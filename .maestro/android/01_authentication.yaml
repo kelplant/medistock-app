@@ -38,13 +38,22 @@ appId: com.medistock
 - takeScreenshot: "android_login_success"
 
 # Test 2: Logout
-- back
+# Tap on profile badge (A icon in upper right)
 - tapOn:
-    text: ".*Profil.*"
+    id: ".*profile.*"
+    optional: true
+- tapOn:
+    text: ".*Admin.*"
     optional: true
 
+- waitForAnimationToEnd
+
+# Tap logout button
 - tapOn:
     text: ".*Déconnexion.*"
+    optional: true
+- tapOn:
+    text: ".*Logout.*"
     optional: true
 
 - waitForAnimationToEnd

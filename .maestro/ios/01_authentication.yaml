@@ -27,34 +27,26 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 10000
 
-# Verify we're on the home screen (tab bar should be visible)
-- assertVisible:
-    text: ".*Accueil.*"
-    optional: true
+# Verify we're on the home screen (MediStock title and menu visible)
+- assertVisible: "MediStock"
+- assertVisible: "Opérations"
 
 # Take screenshot for verification
 - takeScreenshot: "ios_login_success"
 
 # Test 2: Logout
+# Tap on profile badge (has accessibility label "Profil - ...")
 - tapOn:
-    text: "Profil"
-    optional: true
-
-- tapOn:
-    text: ".*Déconnexion.*"
-    optional: true
+    text: ".*Profil.*"
 
 - waitForAnimationToEnd
 
-# Confirm logout if dialog appears
-- tapOn:
-    text: ".*Déconnecter.*"
-    optional: true
+# Tap logout button
+- tapOn: "Déconnexion"
 
 - waitForAnimationToEnd
 
 # Verify back on login screen
-- assertVisible: "MediStock"
 - assertVisible: "Connexion"
 
 # Take screenshot
@@ -73,7 +65,6 @@ appId: com.medistock.ios
 
 # Verify error message is shown
 - assertVisible:
-    text: ".*incorrect.*"
-    optional: true
+    text: ".*trouvé.*"
 
 - takeScreenshot: "ios_login_invalid"

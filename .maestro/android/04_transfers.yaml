@@ -24,6 +24,12 @@ appId: com.medistock
     timeout: 10000
 
 # ========== PREREQUISITE: Create 2 sites if needed ==========
+# Navigate to Administration first
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: ".*Sites.*"
 
@@ -62,6 +68,7 @@ appId: com.medistock
 - takeScreenshot: "android_transfer_sites_ready"
 
 # ========== PREREQUISITE: Ensure product with stock exists ==========
+# Go back to Admin menu
 - back
 
 - tapOn:
@@ -87,7 +94,11 @@ appId: com.medistock
           optional: true
       - waitForAnimationToEnd
 
+# Go back to home
 - back
+- back
+
+- waitForAnimationToEnd
 
 # Add stock via purchase
 - tapOn:

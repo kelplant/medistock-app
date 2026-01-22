@@ -20,8 +20,26 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 10000
 
-# ========== PREREQUISITE: Ensure product with stock exists ==========
-- tapOn: "Produits"
+# ========== PREREQUISITE: Ensure product exists ==========
+# Scroll and navigate to Administration
+- scrollUntilVisible:
+    element:
+      text: "Administration"
+    direction: DOWN
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Administration"
+    index: 1
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: "Produits"
+    retryTapIfNoChange: true
 
 - waitForAnimationToEnd
 
@@ -30,17 +48,27 @@ appId: com.medistock.ios
     when:
       visible: "Aucun produit"
     commands:
-      - tapOn: ".*Ajouter.*"
+      - tapOn:
+          text: ".*Ajouter.*"
+          optional: true
       - waitForAnimationToEnd
-      - tapOn: "Nom du produit"
+      - tapOn:
+          text: "Nom du produit"
+          optional: true
       - inputText: "Produit Inventaire Test"
-      - tapOn: ".*Ajouter.*"
+      - tapOn:
+          text: ".*Ajouter.*"
+          optional: true
       - waitForAnimationToEnd
 
+# Go back to home
+- back
+- back
+
+- waitForAnimationToEnd
+
 # Add stock via purchase
-- tapOn:
-    text: "Achats"
-    optional: true
+- tapOn: "Achats"
 
 - waitForAnimationToEnd
 
@@ -76,10 +104,13 @@ appId: com.medistock.ios
 
 - takeScreenshot: "ios_inventory_stock_ready"
 
+# Go back to home
+- back
+
+- waitForAnimationToEnd
+
 # ========== TEST: Start Inventory Count ==========
-- tapOn:
-    text: "Inventaire"
-    optional: true
+- tapOn: "Inventaire"
 
 - waitForAnimationToEnd
 
@@ -138,6 +169,11 @@ appId: com.medistock.ios
 - waitForAnimationToEnd
 
 - takeScreenshot: "ios_inventory_completed"
+
+# Go back to home
+- back
+
+- waitForAnimationToEnd
 
 # ========== VERIFY: Check adjusted stock ==========
 - tapOn: "Stock"

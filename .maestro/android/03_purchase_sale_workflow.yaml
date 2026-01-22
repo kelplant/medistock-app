@@ -24,6 +24,12 @@ appId: com.medistock
     timeout: 10000
 
 # ========== STEP 1: Ensure we have a site ==========
+# Navigate to Administration first
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
 - tapOn:
     text: ".*Sites.*"
 
@@ -44,6 +50,7 @@ appId: com.medistock
           optional: true
       - waitForAnimationToEnd
 
+# Go back to Admin menu
 - back
 
 # ========== STEP 2: Ensure we have a product ==========
@@ -70,7 +77,11 @@ appId: com.medistock
           optional: true
       - waitForAnimationToEnd
 
+# Go back to home
 - back
+- back
+
+- waitForAnimationToEnd
 
 # ========== STEP 3: Create a Purchase (adds stock) ==========
 - tapOn:
