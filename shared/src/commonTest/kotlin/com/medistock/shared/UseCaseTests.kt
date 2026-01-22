@@ -344,6 +344,8 @@ class PurchaseResultTest {
             productId = "prod-1",
             siteId = "site-1",
             quantity = 100.0,
+            type = "PURCHASE",
+            date = 1705680000000L,
             movementType = "PURCHASE",
             createdAt = 1705680000000L,
             createdBy = "user-1"
@@ -387,6 +389,8 @@ class SaleResultTest {
             productId = "prod-1",
             siteId = "site-1",
             quantity = -10.0,
+            type = "SALE",
+            date = 1705680000000L,
             movementType = "SALE",
             createdAt = 1705680000000L,
             createdBy = "user-1"
@@ -434,6 +438,8 @@ class TransferResultTest {
             productId = "prod-1",
             siteId = "site-1",
             quantity = -50.0,
+            type = "TRANSFER_OUT",
+            date = 1705680000000L,
             movementType = "TRANSFER_OUT",
             createdAt = 1705680000000L,
             createdBy = "user-1"
@@ -444,6 +450,8 @@ class TransferResultTest {
             productId = "prod-1",
             siteId = "site-2",
             quantity = 50.0,
+            type = "TRANSFER_IN",
+            date = 1705680000000L,
             movementType = "TRANSFER_IN",
             createdAt = 1705680000000L,
             createdBy = "user-1"

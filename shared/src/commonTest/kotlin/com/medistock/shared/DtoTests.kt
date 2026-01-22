@@ -354,6 +354,8 @@ class StockMovementDtoTest {
             productId = "prod-1",
             siteId = "site-1",
             quantity = 10.0,
+            type = "IN",
+            date = 1000L,
             movementType = "IN",
             referenceId = "batch-1",
             notes = "Initial stock",
@@ -367,6 +369,7 @@ class StockMovementDtoTest {
         assertEquals("prod-1", model.productId)
         assertEquals("site-1", model.siteId)
         assertEquals(10.0, model.quantity)
+        assertEquals("IN", model.type)
         assertEquals("IN", model.movementType)
         assertEquals("batch-1", model.referenceId)
         assertEquals("Initial stock", model.notes)
@@ -379,14 +382,15 @@ class StockMovementDtoTest {
             productId = "prod-1",
             siteId = "site-1",
             quantity = 10.0,
-            movementType = "IN",
+            type = "IN",
+            date = 1000L,
             createdAt = 1000L,
             createdBy = "user"
         )
 
         val jsonString = json.encodeToString(dto)
 
-        // movementType should be serialized as "type"
+        // type should be serialized
         assertTrue(jsonString.contains("\"type\""))
         assertTrue(jsonString.contains("\"IN\""))
     }
@@ -473,5 +477,301 @@ class UserPermissionDtoTest {
         assertTrue(jsonString.contains("can_create"))
         assertTrue(jsonString.contains("can_edit"))
         assertTrue(jsonString.contains("can_delete"))
+    }
+}
+
+class CategoryDtoTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun testToModel() {
+        val dto = CategoryDto(
+            id = "cat-1",
+            name = "Test Category",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        assertEquals("cat-1", model.id)
+        assertEquals("Test Category", model.name)
+        assertEquals(1000L, model.createdAt)
+        assertEquals(2000L, model.updatedAt)
+    }
+
+    @Test
+    fun testFromModel() {
+        val model = Category(
+            id = "cat-1",
+            name = "Test Category",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val dto = CategoryDto.fromModel(model, "client-1")
+
+        assertEquals("cat-1", dto.id)
+        assertEquals("Test Category", dto.name)
+        assertEquals("client-1", dto.clientId)
+    }
+
+    @Test
+    fun testRoundTrip() {
+        val original = Category(
+            id = "cat-1",
+            name = "Original",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val roundTrip = CategoryDto.fromModel(original).toModel()
+
+        assertEquals(original.id, roundTrip.id)
+        assertEquals(original.name, roundTrip.name)
+    }
+}
+
+class PackagingTypeDtoTest {
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    @Test
+    fun testToModel() {
+        val dto = PackagingTypeDto(
+            id = "pkg-1",
+            name = "Box",
+            level1Name = "Unit",
+            level2Name = "Carton",
+            level2Quantity = 10,
+            defaultConversionFactor = 10.0,
+            isActive = true,
+            displayOrder = 1,
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        assertEquals("pkg-1", model.id)
+        assertEquals("Box", model.name)
+        assertEquals("Unit", model.level1Name)
+        assertEquals("Carton", model.level2Name)
+        assertEquals(10, model.level2Quantity)
+        assertEquals(1000L, model.createdAt)
+        assertEquals(2000L, model.updatedAt)
+    }
+
+    @Test
+    fun testJsonSerializationWithSnakeCase() {
+        val dto = PackagingTypeDto(
+            id = "pkg-1",
+            name = "Box",
+            level1Name = "Unit",
+            level2Name = "Carton",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val jsonString = json.encodeToString(dto)
+
+        assertTrue(jsonString.contains("level1_name"))
+        assertTrue(jsonString.contains("level2_name"))
+        assertTrue(jsonString.contains("default_conversion_factor"))
+        assertTrue(jsonString.contains("is_active"))
+        assertTrue(jsonString.contains("display_order"))
+    }
+}
+
+class ProductTransferDtoTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun testToModel() {
+        val dto = ProductTransferDto(
+            id = "transfer-1",
+            productId = "prod-1",
+            fromSiteId = "site-1",
+            toSiteId = "site-2",
+            quantity = 10.0,
+            status = "pending",
+            notes = "Test transfer",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        assertEquals("transfer-1", model.id)
+        assertEquals("prod-1", model.productId)
+        assertEquals("site-1", model.fromSiteId)
+        assertEquals("site-2", model.toSiteId)
+        assertEquals(10.0, model.quantity)
+        assertEquals("pending", model.status)
+        assertEquals("Test transfer", model.notes)
+    }
+
+    @Test
+    fun testJsonSerializationWithSnakeCase() {
+        val dto = ProductTransferDto(
+            id = "transfer-1",
+            productId = "prod-1",
+            fromSiteId = "site-1",
+            toSiteId = "site-2",
+            quantity = 10.0,
+            status = "pending",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            createdBy = "user",
+            updatedBy = "user"
+        )
+
+        val jsonString = json.encodeToString(dto)
+
+        assertTrue(jsonString.contains("product_id"))
+        assertTrue(jsonString.contains("from_site_id"))
+        assertTrue(jsonString.contains("to_site_id"))
+    }
+}
+
+class SaleItemDtoTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun testToModel() {
+        val dto = SaleItemDto(
+            id = "item-1",
+            saleId = "sale-1",
+            productId = "prod-1",
+            productName = "Test Product",
+            unit = "kg",
+            quantity = 5.0,
+            unitPrice = 10.0,
+            totalPrice = 50.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        // Note: toModel() only sets the basic required fields
+        assertEquals("item-1", model.id)
+        assertEquals("sale-1", model.saleId)
+        assertEquals("prod-1", model.productId)
+        assertEquals(5.0, model.quantity)
+        assertEquals(10.0, model.unitPrice)
+        assertEquals(50.0, model.totalPrice)
+    }
+
+    @Test
+    fun testJsonSerializationWithSnakeCase() {
+        val dto = SaleItemDto(
+            id = "item-1",
+            saleId = "sale-1",
+            productId = "prod-1",
+            quantity = 5.0,
+            unitPrice = 10.0,
+            totalPrice = 50.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val jsonString = json.encodeToString(dto)
+
+        assertTrue(jsonString.contains("sale_id"))
+        assertTrue(jsonString.contains("product_id"))
+        assertTrue(jsonString.contains("unit_price"))
+        assertTrue(jsonString.contains("total_price"))
+    }
+}
+
+class InventoryDtoTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun testJsonSerializationWithSnakeCase() {
+        val dto = InventoryDto(
+            id = "inv-1",
+            productId = "prod-1",
+            siteId = "site-1",
+            countDate = 1000L,
+            countedQuantity = 50.0,
+            theoreticalQuantity = 55.0,
+            discrepancy = -5.0,
+            reason = "Damaged items",
+            countedBy = "user",
+            notes = "Test inventory",
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val jsonString = json.encodeToString(dto)
+
+        assertTrue(jsonString.contains("product_id"))
+        assertTrue(jsonString.contains("site_id"))
+        assertTrue(jsonString.contains("count_date"))
+        assertTrue(jsonString.contains("counted_quantity"))
+        assertTrue(jsonString.contains("theoretical_quantity"))
+        assertTrue(jsonString.contains("counted_by"))
+        assertTrue(jsonString.contains("created_at"))
+        assertTrue(jsonString.contains("created_by"))
+    }
+}
+
+class SaleBatchAllocationDtoTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Test
+    fun testToModel() {
+        val dto = SaleBatchAllocationDto(
+            id = "alloc-1",
+            saleItemId = "item-1",
+            batchId = "batch-1",
+            quantityAllocated = 5.0,
+            purchasePriceAtAllocation = 10.0,
+            quantity = 5.0,
+            unitCost = 10.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        assertEquals("alloc-1", model.id)
+        assertEquals("item-1", model.saleItemId)
+        assertEquals("batch-1", model.batchId)
+        assertEquals(5.0, model.quantityAllocated)
+        assertEquals(10.0, model.purchasePriceAtAllocation)
+    }
+
+    @Test
+    fun testJsonSerializationWithSnakeCase() {
+        val dto = SaleBatchAllocationDto(
+            id = "alloc-1",
+            saleItemId = "item-1",
+            batchId = "batch-1",
+            quantityAllocated = 5.0,
+            purchasePriceAtAllocation = 10.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val jsonString = json.encodeToString(dto)
+
+        assertTrue(jsonString.contains("sale_item_id"))
+        assertTrue(jsonString.contains("batch_id"))
+        assertTrue(jsonString.contains("quantity_allocated"))
+        assertTrue(jsonString.contains("purchase_price_at_allocation"))
     }
 }
