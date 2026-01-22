@@ -5,19 +5,23 @@ import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.*
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.CurrentStock
+import com.medistock.shared.domain.model.InventoryItem
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class InventoryActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var spinnerProduct: Spinner
     private lateinit var textTheoreticalStock: TextView
@@ -39,7 +43,7 @@ class InventoryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_inventory)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
         currentSiteId = PrefsHelper.getActiveSiteId(this)
 
@@ -75,9 +79,9 @@ class InventoryActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getAll().first()
+            products = sdk.productRepository.getAll()
             val siteId = currentSiteId ?: return@launch
-            currentStockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
+            currentStockItems = sdk.stockRepository.getCurrentStockForSite(siteId)
 
             withContext(Dispatchers.Main) {
                 val productNames = products.map { "${it.name} (${it.unit})" }
@@ -140,35 +144,40 @@ class InventoryActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             val currentUser = authManager.getUsername().ifBlank { "system" }
-            val inventory = Inventory(
+            val now = System.currentTimeMillis()
+            val inventoryItem = InventoryItem(
+                id = UUID.randomUUID().toString(),
                 productId = selectedProductId!!,
                 siteId = currentSiteId!!,
-                countDate = System.currentTimeMillis(),
+                countDate = now,
                 countedQuantity = countedQty,
                 theoreticalQuantity = theoreticalQuantity,
                 discrepancy = discrepancy,
                 reason = reason,
                 countedBy = countedBy,
                 notes = notes,
+                createdAt = now,
                 createdBy = currentUser
             )
-            db.inventoryDao().insert(inventory)
+            sdk.inventoryItemRepository.insert(inventoryItem)
 
             // If there's a discrepancy, create a stock adjustment movement
             if (discrepancy != 0.0) {
-                val latestPrice = db.productPriceDao().getLatestPrice(selectedProductId!!).first()
+                val latestPrice = sdk.productPriceRepository.getLatestPrice(selectedProductId!!)
 
                 val movement = StockMovement(
+                    id = UUID.randomUUID().toString(),
                     productId = selectedProductId!!,
+                    siteId = currentSiteId!!,
+                    quantity = kotlin.math.abs(discrepancy),
                     type = if (discrepancy > 0) "in" else "out",
-                    quantity = Math.abs(discrepancy),
-                    date = System.currentTimeMillis(),
+                    date = now,
                     purchasePriceAtMovement = latestPrice?.purchasePrice ?: 0.0,
                     sellingPriceAtMovement = latestPrice?.sellingPrice ?: 0.0,
-                    siteId = currentSiteId!!,
+                    createdAt = now,
                     createdBy = currentUser
                 )
-                db.stockMovementDao().insert(movement)
+                sdk.stockMovementRepository.insert(movement)
             }
 
             withContext(Dispatchers.Main) {

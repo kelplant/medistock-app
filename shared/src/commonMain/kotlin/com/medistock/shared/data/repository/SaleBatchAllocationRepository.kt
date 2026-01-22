@@ -27,6 +27,10 @@ class SaleBatchAllocationRepository(private val database: MedistockDatabase) {
         )
     }
 
+    suspend fun deleteForSaleItem(saleItemId: String) = withContext(Dispatchers.Default) {
+        queries.deleteSaleBatchAllocationsBySaleItem(saleItemId)
+    }
+
     private fun com.medistock.shared.db.Sale_batch_allocations.toModel(): SaleBatchAllocation {
         return SaleBatchAllocation(
             id = id,

@@ -5,13 +5,17 @@ import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.*
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.ProductPrice
+import com.medistock.shared.domain.model.PurchaseBatch
+import com.medistock.shared.domain.model.Site
+import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -19,7 +23,7 @@ import java.util.*
 
 class PurchaseActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var spinnerSite: Spinner
     private lateinit var spinnerProduct: Spinner
@@ -32,7 +36,7 @@ class PurchaseActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var textMarginInfo: TextView
 
-    private var sites: List<com.medistock.data.entities.Site> = emptyList()
+    private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
     private var selectedProductId: String? = null
     private var selectedProduct: Product? = null
@@ -46,7 +50,7 @@ class PurchaseActivity : AppCompatActivity() {
         setContentView(R.layout.activity_purchase)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
         selectedSiteId = PrefsHelper.getActiveSiteId(this)
 
@@ -113,7 +117,7 @@ class PurchaseActivity : AppCompatActivity() {
 
     private fun loadSites() {
         lifecycleScope.launch(Dispatchers.IO) {
-            sites = db.siteDao().getAll().first()
+            sites = sdk.siteRepository.getAll()
             withContext(Dispatchers.Main) {
                 val siteNames = sites.map { it.name }
                 val adapter = ArrayAdapter(
@@ -135,7 +139,7 @@ class PurchaseActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getAll().first()
+            products = sdk.productRepository.getAll()
             withContext(Dispatchers.Main) {
                 val productNames = products.map { "${it.name} (${it.unit})" }
                 val adapter = ArrayAdapter(
@@ -220,48 +224,57 @@ class PurchaseActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val product = selectedProduct ?: return@launch
             val currentUser = authManager.getUsername().ifBlank { "system" }
+            val now = System.currentTimeMillis()
 
             // Create purchase batch
             val batch = PurchaseBatch(
+                id = UUID.randomUUID().toString(),
                 productId = selectedProductId!!,
                 siteId = selectedSiteId!!,
                 batchNumber = batchNumber.ifEmpty { null }, // Optional, null if not provided
-                purchaseDate = System.currentTimeMillis(),
+                purchaseDate = now,
                 initialQuantity = quantity,
                 remainingQuantity = quantity,
                 purchasePrice = purchasePrice,
                 supplierName = supplier,
                 expiryDate = expiryDate,
                 isExhausted = false,
+                createdAt = now,
+                updatedAt = now,
                 createdBy = currentUser,
                 updatedBy = currentUser
             )
-            db.purchaseBatchDao().insert(batch)
+            sdk.purchaseBatchRepository.insert(batch)
 
             // Create stock movement (entry)
             val movement = StockMovement(
+                id = UUID.randomUUID().toString(),
                 productId = selectedProductId!!,
-                type = "in",
+                siteId = selectedSiteId!!,
                 quantity = quantity,
-                date = System.currentTimeMillis(),
+                type = "in",
+                date = now,
                 purchasePriceAtMovement = purchasePrice,
                 sellingPriceAtMovement = sellingPrice,
-                siteId = selectedSiteId!!,
+                createdAt = now,
                 createdBy = currentUser
             )
-            db.stockMovementDao().insert(movement)
+            sdk.stockMovementRepository.insert(movement)
 
             // Update product price record
             val priceRecord = ProductPrice(
+                id = UUID.randomUUID().toString(),
                 productId = selectedProductId!!,
-                effectiveDate = System.currentTimeMillis(),
+                effectiveDate = now,
                 purchasePrice = purchasePrice,
                 sellingPrice = sellingPrice,
                 source = "purchase",
+                createdAt = now,
+                updatedAt = now,
                 createdBy = currentUser,
                 updatedBy = currentUser
             )
-            db.productPriceDao().insert(priceRecord)
+            sdk.productPriceRepository.insert(priceRecord)
 
             withContext(Dispatchers.Main) {
                 Toast.makeText(

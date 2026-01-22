@@ -1,28 +1,32 @@
 package com.medistock.util
 
-import com.medistock.data.dao.PurchaseBatchDao
-import com.medistock.data.entities.PurchaseBatch
+import com.medistock.shared.data.repository.PurchaseBatchRepository
+import com.medistock.shared.domain.model.PurchaseBatch
+import java.util.UUID
 
 /**
  * Helper class to manage FIFO batch transfers between sites.
  * When transferring products, batches are consumed in FIFO order (oldest first).
  */
-class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
+class BatchTransferHelper(private val batchRepository: PurchaseBatchRepository) {
 
     /**
      * Transfer quantity from source site to destination site using FIFO.
      * Returns list of batch transfers (source batch info for creating destination batches).
      */
-    fun transferBatchesFIFO(
+    suspend fun transferBatchesFIFO(
         productId: String,
         fromSiteId: String,
         toSiteId: String,
         totalQuantity: Double,
         currentUser: String
     ): List<BatchTransferInfo> {
-        val batches = batchDao.getAvailableBatchesFIFOSync(productId, fromSiteId)
+        val batches = batchRepository.getByProductAndSite(productId, fromSiteId)
+            .filter { !it.isExhausted && it.remainingQuantity > 0 }
+            .sortedBy { it.purchaseDate }
         var remainingToTransfer = totalQuantity
         val transferInfoList = mutableListOf<BatchTransferInfo>()
+        val now = System.currentTimeMillis()
 
         for (batch in batches) {
             if (remainingToTransfer <= 0) break
@@ -30,16 +34,13 @@ class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
             val quantityFromThisBatch = minOf(batch.remainingQuantity, remainingToTransfer)
 
             // Update source batch
-            val updatedBatch = batch.copy(
-                remainingQuantity = batch.remainingQuantity - quantityFromThisBatch,
-                isExhausted = (batch.remainingQuantity - quantityFromThisBatch) <= 0.0,
-                updatedAt = System.currentTimeMillis(),
-                updatedBy = currentUser
-            )
-            batchDao.update(updatedBatch)
+            val newRemainingQty = batch.remainingQuantity - quantityFromThisBatch
+            val isExhausted = newRemainingQty <= 0.0
+            batchRepository.updateQuantity(batch.id, newRemainingQty, isExhausted, now, currentUser)
 
             // Create new batch on destination site
             val newBatch = PurchaseBatch(
+                id = UUID.randomUUID().toString(),
                 productId = productId,
                 siteId = toSiteId,
                 batchNumber = "${batch.batchNumber ?: "Batch-${batch.id}"}-TRANSFER",
@@ -50,12 +51,12 @@ class BatchTransferHelper(private val batchDao: PurchaseBatchDao) {
                 supplierName = "Transfer from Site ${fromSiteId}",
                 expiryDate = batch.expiryDate,
                 isExhausted = false,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
+                createdAt = now,
+                updatedAt = now,
                 createdBy = currentUser,
                 updatedBy = currentUser
             )
-            batchDao.insert(newBatch)
+            batchRepository.insert(newBatch)
 
             // Track transfer info
             transferInfoList.add(

@@ -38,6 +38,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val stockRepository: StockRepository by lazy { StockRepository(database) }
     val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
     val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
+    val productPriceRepository: ProductPriceRepository by lazy { ProductPriceRepository(database) }
 
     // Services - Shared business services
     val permissionService: PermissionService by lazy { PermissionService(userPermissionRepository) }

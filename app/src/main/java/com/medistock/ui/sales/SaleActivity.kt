@@ -11,27 +11,24 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.SaleBatchAllocation
-import com.medistock.data.entities.StockMovement
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Customer
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.Sale
 import com.medistock.shared.domain.model.SaleItem
 import com.medistock.shared.domain.model.Site
+import com.medistock.shared.domain.model.SaleBatchAllocation
+import com.medistock.shared.domain.model.StockMovement
 import com.medistock.ui.adapters.SaleItemAdapter
 import java.util.UUID
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SaleActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
     private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var spinnerSite: Spinner
@@ -55,7 +52,6 @@ class SaleActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sale)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
         sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
         selectedSiteId = PrefsHelper.getActiveSiteId(this)
@@ -144,7 +140,7 @@ class SaleActivity : AppCompatActivity() {
     private fun loadStockForSite() {
         lifecycleScope.launch(Dispatchers.IO) {
             val siteId = selectedSiteId ?: return@launch
-            val stockItems = db.stockMovementDao().getCurrentStockForSite(siteId).first()
+            val stockItems = sdk.stockRepository.getCurrentStockForSite(siteId)
             currentStock = stockItems.associate { it.productId to it.quantityOnHand }
         }
     }
@@ -201,7 +197,7 @@ class SaleActivity : AppCompatActivity() {
 
                     // Load suggested price
                     lifecycleScope.launch(Dispatchers.IO) {
-                        val latestPrice = db.productPriceDao().getLatestPrice(selectedProduct!!.id).first()
+                        val latestPrice = sdk.productPriceRepository.getLatestPrice(selectedProduct!!.id)
                         withContext(Dispatchers.Main) {
                             if (latestPrice != null) {
                                 editPrice.setText(String.format("%.2f", latestPrice.sellingPrice))
@@ -413,12 +409,16 @@ class SaleActivity : AppCompatActivity() {
     private suspend fun allocateBatchesFIFO(
         productId: String,
         siteId: String,
-        quantityNeeded: Double
+        quantityNeeded: Double,
+        currentUser: String
     ): Pair<List<SaleBatchAllocation>, Double> {
-        val batches = db.purchaseBatchDao().getAvailableBatchesFIFOSync(productId, siteId)
+        // Get available batches ordered by purchase date (FIFO) - already filtered by is_exhausted=0
+        val batches = sdk.purchaseBatchRepository.getByProductAndSite(productId, siteId)
+            .sortedBy { it.purchaseDate }
         val allocations = mutableListOf<SaleBatchAllocation>()
         var remainingQty = quantityNeeded
         var totalCost = 0.0
+        val now = System.currentTimeMillis()
 
         for (batch in batches) {
             if (remainingQty <= 0) break
@@ -428,10 +428,13 @@ class SaleActivity : AppCompatActivity() {
             // Create allocation (saleItemId will be set later)
             allocations.add(
                 SaleBatchAllocation(
+                    id = UUID.randomUUID().toString(),
                     saleItemId = "", // Will be updated after sale item is created
                     batchId = batch.id,
                     quantityAllocated = qtyToTake,
-                    purchasePriceAtAllocation = batch.purchasePrice
+                    purchasePriceAtAllocation = batch.purchasePrice,
+                    createdAt = now,
+                    createdBy = currentUser
                 )
             )
 
@@ -440,7 +443,8 @@ class SaleActivity : AppCompatActivity() {
 
             // Update batch remaining quantity
             val newRemainingQty = batch.remainingQuantity - qtyToTake
-            db.purchaseBatchDao().updateRemainingQuantity(batch.id, newRemainingQty, System.currentTimeMillis())
+            val isExhausted = newRemainingQty <= 0
+            sdk.purchaseBatchRepository.updateQuantity(batch.id, newRemainingQty, isExhausted, now, currentUser)
 
             remainingQty -= qtyToTake
         }
@@ -456,21 +460,22 @@ class SaleActivity : AppCompatActivity() {
     /**
      * Reverses batch allocations when editing/deleting a sale.
      */
-    private suspend fun reverseBatchAllocations(saleItemId: String) {
-        val allocations = db.saleBatchAllocationDao().getAllocationsForSaleItem(saleItemId).first()
+    private suspend fun reverseBatchAllocations(saleItemId: String, currentUser: String) {
+        val allocations = sdk.saleBatchAllocationRepository.getBySaleItem(saleItemId)
+        val now = System.currentTimeMillis()
 
         for (allocation in allocations) {
             // Get current batch
-            val batch = db.purchaseBatchDao().getById(allocation.batchId).first()
+            val batch = sdk.purchaseBatchRepository.getById(allocation.batchId)
             batch?.let {
                 // Add back the quantity
                 val newRemainingQty = it.remainingQuantity + allocation.quantityAllocated
-                db.purchaseBatchDao().updateRemainingQuantity(it.id, newRemainingQty, System.currentTimeMillis())
+                sdk.purchaseBatchRepository.updateQuantity(it.id, newRemainingQty, false, now, currentUser)
             }
         }
 
         // Delete allocations
-        db.saleBatchAllocationDao().deleteAllForSaleItem(saleItemId)
+        sdk.saleBatchAllocationRepository.deleteForSaleItem(saleItemId)
     }
 
     private fun saveSale() {
@@ -511,20 +516,22 @@ class SaleActivity : AppCompatActivity() {
                     // Reverse old batch allocations and stock movements
                     oldItems.forEach { oldItem ->
                         // Reverse batch allocations
-                        reverseBatchAllocations(oldItem.id)
+                        reverseBatchAllocations(oldItem.id, currentUser)
 
                         // Reverse stock movement
                         val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
                             productId = oldItem.productId,
-                            type = "in",
-                            quantity = oldItem.quantity,
-                            date = currentTime,
                             siteId = selectedSiteId ?: "",
+                            quantity = oldItem.quantity,
+                            type = "in",
+                            date = currentTime,
                             purchasePriceAtMovement = 0.0,
                             sellingPriceAtMovement = oldItem.unitPrice,
+                            createdAt = currentTime,
                             createdBy = currentUser
                         )
-                        db.stockMovementDao().insert(movement)
+                        sdk.stockMovementRepository.insert(movement)
                     }
 
                     // Delete old sale items AFTER reversing
@@ -536,7 +543,8 @@ class SaleActivity : AppCompatActivity() {
                         val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
                             item.productId,
                             selectedSiteId ?: "",
-                            item.quantity
+                            item.quantity,
+                            currentUser
                         )
 
                         // Insert sale item
@@ -556,23 +564,25 @@ class SaleActivity : AppCompatActivity() {
 
                         // Insert batch allocations with correct saleItemId
                         allocations.forEach { allocation ->
-                            db.saleBatchAllocationDao().insert(
+                            sdk.saleBatchAllocationRepository.insert(
                                 allocation.copy(saleItemId = newItem.id)
                             )
                         }
 
                         // Create stock movement with actual purchase price
                         val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
                             productId = item.productId,
-                            type = "out",
-                            quantity = item.quantity,
-                            date = currentTime,
                             siteId = selectedSiteId ?: "",
+                            quantity = item.quantity,
+                            type = "out",
+                            date = currentTime,
                             purchasePriceAtMovement = avgPurchasePrice,
                             sellingPriceAtMovement = item.unitPrice,
+                            createdAt = currentTime,
                             createdBy = currentUser
                         )
-                        db.stockMovementDao().insert(movement)
+                        sdk.stockMovementRepository.insert(movement)
                     }
 
                     withContext(Dispatchers.Main) {
@@ -601,7 +611,8 @@ class SaleActivity : AppCompatActivity() {
                         val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
                             item.productId,
                             selectedSiteId ?: "",
-                            item.quantity
+                            item.quantity,
+                            currentUser
                         )
 
                         // Insert sale item
@@ -618,23 +629,25 @@ class SaleActivity : AppCompatActivity() {
 
                         // Insert batch allocations with correct saleItemId
                         allocations.forEach { allocation ->
-                            db.saleBatchAllocationDao().insert(
+                            sdk.saleBatchAllocationRepository.insert(
                                 allocation.copy(saleItemId = newItem.id)
                             )
                         }
 
                         // Create stock movement with actual purchase price
                         val movement = StockMovement(
+                            id = UUID.randomUUID().toString(),
                             productId = item.productId,
-                            type = "out",
-                            quantity = item.quantity,
-                            date = currentTime,
                             siteId = selectedSiteId ?: "",
+                            quantity = item.quantity,
+                            type = "out",
+                            date = currentTime,
                             purchasePriceAtMovement = avgPurchasePrice,
                             sellingPriceAtMovement = item.unitPrice,
+                            createdAt = currentTime,
                             createdBy = currentUser
                         )
-                        db.stockMovementDao().insert(movement)
+                        sdk.stockMovementRepository.insert(movement)
                     }
 
                     withContext(Dispatchers.Main) {
