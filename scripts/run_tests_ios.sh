@@ -70,7 +70,7 @@ echo "=========================================="
 
 # Run tests with iOS platform flag
 cd "$PROJECT_DIR"
-"$MAESTRO_BIN" -p ios test .maestro/ios/
+"$MAESTRO_BIN" -p ios test --no-parallel .maestro/ios/
 
 EXIT_CODE=$?
 
