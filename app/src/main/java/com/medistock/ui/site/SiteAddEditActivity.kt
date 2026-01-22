@@ -8,17 +8,19 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Site
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Site
 import com.medistock.util.AuthManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class SiteAddEditActivity : AppCompatActivity() {
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private var siteId: String? = null
     private var existingSite: Site? = null
@@ -27,7 +29,7 @@ class SiteAddEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         val editName = findViewById<EditText>(R.id.editSiteName)
@@ -38,13 +40,13 @@ class SiteAddEditActivity : AppCompatActivity() {
         if (siteId != null) {
             supportActionBar?.title = "Edit Site"
             btnDelete.visibility = View.VISIBLE
-            CoroutineScope(Dispatchers.IO).launch {
-                val site = db.siteDao().getById(siteId!!).first()
-                runOnUiThread {
-                    if (site != null) {
-                        existingSite = site
-                        editName.setText(site.name)
-                    }
+            lifecycleScope.launch {
+                val site = withContext(Dispatchers.IO) {
+                    sdk.siteRepository.getById(siteId!!)
+                }
+                if (site != null) {
+                    existingSite = site
+                    editName.setText(site.name)
                 }
             }
         } else {
@@ -57,21 +59,23 @@ class SiteAddEditActivity : AppCompatActivity() {
                 Toast.makeText(this, "Site name required", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            CoroutineScope(Dispatchers.IO).launch {
+            lifecycleScope.launch {
                 val currentUser = authManager.getUsername().ifBlank { "system" }
-                if (siteId == null) {
-                    db.siteDao().insert(
-                        Site(
+                withContext(Dispatchers.IO) {
+                    if (siteId == null) {
+                        val newSite = Site(
+                            id = UUID.randomUUID().toString(),
                             name = name,
+                            createdAt = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis(),
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                    )
-                } else {
-                    val createdAt = existingSite?.createdAt ?: System.currentTimeMillis()
-                    val createdBy = existingSite?.createdBy?.ifBlank { currentUser } ?: currentUser
-                    db.siteDao().update(
-                        Site(
+                        sdk.siteRepository.insert(newSite)
+                    } else {
+                        val createdAt = existingSite?.createdAt ?: System.currentTimeMillis()
+                        val createdBy = existingSite?.createdBy?.ifBlank { currentUser } ?: currentUser
+                        val updatedSite = Site(
                             id = siteId!!,
                             name = name,
                             createdAt = createdAt,
@@ -79,7 +83,8 @@ class SiteAddEditActivity : AppCompatActivity() {
                             createdBy = createdBy,
                             updatedBy = currentUser
                         )
-                    )
+                        sdk.siteRepository.update(updatedSite)
+                    }
                 }
                 finish()
             }
@@ -104,15 +109,12 @@ class SiteAddEditActivity : AppCompatActivity() {
     private fun deleteSite() {
         if (siteId == null) return
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val site = db.siteDao().getById(siteId!!).first()
-            if (site != null) {
-                db.siteDao().delete(site)
-                runOnUiThread {
-                    Toast.makeText(this@SiteAddEditActivity, "Site deleted", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                sdk.siteRepository.delete(siteId!!)
             }
+            Toast.makeText(this@SiteAddEditActivity, "Site deleted", Toast.LENGTH_SHORT).show()
+            finish()
         }
     }
 
