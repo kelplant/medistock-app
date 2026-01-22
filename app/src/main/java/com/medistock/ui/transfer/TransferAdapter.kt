@@ -7,9 +7,9 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.Product
-import com.medistock.data.entities.ProductTransfer
-import com.medistock.data.entities.Site
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.ProductTransfer
+import com.medistock.shared.domain.model.Site
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -49,13 +49,14 @@ class TransferAdapter(
         holder.textProduct.text = product?.name ?: "Unknown Product"
         holder.textQuantity.text = "Quantity: ${transfer.quantity} ${product?.unit ?: ""}"
         holder.textRoute.text = "From: ${fromSite?.name ?: "Unknown"} → To: ${toSite?.name ?: "Unknown"}"
-        holder.textDate.text = "Date: ${dateFormat.format(Date(transfer.date))}"
+        holder.textDate.text = "Date: ${dateFormat.format(Date(transfer.createdAt))}"
         holder.textCreatedBy.text = "By: ${transfer.createdBy.ifEmpty { "Unknown" }}"
 
         // Show notes if available
-        if (transfer.notes.isNotEmpty()) {
+        val notes = transfer.notes
+        if (!notes.isNullOrEmpty()) {
             holder.textNotes.visibility = View.VISIBLE
-            holder.textNotes.text = "Note: ${transfer.notes}"
+            holder.textNotes.text = "Note: $notes"
         } else {
             holder.textNotes.visibility = View.GONE
         }

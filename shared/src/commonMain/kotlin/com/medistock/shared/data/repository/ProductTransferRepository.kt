@@ -50,6 +50,10 @@ class ProductTransferRepository(private val database: MedistockDatabase) {
         )
     }
 
+    suspend fun delete(id: String) = withContext(Dispatchers.Default) {
+        queries.deleteTransfer(id)
+    }
+
     fun observeAll(): Flow<List<ProductTransfer>> {
         return queries.getAllTransfers()
             .asFlow()

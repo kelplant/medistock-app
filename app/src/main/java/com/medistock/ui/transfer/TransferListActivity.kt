@@ -11,20 +11,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.ProductTransfer
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.ProductTransfer
 import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
 import com.medistock.util.PermissionManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class TransferListActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var permissionManager: PermissionManager
     private lateinit var recyclerView: RecyclerView
@@ -37,9 +37,9 @@ class TransferListActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Transfer Products"
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
-        permissionManager = PermissionManager(db.userPermissionDao(), authManager)
+        permissionManager = PermissionManager(sdk.userPermissionRepository, authManager)
 
         recyclerView = findViewById(R.id.recyclerTransfers)
         fab = findViewById(R.id.fabNewTransfer)
@@ -79,9 +79,9 @@ class TransferListActivity : AppCompatActivity() {
 
     private fun loadTransfers() {
         lifecycleScope.launch(Dispatchers.IO) {
-            val transfers = db.productTransferDao().getAll().first()
-            val products = db.productDao().getAll().first().associateBy { it.id }
-            val sites = db.siteDao().getAll().first().associateBy { it.id }
+            val transfers = sdk.productTransferRepository.getAll()
+            val products = sdk.productRepository.getAll().associateBy { it.id }
+            val sites = sdk.siteRepository.getAll().associateBy { it.id }
 
             withContext(Dispatchers.Main) {
                 adapter = TransferAdapter(
@@ -127,9 +127,13 @@ class TransferListActivity : AppCompatActivity() {
                 return@launch
             }
 
-            val product = db.productDao().getById(transfer.productId).first()
-            val fromSite = db.siteDao().getById(transfer.fromSiteId).first()
-            val toSite = db.siteDao().getById(transfer.toSiteId).first()
+            val (product, fromSite, toSite) = withContext(Dispatchers.IO) {
+                Triple(
+                    sdk.productRepository.getById(transfer.productId),
+                    sdk.siteRepository.getById(transfer.fromSiteId),
+                    sdk.siteRepository.getById(transfer.toSiteId)
+                )
+            }
 
             AlertDialog.Builder(this@TransferListActivity)
                 .setTitle("Delete Transfer")
@@ -145,7 +149,7 @@ class TransferListActivity : AppCompatActivity() {
     private fun deleteTransfer(transfer: ProductTransfer) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                db.productTransferDao().delete(transfer)
+                sdk.productTransferRepository.delete(transfer.id)
                 // Note: For simplicity, we don't automatically revert stock movements
                 // This should be done manually or in a future enhancement
 
