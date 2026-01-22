@@ -6,28 +6,30 @@ import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Site
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Site
 import com.medistock.ui.MainActivity
 import com.medistock.util.AuthManager
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class SiteSelectorActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var selectedSite: Site
-    private lateinit var sites: List<Site>
+    private var sites: List<Site> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_selector)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         val siteSpinner = findViewById<Spinner>(R.id.spinnerSite)
@@ -36,7 +38,9 @@ class SiteSelectorActivity : AppCompatActivity() {
         val btnAddSite = findViewById<Button>(R.id.btnAddSite)
 
         lifecycleScope.launch {
-            sites = db.siteDao().getAll().first()
+            sites = withContext(Dispatchers.IO) {
+                sdk.siteRepository.getAll()
+            }
             siteSpinner.adapter = ArrayAdapter(
                 this@SiteSelectorActivity,
                 android.R.layout.simple_spinner_item,
@@ -49,14 +53,21 @@ class SiteSelectorActivity : AppCompatActivity() {
             if (siteName.isNotEmpty()) {
                 lifecycleScope.launch {
                     val currentUser = authManager.getUsername().ifBlank { "system" }
-                    db.siteDao().insert(
-                        Site(
-                            name = siteName,
-                            createdBy = currentUser,
-                            updatedBy = currentUser
-                        )
+                    val currentTime = System.currentTimeMillis()
+                    val newSite = Site(
+                        id = UUID.randomUUID().toString(),
+                        name = siteName,
+                        createdAt = currentTime,
+                        updatedAt = currentTime,
+                        createdBy = currentUser,
+                        updatedBy = currentUser
                     )
-                    val refreshedSites = db.siteDao().getAll().first()
+                    withContext(Dispatchers.IO) {
+                        sdk.siteRepository.insert(newSite)
+                    }
+                    val refreshedSites = withContext(Dispatchers.IO) {
+                        sdk.siteRepository.getAll()
+                    }
                     sites = refreshedSites
                     siteSpinner.adapter = ArrayAdapter(
                         this@SiteSelectorActivity,
