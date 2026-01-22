@@ -1,5 +1,5 @@
-# MediStock iOS - Purchases Tests
-# Test purchase products navigation
+# MediStock iOS - Sales Tests
+# Test sell products navigation
 appId: com.medistock.ios
 ---
 
@@ -26,17 +26,17 @@ appId: com.medistock.ios
 - assertVisible: "MediStock"
 - assertVisible: "Operations"
 
-- takeScreenshot: "ios_purchases_home"
+- takeScreenshot: "ios_sales_home"
 
-# Navigate to Purchase Products
+# Navigate to Sell Products
 - tapOn:
-    text: "Purchase Products"
+    text: "Sell Products"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:
     timeout: 5000
 
-- takeScreenshot: "ios_purchases_screen"
+- takeScreenshot: "ios_sales_screen"
 
 # Navigate back to home
 - tapOn:
@@ -45,4 +45,4 @@ appId: com.medistock.ios
 
 - waitForAnimationToEnd
 
-- takeScreenshot: "ios_purchases_completed"
+- takeScreenshot: "ios_sales_completed"

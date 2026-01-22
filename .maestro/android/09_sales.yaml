@@ -1,5 +1,5 @@
-# MediStock Android - Purchases Tests
-# Test purchase products navigation
+# MediStock Android - Sales Tests
+# Test sell products navigation
 appId: com.medistock
 ---
 
@@ -28,15 +28,15 @@ appId: com.medistock
     text: ".*MediStock.*"
     optional: true
 
-- takeScreenshot: "android_purchases_home"
+- takeScreenshot: "android_sales_home"
 
-# Navigate to Purchase Products
+# Navigate to Sell Products
 - tapOn:
-    text: "Purchase Products"
+    text: "Sell Products"
 
 - waitForAnimationToEnd
 
-- takeScreenshot: "android_purchases_screen"
+- takeScreenshot: "android_sales_screen"
 
 # Navigate back to home
 - back
@@ -47,4 +47,4 @@ appId: com.medistock
     text: ".*MediStock.*"
     optional: true
 
-- takeScreenshot: "android_purchases_completed"
+- takeScreenshot: "android_sales_completed"
