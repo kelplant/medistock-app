@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 data class CategoryDto(
     val id: String,
     val name: String,
+    @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("created_at") val createdAt: Long,
     @SerialName("updated_at") val updatedAt: Long,
     @SerialName("created_by") val createdBy: String,
@@ -20,6 +21,7 @@ data class CategoryDto(
     fun toModel(): Category = Category(
         id = id,
         name = name,
+        isActive = isActive,
         createdAt = createdAt,
         updatedAt = updatedAt,
         createdBy = createdBy,
@@ -30,6 +32,7 @@ data class CategoryDto(
         fun fromModel(category: Category, clientId: String? = null): CategoryDto = CategoryDto(
             id = category.id,
             name = category.name,
+            isActive = category.isActive,
             createdAt = category.createdAt,
             updatedAt = category.updatedAt,
             createdBy = category.createdBy,

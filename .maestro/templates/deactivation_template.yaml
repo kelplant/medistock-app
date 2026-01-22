@@ -1,0 +1,366 @@
+# TEMPLATE: Deactivation Flow Test - Phase 11
+# This is a TEMPLATE for future tests when Phase 11 UI is implemented
+# DO NOT run this test yet - it will fail because the UI is not ready
+#
+# Usage:
+# 1. Copy this template when implementing Phase 11 UI
+# 2. Replace placeholders with actual UI elements
+# 3. Update testIds based on actual implementation
+# 4. Test on both Android and iOS
+
+appId: com.medistock  # Change to com.medistock.ios for iOS
+---
+
+# Scenario: Try to delete an entity that is used elsewhere
+# Expected: System shows deactivation dialog instead of deleting
+
+# ========================================
+# STEP 1: Login as admin
+# ========================================
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"  # iOS: use "Username"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"  # iOS: use "Password"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"  # iOS: use text: "Login"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========================================
+# STEP 2: Create a site
+# ========================================
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Site Management.*"
+
+- waitForAnimationToEnd
+
+# Create new site
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- inputText: "Site With Products"
+
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify site created
+- assertVisible: "Site With Products"
+
+# ========================================
+# STEP 3: Create a product at this site
+# ========================================
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Enter product name
+- inputText: "Product Using Site"
+
+# TODO: Select site from dropdown
+# This part depends on how the UI handles site selection
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+
+- tapOn:
+    text: "Site With Products"
+
+# Save product
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# ========================================
+# STEP 4: Try to delete the site (should trigger deactivation)
+# ========================================
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Site Management.*"
+
+- waitForAnimationToEnd
+
+# Attempt to delete the site
+- longPressOn:
+    text: "Site With Products"
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+# ========================================
+# STEP 5: Verify deactivation dialog appears
+# TODO: Update these selectors based on actual UI implementation
+# ========================================
+
+# Expected dialog content:
+# - Title: "Cannot Delete Site" or similar
+# - Message: "This site is used in X products" or similar
+# - Buttons: "Deactivate" and "Cancel"
+
+- assertVisible:
+    text: ".*used.*"  # TODO: Update with actual message text
+    optional: true
+
+- assertVisible:
+    text: ".*product.*"  # Should mention products
+    optional: true
+
+- assertVisible:
+    text: ".*Deactivate.*"  # TODO: Confirm button text
+    optional: true
+
+- takeScreenshot: "deactivation_dialog"
+
+# ========================================
+# STEP 6: Confirm deactivation
+# ========================================
+- tapOn:
+    text: ".*Deactivate.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# ========================================
+# STEP 7: Verify site is marked inactive
+# TODO: Update based on how inactive entities are displayed
+# ========================================
+
+# Option 1: Site shown with "Inactive" badge/label
+- assertVisible:
+    text: "Site With Products"
+
+# TODO: Verify inactive indicator
+# This could be:
+# - A badge with text "Inactive"
+# - Grey text color
+# - Strikethrough text
+# - An icon
+- assertVisible:
+    text: ".*Inactive.*"
+    optional: true
+
+- takeScreenshot: "site_deactivated"
+
+# ========================================
+# STEP 8: Verify site doesn't appear in product creation dropdown
+# ========================================
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Open site selector
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+
+# Verify deactivated site is NOT in the list
+- assertNotVisible:
+    text: "Site With Products"
+    optional: true
+
+- takeScreenshot: "inactive_site_not_in_dropdown"
+
+# ========================================
+# STEP 9: Verify inactive site still shows in existing product
+# (When viewing product details)
+# ========================================
+- back
+- waitForAnimationToEnd
+
+# Tap on the product we created
+- tapOn:
+    text: "Product Using Site"
+
+- waitForAnimationToEnd
+
+# Verify site is shown (even though inactive)
+- assertVisible:
+    text: "Site With Products"
+
+# TODO: Verify there's a warning/indicator that the site is inactive
+- assertVisible:
+    text: ".*Inactive.*"
+    optional: true
+
+- takeScreenshot: "inactive_site_shown_in_existing_product"
+
+# ========================================
+# OPTIONAL STEP 10: Reactivate the site
+# ========================================
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Site Management.*"
+
+- waitForAnimationToEnd
+
+# TODO: Enable "Show Inactive" filter if it exists
+- tapOn:
+    text: ".*Show Inactive.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select the inactive site
+- longPressOn:
+    text: "Site With Products"
+
+# Tap reactivate
+- tapOn:
+    text: ".*Reactivate.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify site is active again (no "Inactive" label)
+- assertVisible:
+    text: "Site With Products"
+
+- assertNotVisible:
+    text: ".*Inactive.*"
+    optional: true
+
+- takeScreenshot: "site_reactivated"
+
+# ========================================
+# CLEANUP: Delete test data
+# ========================================
+# Now that the site is reactivated and unused, we can delete it
+
+# First delete the product
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+- longPressOn:
+    text: "Product Using Site"
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+# Confirm deletion (should be allowed since product is not used)
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Now delete the site
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Site Management.*"
+
+- waitForAnimationToEnd
+
+- longPressOn:
+    text: "Site With Products"
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+# This time it should allow deletion (no products using it)
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# ========================================
+# IMPLEMENTATION NOTES
+# ========================================
+#
+# Before using this template, the implementation team must provide:
+#
+# 1. Dialog UI Specifications:
+#    - Exact dialog title and message text
+#    - Button labels ("Deactivate", "Deactivate Instead", etc.)
+#    - testIds for dialog elements
+#
+# 2. Inactive Entity Display:
+#    - How are inactive entities visually indicated? (badge, color, icon)
+#    - testIds for inactive indicators
+#    - Can users still see inactive entities by default, or is there a toggle?
+#
+# 3. Filter Toggle:
+#    - Is there a "Show Inactive" toggle in list screens?
+#    - Where is it located? (toolbar, menu, FAB menu)
+#    - testId for the toggle
+#
+# 4. Dropdown Behavior:
+#    - Are inactive entities completely hidden from dropdowns?
+#    - Or shown with disabled state?
+#    - Exception: when editing, is current selection shown even if inactive?
+#
+# 5. Reactivation Flow:
+#    - How do users reactivate? (context menu, edit screen, button)
+#    - Any restrictions? (admin only)
+#    - testIds for reactivation UI
+#
+# 6. Usage Details:
+#    - Does the dialog show detailed usage? ("Used in 3 products, 2 sales")
+#    - Or just a generic message? ("This site cannot be deleted")
+#
+# ========================================
+# TEST VARIATIONS TO CREATE
+# ========================================
+#
+# Based on this template, create:
+# - 12_deactivation_sites.yaml (sites with products/purchases/sales)
+# - 13_deactivation_products.yaml (products with purchases/sales)
+# - 14_deactivation_categories.yaml (categories with products)
+# - 15_deactivation_customers.yaml (customers with sales)
+# - 16_inactive_filters.yaml (show/hide inactive toggle)
+# - 17_reactivation.yaml (reactivate all entity types)
+#
+# Each test should cover:
+# - Android and iOS versions
+# - Different usage scenarios (1 reference, multiple references)
+# - Edge cases (try to use inactive entity in new transaction)

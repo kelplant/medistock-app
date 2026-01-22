@@ -18,6 +18,7 @@ data class Product(
     val siteId: String,
     val minStock: Double? = 0.0,
     val maxStock: Double? = 0.0,
+    val isActive: Boolean = true,
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val createdBy: String = "",

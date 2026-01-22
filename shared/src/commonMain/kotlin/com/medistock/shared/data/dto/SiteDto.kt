@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 data class SiteDto(
     val id: String,
     val name: String,
+    @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("created_at") val createdAt: Long,
     @SerialName("updated_at") val updatedAt: Long,
     @SerialName("created_by") val createdBy: String,
@@ -24,6 +25,7 @@ data class SiteDto(
     fun toModel(): Site = Site(
         id = id,
         name = name,
+        isActive = isActive,
         createdAt = createdAt,
         updatedAt = updatedAt,
         createdBy = createdBy,
@@ -39,6 +41,7 @@ data class SiteDto(
         fun fromModel(site: Site, clientId: String? = null): SiteDto = SiteDto(
             id = site.id,
             name = site.name,
+            isActive = site.isActive,
             createdAt = site.createdAt,
             updatedAt = site.updatedAt,
             createdBy = site.createdBy,
