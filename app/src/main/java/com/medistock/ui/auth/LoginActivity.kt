@@ -12,8 +12,6 @@ import com.google.android.material.textfield.TextInputEditText
 import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
-import com.medistock.shared.domain.model.User
-import com.medistock.shared.domain.model.UserPermission
 import com.medistock.shared.domain.compatibility.CompatibilityResult
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.AppUpdateRequiredActivity
@@ -22,7 +20,6 @@ import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.shared.domain.auth.AuthResult
 import com.medistock.shared.domain.auth.AuthService
 import com.medistock.shared.domain.auth.PasswordVerifier
-import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import com.medistock.util.PasswordMigration
@@ -37,7 +34,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.UUID
 
 /**
  * Android implementation of PasswordVerifier using BCrypt.
@@ -159,48 +155,10 @@ class LoginActivity : AppCompatActivity() {
 
     private suspend fun createDefaultAdminIfNeeded() {
         withContext(Dispatchers.IO) {
-            val users = sdk.userRepository.getAll()
-            if (users.isEmpty()) {
-                // Create default admin user
-                val currentTime = System.currentTimeMillis()
-                val adminUserId = UUID.randomUUID().toString()
-                val adminUser = User(
-                    id = adminUserId,
-                    username = "admin",
-                    password = PasswordHasher.hashPassword("admin"),
-                    fullName = "Administrator",
-                    isAdmin = true,
-                    isActive = true,
-                    createdAt = currentTime,
-                    updatedAt = currentTime,
-                    createdBy = "system",
-                    updatedBy = "system"
-                )
-                sdk.userRepository.insert(adminUser)
-
-                // Give admin all permissions (though admin check bypasses this)
-                val modules = listOf(
-                    Module.STOCK, Module.SALES, Module.PURCHASES,
-                    Module.INVENTORY, Module.ADMIN, Module.PRODUCTS,
-                    Module.SITES, Module.CATEGORIES, Module.USERS
-                )
-                modules.forEach { module ->
-                    val permission = UserPermission(
-                        id = UUID.randomUUID().toString(),
-                        userId = adminUserId,
-                        module = module.name,
-                        canView = true,
-                        canCreate = true,
-                        canEdit = true,
-                        canDelete = true,
-                        createdAt = currentTime,
-                        updatedAt = currentTime,
-                        createdBy = "system",
-                        updatedBy = "system"
-                    )
-                    sdk.userPermissionRepository.insert(permission)
-                }
-            }
+            // Use the shared DefaultAdminService
+            val hashedPassword = PasswordHasher.hashPassword("admin")
+            val currentTime = System.currentTimeMillis()
+            sdk.defaultAdminService.createDefaultAdminIfNeeded(hashedPassword, currentTime)
         }
     }
 

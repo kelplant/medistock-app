@@ -65,6 +65,10 @@ class UserRepository(private val database: MedistockDatabase) {
         queries.countActiveAdmins().executeAsOne()
     }
 
+    suspend fun delete(id: String) = withContext(Dispatchers.Default) {
+        queries.deleteUser(id)
+    }
+
     /**
      * Upsert (INSERT OR REPLACE) a user.
      * Use this for sync operations to handle both new and existing records.

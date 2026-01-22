@@ -8,6 +8,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.data.dto.*
 import com.medistock.shared.domain.sync.SyncDirection
 import com.medistock.shared.domain.sync.SyncOrchestrator
+import com.medistock.util.DebugConfig
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -363,6 +364,14 @@ class SyncManager(
                     sdk.userRepository.upsert(dto.toModel())
                 } catch (e: Exception) {
                     onError?.invoke("User: ${dto.username}", e)
+                }
+            }
+
+            // Remove local system admin if real users were synced
+            if (remoteUsers.isNotEmpty()) {
+                val removed = sdk.defaultAdminService.removeLocalAdminIfRemoteUsersExist()
+                if (removed) {
+                    DebugConfig.d("SyncManager", "Local system admin removed after syncing ${remoteUsers.size} remote users")
                 }
             }
         } catch (e: Exception) {
