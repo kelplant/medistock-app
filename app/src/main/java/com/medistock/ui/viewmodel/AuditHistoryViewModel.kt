@@ -3,18 +3,18 @@ package com.medistock.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.AuditHistory
+import com.medistock.MedistockApplication
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.AuditHistory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AuditHistoryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
-    private val auditHistoryDao = db.auditHistoryDao()
+    private val sdk: MedistockSDK = MedistockApplication.sdk
+    private val auditRepo = sdk.auditRepository
 
     private val _auditEntries = MutableStateFlow<List<AuditHistory>>(emptyList())
     val auditEntries: StateFlow<List<AuditHistory>> = _auditEntries
@@ -22,8 +22,8 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _totalCount = MutableStateFlow(0)
-    val totalCount: StateFlow<Int> = _totalCount
+    private val _totalCount = MutableStateFlow(0L)
+    val totalCount: StateFlow<Long> = _totalCount
 
     init {
         loadAllEntries()
@@ -34,7 +34,9 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
-                _auditEntries.value = auditHistoryDao.getAll().first()
+                auditRepo.observeAllHistory().collect { entries ->
+                    _auditEntries.value = entries
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -45,18 +47,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
-                _auditEntries.value = auditHistoryDao.getByEntityType(entityType).first()
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun loadByEntity(entityType: String, entityId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
-            try {
-                _auditEntries.value = auditHistoryDao.getByEntity(entityType, entityId).first()
+                _auditEntries.value = auditRepo.getHistoryByEntityType(entityType)
             } finally {
                 _isLoading.value = false
             }
@@ -67,18 +58,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
-                _auditEntries.value = auditHistoryDao.getByUser(username).first()
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun loadBySite(siteId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
-            try {
-                _auditEntries.value = auditHistoryDao.getBySite(siteId).first()
+                _auditEntries.value = auditRepo.getHistoryByUser(username)
             } finally {
                 _isLoading.value = false
             }
@@ -89,36 +69,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
-                _auditEntries.value = auditHistoryDao.getByDateRange(startTime, endTime).first()
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun loadFiltered(
-        entityType: String?,
-        actionType: String?,
-        username: String?,
-        siteId: String?,
-        startTime: Long?,
-        endTime: Long?,
-        limit: Int = 100,
-        offset: Int = 0
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
-            try {
-                _auditEntries.value = auditHistoryDao.getFiltered(
-                    entityType,
-                    actionType,
-                    username,
-                    siteId,
-                    startTime,
-                    endTime,
-                    limit,
-                    offset
-                ).first()
+                _auditEntries.value = auditRepo.getHistoryByDateRange(startTime, endTime)
             } finally {
                 _isLoading.value = false
             }
@@ -127,7 +78,7 @@ class AuditHistoryViewModel(application: Application) : AndroidViewModel(applica
 
     private fun loadCount() {
         viewModelScope.launch(Dispatchers.IO) {
-            _totalCount.value = auditHistoryDao.getCount().first()
+            _totalCount.value = auditRepo.getHistoryCount()
         }
     }
 }

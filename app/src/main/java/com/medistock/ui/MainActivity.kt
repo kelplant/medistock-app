@@ -9,10 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.ProductWithCategory
+import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.ProductWithCategoryAdapter
 import com.medistock.ui.product.ProductAddActivity
 import com.medistock.util.PrefsHelper
@@ -20,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ProductWithCategoryAdapter
 
@@ -29,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
+        sdk = MedistockApplication.sdk
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -37,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val siteId = PrefsHelper.getActiveSiteId(this@MainActivity)
             if (!siteId.isNullOrBlank()) {
-                db.productDao().getProductsWithCategoryForSite(siteId).collect { products ->
+                sdk.productRepository.observeWithCategoryForSite(siteId).collect { products ->
                     adapter = ProductWithCategoryAdapter(products)
                     recyclerView.adapter = adapter
                 }

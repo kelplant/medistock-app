@@ -141,6 +141,30 @@ CREATE TABLE inventories (
     FOREIGN KEY (site_id) REFERENCES sites(id)
 );
 
+-- Inventory items: individual product counts during inventory (matches Room Inventory entity)
+CREATE TABLE inventory_items (
+    id TEXT NOT NULL PRIMARY KEY,
+    inventory_id TEXT,
+    product_id TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    count_date INTEGER NOT NULL,
+    counted_quantity REAL NOT NULL,
+    theoretical_quantity REAL NOT NULL,
+    discrepancy REAL NOT NULL DEFAULT 0.0,
+    reason TEXT NOT NULL DEFAULT '',
+    counted_by TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (inventory_id) REFERENCES inventories(id),
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+CREATE INDEX idx_inventory_items_site ON inventory_items(site_id);
+CREATE INDEX idx_inventory_items_product ON inventory_items(product_id);
+CREATE INDEX idx_inventory_items_date ON inventory_items(count_date);
+
 -- ============================================
 -- SALES TABLES
 -- ============================================
@@ -492,6 +516,18 @@ insertAuditEntry:
 INSERT INTO audit_history(id, table_name, record_id, action, old_values, new_values, user_id, timestamp)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
+getAllAuditHistory:
+SELECT * FROM audit_history ORDER BY timestamp DESC;
+
+getAuditHistoryByUser:
+SELECT * FROM audit_history WHERE user_id = ? ORDER BY timestamp DESC LIMIT ?;
+
+getAuditHistoryByDateRange:
+SELECT * FROM audit_history WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC LIMIT ?;
+
+getAuditHistoryCount:
+SELECT COUNT(*) FROM audit_history;
+
 -- ============================================
 -- QUERIES - Packaging Types
 -- ============================================
@@ -802,6 +838,38 @@ deleteInventory:
 DELETE FROM inventories WHERE id = ?;
 
 -- ============================================
+-- QUERIES - Inventory Items (product-level counts)
+-- ============================================
+
+getAllInventoryItems:
+SELECT * FROM inventory_items ORDER BY count_date DESC;
+
+getInventoryItemsBySite:
+SELECT * FROM inventory_items WHERE site_id = ? ORDER BY count_date DESC;
+
+getInventoryItemsForProduct:
+SELECT * FROM inventory_items WHERE product_id = ? AND site_id = ? ORDER BY count_date DESC;
+
+getRecentInventoryItems:
+SELECT * FROM inventory_items ORDER BY count_date DESC LIMIT ?;
+
+getInventoryItemsWithDiscrepancies:
+SELECT * FROM inventory_items WHERE site_id = ? AND discrepancy != 0 ORDER BY count_date DESC;
+
+getInventoryItemById:
+SELECT * FROM inventory_items WHERE id = ?;
+
+insertInventoryItem:
+INSERT INTO inventory_items(id, inventory_id, product_id, site_id, count_date, counted_quantity, theoretical_quantity, discrepancy, reason, counted_by, notes, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateInventoryItem:
+UPDATE inventory_items SET counted_quantity = ?, theoretical_quantity = ?, discrepancy = ?, reason = ?, notes = ? WHERE id = ?;
+
+deleteInventoryItem:
+DELETE FROM inventory_items WHERE id = ?;
+
+-- ============================================
 -- ADDITIONAL QUERIES - Product Transfers
 -- ============================================
 
@@ -813,3 +881,10 @@ SELECT * FROM product_transfers WHERE to_site_id = ? ORDER BY created_at DESC;
 
 deleteTransfer:
 DELETE FROM product_transfers WHERE id = ?;
+
+-- ============================================
+-- ADDITIONAL QUERIES - Packaging Types
+-- ============================================
+
+isPackagingTypeUsedByProducts:
+SELECT COUNT(*) > 0 FROM products WHERE packaging_type_id = ?;

@@ -33,6 +33,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val productTransferRepository: ProductTransferRepository by lazy { ProductTransferRepository(database) }
     val packagingTypeRepository: PackagingTypeRepository by lazy { PackagingTypeRepository(database) }
     val inventoryRepository: InventoryRepository by lazy { InventoryRepository(database) }
+    val inventoryItemRepository: InventoryItemRepository by lazy { InventoryItemRepository(database) }
     val auditRepository: AuditRepository by lazy { AuditRepository(database) }
     val stockRepository: StockRepository by lazy { StockRepository(database) }
     val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }

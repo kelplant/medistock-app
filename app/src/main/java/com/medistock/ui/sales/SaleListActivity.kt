@@ -10,9 +10,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.SaleWithItems
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.SaleWithItems
 import com.medistock.ui.adapters.SaleAdapter
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
@@ -22,7 +23,7 @@ import kotlinx.coroutines.withContext
 
 class SaleListActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var recyclerSales: RecyclerView
     private lateinit var fabNewSale: FloatingActionButton
@@ -34,7 +35,7 @@ class SaleListActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Sales"
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
         val siteId = PrefsHelper.getActiveSiteId(this)
 
@@ -66,7 +67,7 @@ class SaleListActivity : AppCompatActivity() {
     private fun loadSales(siteId: String?) {
         if (siteId.isNullOrBlank()) return
         lifecycleScope.launch(Dispatchers.IO) {
-            db.saleDao().getAllWithItemsForSite(siteId).collect { sales ->
+            sdk.saleRepository.observeAllWithItemsForSite(siteId).collect { sales ->
                 withContext(Dispatchers.Main) {
                     saleAdapter.submitList(sales)
                 }
@@ -94,23 +95,22 @@ class SaleListActivity : AppCompatActivity() {
     private fun deleteSale(saleWithItems: SaleWithItems) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // Delete the sale (cascade will delete sale items)
-                db.saleDao().delete(saleWithItems.sale)
+                // Delete the sale and its items
+                sdk.saleRepository.delete(saleWithItems.sale.id)
 
                 // Reverse the stock movements by adding back the quantities
                 val currentUser = authManager.getUsername().ifBlank { "system" }
                 saleWithItems.items.forEach { item ->
-                    val movement = com.medistock.data.entities.StockMovement(
+                    val movement = sdk.createStockMovement(
                         productId = item.productId,
-                        type = "in",
-                        quantity = item.quantity,
-                        date = System.currentTimeMillis(),
                         siteId = saleWithItems.sale.siteId,
-                        purchasePriceAtMovement = 0.0,
-                        sellingPriceAtMovement = item.pricePerUnit,
-                        createdBy = currentUser
+                        quantity = item.quantity,
+                        movementType = "in",
+                        referenceId = "sale-reversal-${saleWithItems.sale.id}",
+                        notes = "Sale deleted - stock restored",
+                        userId = currentUser
                     )
-                    db.stockMovementDao().insert(movement)
+                    sdk.stockMovementRepository.insert(movement)
                 }
 
                 withContext(Dispatchers.Main) {

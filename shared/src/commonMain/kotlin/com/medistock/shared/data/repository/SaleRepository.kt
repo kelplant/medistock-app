@@ -104,6 +104,53 @@ class SaleRepository(private val database: MedistockDatabase) {
             .map { list -> list.map { it.toModel() } }
     }
 
+    suspend fun getAllWithItemsForSite(siteId: String): List<SaleWithItems> = withContext(Dispatchers.Default) {
+        val sales = queries.getSalesBySite(siteId).executeAsList().map { it.toModel() }
+        sales.map { sale ->
+            val items = queries.getSaleItemsBySale(sale.id).executeAsList().map { it.toModel() }
+            SaleWithItems(sale, items)
+        }
+    }
+
+    fun observeAllWithItemsForSite(siteId: String): Flow<List<SaleWithItems>> {
+        return queries.getSalesBySite(siteId)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { salesList ->
+                salesList.map { saleDb ->
+                    val sale = saleDb.toModel()
+                    val items = queries.getSaleItemsBySale(sale.id).executeAsList().map { it.toModel() }
+                    SaleWithItems(sale, items)
+                }
+            }
+    }
+
+    suspend fun delete(saleId: String) = withContext(Dispatchers.Default) {
+        database.transaction {
+            // First delete sale items
+            queries.deleteSaleItemsBySale(saleId)
+            // Then delete the sale
+            queries.deleteSale(saleId)
+        }
+    }
+
+    suspend fun update(sale: Sale) = withContext(Dispatchers.Default) {
+        queries.updateSale(
+            customer_name = sale.customerName,
+            customer_id = sale.customerId,
+            total_amount = sale.totalAmount,
+            id = sale.id
+        )
+    }
+
+    suspend fun deleteItemsForSale(saleId: String) = withContext(Dispatchers.Default) {
+        queries.deleteSaleItemsBySale(saleId)
+    }
+
+    suspend fun getItemsForSale(saleId: String): List<SaleItem> = withContext(Dispatchers.Default) {
+        queries.getSaleItemsBySale(saleId).executeAsList().map { it.toModel() }
+    }
+
     private fun com.medistock.shared.db.Sales.toModel(): Sale {
         return Sale(
             id = id,

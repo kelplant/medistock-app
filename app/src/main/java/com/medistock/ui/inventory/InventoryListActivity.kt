@@ -8,22 +8,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Inventory
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.InventoryItem
 import com.medistock.ui.adapters.InventoryAdapter
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 class InventoryListActivity : AppCompatActivity() {
     private lateinit var adapter: InventoryAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private var siteId: String? = null
-    private var allInventories = listOf<Inventory>()
+    private var allInventories = listOf<InventoryItem>()
     private var productNames = mutableMapOf<String, String>()
 
     private enum class Filter { ALL, WITH_DISCREPANCY, NO_DISCREPANCY }
@@ -34,7 +34,7 @@ class InventoryListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_inventory_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Inventory History"
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         siteId = PrefsHelper.getActiveSiteId(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerInventories)
@@ -86,15 +86,15 @@ class InventoryListActivity : AppCompatActivity() {
     private fun loadData() {
         CoroutineScope(Dispatchers.IO).launch {
             // Load product names
-            val products = db.productDao().getAll().first()
+            val products = sdk.productRepository.getAll()
             productNames.clear()
             products.forEach { productNames[it.id] = it.name }
 
             // Load inventories
             allInventories = if (siteId != null) {
-                db.inventoryDao().getInventoriesForSite(siteId!!).first()
+                sdk.inventoryItemRepository.getBySite(siteId!!)
             } else {
-                db.inventoryDao().getRecentInventories(100).first()
+                sdk.inventoryItemRepository.getRecent(100)
             }
 
             runOnUiThread {

@@ -84,6 +84,10 @@ class PackagingTypeRepository(private val database: MedistockDatabase) {
             .map { list -> list.map { it.toModel() } }
     }
 
+    suspend fun isUsedByProducts(id: String): Boolean = withContext(Dispatchers.Default) {
+        queries.isPackagingTypeUsedByProducts(id).executeAsOne()
+    }
+
     private fun com.medistock.shared.db.Packaging_types.toModel(): PackagingType {
         return PackagingType(
             id = id,
