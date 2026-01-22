@@ -39,6 +39,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
     val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
     val productPriceRepository: ProductPriceRepository by lazy { ProductPriceRepository(database) }
+    val syncQueueRepository: SyncQueueRepository by lazy { SyncQueueRepository(database) }
 
     // Services - Shared business services
     val permissionService: PermissionService by lazy { PermissionService(userPermissionRepository) }
@@ -419,6 +420,36 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             updatedAt = now,
             createdBy = createdBy,
             updatedBy = createdBy
+        )
+    }
+
+    fun createSyncQueueItem(
+        entityType: String,
+        entityId: String,
+        operation: SyncOperation,
+        payload: String,
+        localVersion: Long = 1,
+        lastKnownRemoteUpdatedAt: Long? = null,
+        userId: String? = null,
+        siteId: String? = null
+    ): SyncQueueItem {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return SyncQueueItem(
+            id = generateId(prefix = "sync"),
+            entityType = entityType,
+            entityId = entityId,
+            operation = operation,
+            payload = payload,
+            localVersion = localVersion,
+            remoteVersion = null,
+            lastKnownRemoteUpdatedAt = lastKnownRemoteUpdatedAt,
+            status = SyncStatus.PENDING,
+            retryCount = 0,
+            lastError = null,
+            lastAttemptAt = null,
+            createdAt = now,
+            userId = userId,
+            siteId = siteId
         )
     }
 

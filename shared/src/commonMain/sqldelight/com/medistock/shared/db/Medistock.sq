@@ -288,14 +288,20 @@ CREATE TABLE audit_history (
 
 CREATE TABLE sync_queue (
     id TEXT NOT NULL PRIMARY KEY,
-    table_name TEXT NOT NULL,
-    record_id TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
     operation TEXT NOT NULL,
-    data TEXT NOT NULL,
-    created_at INTEGER NOT NULL DEFAULT 0,
+    payload TEXT NOT NULL,
+    local_version INTEGER NOT NULL DEFAULT 1,
+    remote_version INTEGER,
+    last_known_remote_updated_at INTEGER,
+    status TEXT NOT NULL DEFAULT 'pending',
     retry_count INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
-    status TEXT NOT NULL DEFAULT 'pending'
+    last_attempt_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    user_id TEXT,
+    site_id TEXT
 );
 
 -- ============================================
@@ -312,6 +318,8 @@ CREATE INDEX idx_sale_items_sale ON sale_items(sale_id);
 CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
 CREATE INDEX idx_audit_history_table ON audit_history(table_name);
 CREATE INDEX idx_sync_queue_status ON sync_queue(status);
+CREATE INDEX idx_sync_queue_entity ON sync_queue(entity_type, entity_id);
+CREATE INDEX idx_sync_queue_created ON sync_queue(created_at);
 
 -- ============================================
 -- QUERIES - Sites
@@ -504,18 +512,84 @@ GROUP BY product_id, site_id;
 -- QUERIES - Sync Queue
 -- ============================================
 
+-- Insert
+insertSyncQueueItem:
+INSERT OR REPLACE INTO sync_queue(id, entity_type, entity_id, operation, payload, local_version, remote_version, last_known_remote_updated_at, status, retry_count, last_error, last_attempt_at, created_at, user_id, site_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Update
+updateSyncQueueItem:
+UPDATE sync_queue SET entity_type = ?, entity_id = ?, operation = ?, payload = ?, local_version = ?, remote_version = ?, last_known_remote_updated_at = ?, status = ?, retry_count = ?, last_error = ?, last_attempt_at = ?, user_id = ?, site_id = ? WHERE id = ?;
+
+updateSyncQueueStatus:
+UPDATE sync_queue SET status = ? WHERE id = ?;
+
+updateSyncQueueStatusWithRetry:
+UPDATE sync_queue SET status = ?, last_attempt_at = ?, last_error = ?, retry_count = retry_count + 1 WHERE id = ?;
+
+updateAllSyncQueueStatus:
+UPDATE sync_queue SET status = :newStatus WHERE status = :oldStatus;
+
+-- Delete
+deleteSyncQueueById:
+DELETE FROM sync_queue WHERE id = ?;
+
+deleteSyncQueueByStatus:
+DELETE FROM sync_queue WHERE status = ?;
+
+deleteSyncQueueByEntity:
+DELETE FROM sync_queue WHERE entity_type = ? AND entity_id = ?;
+
+deleteSyncedItems:
+DELETE FROM sync_queue WHERE status = 'synced';
+
+-- Select
+getSyncQueueById:
+SELECT * FROM sync_queue WHERE id = ?;
+
+getSyncQueueByStatus:
+SELECT * FROM sync_queue WHERE status = ? ORDER BY created_at ASC;
+
 getPendingSyncItems:
 SELECT * FROM sync_queue WHERE status = 'pending' ORDER BY created_at ASC;
 
-insertSyncItem:
-INSERT INTO sync_queue(id, table_name, record_id, operation, data, created_at, retry_count, last_error, status)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+getPendingSyncBatch:
+SELECT * FROM sync_queue WHERE status = 'pending' ORDER BY created_at ASC LIMIT ?;
 
-updateSyncItemStatus:
-UPDATE sync_queue SET status = ?, last_error = ?, retry_count = ? WHERE id = ?;
+getConflictSyncItems:
+SELECT * FROM sync_queue WHERE status = 'conflict';
 
-deleteSyncItem:
-DELETE FROM sync_queue WHERE id = ?;
+getFailedSyncItems:
+SELECT * FROM sync_queue WHERE status = 'failed';
+
+getSyncQueueByEntity:
+SELECT * FROM sync_queue WHERE entity_type = ? AND entity_id = ?;
+
+getLatestPendingForEntity:
+SELECT * FROM sync_queue WHERE entity_type = ? AND entity_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1;
+
+-- Counts
+getTotalSyncQueueCount:
+SELECT COUNT(*) FROM sync_queue;
+
+getSyncQueueCountByStatus:
+SELECT COUNT(*) FROM sync_queue WHERE status = ?;
+
+getPendingSyncCount:
+SELECT COUNT(*) FROM sync_queue WHERE status = 'pending';
+
+getConflictSyncCount:
+SELECT COUNT(*) FROM sync_queue WHERE status = 'conflict';
+
+getPermFailedCount:
+SELECT COUNT(*) FROM sync_queue WHERE status = 'failed' AND retry_count >= ?;
+
+-- Optimization
+consolidateSyncOperations:
+DELETE FROM sync_queue WHERE entity_type = ? AND entity_id = ? AND status = 'pending' AND id != ?;
+
+removeObsoleteBeforeDelete:
+DELETE FROM sync_queue WHERE entity_type = ? AND entity_id = ? AND status = 'pending' AND operation != 'DELETE' AND EXISTS (SELECT 1 FROM sync_queue WHERE entity_type = ? AND entity_id = ? AND operation = 'DELETE' AND status = 'pending');
 
 -- ============================================
 -- QUERIES - Audit History
