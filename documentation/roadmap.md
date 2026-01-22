@@ -558,6 +558,135 @@ SELECT COUNT(*) FROM sale_items WHERE product_id = ?;
 - [ ] `getAllCustomers()` → `getAllActiveCustomers()`
 - [ ] `getAllUsers()` → `getAllActiveUsers()`
 
+**Détail des écrans utilisant les références (à filtrer par is_active) :**
+
+#### Sites (is_active) - Utilisés dans :
+**Écrans Android :**
+- [ ] `ProductAddEditActivity` - Dropdown sélection site du produit
+- [ ] `PurchaseActivity` - Dropdown sélection site d'achat
+- [ ] `SaleActivity` - Dropdown sélection site de vente
+- [ ] `TransferActivity` - Dropdowns site source ET site destination
+- [ ] `InventoryActivity` - Dropdown sélection site d'inventaire
+- [ ] `StockMovementActivity` - Dropdown sélection site
+
+**Écrans iOS :**
+- [ ] `ProductsViews.swift` - Picker sélection site du produit
+- [ ] `PurchasesViews.swift` - Picker sélection site d'achat
+- [ ] `SalesViews.swift` - Picker sélection site de vente
+- [ ] `TransfersViews.swift` - Pickers site source ET site destination
+- [ ] `InventoryCountViews.swift` - Picker sélection site d'inventaire
+- [ ] `StockViews.swift` - Picker filtrage par site
+
+#### Products (is_active) - Utilisés dans :
+**Écrans Android :**
+- [ ] `PurchaseActivity` - Dropdown sélection produit à acheter
+- [ ] `SaleActivity` - Dropdown/liste sélection produits à vendre
+- [ ] `TransferActivity` - Dropdown sélection produit à transférer
+- [ ] `InventoryActivity` - Liste produits à compter
+- [ ] `StockMovementActivity` - Dropdown sélection produit
+- [ ] `StockViewActivity` - Liste produits en stock (filtrage)
+
+**Écrans iOS :**
+- [ ] `PurchasesViews.swift` - Picker sélection produit à acheter
+- [ ] `SalesViews.swift` - Picker/liste sélection produits à vendre
+- [ ] `TransfersViews.swift` - Picker sélection produit à transférer
+- [ ] `InventoryCountViews.swift` - Liste produits à compter
+- [ ] `StockViews.swift` - Liste produits en stock (filtrage)
+
+#### Categories (is_active) - Utilisées dans :
+**Écrans Android :**
+- [ ] `ProductAddEditActivity` - Dropdown sélection catégorie du produit
+- [ ] `ProductListActivity` - Filtrage par catégorie (optionnel)
+
+**Écrans iOS :**
+- [ ] `ProductsViews.swift` - Picker sélection catégorie du produit
+- [ ] Liste produits - Filtrage par catégorie (optionnel)
+
+#### PackagingTypes (is_active) - Utilisés dans :
+**Écrans Android :**
+- [ ] `ProductAddEditActivity` - Dropdown sélection type d'emballage
+
+**Écrans iOS :**
+- [ ] `ProductsViews.swift` - Picker sélection type d'emballage
+
+#### Customers (is_active) - Utilisés dans :
+**Écrans Android :**
+- [ ] `SaleActivity` - Dropdown sélection client pour la vente
+
+**Écrans iOS :**
+- [ ] `SalesViews.swift` - Picker sélection client pour la vente
+
+#### Users (is_active) - Utilisés dans :
+**Écrans Android :**
+- [ ] `SaleActivity` - Dropdown sélection vendeur (si applicable)
+- [ ] `UserPermissionsActivity` - Liste utilisateurs pour gérer permissions
+
+**Écrans iOS :**
+- [ ] `SalesViews.swift` - Picker sélection vendeur (si applicable)
+- [ ] Gestion permissions - Liste utilisateurs
+
+**IMPORTANT - Règles de filtrage is_active :**
+
+1. **Écrans d'administration (liste entités)** :
+   - Par défaut : masquer les entités désactivées
+   - Toggle "Afficher les désactivés" pour voir tout
+   - Indicateur visuel clair sur les entités désactivées
+
+2. **Dropdowns/Pickers de sélection (création)** :
+   - Ne montrer QUE les entités actives (`is_active = 1`)
+   - Exception : si on édite un enregistrement existant qui référence une entité désactivée, la montrer dans le dropdown mais avec un badge "⚠️ Désactivé"
+
+3. **Écrans d'historique/consultation** :
+   - Toujours afficher les entités référencées, même désactivées
+   - Exemple : historique des ventes doit montrer le produit même s'il est désactivé maintenant
+   - Ajouter un badge/indicateur si l'entité référencée est désactivée
+
+4. **Édition d'enregistrements existants** :
+   - Si une entité référencée est désactivée, afficher warning : "⚠️ Cette référence est désactivée"
+   - Permettre de garder la référence désactivée OU de changer vers une active
+   - Ne pas permettre de sélectionner d'AUTRES entités désactivées
+
+**Exemples concrets :**
+
+```kotlin
+// Création d'une vente - Dropdown produits
+productSpinner.items = productRepository.getAllActiveProducts()
+
+// Édition d'une vente existante
+val currentProduct = productRepository.getProduct(sale.productId)
+if (!currentProduct.isActive) {
+    // Montrer warning mais permettre de garder
+    warningText.text = "⚠️ Ce produit est désactivé"
+    warningText.visibility = View.VISIBLE
+}
+// Dropdown montre produits actifs + le produit actuel même si désactivé
+productSpinner.items = productRepository.getAllActiveProducts() + currentProduct
+
+// Historique des ventes - Toujours montrer le produit
+saleItemView.productName = sale.product.name
+if (!sale.product.isActive) {
+    saleItemView.addBadge("Désactivé")
+}
+```
+
+**Écrans d'historique à traiter spécifiquement (toujours afficher même si désactivé) :**
+
+**Android :**
+- [ ] `PurchaseListActivity` (Phase 10) - Historique achats avec produits/sites désactivés
+- [ ] `SaleListActivity` - Historique ventes avec produits/clients/sites désactivés
+- [ ] `TransferListActivity` - Historique transferts avec produits/sites désactivés
+- [ ] `StockMovementListActivity` - Mouvements avec produits/sites désactivés
+- [ ] `InventoryListActivity` (Phase 10) - Inventaires avec produits/sites désactivés
+- [ ] `AuditLogActivity` - Audit trail avec toutes références désactivées
+
+**iOS :**
+- [ ] Liste des achats (à créer) - Historique avec références désactivées
+- [ ] Liste des ventes - Historique avec références désactivées
+- [ ] Liste des transferts - Historique avec références désactivées
+- [ ] `StockViews.swift` - Mouvements avec références désactivées
+- [ ] Liste des inventaires - Historique avec références désactivées
+- [ ] `AuditViews.swift` - Audit trail avec toutes références désactivées
+
 ### 11.5. Mise à jour de l'UI Android et iOS 🟡
 
 **Bouton conditionnel dans les écrans de détail/édition :**
@@ -565,33 +694,109 @@ SELECT COUNT(*) FROM sale_items WHERE product_id = ?;
 - [ ] **Si référence utilisée** : Afficher bouton "Deactivate" (soft delete)
 - [ ] Afficher un indicateur visuel pour les entités désactivées dans les listes d'administration
 
-**Écrans à modifier :**
+**Écrans d'administration - Liste des entités :**
+- [ ] Ajouter un toggle/filtre "Afficher les désactivés" (masqués par défaut)
+- [ ] Indicateur visuel pour les entités désactivées (icône, badge, opacité réduite)
+- [ ] Badge "Utilisé dans X endroits" pour montrer les dépendances
+- [ ] Badge "Peut être supprimé" pour les références non utilisées
 
-**Android :**
-- [ ] `SiteAddEditActivity` - Vérifier usage avant suppression
-- [ ] `CategoryAddEditActivity` - Vérifier usage avant suppression
-- [ ] `ProductAddEditActivity` - Vérifier usage avant suppression
-- [ ] `PackagingTypeAddEditActivity` - Vérifier usage avant suppression
-- [ ] `CustomerAddEditActivity` (à créer en Phase 10) - Vérifier usage avant suppression
-- [ ] `UserAddEditActivity` - Vérifier usage avant suppression
+**Écrans de détail/édition - Android :**
+- [ ] `SiteListActivity` + `SiteAddEditActivity` - Liste avec filtre désactivés, vérifier usage avant suppression
+- [ ] `CategoryListActivity` + `CategoryAddEditActivity` - Liste avec filtre, vérifier usage
+- [ ] `ProductListActivity` + `ProductAddEditActivity` - Liste avec filtre, vérifier usage
+- [ ] `PackagingTypeListActivity` + `PackagingTypeAddEditActivity` - Liste avec filtre, vérifier usage
+- [ ] `CustomerListActivity` + `CustomerAddEditActivity` (à créer en Phase 10) - Liste avec filtre, vérifier usage
+- [ ] `UserListActivity` + `UserAddEditActivity` - Liste avec filtre, vérifier usage
 
-**iOS :**
-- [ ] `SitesViews.swift` - Vérifier usage avant suppression
-- [ ] `CategoriesViews.swift` - Vérifier usage avant suppression
-- [ ] `ProductsViews.swift` - Vérifier usage avant suppression
-- [ ] `PackagingTypesViews.swift` - Vérifier usage avant suppression
-- [ ] `CustomersViews.swift` - Vérifier usage avant suppression
-- [ ] `UsersViews.swift` - Vérifier usage avant suppression
+**Écrans de détail/édition - iOS :**
+- [ ] `SitesViews.swift` - Liste avec toggle "Afficher désactivés", vérifier usage avant suppression
+- [ ] `CategoriesViews.swift` - Liste avec toggle, vérifier usage
+- [ ] `ProductsViews.swift` - Liste avec toggle, vérifier usage
+- [ ] `PackagingTypesViews.swift` - Liste avec toggle, vérifier usage
+- [ ] `CustomersViews.swift` - Liste avec toggle, vérifier usage
+- [ ] `UsersViews.swift` - Liste avec toggle, vérifier usage
 
-**Exemple d'implémentation UI :**
+**Exemple d'implémentation UI - Écran de liste :**
 ```swift
-// iOS
-if referentialIntegrityService.isReferenceUsed(.product, productId) {
-    Button("Deactivate") { /* soft delete */ }
-        .foregroundColor(.orange)
-} else {
-    Button("Delete") { /* hard delete */ }
-        .foregroundColor(.red)
+// iOS - Liste avec filtre
+struct SitesListView: View {
+    @State private var showInactive = false
+
+    var filteredSites: [Site] {
+        if showInactive {
+            return allSites // Montrer tous
+        } else {
+            return allSites.filter { $0.isActive } // Seulement actifs
+        }
+    }
+
+    var body: some View {
+        List {
+            Toggle("Show inactive sites", isOn: $showInactive)
+                .foregroundColor(.secondary)
+
+            ForEach(filteredSites) { site in
+                HStack {
+                    Text(site.name)
+                    if !site.isActive {
+                        Badge("Inactive", color: .gray)
+                    }
+                }
+                .opacity(site.isActive ? 1.0 : 0.5)
+            }
+        }
+    }
+}
+```
+
+**Exemple d'implémentation UI - Écran de détail avec bouton conditionnel :**
+```swift
+// iOS - Écran de détail/édition
+if let usageDetails = referentialIntegrityService.getUsageDetails(.product, productId) {
+    if usageDetails.isUsed {
+        VStack(alignment: .leading) {
+            Text("This product is used in:")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            ForEach(usageDetails.usedIn) { ref in
+                Text("• \(ref.table): \(ref.count) records")
+                    .font(.caption)
+            }
+        }
+        .padding()
+        .background(Color.orange.opacity(0.1))
+        .cornerRadius(8)
+
+        Button("Deactivate") { /* soft delete */ }
+            .foregroundColor(.orange)
+    } else {
+        Text("✓ This product can be safely deleted")
+            .font(.caption)
+            .foregroundColor(.green)
+
+        Button("Delete") { /* hard delete */ }
+            .foregroundColor(.red)
+    }
+}
+```
+
+**Exemple Android - Adapter avec indicateur désactivé :**
+```kotlin
+// Android - RecyclerView Adapter
+class SiteAdapter : RecyclerView.Adapter<SiteViewHolder>() {
+    override fun onBindViewHolder(holder: SiteViewHolder, position: Int) {
+        val site = sites[position]
+        holder.textName.text = site.name
+
+        // Indicateur visuel pour entités désactivées
+        if (!site.isActive) {
+            holder.badgeInactive.visibility = View.VISIBLE
+            holder.itemView.alpha = 0.5f
+        } else {
+            holder.badgeInactive.visibility = View.GONE
+            holder.itemView.alpha = 1.0f
+        }
+    }
 }
 ```
 
