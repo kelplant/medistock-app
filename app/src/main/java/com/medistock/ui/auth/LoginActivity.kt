@@ -11,9 +11,9 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.User
-import com.medistock.data.entities.UserPermission
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.User
+import com.medistock.shared.domain.model.UserPermission
 import com.medistock.shared.domain.compatibility.CompatibilityResult
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.AppUpdateRequiredActivity
@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.UUID
 
 /**
  * Android implementation of PasswordVerifier using BCrypt.
@@ -56,7 +57,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvRealtimeBadge: TextView
     private lateinit var btnSupabaseConfig: Button
     private lateinit var authManager: AuthManager
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var sharedAuthService: AuthService
     private var realtimeJob: kotlinx.coroutines.Job? = null
 
@@ -66,8 +67,8 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize
         authManager = AuthManager.getInstance(this)
-        db = AppDatabase.getInstance(this)
-        sharedAuthService = MedistockApplication.sdk.createAuthService(AndroidPasswordVerifier)
+        sdk = MedistockApplication.sdk
+        sharedAuthService = sdk.createAuthService(AndroidPasswordVerifier)
 
         // Initialize views
         editUsername = findViewById(R.id.editUsername)
@@ -134,21 +135,7 @@ class LoginActivity : AppCompatActivity() {
 
                 when (result) {
                     is AuthResult.Success -> {
-                        // Convert shared User to local User entity for AuthManager
-                        val sharedUser = result.user
-                        val localUser = User(
-                            id = sharedUser.id,
-                            username = sharedUser.username,
-                            password = sharedUser.password,
-                            fullName = sharedUser.fullName,
-                            isAdmin = sharedUser.isAdmin,
-                            isActive = sharedUser.isActive,
-                            createdAt = sharedUser.createdAt,
-                            updatedAt = sharedUser.updatedAt,
-                            createdBy = sharedUser.createdBy,
-                            updatedBy = sharedUser.updatedBy
-                        )
-                        authManager.login(localUser)
+                        authManager.login(result.user)
                         navigateToHome()
                     }
                     is AuthResult.InvalidCredentials -> {
@@ -172,19 +159,24 @@ class LoginActivity : AppCompatActivity() {
 
     private suspend fun createDefaultAdminIfNeeded() {
         withContext(Dispatchers.IO) {
-            val userCount = db.userDao().getAllUsers().size
-            if (userCount == 0) {
+            val users = sdk.userRepository.getAll()
+            if (users.isEmpty()) {
                 // Create default admin user
+                val currentTime = System.currentTimeMillis()
+                val adminUserId = UUID.randomUUID().toString()
                 val adminUser = User(
+                    id = adminUserId,
                     username = "admin",
                     password = PasswordHasher.hashPassword("admin"),
                     fullName = "Administrator",
                     isAdmin = true,
                     isActive = true,
+                    createdAt = currentTime,
+                    updatedAt = currentTime,
                     createdBy = "system",
                     updatedBy = "system"
                 )
-                db.userDao().insertUser(adminUser)
+                sdk.userRepository.insert(adminUser)
 
                 // Give admin all permissions (though admin check bypasses this)
                 val modules = listOf(
@@ -192,19 +184,22 @@ class LoginActivity : AppCompatActivity() {
                     Module.INVENTORY, Module.ADMIN, Module.PRODUCTS,
                     Module.SITES, Module.CATEGORIES, Module.USERS
                 )
-                val permissions = modules.map { module ->
-                    UserPermission(
-                        userId = adminUser.id,
+                modules.forEach { module ->
+                    val permission = UserPermission(
+                        id = UUID.randomUUID().toString(),
+                        userId = adminUserId,
                         module = module.name,
                         canView = true,
                         canCreate = true,
                         canEdit = true,
                         canDelete = true,
+                        createdAt = currentTime,
+                        updatedAt = currentTime,
                         createdBy = "system",
                         updatedBy = "system"
                     )
+                    sdk.userPermissionRepository.insert(permission)
                 }
-                db.userPermissionDao().insertPermissions(permissions)
             }
         }
     }
