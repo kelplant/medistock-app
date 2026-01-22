@@ -3,6 +3,7 @@
 /app/build/
 /.gradle/
 /.idea/
+/.claude/
 
 # Local configuration files
 local.properties
@@ -20,3 +21,8 @@ local.properties
 Thumbs.db
 /.kotlin/
 **/build/
+
+# Maestro test screenshots
+android_*.png
+ios_*.png
+iosApp/ios_*.png

@@ -47,18 +47,30 @@ app/src/
 ├── config.yaml                     # Configuration globale
 ├── shared/                         # Flows reutilisables
 │   └── login.yaml
-├── android/                        # Tests Android
-│   ├── 01_authentication.yaml
-│   ├── 02_sites_crud.yaml
-│   ├── 03_purchase_sale_workflow.yaml
-│   ├── 04_transfers.yaml
-│   └── 05_inventory.yaml
-└── ios/                            # Tests iOS
+├── android/                        # Tests Android (11 tests)
+│   ├── 01_authentication.yaml      # Login, logout, invalid credentials
+│   ├── 02_sites_crud.yaml          # Sites CRUD operations
+│   ├── 03_products_crud.yaml       # Products CRUD operations
+│   ├── 04_categories_crud.yaml     # Categories CRUD operations
+│   ├── 05_customers_crud.yaml      # Customers CRUD operations
+│   ├── 06_packaging_types_crud.yaml # Packaging types CRUD
+│   ├── 07_users_crud.yaml          # Users CRUD operations
+│   ├── 08_purchases.yaml           # Purchase products flow
+│   ├── 09_sales.yaml               # Sell products flow
+│   ├── 10_transfers.yaml           # Transfer products between sites
+│   └── 11_inventory.yaml           # Inventory count operations
+└── ios/                            # Tests iOS (11 tests)
     ├── 01_authentication.yaml
     ├── 02_sites_crud.yaml
-    ├── 03_purchase_sale_workflow.yaml
-    ├── 04_transfers.yaml
-    └── 05_inventory.yaml
+    ├── 03_products_crud.yaml
+    ├── 04_categories_crud.yaml
+    ├── 05_customers_crud.yaml
+    ├── 06_packaging_types_crud.yaml
+    ├── 07_users_crud.yaml
+    ├── 08_purchases.yaml
+    ├── 09_sales.yaml
+    ├── 10_transfers.yaml
+    └── 11_inventory.yaml
 ```
 
 ---
@@ -238,9 +250,18 @@ maestro test .maestro/android/
 # Un test specifique
 maestro test .maestro/android/01_authentication.yaml
 maestro test .maestro/android/02_sites_crud.yaml
-maestro test .maestro/android/03_purchase_sale_workflow.yaml
-maestro test .maestro/android/04_transfers.yaml
-maestro test .maestro/android/05_inventory.yaml
+maestro test .maestro/android/03_products_crud.yaml
+maestro test .maestro/android/04_categories_crud.yaml
+maestro test .maestro/android/05_customers_crud.yaml
+maestro test .maestro/android/06_packaging_types_crud.yaml
+maestro test .maestro/android/07_users_crud.yaml
+maestro test .maestro/android/08_purchases.yaml
+maestro test .maestro/android/09_sales.yaml
+maestro test .maestro/android/10_transfers.yaml
+maestro test .maestro/android/11_inventory.yaml
+
+# Utiliser le script de lancement
+./scripts/run_tests_android.sh
 ```
 
 ---
@@ -280,16 +301,30 @@ xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/iosApp.ap
 ```bash
 cd /path/to/medistock-app
 
-# Tous les tests iOS
-maestro test .maestro/ios/
+# Tous les tests iOS (important: utiliser -p ios si Android emulator est actif)
+maestro -p ios test .maestro/ios/
 
 # Un test specifique
-maestro test .maestro/ios/01_authentication.yaml
-maestro test .maestro/ios/02_sites_crud.yaml
-maestro test .maestro/ios/03_purchase_sale_workflow.yaml
-maestro test .maestro/ios/04_transfers.yaml
-maestro test .maestro/ios/05_inventory.yaml
+maestro -p ios test .maestro/ios/01_authentication.yaml
+maestro -p ios test .maestro/ios/02_sites_crud.yaml
+maestro -p ios test .maestro/ios/03_products_crud.yaml
+maestro -p ios test .maestro/ios/04_categories_crud.yaml
+maestro -p ios test .maestro/ios/05_customers_crud.yaml
+maestro -p ios test .maestro/ios/06_packaging_types_crud.yaml
+maestro -p ios test .maestro/ios/07_users_crud.yaml
+maestro -p ios test .maestro/ios/08_purchases.yaml
+maestro -p ios test .maestro/ios/09_sales.yaml
+maestro -p ios test .maestro/ios/10_transfers.yaml
+maestro -p ios test .maestro/ios/11_inventory.yaml
+
+# Utiliser le script de lancement
+./scripts/run_tests_ios.sh
+
+# Lancer Android et iOS en parallele
+./scripts/run_tests_all.sh
 ```
+
+**Note importante** : Lorsque l'emulateur Android et le simulateur iOS sont actifs simultanement, utilisez le flag `-p ios` pour forcer Maestro a cibler iOS.
 
 ---
 
@@ -340,35 +375,118 @@ maestro test \
 
 ---
 
-### 3.7 Tests Maestro inclus
+### 3.7 Tests Maestro inclus (22 tests - 11 Android + 11 iOS)
 
 #### 01_authentication.yaml
-- Connexion avec identifiants valides
-- Deconnexion
-- Connexion avec identifiants invalides
+**Objectif** : Valider le flux d'authentification complet.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login valide | Saisie admin/admin, clic Login | Ecran Home affiche "MediStock" et "Operations" |
+| Logout | Clic profil puis Logout | Retour ecran login, "Login" visible |
+| Login invalide | Saisie wronguser/wrongpassword | Message erreur "not found" affiche |
 
 #### 02_sites_crud.yaml
-- Creation d'un site
-- Modification d'un site
-- Suppression d'un site
+**Objectif** : Valider les operations CRUD sur les sites.
 
-#### 03_purchase_sale_workflow.yaml
-- Creation d'un achat (ajout de stock)
-- Verification du stock apres achat
-- Creation d'une vente (FIFO)
-- Verification du stock apres vente
-- Verification du calcul des benefices
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Navigation | Clic "Site Management" | Ecran liste sites affiche |
+| Create | Clic +, saisie "Test Site A", Save | Site cree, liste mise a jour |
+| Read | Retour liste | "Test Site A" visible dans la liste |
+| Update | Selection site, modification nom, Save | Nom modifie visible |
+| Delete | Selection site, clic Delete | Site supprime de la liste |
 
-#### 04_transfers.yaml
-- Creation de sites source et destination
-- Creation d'un transfert inter-sites
-- Verification du stock apres transfert
+#### 03_products_crud.yaml
+**Objectif** : Valider les operations CRUD sur les produits.
 
-#### 05_inventory.yaml
-- Demarrage d'une session d'inventaire
-- Comptage avec ecart (discrepancy)
-- Validation et ajustement du stock
-- Verification de l'audit
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Navigation | Clic "Manage Products" | Ecran liste produits affiche |
+| Create | Clic +, saisie nom/description/prix, Save | Produit cree |
+| Read | Retour liste | Produit visible |
+| Update | Selection, modification, Save | Modifications visibles |
+| Delete | Selection, clic Delete | Produit supprime |
+
+#### 04_categories_crud.yaml
+**Objectif** : Valider les operations CRUD sur les categories.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Navigation | Clic "Manage Categories" | Ecran liste categories affiche |
+| Create | Clic +, saisie nom, Save | Categorie creee |
+| Read | Retour liste | Categorie visible |
+| Update | Selection, modification nom, Save | Nom modifie |
+| Delete | Selection, clic Delete | Categorie supprimee |
+
+#### 05_customers_crud.yaml
+**Objectif** : Valider les operations CRUD sur les clients.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Navigation | Clic "Manage Customers" | Ecran liste clients affiche |
+| Create | Clic +, saisie infos client, Save | Client cree |
+| Read | Retour liste | Client visible |
+| Update | Selection, modification, Save | Modifications visibles |
+| Delete | Selection, clic Delete | Client supprime |
+
+#### 06_packaging_types_crud.yaml
+**Objectif** : Valider les operations CRUD sur les types d'emballage.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Navigation | Clic "Packaging Types" | Ecran liste emballages affiche |
+| Create | Clic +, saisie nom/unite, Save | Type emballage cree |
+| Read | Retour liste | Type visible |
+| Update | Selection, modification, Save | Modifications visibles |
+| Delete | Selection, clic Delete | Type supprime |
+
+#### 07_users_crud.yaml
+**Objectif** : Valider les operations CRUD sur les utilisateurs.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Navigation | Clic "User Management" | Ecran liste utilisateurs affiche |
+| Create | Clic +, saisie username/password/role, Save | Utilisateur cree |
+| Read | Retour liste | Utilisateur visible |
+| Update | Selection, modification role, Save | Role modifie |
+| Delete | Selection, clic Delete | Utilisateur supprime |
+
+#### 08_purchases.yaml
+**Objectif** : Valider l'acces a l'ecran d'achat de produits.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | Saisie credentials, Login | Ecran Home affiche |
+| Navigation | Clic "Purchase Products" | Ecran achats accessible |
+| Retour | Clic retour/MediStock | Retour ecran Home |
+
+#### 09_sales.yaml
+**Objectif** : Valider l'acces a l'ecran de vente de produits.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | Saisie credentials, Login | Ecran Home affiche |
+| Navigation | Clic "Sell Products" | Ecran ventes accessible |
+| Retour | Clic retour/MediStock | Retour ecran Home |
+
+#### 10_transfers.yaml
+**Objectif** : Valider l'acces a l'ecran de transferts inter-sites.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | Saisie credentials, Login | Ecran Home affiche |
+| Navigation | Clic "Transfer Products" | Ecran transferts accessible |
+| Retour | Clic retour | Retour ecran Home |
+
+#### 11_inventory.yaml
+**Objectif** : Valider l'acces a l'ecran d'inventaire.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | Saisie credentials, Login | Ecran Home affiche |
+| Navigation | Clic "Inventory Stock" | Ecran inventaire accessible |
+| Retour | Clic retour | Retour ecran Home |
 
 ---
 
@@ -378,15 +496,41 @@ maestro test \
 |-------------------|--------------|
 | 2. Authentification | 01_authentication.yaml |
 | 3.1 Gestion des sites | 02_sites_crud.yaml |
-| 4. Gestion des achats | 03_purchase_sale_workflow.yaml |
-| 5. Gestion des ventes | 03_purchase_sale_workflow.yaml |
-| 6. Logique FIFO | 03_purchase_sale_workflow.yaml |
-| 8. Transferts inter-sites | 04_transfers.yaml |
-| 9. Inventaire | 05_inventory.yaml |
+| 3.2 Gestion des produits | 03_products_crud.yaml |
+| 3.3 Gestion des categories | 04_categories_crud.yaml |
+| 3.4 Gestion des clients | 05_customers_crud.yaml |
+| 3.5 Gestion des emballages | 06_packaging_types_crud.yaml |
+| 3.6 Gestion des utilisateurs | 07_users_crud.yaml |
+| 4. Gestion des achats | 08_purchases.yaml |
+| 5. Gestion des ventes | 09_sales.yaml |
+| 8. Transferts inter-sites | 10_transfers.yaml |
+| 9. Inventaire | 11_inventory.yaml |
 
 ---
 
-### 3.9 Depannage Maestro
+### 3.9 Scripts de Lancement
+
+Trois scripts sont fournis dans le dossier `scripts/` :
+
+| Script | Description |
+|--------|-------------|
+| `run_tests_android.sh` | Lance tous les tests Android (verifie emulateur, installe l'app) |
+| `run_tests_ios.sh` | Lance tous les tests iOS (verifie simulateur, utilise `-p ios`) |
+| `run_tests_all.sh` | Lance Android et iOS en parallele |
+
+```bash
+# Rendre les scripts executables (si necessaire)
+chmod +x scripts/run_tests_*.sh
+
+# Lancer les tests
+./scripts/run_tests_android.sh
+./scripts/run_tests_ios.sh
+./scripts/run_tests_all.sh
+```
+
+---
+
+### 3.10 Depannage Maestro
 
 | Probleme | Solution |
 |----------|----------|
@@ -394,6 +538,9 @@ maestro test \
 | Element non trouve | Utiliser `maestro studio` pour inspecter l'UI |
 | Timeout sur animations | Augmenter le timeout : `timeout: 15000` |
 | Simulateur non demarre | `xcrun simctl boot "iPhone 15"` ou `emulator -avd <nom>` |
+| Maestro cible Android au lieu d'iOS | Utiliser le flag `-p ios` : `maestro -p ios test ...` |
+| iOS app affiche du francais | Rebuilder l'app iOS et reinstaller sur le simulateur |
+| NavigationLink ne repond pas sur iOS | Utiliser `retryTapIfNoChange: true` dans le test |
 
 ---
 
@@ -481,11 +628,14 @@ Avant chaque commit :
 # Tests Android
 ./gradlew :app:testDebugUnitTest
 
-# Tests E2E Android
+# Tests E2E Android (11 tests)
 maestro test .maestro/android/
 
-# Tests E2E iOS
-maestro test .maestro/ios/
+# Tests E2E iOS (11 tests)
+maestro -p ios test .maestro/ios/
+
+# Tous les tests E2E (Android + iOS)
+./scripts/run_tests_all.sh
 
 # Mode debug Maestro
 maestro studio
