@@ -8,6 +8,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 MAESTRO_BIN="${HOME}/.maestro/bin/maestro"
 
+# Find Android SDK
+if [ -z "$ANDROID_HOME" ]; then
+    if [ -d "$HOME/Library/Android/sdk" ]; then
+        ANDROID_HOME="$HOME/Library/Android/sdk"
+    elif [ -d "$HOME/Android/Sdk" ]; then
+        ANDROID_HOME="$HOME/Android/Sdk"
+    fi
+fi
+ADB="$ANDROID_HOME/platform-tools/adb"
+
 echo "=========================================="
 echo "  MediStock - Android E2E Tests"
 echo "=========================================="
@@ -19,8 +29,15 @@ if [ ! -f "$MAESTRO_BIN" ]; then
     exit 1
 fi
 
+# Check if adb exists
+if [ ! -f "$ADB" ]; then
+    echo "Error: adb not found at $ADB"
+    echo "Please set ANDROID_HOME environment variable"
+    exit 1
+fi
+
 # Check if Android emulator is running
-if ! adb devices | grep -q "emulator"; then
+if ! "$ADB" devices | grep -q "emulator"; then
     echo "Error: No Android emulator detected"
     echo "Please start an Android emulator first"
     exit 1
@@ -30,7 +47,7 @@ echo "Android emulator detected"
 echo ""
 
 # Check if app is installed
-if ! adb shell pm list packages | grep -q "com.medistock"; then
+if ! "$ADB" shell pm list packages | grep -q "com.medistock"; then
     echo "Warning: MediStock app not installed on emulator"
     echo "Building and installing..."
 
