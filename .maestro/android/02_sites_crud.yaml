@@ -29,9 +29,9 @@ appId: com.medistock
 
 - waitForAnimationToEnd
 
-# Navigate to Sites
+# Navigate to Sites (called "Site Management" on Android)
 - tapOn:
-    text: ".*Sites.*"
+    text: ".*Site Management.*"
 
 - waitForAnimationToEnd
 
