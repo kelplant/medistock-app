@@ -19,18 +19,29 @@ Ce projet dispose d'une suite complète de tests couvrant les composants critiqu
 shared/src/
 ├── commonTest/                     # Tests partagés KMM (Android + iOS)
 │   └── kotlin/com/medistock/shared/
-│       ├── ModelTests.kt           # Tests des modeles
-│       ├── UseCaseTests.kt         # Tests des UseCases
-│       ├── DtoTests.kt             # Tests des DTOs
-│       ├── RetryStrategyTests.kt   # Tests RetryConfiguration
-│       ├── ConflictResolverTests.kt# Tests resolution conflits
-│       └── AuditServiceTests.kt    # Tests service audit
+│       ├── UseCaseTests.kt              # 29 tests - UseCases et regles metier
+│       ├── DtoTests.kt                  # 30 tests - Serialisation DTOs
+│       ├── SyncInfrastructureTests.kt   # 32 tests - Infrastructure sync
+│       ├── AuthTests.kt                 # 22 tests - Authentification
+│       ├── PermissionAndSyncTests.kt    # 22 tests - Permissions et sync
+│       ├── CompatibilityTests.kt        # 13 tests - Compatibilite
+│       ├── ModelTests.kt                # 11 tests - Modeles
+│       └── AuditServiceTests.kt         # 4 tests - Service audit
 │
-└── jvmTest/                        # Tests d'integration JVM
-    └── kotlin/com/medistock/shared/
-        ├── FifoIntegrationTests.kt      # 5 tests FIFO
-        ├── WorkflowIntegrationTests.kt  # 8 tests workflows
-        └── InventoryIntegrationTests.kt # 8 tests inventaires
+├── jvmTest/                        # Tests d'integration JVM
+│   └── kotlin/com/medistock/shared/
+│       ├── FifoIntegrationTests.kt      # 5 tests FIFO
+│       ├── WorkflowIntegrationTests.kt  # 8 tests workflows
+│       └── InventoryIntegrationTests.kt # 8 tests inventaires
+
+app/src/
+├── test/                           # Tests unitaires Android (JVM)
+│   └── java/com/medistock/util/
+│       └── PasswordHasherTest.kt        # 16 tests - BCrypt hashing
+│
+└── androidTest/                    # Tests d'instrumentation Android
+    └── java/com/medistock/data/sync/
+        └── SyncManagerTest.kt           # 2 tests - Sync manager
 
 .maestro/                           # Tests E2E Maestro
 ├── config.yaml                     # Configuration globale
@@ -67,16 +78,18 @@ shared/src/
 ./gradlew :shared:testDebugUnitTest
 ```
 
-### Couverture
+### Couverture (163 tests)
 
 | Fichier | Tests | Description |
 |---------|-------|-------------|
-| `UseCaseTests.kt` | ~20 | Inputs/outputs UseCases, BusinessError, BusinessWarning |
-| `ModelTests.kt` | ~15 | Site, Product, User, PurchaseBatch, Sale |
-| `DtoTests.kt` | ~10 | Serialisation/deserialisation DTOs |
-| `RetryStrategyTests.kt` | 5 | Configuration retry avec backoff |
-| `ConflictResolverTests.kt` | 8 | Resolution conflits sync |
-| `AuditServiceTests.kt` | 6 | Service d'audit |
+| `SyncInfrastructureTests.kt` | 32 | RetryConfiguration, ConflictResolver, SyncQueue |
+| `DtoTests.kt` | 30 | Serialisation/deserialisation de tous les DTOs |
+| `UseCaseTests.kt` | 29 | Inputs/outputs UseCases, BusinessError, BusinessWarning |
+| `AuthTests.kt` | 22 | Authentification, sessions, tokens |
+| `PermissionAndSyncTests.kt` | 22 | Permissions granulaires, sync bidirectionnelle |
+| `CompatibilityTests.kt` | 13 | Compatibilite entre plateformes |
+| `ModelTests.kt` | 11 | Site, Product, User, PurchaseBatch, Sale |
+| `AuditServiceTests.kt` | 4 | Service d'audit et logging |
 
 ---
 
@@ -139,7 +152,40 @@ shared/build/reports/tests/jvmTest/index.html
 
 ---
 
-## 3. Tests E2E avec Maestro
+## 3. Tests Android
+
+### Tests unitaires (16 tests)
+
+```bash
+# Executer les tests unitaires Android
+./gradlew :app:testDebugUnitTest
+```
+
+| Fichier | Tests | Description |
+|---------|-------|-------------|
+| `PasswordHasherTest.kt` | 16 | BCrypt hashing, verification, salt aleatoire |
+
+### Tests d'instrumentation (2 tests)
+
+```bash
+# Executer les tests d'instrumentation (necessite emulateur/device)
+./gradlew :app:connectedAndroidTest
+```
+
+| Fichier | Tests | Description |
+|---------|-------|-------------|
+| `SyncManagerTest.kt` | 2 | Sync manager avec base reelle |
+
+### Rapports
+
+```
+app/build/reports/tests/testDebugUnitTest/index.html
+app/build/reports/androidTests/connected/index.html
+```
+
+---
+
+## 4. Tests E2E avec Maestro
 
 Maestro permet d'executer des tests UI automatises sur Android et iOS.
 
@@ -351,7 +397,7 @@ maestro test \
 
 ---
 
-## 4. CI/CD
+## 5. CI/CD
 
 Le workflow GitHub Actions (`.github/workflows/ci.yml`) execute automatiquement les tests :
 
@@ -368,7 +414,7 @@ Le workflow GitHub Actions (`.github/workflows/ci.yml`) execute automatiquement 
 
 ---
 
-## 5. Git Hooks
+## 6. Git Hooks
 
 ### Pre-commit Hook
 
@@ -388,7 +434,7 @@ git commit --no-verify -m "message"
 
 ---
 
-## 6. Conventions de Tests
+## 7. Conventions de Tests
 
 ### Nommage
 
@@ -413,7 +459,7 @@ fun testName_condition_result() = runTest {
 
 ---
 
-## 7. Checklist Developpeur
+## 8. Checklist Developpeur
 
 Avant chaque commit :
 - [ ] Tests unitaires passent : `./gradlew :shared:allTests`
@@ -423,7 +469,7 @@ Avant chaque commit :
 
 ---
 
-## 8. Resume des Commandes
+## 9. Resume des Commandes
 
 ```bash
 # Tests unitaires shared
@@ -447,7 +493,7 @@ maestro studio
 
 ---
 
-## 9. Ressources
+## 10. Ressources
 
 - [JUnit 5 Documentation](https://junit.org/junit5/)
 - [Maestro Documentation](https://maestro.mobile.dev/)
