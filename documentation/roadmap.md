@@ -102,10 +102,11 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 ## Phase 2 — Auth & Permissions unifiées (2–3 semaines)
 
-### 2.1. Authentification partagée
-- Déplacer la logique d’auth dans `shared`.
-- Uniformiser les règles (Supabase si configuré, sinon local).
-- Éviter les divergences Android/iOS.
+### 2.1. Authentification partagée ✅
+- ✅ `AuthResult` sealed class dans shared
+- ✅ `PasswordVerifier` interface pour BCrypt platform-specific
+- ✅ `AuthService` partagé avec authenticate()
+- ✅ Android et iOS utilisent le AuthService partagé
 
 ### 2.2. Modules permissions partagés ✅
 - ✅ Enum `Module` unifié dans `shared` (13 modules)
@@ -209,7 +210,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 |-------|--------|-------|
 | Phase 0 - Cadrage | ✅ Terminée | Règles métier documentées |
 | Phase 1 - UseCases shared | ✅ Terminée | 4 UseCases + tests |
-| Phase 2 - Auth & Permissions | ⏳ En cours | BCrypt ✅, Modules ✅, Auth 2.1 à faire |
+| Phase 2 - Auth & Permissions | ✅ Terminée | Auth ✅, Modules ✅ (2.3/2.4 différées) |
 | Phase 3 - Sync iOS | ✅ Terminée | Bidirectionnel + Realtime |
 | Phase 4 - UX iOS | ⏳ À faire | Écrans manquants |
 | Phase 5 - Durcissement Android | ✅ Terminée | ViewModels migrés |
