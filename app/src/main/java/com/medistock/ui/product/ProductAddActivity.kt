@@ -7,21 +7,21 @@ import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Category
-import com.medistock.data.entities.Product
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Category
+import com.medistock.shared.domain.model.Product
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class ProductAddActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var editName: EditText
     private lateinit var spinnerCategory: Spinner
@@ -47,7 +47,7 @@ class ProductAddActivity : AppCompatActivity() {
         setContentView(R.layout.activity_product_add)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         editName = findViewById(R.id.editProductName)
@@ -63,16 +63,16 @@ class ProductAddActivity : AppCompatActivity() {
 
         // Load categories from DB
         lifecycleScope.launch {
-            categories = db.categoryDao().getAll().first()
+            categories = withContext(Dispatchers.IO) {
+                sdk.categoryRepository.getAll()
+            }
             if (categories.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ProductAddActivity,
-                        "No categories available. Please create a category first.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    btnSave.isEnabled = false
-                }
+                Toast.makeText(
+                    this@ProductAddActivity,
+                    "No categories available. Please create a category first.",
+                    Toast.LENGTH_LONG
+                ).show()
+                btnSave.isEnabled = false
             } else {
                 val categoryNames = categories.map { it.name }
                 val categoryAdapter = ArrayAdapter(this@ProductAddActivity, android.R.layout.simple_spinner_item, categoryNames)
@@ -197,15 +197,19 @@ class ProductAddActivity : AppCompatActivity() {
 
             // Create product
             val currentUser = authManager.getUsername().ifBlank { "system" }
+            val currentTime = System.currentTimeMillis()
             val product = Product(
+                id = UUID.randomUUID().toString(),
                 name = productName,
                 categoryId = selectedCategoryId,
                 unit = selectedUnit,
+                unitVolume = enteredUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
                 description = descriptionText,
-                unitVolume = enteredUnitVolume,
                 siteId = currentSiteId!!,
+                createdAt = currentTime,
+                updatedAt = currentTime,
                 createdBy = currentUser,
                 updatedBy = currentUser
             )
@@ -213,20 +217,16 @@ class ProductAddActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
-                        db.productDao().insert(product)
+                        sdk.productRepository.insert(product)
                     }
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ProductAddActivity, getString(R.string.product_added), Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
+                    Toast.makeText(this@ProductAddActivity, getString(R.string.product_added), Toast.LENGTH_SHORT).show()
+                    finish()
                 } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            this@ProductAddActivity,
-                            "Error adding product: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+                    Toast.makeText(
+                        this@ProductAddActivity,
+                        "Error adding product: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
