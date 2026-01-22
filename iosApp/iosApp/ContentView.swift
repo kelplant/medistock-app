@@ -50,9 +50,10 @@ struct ContentView: View {
             // Initialize Supabase from stored configuration
             initializeSupabase()
 
-            // Check compatibility
+            // Check compatibility and create default admin if needed
             Task {
                 await checkCompatibilityIfNeeded()
+                await createDefaultAdminIfNeeded()
             }
 
             // If user is already logged in (session restored), start sync
@@ -82,6 +83,29 @@ struct ContentView: View {
            let key = defaults.string(forKey: "supabase_key"),
            !url.isEmpty, !key.isEmpty {
             SupabaseService.shared.configure(url: url, anonKey: key)
+        }
+    }
+
+    /// Creates a default local admin user if no users exist in the database.
+    /// Uses the shared DefaultAdminService from the KMM module.
+    private func createDefaultAdminIfNeeded() async {
+        guard let hashedPassword = PasswordHasher.shared.hashPassword("admin") else {
+            debugLog("ContentView", "Failed to hash default admin password")
+            return
+        }
+
+        let currentTime = Int64(Date().timeIntervalSince1970 * 1000)
+
+        do {
+            let created = try await sdk.defaultAdminService.createDefaultAdminIfNeeded(
+                hashedPassword: hashedPassword,
+                currentTimeMillis: currentTime
+            )
+            if created {
+                debugLog("ContentView", "Default local admin user created")
+            }
+        } catch {
+            debugLog("ContentView", "Error creating default admin: \(error)")
         }
     }
 

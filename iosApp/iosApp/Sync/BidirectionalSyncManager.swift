@@ -188,6 +188,14 @@ class BidirectionalSyncManager: ObservableObject {
             // Use upsert (INSERT OR REPLACE) to handle both new and existing records
             try? await sdk.userRepository.upsert(user: dto.toEntity())
         }
+
+        // Remove local system admin if real users were synced
+        if !remoteUsers.isEmpty {
+            let removed = try await sdk.defaultAdminService.removeLocalAdminIfRemoteUsersExist()
+            if removed {
+                debugLog("BidirectionalSyncManager", "Local system admin removed after syncing \(remoteUsers.count) remote users")
+            }
+        }
     }
 
     private func syncCustomersFromRemote(sdk: MedistockSDK) async throws {
