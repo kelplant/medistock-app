@@ -16,15 +16,21 @@ data class User(
     val updatedBy: String = ""
 )
 
+/**
+ * Module-based permission model.
+ * Each permission grants CRUD access to a specific module for a user.
+ */
 @Serializable
 data class UserPermission(
     val id: String,
     val userId: String,
-    val siteId: String,
-    val canSell: Boolean = false,
-    val canPurchase: Boolean = false,
-    val canManageStock: Boolean = false,
-    val canViewReports: Boolean = false,
+    val module: String,
+    val canView: Boolean = false,
+    val canCreate: Boolean = false,
+    val canEdit: Boolean = false,
+    val canDelete: Boolean = false,
     val createdAt: Long = 0,
-    val updatedAt: Long = 0
+    val updatedAt: Long = 0,
+    val createdBy: String = "",
+    val updatedBy: String = ""
 )

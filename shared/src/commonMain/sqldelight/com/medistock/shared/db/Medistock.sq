@@ -209,16 +209,19 @@ CREATE TABLE app_users (
 CREATE TABLE user_permissions (
     id TEXT NOT NULL PRIMARY KEY,
     user_id TEXT NOT NULL,
-    site_id TEXT NOT NULL,
-    can_sell INTEGER NOT NULL DEFAULT 0,
-    can_purchase INTEGER NOT NULL DEFAULT 0,
-    can_manage_stock INTEGER NOT NULL DEFAULT 0,
-    can_view_reports INTEGER NOT NULL DEFAULT 0,
+    module TEXT NOT NULL,
+    can_view INTEGER NOT NULL DEFAULT 0,
+    can_create INTEGER NOT NULL DEFAULT 0,
+    can_edit INTEGER NOT NULL DEFAULT 0,
+    can_delete INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES app_users(id),
-    FOREIGN KEY (site_id) REFERENCES sites(id)
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (user_id) REFERENCES app_users(id)
 );
+
+CREATE UNIQUE INDEX idx_user_permissions_user_module ON user_permissions(user_id, module);
 
 -- ============================================
 -- AUDIT & SYNC TABLES
@@ -399,6 +402,39 @@ UPDATE app_users SET username = ?, full_name = ?, is_admin = ?, is_active = ?, u
 
 updateUserPassword:
 UPDATE app_users SET password = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+-- ============================================
+-- QUERIES - User Permissions
+-- ============================================
+
+getAllPermissions:
+SELECT * FROM user_permissions ORDER BY user_id, module;
+
+getPermissionById:
+SELECT * FROM user_permissions WHERE id = ?;
+
+getPermissionsForUser:
+SELECT * FROM user_permissions WHERE user_id = ? ORDER BY module;
+
+getPermissionForUserAndModule:
+SELECT * FROM user_permissions WHERE user_id = ? AND module = ?;
+
+insertPermission:
+INSERT INTO user_permissions(id, user_id, module, can_view, can_create, can_edit, can_delete, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updatePermission:
+UPDATE user_permissions SET can_view = ?, can_create = ?, can_edit = ?, can_delete = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+upsertPermission:
+INSERT OR REPLACE INTO user_permissions(id, user_id, module, can_view, can_create, can_edit, can_delete, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deletePermission:
+DELETE FROM user_permissions WHERE id = ?;
+
+deletePermissionsForUser:
+DELETE FROM user_permissions WHERE user_id = ?;
 
 -- ============================================
 -- QUERIES - Current Stock (computed)

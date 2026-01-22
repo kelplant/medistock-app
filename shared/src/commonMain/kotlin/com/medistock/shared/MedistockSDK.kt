@@ -30,6 +30,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val auditRepository: AuditRepository by lazy { AuditRepository(database) }
     val stockRepository: StockRepository by lazy { StockRepository(database) }
     val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
+    val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
 
     // UseCases - Business logic layer
     val purchaseUseCase: PurchaseUseCase by lazy {
@@ -342,6 +343,31 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             newValues = newValues,
             userId = userId,
             timestamp = now
+        )
+    }
+
+    fun createUserPermission(
+        userId: String,
+        module: Module,
+        canView: Boolean = false,
+        canCreate: Boolean = false,
+        canEdit: Boolean = false,
+        canDelete: Boolean = false,
+        createdBy: String = "system"
+    ): UserPermission {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return UserPermission(
+            id = generateId(prefix = "permission"),
+            userId = userId,
+            module = module.name,
+            canView = canView,
+            canCreate = canCreate,
+            canEdit = canEdit,
+            canDelete = canDelete,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = createdBy,
+            updatedBy = createdBy
         )
     }
 

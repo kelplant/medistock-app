@@ -1,6 +1,9 @@
 import Foundation
+import shared
 
-/// Module names for permission management - mirrors Android Modules object
+/// Module names for permission management.
+/// This enum mirrors the shared.Module enum from the shared KMM module.
+/// Use shared.Module directly when possible for cross-platform consistency.
 enum Module: String, CaseIterable {
     case stock = "STOCK"
     case sales = "SALES"
@@ -31,6 +34,45 @@ enum Module: String, CaseIterable {
         case .customers: return "Clients"
         case .audit: return "Audit"
         case .packagingTypes: return "Types d'emballage"
+        }
+    }
+
+    /// Convert to shared Module enum
+    var toShared: shared.Module {
+        switch self {
+        case .stock: return shared.Module.stock
+        case .sales: return shared.Module.sales
+        case .purchases: return shared.Module.purchases
+        case .inventory: return shared.Module.inventory
+        case .transfers: return shared.Module.transfers
+        case .admin: return shared.Module.admin
+        case .products: return shared.Module.products
+        case .sites: return shared.Module.sites
+        case .categories: return shared.Module.categories
+        case .users: return shared.Module.users
+        case .customers: return shared.Module.customers
+        case .audit: return shared.Module.audit
+        case .packagingTypes: return shared.Module.packagingTypes
+        }
+    }
+
+    /// Create from shared Module enum
+    static func from(_ sharedModule: shared.Module) -> Module {
+        switch sharedModule {
+        case .stock: return .stock
+        case .sales: return .sales
+        case .purchases: return .purchases
+        case .inventory: return .inventory
+        case .transfers: return .transfers
+        case .admin: return .admin
+        case .products: return .products
+        case .sites: return .sites
+        case .categories: return .categories
+        case .users: return .users
+        case .customers: return .customers
+        case .audit: return .audit
+        case .packagingTypes: return .packagingTypes
+        default: return .stock // Fallback for future modules
         }
     }
 }

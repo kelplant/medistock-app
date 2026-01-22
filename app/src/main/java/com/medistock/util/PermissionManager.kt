@@ -2,12 +2,16 @@ package com.medistock.util
 
 import com.medistock.data.dao.UserPermissionDao
 import com.medistock.data.entities.UserPermission
+import com.medistock.shared.domain.model.Module
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Module names for permission management
+ * Module names for permission management.
+ * @deprecated Use [Module] enum from shared module instead.
+ * Kept for backward compatibility during migration.
  */
+@Deprecated("Use Module enum from shared module", ReplaceWith("Module", "com.medistock.shared.domain.model.Module"))
 object Modules {
     const val STOCK = "STOCK"
     const val SALES = "SALES"
@@ -19,6 +23,9 @@ object Modules {
     const val SITES = "SITES"
     const val CATEGORIES = "CATEGORIES"
     const val USERS = "USERS"
+    const val CUSTOMERS = "CUSTOMERS"
+    const val AUDIT = "AUDIT"
+    const val PACKAGING_TYPES = "PACKAGING_TYPES"
 }
 
 /**
@@ -32,6 +39,11 @@ class PermissionManager(
     /**
      * Check if current user can view a module
      */
+    suspend fun canView(module: Module): Boolean = canView(module.name)
+
+    /**
+     * Check if current user can view a module (string-based, for backward compatibility)
+     */
     suspend fun canView(module: String): Boolean {
         if (authManager.isAdmin()) return true
         return withContext(Dispatchers.IO) {
@@ -43,6 +55,11 @@ class PermissionManager(
 
     /**
      * Check if current user can create in a module
+     */
+    suspend fun canCreate(module: Module): Boolean = canCreate(module.name)
+
+    /**
+     * Check if current user can create in a module (string-based, for backward compatibility)
      */
     suspend fun canCreate(module: String): Boolean {
         if (authManager.isAdmin()) return true
@@ -56,6 +73,11 @@ class PermissionManager(
     /**
      * Check if current user can edit in a module
      */
+    suspend fun canEdit(module: Module): Boolean = canEdit(module.name)
+
+    /**
+     * Check if current user can edit in a module (string-based, for backward compatibility)
+     */
     suspend fun canEdit(module: String): Boolean {
         if (authManager.isAdmin()) return true
         return withContext(Dispatchers.IO) {
@@ -67,6 +89,11 @@ class PermissionManager(
 
     /**
      * Check if current user can delete in a module
+     */
+    suspend fun canDelete(module: Module): Boolean = canDelete(module.name)
+
+    /**
+     * Check if current user can delete in a module (string-based, for backward compatibility)
      */
     suspend fun canDelete(module: String): Boolean {
         if (authManager.isAdmin()) return true
