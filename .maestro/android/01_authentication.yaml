@@ -58,6 +58,14 @@ appId: com.medistock
 
 - waitForAnimationToEnd
 
+# Confirm logout dialog if shown
+- tapOn:
+    text: "OK"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
 # Verify back on login screen
 - assertVisible: "Connexion"
 
