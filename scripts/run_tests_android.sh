@@ -67,7 +67,7 @@ echo "=========================================="
 
 # Run tests
 cd "$PROJECT_DIR"
-"$MAESTRO_BIN" test --no-parallel .maestro/android/
+"$MAESTRO_BIN" test .maestro/android/
 
 EXIT_CODE=$?
 
