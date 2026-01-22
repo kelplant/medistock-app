@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">MediStock</string>
+    <string name="error_enter_product_name">Please enter a product name</string>
+    <string name="error_select_category">Please select a category</string>
+    <string name="product_added">Product added successfully</string>
+    <string name="final_price_template">Final price: %.2f</string>
+    <string name="selling_price_template">Calculated selling price: %.2f</string>
+    <string name="product_name">Product Name</string>
+    <string name="product_name_hint">Enter product name</string>
+    <string name="product_description">Description</string>
+    <string name="product_description_hint">Optional details (form, dosage, etc.)</string>
+    <string name="category">Category</string>
+    <string name="unit">Unit</string>
+    <string name="margin_type">Margin Type</string>
+    <string name="margin_value">Margin Value</string>
+    <string name="margin_value_hint">Enter the value</string>
+    <string name="save_product">Save</string>
+    <string name="view_stock">View Stock</string>
+    <string name="sell_product">Sell Product</string>
+    <string name="manage_product">Manage Products</string>
+    <string name="stock_movement">Stock Movement</string>
+    <string name="change_password">Change Password</string>
+    <string name="logout">Logout</string>
+    <string name="logout_confirmation">Do you want to logout?</string>
+
+    <!-- App Update Required -->
+    <string name="update_required_title">Mise à jour requise</string>
+    <string name="update_required_message">Une version plus récente de l\'application est nécessaire pour utiliser cette base de données.\n\nVeuillez mettre à jour l\'application pour continuer.</string>
+    <string name="update_version_info">Version app: %1$d\nVersion requise: %2$d\nVersion DB: %3$d</string>
+    <string name="update_app_button">Play Store</string>
+    <string name="close_app_button">Fermer l\'application</string>
+
+    <!-- GitHub Update -->
+    <string name="download_from_github">Télécharger depuis GitHub</string>
+    <string name="download_checking">Vérification de la mise à jour…</string>
+    <string name="download_available">Nouvelle version %s disponible (%s)</string>
+    <string name="download_progress">Téléchargement: %d%% (%s / %s)</string>
+    <string name="download_complete">Téléchargement terminé</string>
+    <string name="download_failed">Échec du téléchargement: %s</string>
+    <string name="download_no_update">Aucune mise à jour disponible</string>
+    <string name="download_installing">Installation en cours…</string>
+    <string name="install_permission_required">Veuillez autoriser l\'installation d\'applications inconnues</string>
+    <string name="install_button">Installer</string>
+
+    <!-- Sync Indicator -->
+    <string name="sync_indicator_description">Indicateur de synchronisation</string>
+    <string name="sync_status_synced">Synchronisé</string>
+    <string name="sync_status_syncing">Synchronisation…</string>
+    <string name="sync_status_offline">Hors ligne</string>
+    <string name="sync_status_pending">%d en attente</string>
+    <string name="sync_status_conflicts">%d conflit(s)</string>
+    <string name="sync_status_error">Erreur de sync</string>
+</resources>

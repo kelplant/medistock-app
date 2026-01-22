@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Spinner
+        android:id="@+id/spinnerSite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <EditText
+        android:id="@+id/editNewSite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Add new site" />
+
+    <Button
+        android:id="@+id/btnAddSite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Site" />
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Continue" />
+</LinearLayout>

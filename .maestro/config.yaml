@@ -1,0 +1,18 @@
+# Maestro Configuration for MediStock E2E Testing
+# Documentation: https://maestro.mobile.dev/
+
+# Global settings
+name: MediStock E2E Tests
+flows:
+  - android/**/*.yaml
+  - ios/**/*.yaml
+  - shared/**/*.yaml
+
+# Test variables (can be overridden via CLI)
+env:
+  TEST_USERNAME: admin
+  TEST_PASSWORD: admin123
+  TEST_SITE: "Site Test"
+  TEST_PRODUCT: "Produit Test"
+  TEST_CATEGORY: "Catégorie Test"
+  TEST_CUSTOMER: "Client Test"

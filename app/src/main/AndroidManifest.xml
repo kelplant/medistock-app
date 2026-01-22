@@ -1,0 +1,81 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.medistock">
+
+    <!-- Permissions pour Supabase -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permission pour installer des APK (mise à jour auto via GitHub) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application
+        android:name=".MedistockApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.MediStock">
+
+        <!-- Login Activity - Main Launcher -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Authentication -->
+        <activity android:name=".ui.auth.ChangePasswordActivity" android:exported="false" />
+
+        <!-- Main Activity -->
+        <activity android:name=".ui.HomeActivity" android:exported="false" />
+
+        <!-- User Management -->
+        <activity android:name=".ui.user.UserListActivity" android:exported="false" />
+        <activity android:name=".ui.user.UserAddEditActivity" android:exported="false" />
+
+        <!-- Other Activities -->
+        <activity android:name=".ui.manage.ManageProductMenuActivity" android:exported="false" />
+        <activity android:name=".ui.product.ProductListActivity" android:exported="false" />
+        <activity android:name=".ui.product.ProductAddActivity" android:exported="false" />
+        <activity android:name=".ui.product.ProductAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.movement.StockMovementListActivity" android:exported="false" />
+        <activity android:name=".ui.stock.StockListActivity" android:exported="false" />
+        <activity android:name=".ui.sales.SaleListActivity" android:exported="false" />
+        <activity android:name=".ui.sales.SaleActivity" android:exported="false" />
+        <activity android:name=".ui.purchase.PurchaseActivity" android:exported="false" />
+        <activity android:name=".ui.purchase.PurchaseListActivity" android:exported="false" />
+        <activity android:name=".ui.inventory.InventoryActivity" android:exported="false" />
+        <activity android:name=".ui.inventory.InventoryListActivity" android:exported="false" />
+        <activity android:name=".ui.admin.AdminActivity" android:exported="false" />
+        <activity android:name=".ui.admin.AuditHistoryActivity" android:exported="false" />
+        <activity android:name=".ui.admin.SupabaseConfigActivity" android:exported="false" />
+        <activity android:name=".ui.AppUpdateRequiredActivity" android:exported="false" />
+        <activity android:name=".ui.site.SiteListActivity" android:exported="false" />
+        <activity android:name=".ui.site.SiteAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.category.CategoryListActivity" android:exported="false" />
+        <activity android:name=".ui.category.CategoryAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.packaging.PackagingTypeListActivity" android:exported="false" />
+        <activity android:name=".ui.packaging.PackagingTypeAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.transfer.TransferListActivity" android:exported="false" />
+        <activity android:name=".ui.transfer.TransferActivity" android:exported="false" />
+        <activity android:name=".ui.customer.CustomerListActivity" android:exported="false" />
+        <activity android:name=".ui.customer.CustomerAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.profile.ProfileActivity" android:exported="false" />
+
+        <!-- FileProvider pour partager les APK de mise à jour -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

@@ -1,0 +1,98 @@
+# MediStock iOS - Sites CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock.iosApp
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Nom d'utilisateur"
+- inputText: "admin"
+
+- tapOn: "Mot de passe"
+- inputText: "admin123"
+
+- tapOn: "Se connecter"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Sites
+- tapOn:
+    text: "Sites"
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new site
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+- tapOn:
+    id: ".*add.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill site form
+- tapOn:
+    text: "Nom du site"
+    optional: true
+- inputText: "Site E2E Test iOS"
+
+# Save
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify site appears in list
+- assertVisible: "Site E2E Test iOS"
+
+- takeScreenshot: "ios_site_created"
+
+# Test 2: Edit site
+- tapOn: "Site E2E Test iOS"
+
+- waitForAnimationToEnd
+
+# Clear and enter new name
+- clearText
+- inputText: "Site E2E Modified iOS"
+
+# Save
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name
+- assertVisible: "Site E2E Modified iOS"
+
+- takeScreenshot: "ios_site_edited"
+
+# Test 3: Delete site (swipe to delete)
+- swipe:
+    direction: "LEFT"
+    start:
+      text: "Site E2E Modified iOS"
+
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+# Confirm deletion if dialog appears
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_site_deleted"

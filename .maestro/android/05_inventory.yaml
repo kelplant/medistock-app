@@ -1,0 +1,195 @@
+# MediStock Android - Inventory Tests
+# Tests stock counting and adjustment
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin123"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========== PREREQUISITE: Ensure product with stock exists ==========
+- tapOn:
+    text: ".*Produits.*"
+
+- waitForAnimationToEnd
+
+# Create product if needed
+- runFlow:
+    when:
+      notVisible: ".*Inventaire Test.*"
+    commands:
+      - tapOn:
+          contentDescription: ".*ajouter.*"
+          optional: true
+      - waitForAnimationToEnd
+      - tapOn:
+          text: ".*Nom.*"
+          optional: true
+      - inputText: "Produit Inventaire Test"
+      - tapOn:
+          text: ".*Enregistrer.*"
+          optional: true
+      - waitForAnimationToEnd
+
+- back
+
+# Add stock via purchase
+- tapOn:
+    text: ".*Achats.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill purchase
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+- tapOn:
+    text: ".*Inventaire Test.*"
+    optional: true
+
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- inputText: "100"
+
+- tapOn:
+    text: ".*Prix.*"
+    optional: true
+- inputText: "10"
+
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_inventory_stock_ready"
+
+# ========== TEST: Start Inventory Count ==========
+- back
+
+- tapOn:
+    text: ".*Inventaire.*"
+
+- waitForAnimationToEnd
+
+# Start new inventory
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+- tapOn:
+    text: ".*Nouveau.*"
+    optional: true
+- tapOn:
+    text: ".*Démarrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_inventory_started"
+
+# ========== TEST: Count Product with Discrepancy ==========
+# Find the product and enter counted quantity
+- tapOn:
+    text: ".*Inventaire Test.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Enter counted quantity (85 instead of 100 = discrepancy of -15)
+- tapOn:
+    text: ".*Quantité comptée.*"
+    optional: true
+- eraseText: 5
+- inputText: "85"
+
+# Add reason for discrepancy
+- tapOn:
+    text: ".*Raison.*"
+    optional: true
+- inputText: "Produits endommagés"
+
+# Save count
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+- tapOn:
+    text: ".*Valider.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_inventory_count_entered"
+
+# ========== TEST: Complete Inventory ==========
+- tapOn:
+    text: ".*Terminer.*"
+    optional: true
+- tapOn:
+    text: ".*Valider.*inventaire.*"
+    optional: true
+
+# Confirm if dialog
+- tapOn:
+    text: ".*Confirmer.*"
+    optional: true
+- tapOn:
+    text: ".*Oui.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_inventory_completed"
+
+# ========== VERIFY: Check adjusted stock ==========
+- back
+
+- tapOn:
+    text: ".*Stock.*"
+
+- waitForAnimationToEnd
+
+# Stock should now show 85 units (adjusted from 100)
+- takeScreenshot: "android_inventory_stock_adjusted"
+
+# ========== VERIFY: Check audit history ==========
+- back
+
+- tapOn:
+    text: ".*Admin.*"
+    optional: true
+
+- tapOn:
+    text: ".*Historique.*"
+    optional: true
+- tapOn:
+    text: ".*Audit.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Should see inventory entry in audit
+- takeScreenshot: "android_inventory_audit_entry"

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Spinner
+        android:id="@+id/spinnerSites"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:spinnerMode="dropdown"/>
+
+    <Spinner
+        android:id="@+id/spinnerProducts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:spinnerMode="dropdown"/>
+
+    <TextView
+        android:id="@+id/textStockSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Products: 0 | In stock: 0 | Out of stock: 0"
+        android:padding="12dp"
+        android:layout_marginTop="8dp"
+        android:background="#E3F2FD"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#1976D2"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewStock"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"/>
+
+</LinearLayout>

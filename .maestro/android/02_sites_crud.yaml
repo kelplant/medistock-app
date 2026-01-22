@@ -1,0 +1,121 @@
+# MediStock Android - Sites CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin123"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Sites
+- tapOn:
+    text: ".*Sites.*"
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new site
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+
+# If FAB button, try that
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill site form
+- tapOn:
+    text: ".*Nom.*"
+    optional: true
+- inputText: "Site E2E Test"
+
+# Save
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+- tapOn:
+    text: ".*Sauvegarder.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify site appears in list
+- assertVisible: "Site E2E Test"
+
+- takeScreenshot: "android_site_created"
+
+# Test 2: Edit site
+- tapOn: "Site E2E Test"
+
+- waitForAnimationToEnd
+
+# Clear and enter new name
+- tapOn:
+    text: ".*Nom.*"
+    optional: true
+- eraseText: 20
+- inputText: "Site E2E Modified"
+
+# Save
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+- tapOn:
+    text: ".*Sauvegarder.*"
+    optional: true
+- tapOn:
+    text: ".*Modifier.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name
+- assertVisible: "Site E2E Modified"
+
+- takeScreenshot: "android_site_edited"
+
+# Test 3: Delete site (swipe to delete or long press)
+- longPressOn: "Site E2E Modified"
+
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+# Confirm deletion if dialog appears
+- tapOn:
+    text: ".*Oui.*"
+    optional: true
+- tapOn:
+    text: ".*Confirmer.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_site_deleted"

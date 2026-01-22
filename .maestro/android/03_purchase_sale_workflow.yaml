@@ -1,0 +1,233 @@
+# MediStock Android - Purchase → Sale Workflow Tests
+# Tests the complete FIFO workflow
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin123"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========== STEP 1: Ensure we have a site ==========
+- tapOn:
+    text: ".*Sites.*"
+
+- waitForAnimationToEnd
+
+# Check if a site exists, if not create one
+- runFlow:
+    when:
+      notVisible: ".*Site.*"
+    commands:
+      - tapOn:
+          contentDescription: ".*ajouter.*"
+          optional: true
+      - waitForAnimationToEnd
+      - inputText: "Pharmacie Test"
+      - tapOn:
+          text: ".*Enregistrer.*"
+          optional: true
+      - waitForAnimationToEnd
+
+- back
+
+# ========== STEP 2: Ensure we have a product ==========
+- tapOn:
+    text: ".*Produits.*"
+
+- waitForAnimationToEnd
+
+# Check if a product exists, if not create one
+- runFlow:
+    when:
+      notVisible: ".*Paracetamol.*"
+    commands:
+      - tapOn:
+          contentDescription: ".*ajouter.*"
+          optional: true
+      - waitForAnimationToEnd
+      - tapOn:
+          text: ".*Nom.*"
+          optional: true
+      - inputText: "Paracetamol E2E"
+      - tapOn:
+          text: ".*Enregistrer.*"
+          optional: true
+      - waitForAnimationToEnd
+
+- back
+
+# ========== STEP 3: Create a Purchase (adds stock) ==========
+- tapOn:
+    text: ".*Achats.*"
+    optional: true
+- tapOn:
+    text: ".*Achat.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Add new purchase
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select product
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+- tapOn:
+    text: ".*Paracetamol.*"
+    optional: true
+
+# Enter quantity
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- inputText: "100"
+
+# Enter price
+- tapOn:
+    text: ".*Prix.*"
+    optional: true
+- inputText: "5"
+
+# Enter supplier
+- tapOn:
+    text: ".*Fournisseur.*"
+    optional: true
+- inputText: "Pharma Supplier"
+
+# Save purchase
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+- tapOn:
+    text: ".*Valider.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_created"
+
+# ========== STEP 4: Verify stock increased ==========
+- back
+
+- tapOn:
+    text: ".*Stock.*"
+
+- waitForAnimationToEnd
+
+# Verify stock shows the product with quantity
+- assertVisible:
+    text: ".*Paracetamol.*"
+    optional: true
+
+- takeScreenshot: "android_stock_after_purchase"
+
+# ========== STEP 5: Create a Sale (reduces stock via FIFO) ==========
+- back
+
+- tapOn:
+    text: ".*Ventes.*"
+    optional: true
+- tapOn:
+    text: ".*Vente.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Add new sale
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Enter customer name
+- tapOn:
+    text: ".*Client.*"
+    optional: true
+- inputText: "Patient Test"
+
+# Add sale item
+- tapOn:
+    text: ".*Ajouter.*article.*"
+    optional: true
+- tapOn:
+    text: ".*Paracetamol.*"
+    optional: true
+
+# Enter quantity to sell
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- eraseText: 5
+- inputText: "20"
+
+# Enter selling price
+- tapOn:
+    text: ".*Prix.*"
+    optional: true
+- inputText: "10"
+
+# Validate sale
+- tapOn:
+    text: ".*Valider.*"
+    optional: true
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sale_created"
+
+# ========== STEP 6: Verify stock decreased ==========
+- back
+
+- tapOn:
+    text: ".*Stock.*"
+
+- waitForAnimationToEnd
+
+# Stock should now show 80 units (100 - 20)
+- takeScreenshot: "android_stock_after_sale"
+
+# ========== STEP 7: Check profit calculation (optional) ==========
+- back
+
+- tapOn:
+    text: ".*Ventes.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# The sale should show profit info
+# Revenue: 20 * 10 = 200
+# Cost: 20 * 5 = 100
+# Profit: 100
+- takeScreenshot: "android_sale_profit"

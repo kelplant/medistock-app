@@ -1,0 +1,127 @@
+package com.medistock.data.sync
+
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.os.Build
+import com.medistock.util.DebugConfig
+import androidx.annotation.RequiresApi
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.medistock.data.realtime.RealtimeSyncService
+import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.util.NetworkStatus
+import com.medistock.util.SecureSupabasePreferences
+import java.util.concurrent.TimeUnit
+
+object SyncScheduler {
+    private const val PERIODIC_SYNC_WORK = "auto_sync_periodic"
+    private const val IMMEDIATE_SYNC_WORK = "auto_sync_immediate"
+    private const val TAG = "SyncScheduler"
+    private const val SYNC_INTERVAL_SECONDS = 30L
+
+    private var networkCallbackRegistered = false
+
+    fun start(context: Context) {
+        val appContext = context.applicationContext
+        scheduleNext(appContext)
+        updateSyncMode(appContext, NetworkStatus.isOnline(appContext))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            registerNetworkCallback(appContext)
+        } else {
+            DebugConfig.w(TAG, "Skipping network callback registration: API < 24")
+        }
+
+        if (SupabaseClientProvider.isConfigured(appContext) && NetworkStatus.isOnline(appContext)) {
+            triggerImmediate(appContext, "app-start")
+            if (RealtimeSyncService.isRealtimeEnabled(appContext)) {
+                RealtimeSyncService.start(appContext)
+            } else {
+                RealtimeSyncService.stop()
+            }
+        }
+    }
+
+    fun scheduleNext(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<AutoSyncWorker>()
+            .setConstraints(constraints)
+            .setInitialDelay(SYNC_INTERVAL_SECONDS, TimeUnit.SECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            PERIODIC_SYNC_WORK,
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    fun triggerImmediate(context: Context, reason: String) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<AutoSyncWorker>()
+            .setConstraints(constraints)
+            .setInputData(workDataOf("reason" to reason))
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            IMMEDIATE_SYNC_WORK,
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun registerNetworkCallback(context: Context) {
+        if (networkCallbackRegistered) {
+            return
+        }
+
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        connectivityManager.registerDefaultNetworkCallback(
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    updateSyncMode(context, true)
+                    if (SupabaseClientProvider.isConfigured(context)) {
+                        SupabaseClientProvider.reinitialize(context)
+                        triggerImmediate(context, "network-available")
+                        if (RealtimeSyncService.isRealtimeEnabled(context)) {
+                            RealtimeSyncService.start(context)
+                        }
+                    }
+                }
+
+                override fun onLost(network: Network) {
+                    updateSyncMode(context, false)
+                    RealtimeSyncService.stop()
+                }
+            }
+        )
+
+
+        networkCallbackRegistered = true
+        DebugConfig.d(TAG, "Network callback registered for auto sync")
+    }
+
+    private fun updateSyncMode(context: Context, isOnline: Boolean) {
+        val preferences = SecureSupabasePreferences(context)
+        val configured = SupabaseClientProvider.isConfigured(context)
+        val mode = if (configured && isOnline) {
+            SecureSupabasePreferences.SyncMode.REALTIME
+        } else {
+            SecureSupabasePreferences.SyncMode.LOCAL
+        }
+        preferences.setSyncMode(mode)
+    }
+}

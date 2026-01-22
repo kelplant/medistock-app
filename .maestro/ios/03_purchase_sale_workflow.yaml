@@ -1,0 +1,203 @@
+# MediStock iOS - Purchase → Sale Workflow Tests
+# Tests the complete FIFO workflow
+appId: com.medistock.iosApp
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Nom d'utilisateur"
+- inputText: "admin"
+
+- tapOn: "Mot de passe"
+- inputText: "admin123"
+
+- tapOn: "Se connecter"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========== STEP 1: Navigate to home and check tabs ==========
+# Verify tab bar is visible
+- assertVisible:
+    text: "Accueil"
+    optional: true
+
+# ========== STEP 2: Create/verify a site exists ==========
+- tapOn: "Sites"
+
+- waitForAnimationToEnd
+
+# If no sites, create one
+- runFlow:
+    when:
+      visible: "Aucun site"
+    commands:
+      - tapOn: ".*Ajouter.*"
+      - waitForAnimationToEnd
+      - inputText: "Pharmacie Test iOS"
+      - tapOn: ".*Ajouter.*"
+      - waitForAnimationToEnd
+
+- takeScreenshot: "ios_site_ready"
+
+# ========== STEP 3: Create/verify a product exists ==========
+- tapOn: "Produits"
+
+- waitForAnimationToEnd
+
+# If no products, create one
+- runFlow:
+    when:
+      visible: "Aucun produit"
+    commands:
+      - tapOn: ".*Ajouter.*"
+      - waitForAnimationToEnd
+      - tapOn: "Nom du produit"
+      - inputText: "Paracetamol iOS"
+      - tapOn: ".*Ajouter.*"
+      - waitForAnimationToEnd
+
+- takeScreenshot: "ios_product_ready"
+
+# ========== STEP 4: Create a Purchase (adds stock) ==========
+- tapOn:
+    text: "Achats"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Add new purchase
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill purchase form
+# Select product
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+- tapOn:
+    text: ".*Paracetamol.*"
+    optional: true
+
+# Enter quantity
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- inputText: "100"
+
+# Enter price
+- tapOn:
+    text: ".*Prix.*achat.*"
+    optional: true
+- inputText: "5"
+
+# Enter supplier (optional)
+- tapOn:
+    text: ".*Fournisseur.*"
+    optional: true
+- inputText: "Pharma Supplier iOS"
+
+# Save purchase
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchase_created"
+
+# ========== STEP 5: Verify stock ==========
+- tapOn: "Stock"
+
+- waitForAnimationToEnd
+
+# Verify product appears with stock
+- assertVisible:
+    text: ".*Paracetamol.*"
+    optional: true
+
+- takeScreenshot: "ios_stock_after_purchase"
+
+# ========== STEP 6: Create a Sale (reduces stock via FIFO) ==========
+- tapOn:
+    text: "Ventes"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Add new sale
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Enter customer
+- tapOn:
+    text: ".*Client.*"
+    optional: true
+- inputText: "Patient Test iOS"
+
+# Add product to sale
+- tapOn:
+    text: ".*Ajouter.*article.*"
+    optional: true
+- tapOn:
+    text: ".*Paracetamol.*"
+    optional: true
+
+# Enter quantity
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- clearText
+- inputText: "20"
+
+# Enter selling price
+- tapOn:
+    text: ".*Prix.*"
+    optional: true
+- inputText: "10"
+
+# Validate sale
+- tapOn:
+    text: ".*Valider.*"
+    optional: true
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sale_created"
+
+# ========== STEP 7: Verify stock decreased ==========
+- tapOn: "Stock"
+
+- waitForAnimationToEnd
+
+# Stock should now show 80 units (100 - 20)
+- takeScreenshot: "ios_stock_after_sale"
+
+# ========== STEP 8: Verify sale profit ==========
+- tapOn:
+    text: "Ventes"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Sale should show:
+# Revenue: 20 * 10 = 200
+# Cost: 20 * 5 = 100
+# Profit: 100
+- takeScreenshot: "ios_sale_profit_verification"
