@@ -9,21 +9,22 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Category
-import com.medistock.data.entities.Product
-import com.medistock.data.entities.PackagingType
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Category
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class ProductAddEditActivity : AppCompatActivity() {
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private lateinit var editName: EditText
     private lateinit var spinnerCategory: Spinner
@@ -55,7 +56,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         setContentView(R.layout.activity_product_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
 
         editName = findViewById(R.id.editProductName)
@@ -81,44 +82,38 @@ class ProductAddEditActivity : AppCompatActivity() {
 
         // Load categories and packaging types from DB
         lifecycleScope.launch {
-            categories = db.categoryDao().getAll().first()
-            packagingTypes = db.packagingTypeDao().getAllActive().first()
+            categories = withContext(Dispatchers.IO) { sdk.categoryRepository.getAll() }
+            packagingTypes = withContext(Dispatchers.IO) { sdk.packagingTypeRepository.getActive() }
 
             if (categories.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ProductAddEditActivity,
-                        "No categories available. Please create a category first.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    btnSave.isEnabled = false
-                }
+                Toast.makeText(
+                    this@ProductAddEditActivity,
+                    "No categories available. Please create a category first.",
+                    Toast.LENGTH_LONG
+                ).show()
+                btnSave.isEnabled = false
             } else if (packagingTypes.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ProductAddEditActivity,
-                        "No packaging types available. Please create packaging types first.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    btnSave.isEnabled = false
-                }
+                Toast.makeText(
+                    this@ProductAddEditActivity,
+                    "No packaging types available. Please create packaging types first.",
+                    Toast.LENGTH_LONG
+                ).show()
+                btnSave.isEnabled = false
             } else {
-                withContext(Dispatchers.Main) {
-                    setupCategorySpinner()
-                    setupPackagingTypeSpinner()
-                    setupSpinnerListeners()
+                setupCategorySpinner()
+                setupPackagingTypeSpinner()
+                setupSpinnerListeners()
 
-                    // If edit mode, load the product
-                    productId = intent.getStringExtra("PRODUCT_ID")?.takeIf { it.isNotBlank() }
-                    if (productId != null) {
-                        supportActionBar?.title = "Edit Product"
-                        btnDelete.visibility = View.VISIBLE
-                        loadProduct(productId!!)
-                    } else {
-                        supportActionBar?.title = "Add Product"
-                        // Set default level
-                        updateLevelSpinner()
-                    }
+                // If edit mode, load the product
+                productId = intent.getStringExtra("PRODUCT_ID")?.takeIf { it.isNotBlank() }
+                if (productId != null) {
+                    supportActionBar?.title = "Edit Product"
+                    btnDelete.visibility = View.VISIBLE
+                    loadProduct(productId!!)
+                } else {
+                    supportActionBar?.title = "Add Product"
+                    // Set default level
+                    updateLevelSpinner()
                 }
             }
         }
@@ -239,50 +234,48 @@ class ProductAddEditActivity : AppCompatActivity() {
 
     private fun loadProduct(id: String) {
         lifecycleScope.launch {
-            val product = db.productDao().getById(id).first()
-            withContext(Dispatchers.Main) {
-                if (product != null) {
-                    existingProduct = product
-                    editName.setText(product.name)
-                    editMarginValue.setText((product.marginValue ?: 0.0).toString())
-                    editDescription.setText(product.description.orEmpty())
+            val product = withContext(Dispatchers.IO) { sdk.productRepository.getById(id) }
+            if (product != null) {
+                existingProduct = product
+                editName.setText(product.name)
+                editMarginValue.setText((product.marginValue ?: 0.0).toString())
+                editDescription.setText(product.description.orEmpty())
 
-                    // Select the category
-                    val categoryIndex = categories.indexOfFirst { it.id == product.categoryId }
-                    if (categoryIndex >= 0) {
-                        spinnerCategory.setSelection(categoryIndex)
-                    }
-
-                    // Select packaging type and level
-                    if (product.packagingTypeId != null) {
-                        val packagingTypeIndex = packagingTypes.indexOfFirst { it.id == product.packagingTypeId }
-                        if (packagingTypeIndex >= 0) {
-                            spinnerPackagingType.setSelection(packagingTypeIndex)
-                            selectedPackagingTypeId = product.packagingTypeId
-                            updateLevelSpinner()
-
-                            // Select the level
-                            if (product.selectedLevel != null) {
-                                spinnerSelectedLevel.setSelection(product.selectedLevel - 1)
-                                selectedLevel = product.selectedLevel
-                            }
-                        }
-
-                        // Set conversion factor if available
-                        if (product.conversionFactor != null) {
-                            editConversionFactor.setText(product.conversionFactor.toString())
-                        }
-                    }
-
-                    // Select the margin type
-                    val marginTypeIndex = listOf("percentage", "fixed").indexOf(product.marginType)
-                    if (marginTypeIndex >= 0) {
-                        spinnerMarginType.setSelection(marginTypeIndex)
-                    }
-
-                    selectedCategoryId = product.categoryId
-                    selectedMarginType = product.marginType ?: "percentage"
+                // Select the category
+                val categoryIndex = categories.indexOfFirst { it.id == product.categoryId }
+                if (categoryIndex >= 0) {
+                    spinnerCategory.setSelection(categoryIndex)
                 }
+
+                // Select packaging type and level
+                if (product.packagingTypeId != null) {
+                    val packagingTypeIndex = packagingTypes.indexOfFirst { it.id == product.packagingTypeId }
+                    if (packagingTypeIndex >= 0) {
+                        spinnerPackagingType.setSelection(packagingTypeIndex)
+                        selectedPackagingTypeId = product.packagingTypeId
+                        updateLevelSpinner()
+
+                        // Select the level
+                        product.selectedLevel?.let { level ->
+                            spinnerSelectedLevel.setSelection(level - 1)
+                            selectedLevel = level
+                        }
+                    }
+
+                    // Set conversion factor if available
+                    if (product.conversionFactor != null) {
+                        editConversionFactor.setText(product.conversionFactor.toString())
+                    }
+                }
+
+                // Select the margin type
+                val marginTypeIndex = listOf("percentage", "fixed").indexOf(product.marginType)
+                if (marginTypeIndex >= 0) {
+                    spinnerMarginType.setSelection(marginTypeIndex)
+                }
+
+                selectedCategoryId = product.categoryId
+                selectedMarginType = product.marginType ?: "percentage"
             }
         }
     }
@@ -335,8 +328,10 @@ class ProductAddEditActivity : AppCompatActivity() {
         val currentUser = authManager.getUsername().ifBlank { "system" }
 
         // Create/Update product
+        val currentTime = System.currentTimeMillis()
         val product = if (productId == null) {
             Product(
+                id = UUID.randomUUID().toString(),
                 name = productName,
                 categoryId = selectedCategoryId,
                 packagingTypeId = selectedPackagingTypeId,
@@ -348,11 +343,13 @@ class ProductAddEditActivity : AppCompatActivity() {
                 marginValue = enteredMarginValue,
                 description = descriptionText,
                 siteId = currentSiteId!!,
+                createdAt = currentTime,
+                updatedAt = currentTime,
                 createdBy = currentUser,
                 updatedBy = currentUser
             )
         } else {
-            val createdAt = existingProduct?.createdAt ?: System.currentTimeMillis()
+            val createdAt = existingProduct?.createdAt ?: currentTime
             val createdBy = existingProduct?.createdBy?.ifBlank { currentUser } ?: currentUser
             Product(
                 id = productId!!,
@@ -368,7 +365,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 description = descriptionText,
                 siteId = currentSiteId!!,
                 createdAt = createdAt,
-                updatedAt = System.currentTimeMillis(),
+                updatedAt = currentTime,
                 createdBy = createdBy,
                 updatedBy = currentUser
             )
@@ -378,24 +375,20 @@ class ProductAddEditActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.IO) {
                     if (productId == null) {
-                        db.productDao().insert(product)
+                        sdk.productRepository.insert(product)
                     } else {
-                        db.productDao().update(product)
+                        sdk.productRepository.update(product)
                     }
                 }
-                withContext(Dispatchers.Main) {
-                    val message = if (productId == null) getString(R.string.product_added) else "Product updated successfully"
-                    Toast.makeText(this@ProductAddEditActivity, message, Toast.LENGTH_SHORT).show()
-                    finish()
-                }
+                val message = if (productId == null) getString(R.string.product_added) else "Product updated successfully"
+                Toast.makeText(this@ProductAddEditActivity, message, Toast.LENGTH_SHORT).show()
+                finish()
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ProductAddEditActivity,
-                        "Error: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                Toast.makeText(
+                    this@ProductAddEditActivity,
+                    "Error: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -416,24 +409,17 @@ class ProductAddEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val product = db.productDao().getById(productId!!).first()
-                if (product != null) {
-                    withContext(Dispatchers.IO) {
-                        db.productDao().delete(product)
-                    }
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ProductAddEditActivity, "Product deleted", Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
+                withContext(Dispatchers.IO) {
+                    sdk.productRepository.delete(productId!!)
                 }
+                Toast.makeText(this@ProductAddEditActivity, "Product deleted", Toast.LENGTH_SHORT).show()
+                finish()
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ProductAddEditActivity,
-                        "Error deleting: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                Toast.makeText(
+                    this@ProductAddEditActivity,
+                    "Error deleting: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
