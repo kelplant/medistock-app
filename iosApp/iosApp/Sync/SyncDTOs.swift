@@ -2,7 +2,17 @@ import Foundation
 import shared
 
 // MARK: - DTOs for Supabase JSON encoding/decoding
-// These mirror the Remote* models but with proper snake_case coding keys
+//
+// These Swift DTOs mirror the Kotlin DTOs in shared/src/commonMain/kotlin/com/medistock/shared/data/dto/
+// They exist because:
+// 1. Swift's Codable is required for Supabase JSON encoding on iOS
+// 2. Kotlin's kotlinx.serialization doesn't automatically provide Swift Codable conformance
+//
+// The authoritative DTOs are in Kotlin. When updating field mappings or adding new DTOs,
+// update both the Kotlin DTOs and these Swift DTOs to maintain consistency.
+//
+// Note: The shared module's repositories, services, and business logic ARE used directly
+// from iOS. Only the JSON encoding layer uses these Swift-specific DTOs.
 
 struct SiteDTO: Codable {
     let id: String
