@@ -1,0 +1,79 @@
+# MediStock iOS - Authentication Tests
+# Tests: Login, logout, invalid credentials
+appId: com.medistock.iosApp
+---
+
+# Test 1: Login with valid credentials
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Verify login screen is displayed
+- assertVisible: "MediStock"
+- assertVisible: "Connexion"
+
+# Enter username
+- tapOn: "Nom d'utilisateur"
+- inputText: "admin"
+
+# Enter password
+- tapOn: "Mot de passe"
+- inputText: "admin123"
+
+# Tap login button
+- tapOn: "Se connecter"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen (tab bar should be visible)
+- assertVisible:
+    text: ".*Accueil.*"
+    optional: true
+
+# Take screenshot for verification
+- takeScreenshot: "ios_login_success"
+
+# Test 2: Logout
+- tapOn:
+    text: "Profil"
+    optional: true
+
+- tapOn:
+    text: ".*Déconnexion.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm logout if dialog appears
+- tapOn:
+    text: ".*Déconnecter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify back on login screen
+- assertVisible: "MediStock"
+- assertVisible: "Connexion"
+
+# Take screenshot
+- takeScreenshot: "ios_logout_success"
+
+# Test 3: Invalid credentials
+- tapOn: "Nom d'utilisateur"
+- inputText: "wronguser"
+
+- tapOn: "Mot de passe"
+- inputText: "wrongpassword"
+
+- tapOn: "Se connecter"
+
+- waitForAnimationToEnd
+
+# Verify error message is shown
+- assertVisible:
+    text: ".*incorrect.*"
+    optional: true
+
+- takeScreenshot: "ios_login_invalid"

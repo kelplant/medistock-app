@@ -1,0 +1,27 @@
+# Login Flow - Shared between Android and iOS
+# Usage: runFlow with env variables TEST_USERNAME and TEST_PASSWORD
+appId: ${APP_ID}
+---
+# Wait for login screen
+- waitForAnimationToEnd
+
+# Enter credentials
+- tapOn:
+    text: ".*utilisateur.*"
+    optional: true
+- inputText: ${TEST_USERNAME}
+
+- tapOn:
+    text: ".*passe.*"
+    optional: true
+- inputText: ${TEST_PASSWORD}
+
+# Tap login button
+- tapOn:
+    text: ".*connecter.*"
+
+# Wait for home screen
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true

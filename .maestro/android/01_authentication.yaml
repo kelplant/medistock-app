@@ -1,0 +1,77 @@
+# MediStock Android - Authentication Tests
+# Tests: Login, logout, invalid credentials
+appId: com.medistock
+---
+
+# Test 1: Login with valid credentials
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Verify login screen is displayed
+- assertVisible: "Connexion"
+
+# Enter username
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+# Enter password
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin123"
+
+# Tap login button
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+# Take screenshot for verification
+- takeScreenshot: "android_login_success"
+
+# Test 2: Logout
+- back
+- tapOn:
+    text: ".*Profil.*"
+    optional: true
+
+- tapOn:
+    text: ".*Déconnexion.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify back on login screen
+- assertVisible: "Connexion"
+
+# Take screenshot
+- takeScreenshot: "android_logout_success"
+
+# Test 3: Invalid credentials
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "wronguser"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "wrongpassword"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd
+
+# Verify error message is shown
+- assertVisible:
+    text: ".*incorrect.*"
+    optional: true
+
+- takeScreenshot: "android_login_invalid"

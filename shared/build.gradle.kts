@@ -7,6 +7,16 @@ plugins {
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+    // JVM target for integration tests
+    jvm {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
+
     // Android target
     androidTarget {
         compilerOptions {
@@ -87,6 +97,25 @@ kotlin {
 
                 // SQLDelight iOS driver
                 implementation("app.cash.sqldelight:native-driver:2.0.1")
+            }
+        }
+
+        // JVM source sets for integration testing
+        val jvmMain by getting {
+            dependencies {
+                // JVM-specific Ktor engine
+                implementation("io.ktor:ktor-client-cio:2.3.4")
+
+                // SQLDelight JDBC driver for JVM
+                implementation("app.cash.sqldelight:sqlite-driver:2.0.1")
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test-junit5"))
+                implementation("org.junit.jupiter:junit-jupiter:5.10.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
             }
         }
     }

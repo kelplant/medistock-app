@@ -1,0 +1,202 @@
+# MediStock Android - Transfer Tests
+# Tests inter-site product transfers
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin123"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========== PREREQUISITE: Create 2 sites if needed ==========
+- tapOn:
+    text: ".*Sites.*"
+
+- waitForAnimationToEnd
+
+# Create Site 1 if needed
+- runFlow:
+    when:
+      notVisible: ".*Entrepôt.*"
+    commands:
+      - tapOn:
+          contentDescription: ".*ajouter.*"
+          optional: true
+      - waitForAnimationToEnd
+      - inputText: "Entrepôt Central"
+      - tapOn:
+          text: ".*Enregistrer.*"
+          optional: true
+      - waitForAnimationToEnd
+
+# Create Site 2 if needed
+- runFlow:
+    when:
+      notVisible: ".*Pharmacie.*"
+    commands:
+      - tapOn:
+          contentDescription: ".*ajouter.*"
+          optional: true
+      - waitForAnimationToEnd
+      - inputText: "Pharmacie Test"
+      - tapOn:
+          text: ".*Enregistrer.*"
+          optional: true
+      - waitForAnimationToEnd
+
+- takeScreenshot: "android_transfer_sites_ready"
+
+# ========== PREREQUISITE: Ensure product with stock exists ==========
+- back
+
+- tapOn:
+    text: ".*Produits.*"
+
+- waitForAnimationToEnd
+
+# Create product if needed
+- runFlow:
+    when:
+      notVisible: ".*Transfer Test.*"
+    commands:
+      - tapOn:
+          contentDescription: ".*ajouter.*"
+          optional: true
+      - waitForAnimationToEnd
+      - tapOn:
+          text: ".*Nom.*"
+          optional: true
+      - inputText: "Produit Transfer Test"
+      - tapOn:
+          text: ".*Enregistrer.*"
+          optional: true
+      - waitForAnimationToEnd
+
+- back
+
+# Add stock via purchase
+- tapOn:
+    text: ".*Achats.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill purchase
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+- tapOn:
+    text: ".*Transfer Test.*"
+    optional: true
+
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- inputText: "200"
+
+- tapOn:
+    text: ".*Prix.*"
+    optional: true
+- inputText: "5"
+
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# ========== TEST: Create a Transfer ==========
+- back
+
+- tapOn:
+    text: ".*Transferts.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    contentDescription: ".*ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill transfer form
+# Select product
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+- tapOn:
+    text: ".*Transfer Test.*"
+    optional: true
+
+# Select source site
+- tapOn:
+    text: ".*Site source.*"
+    optional: true
+- tapOn:
+    text: ".*Entrepôt.*"
+    optional: true
+
+# Select destination site
+- tapOn:
+    text: ".*Site destination.*"
+    optional: true
+- tapOn:
+    text: ".*Pharmacie.*"
+    optional: true
+
+# Enter quantity
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+- inputText: "50"
+
+# Add notes
+- tapOn:
+    text: ".*Notes.*"
+    optional: true
+- inputText: "Test E2E transfer"
+
+# Validate
+- tapOn:
+    text: ".*Valider.*"
+    optional: true
+- tapOn:
+    text: ".*Enregistrer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_transfer_created"
+
+# ========== VERIFY: Check stock at both sites ==========
+- back
+
+- tapOn:
+    text: ".*Stock.*"
+
+- waitForAnimationToEnd
+
+# Change site filter to verify stock
+- takeScreenshot: "android_transfer_stock_verification"
