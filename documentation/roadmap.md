@@ -107,9 +107,11 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - Uniformiser les règles (Supabase si configuré, sinon local).
 - Éviter les divergences Android/iOS.
 
-### 2.2. Modules permissions partagés
-- Créer un enum de modules unique dans `shared`.
-- Android et iOS se branchent dessus.
+### 2.2. Modules permissions partagés ✅
+- ✅ Enum `Module` unifié dans `shared` (13 modules)
+- ✅ Modèle `UserPermission` module-based (canView/Create/Edit/Delete)
+- ✅ `UserPermissionRepository` dans shared
+- ✅ Android et iOS utilisent les modules shared
 
 ### 2.3. Permissions offline-first
 - Définir une stratégie commune (cache local + refresh distant).
@@ -207,7 +209,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 |-------|--------|-------|
 | Phase 0 - Cadrage | ✅ Terminée | Règles métier documentées |
 | Phase 1 - UseCases shared | ✅ Terminée | 4 UseCases + tests |
-| Phase 2 - Auth & Permissions | ⏳ En cours | BCrypt partagé ✅ |
+| Phase 2 - Auth & Permissions | ⏳ En cours | BCrypt ✅, Modules ✅, Auth 2.1 à faire |
 | Phase 3 - Sync iOS | ✅ Terminée | Bidirectionnel + Realtime |
 | Phase 4 - UX iOS | ⏳ À faire | Écrans manquants |
 | Phase 5 - Durcissement Android | ✅ Terminée | ViewModels migrés |
