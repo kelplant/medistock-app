@@ -35,7 +35,7 @@ appId: com.medistock
       notVisible: ".*Inventaire Test.*"
     commands:
       - tapOn:
-          contentDescription: ".*ajouter.*"
+          id: ".*ajouter.*"
           optional: true
       - waitForAnimationToEnd
       - tapOn:
@@ -57,7 +57,7 @@ appId: com.medistock
 - waitForAnimationToEnd
 
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 
 - waitForAnimationToEnd
@@ -98,7 +98,7 @@ appId: com.medistock
 
 # Start new inventory
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 - tapOn:
     text: ".*Nouveau.*"

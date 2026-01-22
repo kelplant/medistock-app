@@ -34,7 +34,7 @@ appId: com.medistock
     text: ".*Ajouter.*"
     optional: true
 - tapOn:
-    contentDescription: ".*ajouter.*"
+    id: ".*ajouter.*"
     optional: true
 
 # If FAB button, try that
