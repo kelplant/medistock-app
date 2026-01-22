@@ -2,6 +2,7 @@ package com.medistock.shared
 
 import com.medistock.shared.data.repository.*
 import com.medistock.shared.db.MedistockDatabase
+import com.medistock.shared.domain.audit.AuditService
 import com.medistock.shared.domain.auth.AuthService
 import com.medistock.shared.domain.auth.PasswordVerifier
 import com.medistock.shared.domain.model.*
@@ -48,6 +49,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val conflictResolver: ConflictResolver by lazy { ConflictResolver() }
     val retryConfiguration: RetryConfiguration by lazy { RetryConfiguration.DEFAULT }
     val syncEnqueueService: SyncEnqueueService by lazy { SyncEnqueueService(syncQueueRepository) }
+    val auditService: AuditService by lazy { AuditService(auditRepository) }
 
     /**
      * Create an AuthService with a platform-specific PasswordVerifier.
