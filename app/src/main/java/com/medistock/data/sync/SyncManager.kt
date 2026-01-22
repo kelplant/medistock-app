@@ -1,27 +1,25 @@
 package com.medistock.data.sync
 
 import android.content.Context
-import com.medistock.data.db.AppDatabase
+import com.medistock.MedistockApplication
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.remote.repository.*
-import com.medistock.data.sync.SyncMapper.toDto
-import com.medistock.data.sync.SyncMapper.toEntity
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.data.dto.*
 import com.medistock.shared.domain.sync.SyncDirection
 import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Gestionnaire de synchronisation bidirectionnelle entre Room (local) et Supabase (remote)
+ * Gestionnaire de synchronisation bidirectionnelle entre SQLDelight (local) et Supabase (remote)
  */
 class SyncManager(
     private val context: Context
 ) {
-    private val database = AppDatabase.getInstance(context)
+    private val sdk: MedistockSDK = MedistockApplication.sdk
     private val scope = CoroutineScope(Dispatchers.IO)
     private val orchestrator = SyncOrchestrator()
 
@@ -39,7 +37,7 @@ class SyncManager(
     private val stockMovementRepo by lazy { StockMovementSupabaseRepository() }
 
     /**
-     * Synchronise toutes les données de Room vers Supabase
+     * Synchronise toutes les données de SQLDelight vers Supabase
      * À utiliser lors de la première connexion ou pour une sync complète
      */
     suspend fun syncLocalToRemote(
@@ -104,7 +102,7 @@ class SyncManager(
     }
 
     /**
-     * Synchronise toutes les données de Supabase vers Room
+     * Synchronise toutes les données de Supabase vers SQLDelight
      * Pour récupérer les données d'autres appareils
      */
     suspend fun syncRemoteToLocal(
@@ -172,11 +170,10 @@ class SyncManager(
 
     private suspend fun syncSitesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localSites = database.siteDao().getAll().firstOrNull() ?: emptyList()
+            val localSites = sdk.siteRepository.getAll()
             localSites.forEach { site ->
                 try {
-                    val dto = site.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = SiteDto.fromModel(site)
                     siteRepo.upsertSite(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Site: ${site.name}", e)
@@ -192,8 +189,8 @@ class SyncManager(
             val remoteSites = siteRepo.getAllSites()
             remoteSites.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.siteDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.siteRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Site: ${dto.name}", e)
                 }
@@ -207,11 +204,10 @@ class SyncManager(
 
     private suspend fun syncPackagingTypesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localTypes = database.packagingTypeDao().getAll().firstOrNull() ?: emptyList()
+            val localTypes = sdk.packagingTypeRepository.getAll()
             localTypes.forEach { type ->
                 try {
-                    val dto = type.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = PackagingTypeDto.fromModel(type)
                     packagingTypeRepo.upsertPackagingType(dto)
                 } catch (e: Exception) {
                     onError?.invoke("PackagingType: ${type.name}", e)
@@ -227,8 +223,8 @@ class SyncManager(
             val remoteTypes = packagingTypeRepo.getAllPackagingTypes()
             remoteTypes.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.packagingTypeDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.packagingTypeRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("PackagingType: ${dto.name}", e)
                 }
@@ -242,11 +238,10 @@ class SyncManager(
 
     private suspend fun syncCategoriesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localCategories = database.categoryDao().getAll().firstOrNull() ?: emptyList()
+            val localCategories = sdk.categoryRepository.getAll()
             localCategories.forEach { category ->
                 try {
-                    val dto = category.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = CategoryDto.fromModel(category)
                     categoryRepo.upsertCategory(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Category: ${category.name}", e)
@@ -262,8 +257,8 @@ class SyncManager(
             val remoteCategories = categoryRepo.getAllCategories()
             remoteCategories.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.categoryDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.categoryRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Category: ${dto.name}", e)
                 }
@@ -277,11 +272,10 @@ class SyncManager(
 
     private suspend fun syncProductsToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localProducts = database.productDao().getAll().firstOrNull() ?: emptyList()
+            val localProducts = sdk.productRepository.getAll()
             localProducts.forEach { product ->
                 try {
-                    val dto = product.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = ProductDto.fromModel(product)
                     productRepo.upsertProduct(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Product: ${product.name}", e)
@@ -297,8 +291,8 @@ class SyncManager(
             val remoteProducts = productRepo.getAllProducts()
             remoteProducts.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.productDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.productRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Product: ${dto.name}", e)
                 }
@@ -312,11 +306,10 @@ class SyncManager(
 
     private suspend fun syncCustomersToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localCustomers = database.customerDao().getAll().firstOrNull() ?: emptyList()
+            val localCustomers = sdk.customerRepository.getAll()
             localCustomers.forEach { customer ->
                 try {
-                    val dto = customer.toDto()
-                    // Upsert: insère si nouveau, met à jour sinon
+                    val dto = CustomerDto.fromModel(customer)
                     customerRepo.upsertCustomer(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Customer: ${customer.name}", e)
@@ -332,8 +325,8 @@ class SyncManager(
             val remoteCustomers = customerRepo.getAllCustomers()
             remoteCustomers.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.customerDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.customerRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Customer: ${dto.name}", e)
                 }
@@ -347,10 +340,10 @@ class SyncManager(
 
     private suspend fun syncUsersToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localUsers = database.userDao().getAllUsers()
+            val localUsers = sdk.userRepository.getAll()
             localUsers.forEach { user ->
                 try {
-                    val dto = user.toDto()
+                    val dto = UserDto.fromModel(user)
                     userRepo.upsert(dto)
                 } catch (e: Exception) {
                     onError?.invoke("User: ${user.username}", e)
@@ -366,8 +359,8 @@ class SyncManager(
             val remoteUsers = userRepo.getAllUsers()
             remoteUsers.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.userDao().insertUser(entity)
+                    val model = dto.toModel()
+                    sdk.userRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("User: ${dto.username}", e)
                 }
@@ -381,10 +374,10 @@ class SyncManager(
 
     private suspend fun syncUserPermissionsToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localPermissions = database.userPermissionDao().getAllPermissions()
+            val localPermissions = sdk.userPermissionRepository.getAll()
             localPermissions.forEach { permission ->
                 try {
-                    val dto = permission.toDto()
+                    val dto = UserPermissionDto.fromModel(permission)
                     userPermissionRepo.upsert(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Permission: ${permission.module}", e)
@@ -400,8 +393,8 @@ class SyncManager(
             val remotePermissions = userPermissionRepo.getAllPermissions()
             remotePermissions.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.userPermissionDao().insertPermission(entity)
+                    val model = dto.toModel()
+                    sdk.userPermissionRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Permission: ${dto.module}", e)
                 }
@@ -415,10 +408,10 @@ class SyncManager(
 
     private suspend fun syncPurchaseBatchesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localBatches = database.purchaseBatchDao().getAll().firstOrNull() ?: emptyList()
+            val localBatches = sdk.purchaseBatchRepository.getAll()
             localBatches.forEach { batch ->
                 try {
-                    val dto = batch.toDto()
+                    val dto = PurchaseBatchDto.fromModel(batch)
                     purchaseBatchRepo.upsert(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Batch: ${batch.batchNumber ?: batch.id}", e)
@@ -434,8 +427,8 @@ class SyncManager(
             val remoteBatches = purchaseBatchRepo.getAllBatches()
             remoteBatches.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.purchaseBatchDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.purchaseBatchRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Batch: ${dto.batchNumber ?: dto.id}", e)
                 }
@@ -449,17 +442,17 @@ class SyncManager(
 
     private suspend fun syncSalesToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localSales = database.saleDao().getAll().firstOrNull() ?: emptyList()
+            val localSales = sdk.saleRepository.getAll()
             localSales.forEach { sale ->
                 try {
                     // Upsert sale
-                    val saleDto = sale.toDto()
+                    val saleDto = SaleDto.fromModel(sale)
                     saleRepo.upsert(saleDto)
 
                     // Sync sale items for this sale
-                    val saleItems = database.saleItemDao().getItemsBySale(sale.id)
-                    saleItems.forEach { item ->
-                        val itemDto = item.toDto()
+                    val saleItems = sdk.saleRepository.getItemsForSale(sale.id)
+                    saleItems.forEach { item: com.medistock.shared.domain.model.SaleItem ->
+                        val itemDto = SaleItemDto.fromModel(item)
                         saleItemRepo.upsert(itemDto)
                     }
                 } catch (e: Exception) {
@@ -483,14 +476,14 @@ class SyncManager(
             remoteSales.forEach { saleDto ->
                 try {
                     // Insert sale
-                    val saleEntity = saleDto.toEntity()
-                    database.saleDao().insert(saleEntity)
+                    val saleModel = saleDto.toModel()
+                    sdk.saleRepository.insert(saleModel)
 
                     // Insert sale items
                     val items = itemsBySale[saleDto.id] ?: emptyList()
                     items.forEach { itemDto ->
-                        val itemEntity = itemDto.toEntity()
-                        database.saleItemDao().insert(itemEntity)
+                        val itemModel = itemDto.toModel()
+                        sdk.saleRepository.insertSaleItem(itemModel)
                     }
                 } catch (e: Exception) {
                     onError?.invoke("Sale: ${saleDto.id}", e)
@@ -505,10 +498,10 @@ class SyncManager(
 
     private suspend fun syncStockMovementsToRemote(onError: ((String, Exception) -> Unit)?) {
         try {
-            val localMovements = database.stockMovementDao().getAll().firstOrNull() ?: emptyList()
+            val localMovements = sdk.stockMovementRepository.getAll()
             localMovements.forEach { movement ->
                 try {
-                    val dto = movement.toDto()
+                    val dto = StockMovementDto.fromModel(movement)
                     stockMovementRepo.upsert(dto)
                 } catch (e: Exception) {
                     onError?.invoke("Movement: ${movement.id}", e)
@@ -524,8 +517,8 @@ class SyncManager(
             val remoteMovements = stockMovementRepo.getAllMovements()
             remoteMovements.forEach { dto ->
                 try {
-                    val entity = dto.toEntity()
-                    database.stockMovementDao().insert(entity)
+                    val model = dto.toModel()
+                    sdk.stockMovementRepository.insert(model)
                 } catch (e: Exception) {
                     onError?.invoke("Movement: ${dto.id}", e)
                 }
@@ -538,7 +531,7 @@ class SyncManager(
     /**
      * Synchronisation bidirectionnelle complète
      * 1. Envoie les données locales vers Supabase
-     * 2. Récupère les données de Supabase vers Room
+     * 2. Récupère les données de Supabase vers SQLDelight
      */
     suspend fun fullSync(
         onProgress: ((String) -> Unit)? = null,
