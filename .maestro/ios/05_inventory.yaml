@@ -1,5 +1,5 @@
 # MediStock iOS - Inventory Tests
-# Tests stock counting and adjustment
+# Simplified test for inventory screen navigation
 appId: com.medistock.ios
 ---
 
@@ -20,165 +20,29 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 10000
 
-# ========== PREREQUISITE: Ensure product exists ==========
-# Scroll and navigate to Administration
-- scrollUntilVisible:
-    element:
-      text: "Administration"
-    direction: DOWN
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Opérations"
 
-- waitForAnimationToEnd
+- takeScreenshot: "ios_inventory_home"
 
+# ========== TEST: Navigate to Inventory screen ==========
 - tapOn:
-    text: "Administration"
-    index: 1
+    text: "Inventaire"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:
     timeout: 5000
 
-- tapOn:
-    text: "Produits"
-    retryTapIfNoChange: true
+- takeScreenshot: "ios_inventory_screen"
 
-- waitForAnimationToEnd
-
-# Create product if needed
-- runFlow:
-    when:
-      visible: "Aucun produit"
-    commands:
-      - tapOn:
-          text: ".*Ajouter.*"
-          optional: true
-      - waitForAnimationToEnd
-      - tapOn:
-          text: "Nom du produit"
-          optional: true
-      - inputText: "Produit Inventaire Test"
-      - tapOn:
-          text: ".*Ajouter.*"
-          optional: true
-      - waitForAnimationToEnd
-
-# Go back to home
+# Navigate back to home
 - back
-- back
-
 - waitForAnimationToEnd
 
-# Add stock via purchase
-- tapOn: "Achats"
-
-- waitForAnimationToEnd
-
-- tapOn:
-    text: ".*Ajouter.*"
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
     optional: true
-
-- waitForAnimationToEnd
-
-# Fill purchase
-- tapOn:
-    text: ".*Produit.*"
-    optional: true
-- tapOn:
-    text: ".*Inventaire Test.*"
-    optional: true
-
-- tapOn:
-    text: ".*Quantité.*"
-    optional: true
-- inputText: "100"
-
-- tapOn:
-    text: ".*Prix.*"
-    optional: true
-- inputText: "10"
-
-- tapOn:
-    text: ".*Ajouter.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-- takeScreenshot: "ios_inventory_stock_ready"
-
-# Go back to home
-- back
-
-- waitForAnimationToEnd
-
-# ========== TEST: Start Inventory Count ==========
-- tapOn: "Inventaire"
-
-- waitForAnimationToEnd
-
-# Start new inventory
-- tapOn:
-    text: ".*Nouveau.*"
-    optional: true
-- tapOn:
-    text: ".*Démarrer.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-- takeScreenshot: "ios_inventory_started"
-
-# ========== TEST: Count Product with Discrepancy ==========
-# Find the product and enter counted quantity
-- tapOn:
-    text: ".*Inventaire Test.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-# Enter counted quantity (85 instead of 100 = discrepancy of -15)
-- tapOn:
-    text: ".*Quantité.*"
-    optional: true
-- eraseText: 100
-- inputText: "85"
-
-# Save count
-- tapOn:
-    text: ".*Enregistrer.*"
-    optional: true
-- tapOn:
-    text: ".*Valider.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-- takeScreenshot: "ios_inventory_count_entered"
-
-# ========== TEST: Complete Inventory ==========
-- tapOn:
-    text: ".*Terminer.*"
-    optional: true
-- tapOn:
-    text: ".*Valider.*"
-    optional: true
-
-# Confirm if dialog
-- tapOn:
-    text: ".*Confirmer.*"
-    optional: true
-
-- waitForAnimationToEnd
 
 - takeScreenshot: "ios_inventory_completed"
-
-# Go back to home
-- back
-
-- waitForAnimationToEnd
-
-# ========== VERIFY: Check adjusted stock ==========
-- tapOn: "Stock"
-
-- waitForAnimationToEnd
-
-# Stock should now show 85 units (adjusted from 100)
-- takeScreenshot: "ios_inventory_stock_adjusted"

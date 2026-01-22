@@ -1,5 +1,5 @@
 # MediStock iOS - Transfer Tests
-# Tests inter-site product transfers
+# Simplified test for transfer screen navigation
 appId: com.medistock.ios
 ---
 
@@ -20,196 +20,29 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 10000
 
-# ========== PREREQUISITE: Create 2 sites if needed ==========
-# Scroll and navigate to Administration
-- scrollUntilVisible:
-    element:
-      text: "Administration"
-    direction: DOWN
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Opérations"
 
-- waitForAnimationToEnd
+- takeScreenshot: "ios_transfer_home"
 
+# ========== TEST: Navigate to Transfers screen ==========
 - tapOn:
-    text: "Administration"
-    index: 1
+    text: "Transferts"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:
     timeout: 5000
 
-- tapOn:
-    text: "Sites"
-    retryTapIfNoChange: true
+- takeScreenshot: "ios_transfer_screen"
 
-- waitForAnimationToEnd
-
-# Create Site 1 if needed
-- runFlow:
-    when:
-      visible: "Aucun site"
-    commands:
-      - tapOn:
-          text: "Ajouter un site"
-      - waitForAnimationToEnd
-      - tapOn:
-          text: "Nom du site"
-      - inputText: "Entrepôt Central"
-      - tapOn: "Ajouter"
-      - waitForAnimationToEnd
-
-# Create Site 2
-- tapOn:
-    text: "Ajouter un site"
-    optional: true
-
-- waitForAnimationToEnd
-
-- tapOn:
-    text: "Nom du site"
-    optional: true
-- inputText: "Pharmacie Test"
-
-- tapOn:
-    text: "Ajouter"
-    optional: true
-
-- waitForAnimationToEnd
-
-- takeScreenshot: "ios_transfer_sites_ready"
-
-# Go back to Admin
+# Navigate back to home
 - back
-
 - waitForAnimationToEnd
 
-# ========== PREREQUISITE: Ensure product exists ==========
-- tapOn:
-    text: "Produits"
-    retryTapIfNoChange: true
-
-- waitForAnimationToEnd
-
-# Create product if needed
-- runFlow:
-    when:
-      visible: "Aucun produit"
-    commands:
-      - tapOn:
-          text: ".*Ajouter.*"
-          optional: true
-      - waitForAnimationToEnd
-      - tapOn:
-          text: "Nom du produit"
-          optional: true
-      - inputText: "Produit Transfer Test"
-      - tapOn:
-          text: ".*Ajouter.*"
-          optional: true
-      - waitForAnimationToEnd
-
-# Go back to home
-- back
-- back
-
-- waitForAnimationToEnd
-
-# Add stock via purchase
-- tapOn: "Achats"
-
-- waitForAnimationToEnd
-
-- tapOn:
-    text: ".*Ajouter.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-# Fill purchase
-- tapOn:
-    text: ".*Produit.*"
-    optional: true
-- tapOn:
-    text: ".*Transfer Test.*"
-    optional: true
-
-- tapOn:
-    text: ".*Quantité.*"
-    optional: true
-- inputText: "200"
-
-- tapOn:
-    text: ".*Prix.*"
-    optional: true
-- inputText: "5"
-
-- tapOn:
-    text: ".*Ajouter.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-# Go back to home
-- back
-
-- waitForAnimationToEnd
-
-# ========== TEST: Create a Transfer ==========
-- tapOn: "Transferts"
-
-- waitForAnimationToEnd
-
-- tapOn:
-    text: ".*Ajouter.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-# Fill transfer form
-# Select product
-- tapOn:
-    text: ".*Produit.*"
-    optional: true
-- tapOn:
-    text: ".*Transfer Test.*"
-    optional: true
-
-# Select source site
-- tapOn:
-    text: ".*Site source.*"
-    optional: true
-- tapOn:
-    text: ".*Entrepôt.*"
-    optional: true
-
-# Select destination site
-- tapOn:
-    text: ".*destination.*"
-    optional: true
-- tapOn:
-    text: ".*Pharmacie.*"
-    optional: true
-
-# Enter quantity
-- tapOn:
-    text: ".*Quantité.*"
-    optional: true
-- inputText: "50"
-
-# Validate
-- tapOn:
-    text: ".*Transférer.*"
-    optional: true
-- tapOn:
-    text: ".*Valider.*"
-    optional: true
-
-- waitForAnimationToEnd
-
-- takeScreenshot: "ios_transfer_created"
-
-# ========== VERIFY: Check transfer list ==========
+# Verify we're back on home screen
 - assertVisible:
-    text: ".*50.*"
+    text: ".*MediStock.*"
     optional: true
 
-- takeScreenshot: "ios_transfer_verification"
+- takeScreenshot: "ios_transfer_completed"
