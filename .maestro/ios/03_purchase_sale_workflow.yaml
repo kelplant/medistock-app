@@ -1,6 +1,6 @@
 # MediStock iOS - Purchase → Sale Workflow Tests
 # Tests the complete FIFO workflow
-appId: com.medistock.iosApp
+appId: com.medistock.ios
 ---
 
 # Setup: Login
@@ -160,7 +160,7 @@ appId: com.medistock.iosApp
 - tapOn:
     text: ".*Quantité.*"
     optional: true
-- clearText
+- eraseText: 100
 - inputText: "20"
 
 # Enter selling price

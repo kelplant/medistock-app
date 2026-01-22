@@ -1,6 +1,6 @@
 # MediStock iOS - Authentication Tests
 # Tests: Login, logout, invalid credentials
-appId: com.medistock.iosApp
+appId: com.medistock.ios
 ---
 
 # Test 1: Login with valid credentials

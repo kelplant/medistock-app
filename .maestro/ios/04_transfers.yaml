@@ -1,6 +1,6 @@
 # MediStock iOS - Transfer Tests
 # Tests inter-site product transfers
-appId: com.medistock.iosApp
+appId: com.medistock.ios
 ---
 
 # Setup: Login
