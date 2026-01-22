@@ -13,16 +13,18 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.User
-import com.medistock.data.entities.UserPermission
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.User
+import com.medistock.shared.domain.model.UserPermission
 import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class UserAddEditActivity : AppCompatActivity() {
 
@@ -36,7 +38,7 @@ class UserAddEditActivity : AppCompatActivity() {
     private lateinit var tvAdminNote: TextView
     private lateinit var permissionsContainer: LinearLayout
 
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private var userId: String? = null
     private var isEditMode = false
@@ -70,7 +72,7 @@ class UserAddEditActivity : AppCompatActivity() {
         setContentView(R.layout.activity_user_add_edit)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         // Initialize views
         editFullName = findViewById(R.id.editFullName)
@@ -173,8 +175,8 @@ class UserAddEditActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val (user, permissions) = withContext(Dispatchers.IO) {
-                    val u = userId?.let { db.userDao().getUserById(it) }
-                    val p = if (u != null) db.userPermissionDao().getPermissionsForUser(u.id) else emptyList()
+                    val u = userId?.let { sdk.userRepository.getById(it) }
+                    val p = if (u != null) sdk.userPermissionRepository.getPermissionsForUser(u.id) else emptyList()
                     Pair(u, p)
                 }
 
@@ -187,10 +189,7 @@ class UserAddEditActivity : AppCompatActivity() {
                     checkIsAdmin.isChecked = user.isAdmin
                     checkIsActive.isChecked = user.isActive
 
-                    // Update toggle button text based on current status
-                    runOnUiThread {
-                        updateToggleButtonText()
-                    }
+                    updateToggleButtonText()
 
                     // Load permissions
                     permissions.forEach { permission ->
@@ -245,7 +244,7 @@ class UserAddEditActivity : AppCompatActivity() {
                 withContext(Dispatchers.IO) {
                     if (isEditMode) {
                         // Update existing user
-                        val existingUser = userId?.let { db.userDao().getUserById(it) }
+                        val existingUser = userId?.let { sdk.userRepository.getById(it) }
                         if (existingUser != null) {
                             val updatedUser = existingUser.copy(
                                 fullName = fullName,
@@ -256,7 +255,15 @@ class UserAddEditActivity : AppCompatActivity() {
                                 updatedAt = timestamp,
                                 updatedBy = currentUser
                             )
-                            db.userDao().updateUser(updatedUser)
+                            sdk.userRepository.update(updatedUser)
+                            if (password.isNotEmpty()) {
+                                sdk.userRepository.updatePassword(
+                                    userId = existingUser.id,
+                                    password = PasswordHasher.hashPassword(password),
+                                    updatedAt = timestamp,
+                                    updatedBy = currentUser
+                                )
+                            }
 
                             // Update permissions
                             savePermissions(existingUser.id, currentUser, timestamp)
@@ -267,7 +274,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         }
                     } else {
                         // Check if username already exists
-                        val existingUser = db.userDao().getUserByUsername(username)
+                        val existingUser = sdk.userRepository.getByUsername(username)
                         if (existingUser != null) {
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(this@UserAddEditActivity, "Username already exists", Toast.LENGTH_SHORT).show()
@@ -276,7 +283,9 @@ class UserAddEditActivity : AppCompatActivity() {
                         }
 
                         // Create new user
+                        val newUserId = UUID.randomUUID().toString()
                         val newUser = User(
+                            id = newUserId,
                             fullName = fullName,
                             username = username,
                             password = PasswordHasher.hashPassword(password),
@@ -287,10 +296,10 @@ class UserAddEditActivity : AppCompatActivity() {
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                        db.userDao().insertUser(newUser)
+                        sdk.userRepository.insert(newUser)
 
                         // Save permissions
-                        savePermissions(newUser.id, currentUser, timestamp)
+                        savePermissions(newUserId, currentUser, timestamp)
 
                         withContext(Dispatchers.Main) {
                             Toast.makeText(this@UserAddEditActivity, "User created", Toast.LENGTH_SHORT).show()
@@ -305,14 +314,14 @@ class UserAddEditActivity : AppCompatActivity() {
         }
     }
 
-    private fun savePermissions(userId: String, createdBy: String, timestamp: Long) {
+    private suspend fun savePermissions(userId: String, createdBy: String, timestamp: Long) {
         // Delete existing permissions
-        db.userPermissionDao().deleteAllPermissionsForUser(userId)
+        sdk.userPermissionRepository.deletePermissionsForUser(userId)
 
         // Insert new permissions
-        val permissions = mutableListOf<UserPermission>()
         permissionViews.forEach { (moduleKey, checkboxes) ->
             val permission = UserPermission(
+                id = UUID.randomUUID().toString(),
                 userId = userId,
                 module = moduleKey,
                 canView = checkboxes.canView.isChecked,
@@ -324,9 +333,8 @@ class UserAddEditActivity : AppCompatActivity() {
                 createdBy = createdBy,
                 updatedBy = createdBy
             )
-            permissions.add(permission)
+            sdk.userPermissionRepository.insert(permission)
         }
-        db.userPermissionDao().insertPermissions(permissions)
     }
 
     private fun toggleUserActiveStatus() {
@@ -340,14 +348,14 @@ class UserAddEditActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     try {
                         val (user, shouldContinue) = withContext(Dispatchers.IO) {
-                            val u = userId?.let { db.userDao().getUserById(it) }
+                            val u = userId?.let { sdk.userRepository.getById(it) }
                             if (u == null) {
                                 return@withContext Pair(null, false)
                             }
 
                             // Check if trying to deactivate the last active admin
                             if (currentUserIsActive && u.isAdmin) {
-                                val adminCount = db.userDao().countActiveAdmins()
+                                val adminCount = sdk.userRepository.countActiveAdmins()
                                 if (adminCount <= 1) {
                                     return@withContext Pair(u, false)
                                 }
@@ -373,7 +381,7 @@ class UserAddEditActivity : AppCompatActivity() {
                             )
 
                             withContext(Dispatchers.IO) {
-                                db.userDao().updateUser(updatedUser)
+                                sdk.userRepository.update(updatedUser)
                             }
 
                             currentUserIsActive = newStatus

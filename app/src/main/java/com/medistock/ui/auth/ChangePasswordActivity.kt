@@ -7,8 +7,9 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
+import com.medistock.shared.MedistockSDK
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,7 @@ class ChangePasswordActivity : AppCompatActivity() {
     private lateinit var editConfirmPassword: EditText
     private lateinit var btnSave: Button
     private lateinit var authManager: AuthManager
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +32,7 @@ class ChangePasswordActivity : AppCompatActivity() {
         supportActionBar?.title = "Change Password"
 
         authManager = AuthManager.getInstance(this)
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         editCurrentPassword = findViewById(R.id.editCurrentPassword)
         editNewPassword = findViewById(R.id.editNewPassword)
@@ -85,7 +86,7 @@ class ChangePasswordActivity : AppCompatActivity() {
             try {
                 // Verify current password
                 val user = withContext(Dispatchers.IO) {
-                    val u = db.userDao().getUserForAuth(username)
+                    val u = sdk.userRepository.getByUsername(username)
                     if (u != null && PasswordHasher.verifyPassword(currentPassword, u.password)) {
                         u
                     } else {
@@ -94,43 +95,37 @@ class ChangePasswordActivity : AppCompatActivity() {
                 }
 
                 if (user == null) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            this@ChangePasswordActivity,
-                            "Current password is incorrect",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    Toast.makeText(
+                        this@ChangePasswordActivity,
+                        "Current password is incorrect",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@launch
                 }
 
                 // Update password with hashed version
-                val updatedUser = user.copy(
-                    password = PasswordHasher.hashPassword(newPassword),
-                    updatedAt = System.currentTimeMillis(),
-                    updatedBy = username
-                )
-
+                val currentTime = System.currentTimeMillis()
                 withContext(Dispatchers.IO) {
-                    db.userDao().updateUser(updatedUser)
+                    sdk.userRepository.updatePassword(
+                        userId = user.id,
+                        password = PasswordHasher.hashPassword(newPassword),
+                        updatedAt = currentTime,
+                        updatedBy = username
+                    )
                 }
 
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ChangePasswordActivity,
-                        "Password changed successfully",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    finish()
-                }
+                Toast.makeText(
+                    this@ChangePasswordActivity,
+                    "Password changed successfully",
+                    Toast.LENGTH_SHORT
+                ).show()
+                finish()
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ChangePasswordActivity,
-                        "Error changing password: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                Toast.makeText(
+                    this@ChangePasswordActivity,
+                    "Error changing password: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }

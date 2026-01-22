@@ -61,6 +61,10 @@ class UserRepository(private val database: MedistockDatabase) {
         )
     }
 
+    suspend fun countActiveAdmins(): Long = withContext(Dispatchers.Default) {
+        queries.countActiveAdmins().executeAsOne()
+    }
+
     fun observeAll(): Flow<List<User>> {
         return queries.getAllUsers()
             .asFlow()
