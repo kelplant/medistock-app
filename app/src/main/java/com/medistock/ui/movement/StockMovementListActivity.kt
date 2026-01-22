@@ -6,13 +6,13 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.Product
+import com.medistock.shared.MedistockSDK
 import com.medistock.util.PrefsHelper
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class StockMovementListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,16 +21,19 @@ class StockMovementListActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val listView = findViewById<ListView>(R.id.listStockMovements)
-        val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "medistock-db").build()
+        val sdk = MedistockApplication.sdk
         val siteId = PrefsHelper.getActiveSiteId(this)
 
         lifecycleScope.launch {
             if (siteId.isNullOrBlank()) return@launch
-            val products = db.productDao().getProductsForSite(siteId).first().associateBy { it.id }
-            val movements = db.stockMovementDao().getAllForSite(siteId).first()
+            val (products, movements) = withContext(Dispatchers.IO) {
+                val prods = sdk.productRepository.getBySite(siteId).associateBy { it.id }
+                val movs = sdk.stockMovementRepository.getBySite(siteId)
+                Pair(prods, movs)
+            }
             val items = movements.map {
                 val productName = products[it.productId]?.name ?: "Unknown"
-                "Product: $productName, Type: ${it.type}, Qty: ${it.quantity}, Date: ${java.util.Date(it.date)}"
+                "Product: $productName, Type: ${it.movementType}, Qty: ${it.quantity}, Date: ${java.util.Date(it.createdAt)}"
             }
             listView.adapter = ArrayAdapter(this@StockMovementListActivity, android.R.layout.simple_list_item_1, items)
         }
