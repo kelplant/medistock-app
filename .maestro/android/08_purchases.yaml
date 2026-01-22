@@ -1,0 +1,50 @@
+# MediStock Android - Purchases Tests
+# Test purchase products navigation
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+- takeScreenshot: "android_purchases_home"
+
+# Navigate to Purchase Products
+- tapOn:
+    text: "Purchase Products"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchases_screen"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+- takeScreenshot: "android_purchases_completed"

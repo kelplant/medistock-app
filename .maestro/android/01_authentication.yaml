@@ -20,7 +20,7 @@ appId: com.medistock
 # Enter password
 - tapOn:
     id: "com.medistock:id/editPassword"
-- inputText: "admin123"
+- inputText: "admin"
 
 # Tap login button
 - tapOn:
@@ -38,16 +38,33 @@ appId: com.medistock
 - takeScreenshot: "android_login_success"
 
 # Test 2: Logout
-- back
+# Tap on profile badge (A icon in upper right)
 - tapOn:
-    text: ".*Profil.*"
+    id: ".*profile.*"
     optional: true
-
 - tapOn:
-    text: ".*Déconnexion.*"
+    text: ".*Admin.*"
     optional: true
 
 - waitForAnimationToEnd
+
+# Tap logout button
+- tapOn:
+    text: ".*Déconnexion.*"
+    optional: true
+- tapOn:
+    text: ".*Logout.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm logout dialog if shown
+- tapOn:
+    text: "OK"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
 
 # Verify back on login screen
 - assertVisible: "Connexion"

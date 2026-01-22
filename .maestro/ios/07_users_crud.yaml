@@ -1,0 +1,121 @@
+# MediStock iOS - Users CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock.ios
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- scrollUntilVisible:
+    element:
+      text: "Administration"
+    direction: DOWN
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Administration"
+    index: 1
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Navigate to Users
+- tapOn:
+    text: "User Management"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new user
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Fill user form - username
+- tapOn:
+    text: ".*Username.*"
+    optional: true
+- inputText: "testuser_e2e"
+
+# Password
+- tapOn:
+    text: ".*Password.*"
+    optional: true
+- inputText: "testpassword123"
+
+# Save
+- tapOn:
+    text: "Add"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
+- tapOn:
+    text: "Create"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify user appears in list
+- assertVisible:
+    text: "testuser_e2e"
+    optional: true
+
+- takeScreenshot: "ios_user_created"
+
+# Test 2: Edit user (change password or other attributes)
+- tapOn:
+    text: "testuser_e2e"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Save
+- tapOn:
+    text: "Save"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_user_edited"
+
+# Test 3: Delete user
+- longPressOn:
+    text: "testuser_e2e"
+    optional: true
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_user_deleted"

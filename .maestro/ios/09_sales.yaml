@@ -1,0 +1,48 @@
+# MediStock iOS - Sales Tests
+# Test sell products navigation
+appId: com.medistock.ios
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "ios_sales_home"
+
+# Navigate to Sell Products
+- tapOn:
+    text: "Sell Products"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- takeScreenshot: "ios_sales_screen"
+
+# Navigate back to home
+- tapOn:
+    text: ".*MediStock.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_completed"

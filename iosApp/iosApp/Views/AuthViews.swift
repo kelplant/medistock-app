@@ -25,17 +25,17 @@ struct LoginView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
-            Text("Connexion")
+            Text("Login")
                 .font(.headline)
                 .foregroundColor(.secondary)
 
             VStack(spacing: 12) {
-                TextField("Nom d'utilisateur", text: $username)
+                TextField("Username", text: $username)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)
 
-                SecureField("Mot de passe", text: $password)
+                SecureField("Password", text: $password)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -52,13 +52,13 @@ struct LoginView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
-                    Text("Se connecter")
+                    Text("Login")
                 }
             }
             .buttonStyle(.borderedProminent)
             .disabled(isLoading || username.isEmpty || password.isEmpty)
 
-            Button("Configurer Supabase") {
+            Button("Configure Supabase") {
                 isShowingSupabase = true
             }
             .buttonStyle(.bordered)
@@ -69,7 +69,7 @@ struct LoginView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Authentification")
+        .navigationTitle("Authentication")
     }
 
     private func performLogin() {
@@ -77,7 +77,7 @@ struct LoginView: View {
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmedUser.isEmpty, !trimmedPassword.isEmpty else {
-            errorMessage = "Veuillez renseigner vos identifiants."
+            errorMessage = "Please enter your credentials."
             return
         }
 
@@ -99,19 +99,19 @@ struct LoginView: View {
                     onLogin(user)
 
                 case .invalidCredentials:
-                    errorMessage = "Mot de passe incorrect."
+                    errorMessage = "Invalid password."
 
                 case .userNotFound:
-                    errorMessage = "Utilisateur non trouvé."
+                    errorMessage = "User not found."
 
                 case .userInactive:
-                    errorMessage = "Ce compte est désactivé. Contactez un administrateur."
+                    errorMessage = "This account is disabled. Contact an administrator."
 
                 case .networkError(let message):
-                    errorMessage = "Erreur de connexion: \(message)"
+                    errorMessage = "Connection error: \(message)"
 
                 case .notConfigured:
-                    errorMessage = "Supabase n'est pas configuré et aucun utilisateur local trouvé."
+                    errorMessage = "Supabase is not configured and no local user found."
                 }
             }
         }

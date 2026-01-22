@@ -35,8 +35,8 @@ struct InventoryListView: View {
                 Section {
                     EmptyStateView(
                         icon: "list.clipboard",
-                        title: "Aucun inventaire",
-                        message: "Démarrez un inventaire pour compter votre stock physique."
+                        title: "No inventories",
+                        message: "Start an inventory to count your physical stock."
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -44,7 +44,7 @@ struct InventoryListView: View {
                 // In progress
                 let inProgress = inventories.filter { $0.status == "in_progress" }
                 if !inProgress.isEmpty {
-                    Section(header: Text("En cours (\(inProgress.count))")) {
+                    Section(header: Text("In progress (\(inProgress.count))")) {
                         ForEach(inProgress, id: \.id) { inventory in
                             InventoryRowView(
                                 inventory: inventory,
@@ -58,7 +58,7 @@ struct InventoryListView: View {
                 // Completed
                 let completed = inventories.filter { $0.status == "completed" }
                 if !completed.isEmpty {
-                    Section(header: Text("Terminés (\(completed.count))")) {
+                    Section(header: Text("Completed (\(completed.count))")) {
                         ForEach(completed, id: \.id) { inventory in
                             InventoryRowView(
                                 inventory: inventory,
@@ -71,7 +71,7 @@ struct InventoryListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Inventaires")
+        .navigationTitle("Inventories")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -107,13 +107,13 @@ struct InventoryListView: View {
                 inventories = inventories.filter { $0.siteId == siteId }
             }
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Site inconnu"
+        sites.first { $0.id == siteId }?.name ?? "Unknown site"
     }
 
     private func completeInventory(_ inventory: Inventory) {
@@ -128,7 +128,7 @@ struct InventoryListView: View {
                 await loadData()
             } catch {
                 await MainActor.run {
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }
@@ -148,10 +148,10 @@ struct InventoryRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Inventaire - \(siteName)")
+                Text("Inventory - \(siteName)")
                     .font(.headline)
                 Spacer()
-                Text(inventory.status == "completed" ? "Terminé" : "En cours")
+                Text(inventory.status == "completed" ? "Completed" : "In progress")
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
@@ -161,9 +161,9 @@ struct InventoryRowView: View {
             }
 
             HStack {
-                Text("Démarré: \(formatDate(inventory.startedAt))")
+                Text("Started: \(formatDate(inventory.startedAt))")
                 if let completed = inventory.completedAt {
-                    Text("• Terminé: \(formatDate(completed))")
+                    Text("- Completed: \(formatDate(completed))")
                 }
             }
             .font(.caption)
@@ -177,7 +177,7 @@ struct InventoryRowView: View {
 
             if let onComplete = onComplete, inventory.status == "in_progress" {
                 Button(action: onComplete) {
-                    Text("Terminer l'inventaire")
+                    Text("Complete inventory")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                 }
@@ -226,14 +226,14 @@ struct InventoryEditorView: View {
             Form {
                 Section(header: Text("Site")) {
                     Picker("Site", selection: $selectedSiteId) {
-                        Text("Sélectionner").tag("")
+                        Text("Select").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Notes (optionnel)")) {
+                Section(header: Text("Notes (optional)")) {
                     notesField
                 }
 
@@ -244,13 +244,13 @@ struct InventoryEditorView: View {
                     }
                 }
             }
-            .navigationTitle("Nouvel inventaire")
+            .navigationTitle("New Inventory")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Démarrer") {
+                    Button("Start") {
                         saveInventory()
                     }
                     .disabled(selectedSiteId.isEmpty || isSaving)
@@ -282,7 +282,7 @@ struct InventoryEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }

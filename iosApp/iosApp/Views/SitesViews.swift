@@ -34,8 +34,8 @@ struct SitesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "building.2",
-                        title: "Aucun site",
-                        message: "Ajoutez votre premier site pour commencer."
+                        title: "No sites",
+                        message: "Add your first site to get started."
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -59,6 +59,8 @@ struct SitesListView: View {
                 Button(action: { showAddSheet = true }) {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Add a site")
+                .accessibilityIdentifier("add-site-button")
             }
         }
         .sheet(isPresented: $showAddSheet) {
@@ -103,7 +105,7 @@ struct SitesListView: View {
         do {
             sites = try await sdk.siteRepository.getAll()
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
             sites = []
         }
         isLoading = false
@@ -124,7 +126,7 @@ struct SitesListView: View {
                     }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
+                        errorMessage = "Error deleting: \(error.localizedDescription)"
                     }
                 }
             }
@@ -167,8 +169,8 @@ struct SiteEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Informations")) {
-                    TextField("Nom du site", text: $name)
+                Section(header: Text("Information")) {
+                    TextField("Site name", text: $name)
                 }
 
                 if let errorMessage {
@@ -178,13 +180,13 @@ struct SiteEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Modifier le site" : "Nouveau site")
+            .navigationTitle(isEditing ? "Edit Site" : "New Site")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Enregistrer" : "Ajouter") {
+                    Button(isEditing ? "Save" : "Add") {
                         saveSite()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
@@ -250,7 +252,7 @@ struct SiteEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }

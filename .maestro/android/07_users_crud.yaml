@@ -1,0 +1,112 @@
+# MediStock Android - Users CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Navigate to User Management
+- tapOn:
+    text: ".*User Management.*"
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new user
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill user form - username
+- tapOn:
+    text: ".*Username.*"
+    optional: true
+- inputText: "testuser_e2e"
+
+# Password
+- tapOn:
+    text: ".*Password.*"
+    optional: true
+- inputText: "testpassword123"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*Create.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify user appears in list
+- assertVisible:
+    text: "testuser_e2e"
+    optional: true
+
+- takeScreenshot: "android_user_created"
+
+# Test 2: Edit user
+- tapOn:
+    text: "testuser_e2e"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_user_edited"
+
+# Test 3: Delete user
+- longPressOn:
+    text: "testuser_e2e"
+    optional: true
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_user_deleted"

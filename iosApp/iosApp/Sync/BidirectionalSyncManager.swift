@@ -192,7 +192,7 @@ class BidirectionalSyncManager: ObservableObject {
         // Remove local system admin if real users were synced
         if !remoteUsers.isEmpty {
             let removed = try await sdk.defaultAdminService.removeLocalAdminIfRemoteUsersExist()
-            if removed {
+            if removed.boolValue {
                 debugLog("BidirectionalSyncManager", "Local system admin removed after syncing \(remoteUsers.count) remote users")
             }
         }

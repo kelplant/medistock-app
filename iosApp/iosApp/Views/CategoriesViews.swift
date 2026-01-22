@@ -34,13 +34,13 @@ struct CategoriesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "folder",
-                        title: "Aucune catégorie",
-                        message: "Ajoutez votre première catégorie pour organiser vos produits."
+                        title: "No categories",
+                        message: "Add your first category to organize your products."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(categories.count) catégorie(s)")) {
+                Section(header: Text("\(categories.count) category(ies)")) {
                     ForEach(categories, id: \.id) { category in
                         CategoryRowView(category: category)
                             .contentShape(Rectangle())
@@ -53,7 +53,7 @@ struct CategoriesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Catégories")
+        .navigationTitle("Categories")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -102,7 +102,7 @@ struct CategoriesListView: View {
         do {
             categories = try await sdk.categoryRepository.getAll()
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
             categories = []
         }
         isLoading = false
@@ -123,7 +123,7 @@ struct CategoriesListView: View {
                     }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
+                        errorMessage = "Error deleting: \(error.localizedDescription)"
                     }
                 }
             }
@@ -166,8 +166,8 @@ struct CategoryEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Informations")) {
-                    TextField("Nom de la catégorie", text: $name)
+                Section(header: Text("Information")) {
+                    TextField("Category name", text: $name)
                 }
 
                 if let errorMessage {
@@ -177,13 +177,13 @@ struct CategoryEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Modifier la catégorie" : "Nouvelle catégorie")
+            .navigationTitle(isEditing ? "Edit Category" : "New Category")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Enregistrer" : "Ajouter") {
+                    Button(isEditing ? "Save" : "Add") {
                         saveCategory()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
@@ -247,7 +247,7 @@ struct CategoryEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }

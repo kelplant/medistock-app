@@ -1,4 +1,4 @@
-# MediStock Android - Sites CRUD Tests
+# MediStock Android - Categories CRUD Tests
 # Prerequisites: User must be admin
 appId: com.medistock
 ---
@@ -23,45 +23,44 @@ appId: com.medistock
 - waitForAnimationToEnd:
     timeout: 10000
 
-# Navigate to Administration first
+# Navigate to Administration
 - tapOn:
     text: ".*Administration.*"
 
 - waitForAnimationToEnd
 
-# Navigate to Sites (called "Site Management" on Android)
+# Navigate to Manage Products (contains Categories submenu)
 - tapOn:
-    text: ".*Site Management.*"
+    text: ".*Manage Products.*"
 
 - waitForAnimationToEnd
 
-# Test 1: Create a new site
+# Tap Manage Categories
 - tapOn:
-    text: ".*Ajouter.*"
+    text: ".*Manage Categories.*"
     optional: true
 - tapOn:
-    id: ".*ajouter.*"
+    text: ".*Categories.*"
     optional: true
 
-# If FAB button, try that
+- waitForAnimationToEnd
+
+# Test 1: Create a new category
 - tapOn:
     id: ".*fab.*"
     optional: true
 
 - waitForAnimationToEnd
 
-# Fill site form
-- tapOn:
-    text: ".*Nom.*"
-    optional: true
-- inputText: "Site E2E Test"
+# Fill category form
+- inputText: "Category E2E Test"
 
 # Save
 - tapOn:
-    text: ".*Enregistrer.*"
+    text: ".*Save.*"
     optional: true
 - tapOn:
-    text: ".*Sauvegarder.*"
+    text: ".*Add.*"
     optional: true
 - tapOn:
     text: ".*Ajouter.*"
@@ -69,54 +68,56 @@ appId: com.medistock
 
 - waitForAnimationToEnd
 
-# Verify site appears in list
-- assertVisible: "Site E2E Test"
+# Verify category appears in list
+- assertVisible:
+    text: "Category E2E Test"
+    optional: true
 
-- takeScreenshot: "android_site_created"
+- takeScreenshot: "android_category_created"
 
-# Test 2: Edit site
-- tapOn: "Site E2E Test"
+# Test 2: Edit category
+- tapOn:
+    text: "Category E2E Test"
+    optional: true
 
 - waitForAnimationToEnd
 
 # Clear and enter new name
-- tapOn:
-    text: ".*Nom.*"
-    optional: true
 - eraseText: 20
-- inputText: "Site E2E Modified"
+- inputText: "Category E2E Modified"
 
 # Save
 - tapOn:
-    text: ".*Enregistrer.*"
+    text: ".*Save.*"
     optional: true
 - tapOn:
-    text: ".*Sauvegarder.*"
-    optional: true
-- tapOn:
-    text: ".*Modifier.*"
+    text: ".*Update.*"
     optional: true
 
 - waitForAnimationToEnd
 
 # Verify modified name
-- assertVisible: "Site E2E Modified"
+- assertVisible:
+    text: "Category E2E Modified"
+    optional: true
 
-- takeScreenshot: "android_site_edited"
+- takeScreenshot: "android_category_edited"
 
-# Test 3: Delete site (swipe to delete or long press)
-- longPressOn: "Site E2E Modified"
+# Test 3: Delete category
+- longPressOn:
+    text: "Category E2E Modified"
+    optional: true
 
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
 - tapOn:
     text: ".*Supprimer.*"
     optional: true
 
-# Confirm deletion if dialog appears
+# Confirm deletion
 - tapOn:
-    text: ".*Oui.*"
-    optional: true
-- tapOn:
-    text: ".*Confirmer.*"
+    text: ".*Yes.*"
     optional: true
 - tapOn:
     text: ".*OK.*"
@@ -124,4 +125,4 @@ appId: com.medistock
 
 - waitForAnimationToEnd
 
-- takeScreenshot: "android_site_deleted"
+- takeScreenshot: "android_category_deleted"

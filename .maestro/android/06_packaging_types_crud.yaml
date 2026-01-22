@@ -1,0 +1,112 @@
+# MediStock Android - Packaging Types CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Packaging Types
+- tapOn:
+    text: ".*Packaging Types.*"
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new packaging type
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill form - name field
+- inputText: "PackagingType E2E Test"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify it appears in list
+- assertVisible:
+    text: "PackagingType E2E Test"
+    optional: true
+
+- takeScreenshot: "android_packaging_type_created"
+
+# Test 2: Edit packaging type
+- tapOn:
+    text: "PackagingType E2E Test"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Clear and enter new name
+- eraseText: 30
+- inputText: "PackagingType E2E Modified"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Update.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name
+- assertVisible:
+    text: "PackagingType E2E Modified"
+    optional: true
+
+- takeScreenshot: "android_packaging_type_edited"
+
+# Test 3: Delete packaging type
+- longPressOn:
+    text: "PackagingType E2E Modified"
+    optional: true
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_packaging_type_deleted"

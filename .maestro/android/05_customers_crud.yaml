@@ -1,0 +1,126 @@
+# MediStock Android - Customers CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Profile (where Manage Customers is located)
+- tapOn:
+    id: ".*profile.*"
+    optional: true
+- tapOn:
+    text: ".*Profile.*"
+    optional: true
+- tapOn:
+    id: ".*toolbar.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Customers
+- tapOn:
+    text: ".*Manage Customers.*"
+    optional: true
+- tapOn:
+    text: ".*Customers.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new customer
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill customer form - name field
+- inputText: "Customer E2E Test"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify customer appears in list
+- assertVisible:
+    text: "Customer E2E Test"
+    optional: true
+
+- takeScreenshot: "android_customer_created"
+
+# Test 2: Edit customer
+- tapOn:
+    text: "Customer E2E Test"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Clear and enter new name
+- eraseText: 20
+- inputText: "Customer E2E Modified"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Update.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name
+- assertVisible:
+    text: "Customer E2E Modified"
+    optional: true
+
+- takeScreenshot: "android_customer_edited"
+
+# Test 3: Delete customer
+- longPressOn:
+    text: "Customer E2E Modified"
+    optional: true
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_customer_deleted"

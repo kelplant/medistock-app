@@ -1,0 +1,48 @@
+# MediStock iOS - Purchases Tests
+# Test purchase products navigation
+appId: com.medistock.ios
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "ios_purchases_home"
+
+# Navigate to Purchase Products
+- tapOn:
+    text: "Purchase Products"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- takeScreenshot: "ios_purchases_screen"
+
+# Navigate back to home
+- tapOn:
+    text: ".*MediStock.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchases_completed"

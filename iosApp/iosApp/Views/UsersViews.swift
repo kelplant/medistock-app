@@ -36,13 +36,13 @@ struct UsersListView: View {
                 Section {
                     EmptyStateView(
                         icon: "person.3",
-                        title: "Aucun utilisateur",
-                        message: "Ajoutez des utilisateurs pour gerer les acces."
+                        title: "No users",
+                        message: "Add users to manage access."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(users.count) utilisateur(s)")) {
+                Section(header: Text("\(users.count) user(s)")) {
                     ForEach(users, id: \.id) { user in
                         UserRowView(
                             user: user,
@@ -55,7 +55,7 @@ struct UsersListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Utilisateurs")
+        .navigationTitle("Users")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -108,7 +108,7 @@ struct UsersListView: View {
         do {
             users = try await sdk.userRepository.getAll()
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
             users = []
         }
         isLoading = false
@@ -139,7 +139,7 @@ struct UserRowView: View {
                                 .cornerRadius(4)
                         }
                         if !user.isActive {
-                            Text("Inactif")
+                            Text("Inactive")
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -158,7 +158,7 @@ struct UserRowView: View {
             // Action buttons
             HStack(spacing: 12) {
                 Button(action: onEdit) {
-                    Label("Modifier", systemImage: "pencil")
+                    Label("Edit", systemImage: "pencil")
                         .font(.caption)
                 }
                 .buttonStyle(.bordered)
@@ -166,7 +166,7 @@ struct UserRowView: View {
 
                 if canManagePermissions && !user.isAdmin {
                     Button(action: onPermissions) {
-                        Label("Droits", systemImage: "lock.shield")
+                        Label("Permissions", systemImage: "lock.shield")
                             .font(.caption)
                     }
                     .buttonStyle(.bordered)
@@ -200,27 +200,27 @@ struct UserEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Informations")) {
-                    TextField("Nom d'utilisateur", text: $username)
+                Section(header: Text("Information")) {
+                    TextField("Username", text: $username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .disabled(isEditing)
 
                     if !isEditing {
-                        SecureField("Mot de passe", text: $password)
+                        SecureField("Password", text: $password)
                     }
 
-                    TextField("Nom complet", text: $fullName)
+                    TextField("Full name", text: $fullName)
                 }
 
                 Section(header: Text("Permissions")) {
-                    Toggle("Administrateur", isOn: $isAdmin)
-                    Toggle("Compte actif", isOn: $isActive)
+                    Toggle("Administrator", isOn: $isAdmin)
+                    Toggle("Active account", isOn: $isActive)
                 }
 
                 if isEditing {
-                    Section(header: Text("Mot de passe")) {
-                        SecureField("Nouveau mot de passe (laisser vide pour ne pas changer)", text: $password)
+                    Section(header: Text("Password")) {
+                        SecureField("New password (leave blank to keep current)", text: $password)
                     }
                 }
 
@@ -231,13 +231,13 @@ struct UserEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Modifier l'utilisateur" : "Nouvel utilisateur")
+            .navigationTitle(isEditing ? "Edit User" : "New User")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Enregistrer" : "Ajouter") {
+                    Button(isEditing ? "Save" : "Add") {
                         saveUser()
                     }
                     .disabled(!canSave || isSaving)
@@ -364,7 +364,7 @@ struct UserEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }
@@ -389,7 +389,7 @@ struct UserPermissionsEditView: View {
                     HStack {
                         Image(systemName: "info.circle")
                             .foregroundColor(.blue)
-                        Text("Cet utilisateur est administrateur et a tous les droits.")
+                        Text("This user is an administrator and has all permissions.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -407,10 +407,10 @@ struct UserPermissionsEditView: View {
             } else {
                 ForEach(Module.allCases, id: \.rawValue) { module in
                     Section(header: Text(module.displayName)) {
-                        Toggle("Voir", isOn: binding(for: module, action: \.canView))
-                        Toggle("Creer", isOn: binding(for: module, action: \.canCreate))
-                        Toggle("Modifier", isOn: binding(for: module, action: \.canEdit))
-                        Toggle("Supprimer", isOn: binding(for: module, action: \.canDelete))
+                        Toggle("View", isOn: binding(for: module, action: \.canView))
+                        Toggle("Create", isOn: binding(for: module, action: \.canCreate))
+                        Toggle("Edit", isOn: binding(for: module, action: \.canEdit))
+                        Toggle("Delete", isOn: binding(for: module, action: \.canDelete))
                     }
                     .disabled(user.isAdmin)
                 }
@@ -430,17 +430,17 @@ struct UserPermissionsEditView: View {
                 }
             }
         }
-        .navigationTitle("Droits de \(user.fullName)")
+        .navigationTitle("\(user.fullName)'s Permissions")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Fermer") { dismiss() }
+                Button("Close") { dismiss() }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: savePermissions) {
                     if isSaving {
                         ProgressView()
                     } else {
-                        Text("Enregistrer")
+                        Text("Save")
                     }
                 }
                 .disabled(isSaving || user.isAdmin)
@@ -546,7 +546,7 @@ struct UserPermissionsEditView: View {
                 }
                 await MainActor.run {
                     isSaving = false
-                    successMessage = "Permissions enregistrees avec succes"
+                    successMessage = "Permissions saved successfully"
                 }
             } catch {
                 await MainActor.run {
@@ -565,7 +565,7 @@ enum UserEditorError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .hashingFailed:
-            return "Erreur lors du hachage du mot de passe"
+            return "Error hashing password"
         }
     }
 }

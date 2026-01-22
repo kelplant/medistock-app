@@ -52,7 +52,7 @@ struct ErrorView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.orange)
 
-            Text("Erreur")
+            Text("Error")
                 .font(.headline)
 
             Text(message)
@@ -60,7 +60,7 @@ struct ErrorView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button("Réessayer", action: onRetry)
+            Button("Retry", action: onRetry)
                 .buttonStyle(.borderedProminent)
         }
         .padding()
@@ -93,7 +93,7 @@ extension Date {
     func formatted(style: DateFormatter.Style = .medium) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = style
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = Locale(identifier: "en_US")
         return formatter.string(from: self)
     }
 
@@ -101,7 +101,7 @@ extension Date {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = Locale(identifier: "en_US")
         return formatter.string(from: self)
     }
 }

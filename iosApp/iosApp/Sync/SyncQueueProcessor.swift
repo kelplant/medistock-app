@@ -429,7 +429,7 @@ class SyncQueueProcessor: ObservableObject {
         return try JSONSerialization.data(withJSONObject: first)
     }
 
-    private func upsertMergedRecord(table: String, entityType: SyncEntityType, payload: Data) async throws {
+    private func upsertMergedRecord(table: String, entityType: EntityType, payload: Data) async throws {
         switch entityType {
         case .site:
             let dto = try decoder.decode(SiteDTO.self, from: payload)
@@ -471,7 +471,7 @@ class SyncQueueProcessor: ObservableObject {
             let dto = try decoder.decode(StockMovementDTO.self, from: payload)
             try await supabase.upsert(into: table, record: dto)
 
-        case .productTransfer:
+        case .transfer:
             let dto = try decoder.decode(ProductTransferDTO.self, from: payload)
             try await supabase.upsert(into: table, record: dto)
 

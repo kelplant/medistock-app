@@ -1,0 +1,50 @@
+# MediStock iOS - Inventory Tests
+# Simplified test for inventory screen navigation
+appId: com.medistock.ios
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "ios_inventory_home"
+
+# ========== TEST: Navigate to Inventory screen ==========
+- tapOn:
+    text: "Inventory Stock"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- takeScreenshot: "ios_inventory_screen"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+- takeScreenshot: "ios_inventory_completed"

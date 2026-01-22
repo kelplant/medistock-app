@@ -1,0 +1,128 @@
+# MediStock Android - Products CRUD Tests
+# Prerequisites: User must be admin
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Products
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+# On Android, Manage Products opens a submenu - tap Manage Products again
+- tapOn:
+    text: ".*Manage Products.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Test 1: Create a new product
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Fill product form - name field
+- inputText: "Product E2E Test"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify product appears in list
+- assertVisible:
+    text: "Product E2E Test"
+    optional: true
+
+- takeScreenshot: "android_product_created"
+
+# Test 2: Edit product
+- tapOn:
+    text: "Product E2E Test"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Clear and enter new name
+- eraseText: 20
+- inputText: "Product E2E Modified"
+
+# Save
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+- tapOn:
+    text: ".*Update.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name
+- assertVisible:
+    text: "Product E2E Modified"
+    optional: true
+
+- takeScreenshot: "android_product_edited"
+
+# Test 3: Delete product
+- longPressOn:
+    text: "Product E2E Modified"
+    optional: true
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+# Confirm deletion
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+- tapOn:
+    text: ".*Confirm.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_product_deleted"

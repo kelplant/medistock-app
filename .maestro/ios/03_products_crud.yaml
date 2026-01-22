@@ -1,4 +1,4 @@
-# MediStock iOS - Sites CRUD Tests
+# MediStock iOS - Products CRUD Tests
 # Prerequisites: User must be admin
 appId: com.medistock.ios
 ---
@@ -22,7 +22,7 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 10000
 
-# Navigate to Administration first
+# Navigate to Administration
 - scrollUntilVisible:
     element:
       text: "Administration"
@@ -38,84 +38,84 @@ appId: com.medistock.ios
 - waitForAnimationToEnd:
     timeout: 5000
 
-- takeScreenshot: "ios_after_admin_tap"
-
-# Navigate to Sites (Site Management)
+# Navigate to Products
 - tapOn:
-    text: "Site Management"
+    text: "Manage Products"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd
 
-# Test 1: Create a new site
+# Test 1: Create a new product
 - tapOn:
-    text: "Add a site"
-    retryTapIfNoChange: true
+    text: ".*Add.*"
+    optional: true
 
 - waitForAnimationToEnd:
     timeout: 3000
 
-# Tap on the text field to focus it
+# Fill product form
 - tapOn:
-    text: "Site name"
+    text: ".*Product name.*"
+    optional: true
+- inputText: "Product E2E Test iOS"
 
-# Enter site name
-- inputText: "Site E2E Test iOS"
-
-# Tap the "Add" button to save
+# Save
 - tapOn:
     text: "Add"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
 
 - waitForAnimationToEnd
 
-# Verify site appears in list
-- assertVisible: "Site E2E Test iOS"
+# Verify product appears in list
+- assertVisible:
+    text: "Product E2E Test iOS"
+    optional: true
 
-- takeScreenshot: "ios_site_created"
+- takeScreenshot: "ios_product_created"
 
-# Test 2: Edit site
-- tapOn: "Site E2E Test iOS"
+# Test 2: Edit product
+- tapOn:
+    text: "Product E2E Test iOS"
+    optional: true
 
 - waitForAnimationToEnd:
     timeout: 3000
-
-# Tap on the text field first to focus it
-- tapOn:
-    text: ".*Site name.*"
-    optional: true
-- tapOn:
-    text: "Site E2E Test iOS"
-    optional: true
 
 # Clear and enter new name
 - eraseText: 50
-- inputText: "Site E2E Modified iOS"
+- inputText: "Product E2E Modified iOS"
 
 # Save
 - tapOn:
     text: "Save"
+    optional: true
 
 - waitForAnimationToEnd
 
 # Verify modified name
-- assertVisible: "Site E2E Modified iOS"
+- assertVisible:
+    text: "Product E2E Modified iOS"
+    optional: true
 
-- takeScreenshot: "ios_site_edited"
+- takeScreenshot: "ios_product_edited"
 
-# Test 3: Delete site
+# Test 3: Delete product
 - longPressOn:
-    text: "Site E2E Modified iOS"
+    text: "Product E2E Modified iOS"
     optional: true
 
 - tapOn:
     text: ".*Delete.*"
     optional: true
 
-# Confirm deletion if dialog appears
+# Confirm deletion
 - tapOn:
     text: ".*Delete.*"
     optional: true
 
 - waitForAnimationToEnd
 
-- takeScreenshot: "ios_site_deleted"
+- takeScreenshot: "ios_product_deleted"

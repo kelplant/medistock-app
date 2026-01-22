@@ -35,13 +35,13 @@ struct PackagingTypesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "shippingbox",
-                        title: "Aucun conditionnement",
-                        message: "Ajoutez des types de conditionnement pour vos produits."
+                        title: "No packaging types",
+                        message: "Add packaging types for your products."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(packagingTypes.count) conditionnement(s)")) {
+                Section(header: Text("\(packagingTypes.count) packaging type(s)")) {
                     ForEach(packagingTypes, id: \.id) { packagingType in
                         PackagingTypeRowView(packagingType: packagingType)
                             .contentShape(Rectangle())
@@ -54,7 +54,7 @@ struct PackagingTypesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Conditionnements")
+        .navigationTitle("Packaging Types")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -103,7 +103,7 @@ struct PackagingTypesListView: View {
         do {
             packagingTypes = try await sdk.packagingTypeRepository.getAll()
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
             packagingTypes = []
         }
         isLoading = false
@@ -124,7 +124,7 @@ struct PackagingTypesListView: View {
                     }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
+                        errorMessage = "Error deleting: \(error.localizedDescription)"
                     }
                 }
             }
@@ -142,15 +142,15 @@ struct PackagingTypeRowView: View {
             Text(packagingType.name)
                 .font(.headline)
 
-            Text("Niveau 1: \(packagingType.level1Name)")
+            Text("Level 1: \(packagingType.level1Name)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
             if let level2Name = packagingType.level2Name, !level2Name.isEmpty {
                 HStack {
-                    Text("Niveau 2: \(level2Name)")
+                    Text("Level 2: \(level2Name)")
                     if let qty = packagingType.level2Quantity {
-                        Text("(\(qty) unités)")
+                        Text("(\(qty) units)")
                     }
                 }
                 .font(.caption)
@@ -183,17 +183,17 @@ struct PackagingTypeEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Informations")) {
-                    TextField("Nom du conditionnement", text: $name)
-                    TextField("Nom niveau 1 (ex: Comprimé)", text: $level1Name)
+                Section(header: Text("Information")) {
+                    TextField("Packaging type name", text: $name)
+                    TextField("Level 1 name (e.g., Tablet)", text: $level1Name)
                 }
 
-                Section(header: Text("Niveau 2 (optionnel)")) {
-                    Toggle("Ajouter un niveau 2", isOn: $hasLevel2)
+                Section(header: Text("Level 2 (optional)")) {
+                    Toggle("Add level 2", isOn: $hasLevel2)
 
                     if hasLevel2 {
-                        TextField("Nom niveau 2 (ex: Boîte)", text: $level2Name)
-                        TextField("Quantité par niveau 2", text: $level2QuantityText)
+                        TextField("Level 2 name (e.g., Box)", text: $level2Name)
+                        TextField("Quantity per level 2", text: $level2QuantityText)
                             .keyboardType(.numberPad)
                     }
                 }
@@ -205,13 +205,13 @@ struct PackagingTypeEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Modifier" : "Nouveau conditionnement")
+            .navigationTitle(isEditing ? "Edit" : "New Packaging Type")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Enregistrer" : "Ajouter") {
+                    Button(isEditing ? "Save" : "Add") {
                         savePackagingType()
                     }
                     .disabled(!canSave || isSaving)
@@ -305,7 +305,7 @@ struct PackagingTypeEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }

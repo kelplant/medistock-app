@@ -101,7 +101,7 @@ struct ContentView: View {
                 hashedPassword: hashedPassword,
                 currentTimeMillis: currentTime
             )
-            if created {
+            if created.boolValue {
                 debugLog("ContentView", "Default local admin user created")
             }
         } catch {

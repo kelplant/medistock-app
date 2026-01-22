@@ -1,0 +1,51 @@
+# MediStock Android - Inventory Tests
+# Simplified test for inventory functionality
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+- takeScreenshot: "android_inventory_home"
+
+# ========== TEST: Navigate to Inventory Stock screen ==========
+- tapOn:
+    text: "Inventory Stock"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- takeScreenshot: "android_inventory_screen"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+- takeScreenshot: "android_inventory_completed"

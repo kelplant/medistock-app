@@ -95,18 +95,18 @@ struct ProfileBadgeView: View {
     }
 
     private var statusAccessibilityLabel: String {
-        var label = "Profil - "
+        var label = "Profile - "
         switch syncStatus.indicatorColor {
         case .synced:
-            label += "Synchronisé"
+            label += "Synced"
         case .syncing:
-            label += "Synchronisation en cours"
+            label += "Syncing"
         case .pending:
-            label += "\(syncStatus.pendingCount) modifications en attente"
+            label += "\(syncStatus.pendingCount) pending changes"
         case .offline:
-            label += "Mode hors ligne"
+            label += "Offline mode"
         case .error:
-            label += "Erreur de synchronisation"
+            label += "Sync error"
         }
         return label
     }
@@ -124,27 +124,27 @@ struct ProfileMenuView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Informations")) {
+                Section(header: Text("Information")) {
                     LabeledContentCompat {
-                        Text("Nom d'utilisateur")
+                        Text("Username")
                     } content: {
                         Text(session.username)
                     }
 
                     LabeledContentCompat {
-                        Text("Nom complet")
+                        Text("Full name")
                     } content: {
                         Text(session.fullName)
                     }
 
                     LabeledContentCompat {
-                        Text("Rôle")
+                        Text("Role")
                     } content: {
-                        Text(session.isAdmin ? "Administrateur" : "Utilisateur")
+                        Text(session.isAdmin ? "Administrator" : "User")
                     }
                 }
 
-                Section(header: Text("Synchronisation")) {
+                Section(header: Text("Sync")) {
                     // Status indicator
                     HStack {
                         Circle()
@@ -167,7 +167,7 @@ struct ProfileMenuView: View {
                         HStack {
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .foregroundColor(.orange)
-                            Text("\(syncStatus.pendingCount) modification(s) en attente")
+                            Text("\(syncStatus.pendingCount) pending change(s)")
                                 .font(.subheadline)
                         }
                     }
@@ -177,7 +177,7 @@ struct ProfileMenuView: View {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.red)
-                            Text("\(syncStatus.conflictCount) conflit(s) à résoudre")
+                            Text("\(syncStatus.conflictCount) conflict(s) to resolve")
                                 .font(.subheadline)
                                 .foregroundColor(.red)
                         }
@@ -187,7 +187,7 @@ struct ProfileMenuView: View {
                     HStack {
                         Image(systemName: syncStatus.isOnline ? "wifi" : "wifi.slash")
                             .foregroundColor(syncStatus.isOnline ? .green : .gray)
-                        Text(syncStatus.isOnline ? "En ligne" : "Hors ligne")
+                        Text(syncStatus.isOnline ? "Online" : "Offline")
                             .font(.subheadline)
                     }
 
@@ -195,7 +195,7 @@ struct ProfileMenuView: View {
                     HStack {
                         Image(systemName: realtimeService.isConnected ? "bolt.fill" : "bolt.slash")
                             .foregroundColor(realtimeService.isConnected ? .green : .gray)
-                        Text(realtimeService.isConnected ? "Realtime connecté" : "Realtime déconnecté")
+                        Text(realtimeService.isConnected ? "Realtime connected" : "Realtime disconnected")
                             .font(.subheadline)
                     }
 
@@ -203,14 +203,14 @@ struct ProfileMenuView: View {
                     Button(action: triggerSync) {
                         HStack {
                             Image(systemName: "arrow.clockwise")
-                            Text("Synchroniser maintenant")
+                            Text("Sync now")
                         }
                     }
                     .disabled(!syncStatus.isOnline || syncStatus.isSyncing)
                 }
 
                 if let error = syncStatus.lastSyncInfo.error {
-                    Section(header: Text("Dernière erreur")) {
+                    Section(header: Text("Last error")) {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(.red)
@@ -219,7 +219,7 @@ struct ProfileMenuView: View {
 
                 Section {
                     NavigationLink(destination: ChangePasswordView(sdk: sdk, session: session)) {
-                        Label("Changer le mot de passe", systemImage: "key")
+                        Label("Change password", systemImage: "key")
                     }
                 }
 
@@ -227,14 +227,14 @@ struct ProfileMenuView: View {
                     Button(role: .destructive) {
                         logout()
                     } label: {
-                        Label("Déconnexion", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }
-            .navigationTitle("Mon profil")
+            .navigationTitle("My Profile")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Fermer") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
             }
         }
@@ -279,13 +279,13 @@ struct ChangePasswordView: View {
 
     var body: some View {
         Form {
-            Section(header: Text("Mot de passe actuel")) {
-                SecureField("Mot de passe actuel", text: $currentPassword)
+            Section(header: Text("Current password")) {
+                SecureField("Current password", text: $currentPassword)
             }
 
-            Section(header: Text("Nouveau mot de passe")) {
-                SecureField("Nouveau mot de passe", text: $newPassword)
-                SecureField("Confirmer le mot de passe", text: $confirmPassword)
+            Section(header: Text("New password")) {
+                SecureField("New password", text: $newPassword)
+                SecureField("Confirm password", text: $confirmPassword)
             }
 
             if let errorMessage {
@@ -307,13 +307,13 @@ struct ChangePasswordView: View {
                     if isLoading {
                         ProgressView()
                     } else {
-                        Text("Changer le mot de passe")
+                        Text("Change password")
                     }
                 }
                 .disabled(isLoading || !isFormValid)
             }
         }
-        .navigationTitle("Changer le mot de passe")
+        .navigationTitle("Change Password")
     }
 
     private var isFormValid: Bool {
@@ -326,9 +326,9 @@ struct ChangePasswordView: View {
     private func changePassword() {
         guard isFormValid else {
             if newPassword != confirmPassword {
-                errorMessage = "Les mots de passe ne correspondent pas"
+                errorMessage = "Passwords do not match"
             } else if newPassword.count < 4 {
-                errorMessage = "Le mot de passe doit contenir au moins 4 caractères"
+                errorMessage = "Password must be at least 4 characters"
             }
             return
         }
@@ -386,7 +386,7 @@ struct ChangePasswordView: View {
 
                 await MainActor.run {
                     isLoading = false
-                    successMessage = "Mot de passe modifié avec succès"
+                    successMessage = "Password changed successfully"
                     currentPassword = ""
                     newPassword = ""
                     confirmPassword = ""
@@ -414,11 +414,11 @@ enum PasswordChangeError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .userNotFound:
-            return "Utilisateur non trouvé"
+            return "User not found"
         case .incorrectPassword:
-            return "Mot de passe actuel incorrect"
+            return "Current password incorrect"
         case .hashingFailed:
-            return "Erreur lors du hachage du mot de passe"
+            return "Error hashing password"
         }
     }
 }

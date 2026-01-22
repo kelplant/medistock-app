@@ -18,12 +18,12 @@ struct AppUpdateRequiredView: View {
                 .foregroundColor(.orange)
 
             // Title
-            Text("Mise à jour requise")
+            Text("Update Required")
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
             // Message
-            Text("Votre version de l'application n'est pas compatible avec la base de données. Veuillez mettre à jour l'application pour continuer.")
+            Text("Your app version is not compatible with the database. Please update the app to continue.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -32,7 +32,7 @@ struct AppUpdateRequiredView: View {
             // Version info box
             VStack(spacing: 12) {
                 HStack {
-                    Text("Version de l'app :")
+                    Text("App version:")
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("\(appVersion)")
@@ -43,7 +43,7 @@ struct AppUpdateRequiredView: View {
                 Divider()
 
                 HStack {
-                    Text("Version minimale requise :")
+                    Text("Minimum required version:")
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("\(minRequired)")
@@ -54,7 +54,7 @@ struct AppUpdateRequiredView: View {
                 Divider()
 
                 HStack {
-                    Text("Version de la base :")
+                    Text("Database version:")
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("\(dbVersion)")
@@ -70,10 +70,10 @@ struct AppUpdateRequiredView: View {
 
             // Instructions
             VStack(spacing: 8) {
-                Text("Pour mettre à jour :")
+                Text("To update:")
                     .font(.headline)
 
-                Text("Contactez votre administrateur pour obtenir la dernière version de l'application.")
+                Text("Contact your administrator to get the latest version of the app.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -102,7 +102,7 @@ struct CompatibilityGuardView<Content: View>: View {
                 // Show loading while checking
                 VStack(spacing: 16) {
                     ProgressView()
-                    Text("Vérification de la compatibilité...")
+                    Text("Checking compatibility...")
                         .foregroundColor(.secondary)
                 }
             } else if let result = compatibilityManager.compatibilityResult,

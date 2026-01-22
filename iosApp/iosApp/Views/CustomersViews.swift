@@ -43,13 +43,13 @@ struct CustomersListView: View {
                 Section {
                     EmptyStateView(
                         icon: "person.2",
-                        title: "Aucun client",
-                        message: "Ajoutez vos clients pour faciliter les ventes."
+                        title: "No customers",
+                        message: "Add your customers to facilitate sales."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(filteredCustomers.count) client(s)")) {
+                Section(header: Text("\(filteredCustomers.count) customer(s)")) {
                     ForEach(filteredCustomers, id: \.id) { customer in
                         CustomerRowView(customer: customer)
                             .contentShape(Rectangle())
@@ -62,8 +62,8 @@ struct CustomersListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Clients")
-        .searchable(text: $searchText, prompt: "Rechercher un client")
+        .navigationTitle("Customers")
+        .searchable(text: $searchText, prompt: "Search customers")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -112,7 +112,7 @@ struct CustomersListView: View {
         do {
             customers = try await sdk.customerRepository.getAll()
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
             customers = []
         }
         isLoading = false
@@ -133,7 +133,7 @@ struct CustomersListView: View {
                     }
                 } catch {
                     await MainActor.run {
-                        errorMessage = "Erreur lors de la suppression: \(error.localizedDescription)"
+                        errorMessage = "Error deleting: \(error.localizedDescription)"
                     }
                 }
             }
@@ -195,17 +195,17 @@ struct CustomerEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Informations")) {
-                    TextField("Nom du client", text: $name)
-                    TextField("Téléphone", text: $phone)
+                Section(header: Text("Information")) {
+                    TextField("Customer name", text: $name)
+                    TextField("Phone", text: $phone)
                         .keyboardType(.phonePad)
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                 }
 
-                Section(header: Text("Adresse")) {
-                    TextField("Adresse", text: $address)
+                Section(header: Text("Address")) {
+                    TextField("Address", text: $address)
                 }
 
                 Section(header: Text("Notes")) {
@@ -220,13 +220,13 @@ struct CustomerEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Modifier le client" : "Nouveau client")
+            .navigationTitle(isEditing ? "Edit Customer" : "New Customer")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Enregistrer" : "Ajouter") {
+                    Button(isEditing ? "Save" : "Add") {
                         saveCustomer()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
@@ -307,7 +307,7 @@ struct CustomerEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }

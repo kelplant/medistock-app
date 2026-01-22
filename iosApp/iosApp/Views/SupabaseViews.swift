@@ -23,7 +23,7 @@ struct SupabaseConfigView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Configuration Supabase")) {
+                Section(header: Text("Supabase Configuration")) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Project URL")
                             .font(.caption)
@@ -43,7 +43,7 @@ struct SupabaseConfigView: View {
                                 Text(maskedKey)
                                     .foregroundColor(.secondary)
                                 Spacer()
-                                Button("Modifier") {
+                                Button("Edit") {
                                     hasExistingKey = false
                                 }
                                 .font(.caption)
@@ -67,7 +67,7 @@ struct SupabaseConfigView: View {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle())
                             } else {
-                                Text("Enregistrer")
+                                Text("Save")
                             }
                             Spacer()
                         }
@@ -80,7 +80,7 @@ struct SupabaseConfigView: View {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
-                            Text("Configuration enregistrée avec succès")
+                            Text("Configuration saved successfully")
                                 .foregroundColor(.green)
                         }
                     }
@@ -93,17 +93,17 @@ struct SupabaseConfigView: View {
                     }
                 }
 
-                Section(header: Text("Synchronisation")) {
+                Section(header: Text("Synchronization")) {
                     Button(action: performSync) {
                         HStack {
                             Spacer()
                             if isSyncing {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle())
-                                Text("Synchronisation...")
+                                Text("Syncing...")
                             } else {
                                 Image(systemName: "arrow.triangle.2.circlepath")
-                                Text("Synchroniser les données")
+                                Text("Sync data")
                             }
                             Spacer()
                         }
@@ -113,12 +113,12 @@ struct SupabaseConfigView: View {
                     if let syncMessage {
                         Text(syncMessage)
                             .font(.caption)
-                            .foregroundColor(syncMessage.contains("Erreur") ? .red : .green)
+                            .foregroundColor(syncMessage.contains("Error") ? .red : .green)
                     }
 
                     if let lastSync = syncStatus.lastSyncInfo.timestamp {
                         LabeledContentCompat {
-                            Text("Dernière sync")
+                            Text("Last sync")
                         } content: {
                             Text(lastSync, style: .relative)
                                 .foregroundColor(.secondary)
@@ -126,43 +126,43 @@ struct SupabaseConfigView: View {
                     }
                 }
 
-                Section(header: Text("Informations")) {
+                Section(header: Text("Information")) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Comment obtenir ces informations:")
+                        Text("How to get this information:")
                             .font(.subheadline)
                             .fontWeight(.medium)
 
-                        Text("1. Connectez-vous à votre projet Supabase")
-                        Text("2. Allez dans Settings > API")
-                        Text("3. Copiez l'URL du projet et la clé anon")
+                        Text("1. Log in to your Supabase project")
+                        Text("2. Go to Settings > API")
+                        Text("3. Copy the project URL and anon key")
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
                 }
 
-                Section(header: Text("État actuel")) {
+                Section(header: Text("Current Status")) {
                     LabeledContentCompat {
-                        Text("Configuré")
+                        Text("Configured")
                     } content: {
-                        Text(supabase.isConfigured ? "Oui" : "Non")
+                        Text(supabase.isConfigured ? "Yes" : "No")
                             .foregroundColor(supabase.isConfigured ? .green : .red)
                     }
                     LabeledContentCompat {
-                        Text("Connexion")
+                        Text("Connection")
                     } content: {
                         HStack {
                             Circle()
                                 .fill(syncStatus.isOnline ? Color.green : Color.orange)
                                 .frame(width: 8, height: 8)
-                            Text(syncStatus.isOnline ? "En ligne" : "Hors ligne")
+                            Text(syncStatus.isOnline ? "Online" : "Offline")
                                 .foregroundColor(syncStatus.isOnline ? .green : .orange)
                         }
                     }
                     if syncStatus.pendingCount > 0 {
                         LabeledContentCompat {
-                            Text("En attente")
+                            Text("Pending")
                         } content: {
-                            Text("\(syncStatus.pendingCount) modification(s)")
+                            Text("\(syncStatus.pendingCount) change(s)")
                                 .foregroundColor(.orange)
                         }
                     }
@@ -173,7 +173,7 @@ struct SupabaseConfigView: View {
                         HStack {
                             Spacer()
                             Image(systemName: "network")
-                            Text("Tester la connexion")
+                            Text("Test connection")
                             Spacer()
                         }
                     }
@@ -184,16 +184,16 @@ struct SupabaseConfigView: View {
                     Button(role: .destructive, action: clearConfig) {
                         HStack {
                             Spacer()
-                            Text("Effacer la configuration")
+                            Text("Clear configuration")
                             Spacer()
                         }
                     }
                 }
             }
-            .navigationTitle("Configuration Supabase")
+            .navigationTitle("Supabase Configuration")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Fermer") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
             }
             .onAppear {
@@ -222,7 +222,7 @@ struct SupabaseConfigView: View {
 
         // Validate URL format
         guard let url = URL(string: projectUrl), url.scheme == "https" else {
-            errorMessage = "L'URL doit être une URL HTTPS valide"
+            errorMessage = "URL must be a valid HTTPS URL"
             isSaving = false
             return
         }
@@ -236,7 +236,7 @@ struct SupabaseConfigView: View {
             // Use existing key
             keyToSave = existingConfig.anonKey
         } else {
-            errorMessage = "La clé Anon est requise"
+            errorMessage = "Anon key is required"
             isSaving = false
             return
         }
@@ -283,9 +283,9 @@ struct SupabaseConfigView: View {
             await MainActor.run {
                 isSyncing = false
                 if let error = syncStatus.lastSyncInfo.error {
-                    syncMessage = "Erreur: \(error)"
+                    syncMessage = "Error: \(error)"
                 } else {
-                    syncMessage = "Synchronisation réussie!"
+                    syncMessage = "Sync completed successfully!"
                 }
             }
         }
@@ -300,11 +300,11 @@ struct SupabaseConfigView: View {
                 // Try to fetch a small amount of data to test connection
                 let _: [SiteDTO] = try await supabase.fetchAll(from: "sites")
                 await MainActor.run {
-                    syncMessage = "Connexion réussie!"
+                    syncMessage = "Connection successful!"
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Erreur de connexion: \(error.localizedDescription)"
+                    errorMessage = "Connection error: \(error.localizedDescription)"
                 }
             }
         }

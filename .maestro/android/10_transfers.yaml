@@ -1,0 +1,103 @@
+# MediStock Android - Transfer Tests
+# Simplified test for transfer functionality
+appId: com.medistock
+---
+
+# Setup: Login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========== PREREQUISITE: Create sites ==========
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Site Management.*"
+
+- waitForAnimationToEnd
+
+# Create Site 1
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- inputText: "Warehouse Central"
+
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Create Site 2
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- inputText: "Pharmacy Test"
+
+- tapOn:
+    text: ".*Save.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_transfer_sites_ready"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# ========== TEST: Navigate to Transfer screen ==========
+- tapOn:
+    text: ".*Transfer.*"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_transfer_screen"
+
+# Try to create a transfer
+- tapOn:
+    id: ".*fab.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_transfer_form"
+
+# Navigate back
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+- takeScreenshot: "android_transfer_completed"

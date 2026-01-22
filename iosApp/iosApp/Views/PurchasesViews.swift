@@ -37,13 +37,13 @@ struct PurchasesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "shippingbox",
-                        title: "Aucun achat",
-                        message: "Enregistrez votre premier achat pour alimenter votre stock."
+                        title: "No purchases",
+                        message: "Record your first purchase to stock up your inventory."
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(batches.count) lot(s)")) {
+                Section(header: Text("\(batches.count) batch(es)")) {
                     ForEach(batches, id: \.id) { batch in
                         PurchaseBatchRowView(
                             batch: batch,
@@ -55,7 +55,7 @@ struct PurchasesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Achats")
+        .navigationTitle("Purchases")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -110,17 +110,17 @@ struct PurchasesListView: View {
                 batches = batches.filter { $0.siteId == siteId }
             }
         } catch {
-            errorMessage = "Erreur: \(error.localizedDescription)"
+            errorMessage = "Error: \(error.localizedDescription)"
         }
         isLoading = false
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Produit inconnu"
+        products.first { $0.id == productId }?.name ?? "Unknown product"
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Site inconnu"
+        sites.first { $0.id == siteId }?.name ?? "Unknown site"
     }
 }
 
@@ -137,7 +137,7 @@ struct PurchaseBatchRowView: View {
                     .font(.headline)
                 Spacer()
                 if batch.isExhausted {
-                    Text("Epuise")
+                    Text("Exhausted")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
@@ -148,9 +148,9 @@ struct PurchaseBatchRowView: View {
             }
 
             HStack {
-                Text("Qte restante: \(String(format: "%.1f", batch.remainingQuantity))/\(String(format: "%.1f", batch.initialQuantity))")
+                Text("Remaining qty: \(String(format: "%.1f", batch.remainingQuantity))/\(String(format: "%.1f", batch.initialQuantity))")
                 Spacer()
-                Text("Prix: \(String(format: "%.2f", batch.purchasePrice)) EUR")
+                Text("Price: \(String(format: "%.2f", batch.purchasePrice)) EUR")
             }
             .font(.subheadline)
 
@@ -166,7 +166,7 @@ struct PurchaseBatchRowView: View {
             HStack {
                 Text("Date: \(formatDate(batch.purchaseDate))")
                 if let expiry = batch.expiryDate {
-                    Text("- Exp: \(formatDate(expiry))")
+                    Text("- Exp.: \(formatDate(expiry))")
                         .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
                 }
             }
@@ -174,7 +174,7 @@ struct PurchaseBatchRowView: View {
             .foregroundColor(.secondary)
 
             if let batchNumber = batch.batchNumber, !batchNumber.isEmpty {
-                Text("Lot: \(batchNumber)")
+                Text("Batch: \(batchNumber)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -230,20 +230,20 @@ struct PurchaseEditorView: View {
             Form {
                 Section(header: Text("Site")) {
                     Picker("Site", selection: $selectedSiteId) {
-                        Text("Selectionner").tag("")
+                        Text("Select").tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Produit")) {
+                Section(header: Text("Product")) {
                     if filteredProducts.isEmpty {
-                        Text("Aucun produit disponible pour ce site")
+                        Text("No products available for this site")
                             .foregroundColor(.secondary)
                     } else {
-                        Picker("Produit", selection: $selectedProductId) {
-                            Text("Selectionner").tag("")
+                        Picker("Product", selection: $selectedProductId) {
+                            Text("Select").tag("")
                             ForEach(filteredProducts, id: \.id) { product in
                                 Text(product.name).tag(product.id)
                             }
@@ -251,20 +251,20 @@ struct PurchaseEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantite et Prix")) {
-                    TextField("Quantite", text: $quantityText)
+                Section(header: Text("Quantity and Price")) {
+                    TextField("Quantity", text: $quantityText)
                         .keyboardType(.decimalPad)
-                    TextField("Prix d'achat unitaire", text: $priceText)
+                    TextField("Unit purchase price", text: $priceText)
                         .keyboardType(.decimalPad)
                 }
 
-                Section(header: Text("Fournisseur")) {
-                    TextField("Nom du fournisseur", text: $supplierName)
-                    TextField("Numero de lot (optionnel)", text: $batchNumber)
+                Section(header: Text("Supplier")) {
+                    TextField("Supplier name", text: $supplierName)
+                    TextField("Batch number (optional)", text: $batchNumber)
                 }
 
-                Section(header: Text("Date d'expiration")) {
-                    Toggle("Date d'expiration", isOn: $hasExpiryDate)
+                Section(header: Text("Expiry date")) {
+                    Toggle("Expiry date", isOn: $hasExpiryDate)
                     if hasExpiryDate {
                         DatePicker("Date", selection: $expiryDate, displayedComponents: .date)
                     }
@@ -277,13 +277,13 @@ struct PurchaseEditorView: View {
                     }
                 }
             }
-            .navigationTitle("Nouvel achat")
+            .navigationTitle("New Purchase")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Annuler") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Enregistrer") {
+                    Button("Save") {
                         savePurchase()
                     }
                     .disabled(!canSave || isSaving)
@@ -391,7 +391,7 @@ struct PurchaseEditorView: View {
             } catch {
                 await MainActor.run {
                     isSaving = false
-                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    errorMessage = "Error: \(error.localizedDescription)"
                 }
             }
         }
