@@ -51,9 +51,13 @@ class SaleRepository(private val database: MedistockDatabase) {
             id = item.id,
             sale_id = item.saleId,
             product_id = item.productId,
+            product_name = item.productName,
+            unit = item.unit,
             quantity = item.quantity,
             unit_price = item.unitPrice,
-            total_price = item.totalPrice
+            total_price = item.totalPrice,
+            created_at = item.createdAt,
+            created_by = item.createdBy
         )
     }
 
@@ -74,9 +78,13 @@ class SaleRepository(private val database: MedistockDatabase) {
                     id = item.id,
                     sale_id = item.saleId,
                     product_id = item.productId,
+                    product_name = item.productName,
+                    unit = item.unit,
                     quantity = item.quantity,
                     unit_price = item.unitPrice,
-                    total_price = item.totalPrice
+                    total_price = item.totalPrice,
+                    created_at = item.createdAt,
+                    created_by = item.createdBy
                 )
             }
         }
@@ -114,9 +122,13 @@ class SaleRepository(private val database: MedistockDatabase) {
             id = id,
             saleId = sale_id,
             productId = product_id,
+            productName = product_name,
+            unit = unit,
             quantity = quantity,
             unitPrice = unit_price,
-            totalPrice = total_price
+            totalPrice = total_price,
+            createdAt = created_at,
+            createdBy = created_by
         )
     }
 }

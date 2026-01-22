@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.Customer
+import com.medistock.shared.domain.model.Customer
 
 class CustomerAdapter(
     private val onClick: (Customer) -> Unit

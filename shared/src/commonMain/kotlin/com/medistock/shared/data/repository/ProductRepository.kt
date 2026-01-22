@@ -2,6 +2,7 @@ package com.medistock.shared.data.repository
 
 import com.medistock.shared.db.MedistockDatabase
 import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.ProductWithCategory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import app.cash.sqldelight.coroutines.asFlow
@@ -84,6 +85,62 @@ class ProductRepository(private val database: MedistockDatabase) {
             .asFlow()
             .mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toModel() } }
+    }
+
+    suspend fun getAllWithCategory(): List<ProductWithCategory> = withContext(Dispatchers.Default) {
+        queries.getProductsWithCategory().executeAsList().map { it.toProductWithCategory() }
+    }
+
+    suspend fun getWithCategoryForSite(siteId: String): List<ProductWithCategory> = withContext(Dispatchers.Default) {
+        queries.getProductsWithCategoryForSite(siteId).executeAsList().map { it.toProductWithCategory() }
+    }
+
+    fun observeAllWithCategory(): Flow<List<ProductWithCategory>> {
+        return queries.getProductsWithCategory()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.map { it.toProductWithCategory() } }
+    }
+
+    fun observeWithCategoryForSite(siteId: String): Flow<List<ProductWithCategory>> {
+        return queries.getProductsWithCategoryForSite(siteId)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.map { it.toProductWithCategory() } }
+    }
+
+    private fun com.medistock.shared.db.GetProductsWithCategory.toProductWithCategory(): ProductWithCategory {
+        return ProductWithCategory(
+            id = id,
+            name = name,
+            unit = unit,
+            categoryId = category_id,
+            categoryName = category_name,
+            marginType = margin_type,
+            marginValue = margin_value,
+            unitVolume = unit_volume,
+            description = description,
+            siteId = site_id,
+            minStock = min_stock,
+            maxStock = max_stock
+        )
+    }
+
+    private fun com.medistock.shared.db.GetProductsWithCategoryForSite.toProductWithCategory(): ProductWithCategory {
+        return ProductWithCategory(
+            id = id,
+            name = name,
+            unit = unit,
+            categoryId = category_id,
+            categoryName = category_name,
+            marginType = margin_type,
+            marginValue = margin_value,
+            unitVolume = unit_volume,
+            description = description,
+            siteId = site_id,
+            minStock = min_stock,
+            maxStock = max_stock
+        )
     }
 
     // Extension function to convert SQLDelight generated class to domain model

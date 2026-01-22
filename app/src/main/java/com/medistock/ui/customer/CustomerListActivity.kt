@@ -9,18 +9,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
+import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.CustomerAdapter
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class CustomerListActivity : AppCompatActivity() {
     private lateinit var adapter: CustomerAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private var siteId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +28,7 @@ class CustomerListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_customer_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Customers"
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         siteId = PrefsHelper.getActiveSiteId(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerCustomers)
@@ -60,9 +60,9 @@ class CustomerListActivity : AppCompatActivity() {
     private fun loadCustomers() {
         CoroutineScope(Dispatchers.IO).launch {
             val customers = if (siteId != null) {
-                db.customerDao().getAllForSite(siteId!!).first()
+                sdk.customerRepository.getBySite(siteId!!)
             } else {
-                db.customerDao().getAll().first()
+                sdk.customerRepository.getAll()
             }
             runOnUiThread { adapter.submitList(customers) }
         }
@@ -72,17 +72,16 @@ class CustomerListActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val customers = if (query.isBlank()) {
                 if (siteId != null) {
-                    db.customerDao().getAllForSite(siteId!!).first()
+                    sdk.customerRepository.getBySite(siteId!!)
                 } else {
-                    db.customerDao().getAll().first()
+                    sdk.customerRepository.getAll()
                 }
             } else {
-                if (siteId != null) {
-                    db.customerDao().search(siteId!!, query).first()
-                } else {
-                    db.customerDao().getAll().first().filter {
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.phone?.contains(query, ignoreCase = true) == true
+                sdk.customerRepository.search(query).let { results ->
+                    if (siteId != null) {
+                        results.filter { it.siteId == siteId }
+                    } else {
+                        results
                     }
                 }
             }

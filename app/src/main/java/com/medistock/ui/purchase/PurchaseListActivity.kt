@@ -8,19 +8,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.PurchaseBatch
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.PurchaseBatch
 import com.medistock.ui.adapters.PurchaseBatchAdapter
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class PurchaseListActivity : AppCompatActivity() {
     private lateinit var adapter: PurchaseBatchAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private var siteId: String? = null
     private var allBatches = listOf<PurchaseBatch>()
     private var productNames = mutableMapOf<String, String>()
@@ -33,7 +33,7 @@ class PurchaseListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_purchase_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Purchase History"
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
         siteId = PrefsHelper.getActiveSiteId(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerPurchases)
@@ -85,12 +85,12 @@ class PurchaseListActivity : AppCompatActivity() {
     private fun loadData() {
         CoroutineScope(Dispatchers.IO).launch {
             // Load product names
-            val products = db.productDao().getAll().first()
+            val products = sdk.productRepository.getAll()
             productNames.clear()
             products.forEach { productNames[it.id] = it.name }
 
             // Load batches
-            allBatches = db.purchaseBatchDao().getAll().first()
+            allBatches = sdk.purchaseBatchRepository.getAll()
                 .sortedByDescending { it.purchaseDate }
 
             runOnUiThread {

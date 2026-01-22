@@ -6,20 +6,20 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.Inventory
+import com.medistock.shared.domain.model.InventoryItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.abs
 
 class InventoryAdapter(
     private val productNames: Map<String, String>,
-    private val onClick: (Inventory) -> Unit
+    private val onClick: (InventoryItem) -> Unit
 ) : RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder>() {
 
-    private var inventories = listOf<Inventory>()
+    private var inventories = listOf<InventoryItem>()
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-    fun submitList(list: List<Inventory>) {
+    fun submitList(list: List<InventoryItem>) {
         inventories = list
         notifyDataSetChanged()
     }

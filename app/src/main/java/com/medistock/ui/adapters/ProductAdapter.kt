@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.Product
+import com.medistock.shared.domain.model.Product
 
 class ProductAdapter(
     private val onClick: (Product) -> Unit

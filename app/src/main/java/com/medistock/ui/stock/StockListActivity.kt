@@ -11,14 +11,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
-import com.medistock.data.entities.CurrentStock
-import com.medistock.data.entities.Product
-import com.medistock.data.entities.Site
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.CurrentStock
+import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.Site
 import com.medistock.ui.adapters.StockAdapter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -28,7 +28,7 @@ class StockListActivity : AppCompatActivity() {
     private lateinit var spinnerProducts: Spinner
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StockAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var summaryText: TextView
 
     private var sites: List<Site> = emptyList()
@@ -51,7 +51,7 @@ class StockListActivity : AppCompatActivity() {
         adapter = StockAdapter(emptyList())
         recyclerView.adapter = adapter
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         loadSites()
         loadProducts()
@@ -59,7 +59,7 @@ class StockListActivity : AppCompatActivity() {
 
     private fun loadSites() {
         lifecycleScope.launch(Dispatchers.IO) {
-            sites = db.siteDao().getAll().first()
+            sites = sdk.siteRepository.getAll()
             withContext(Dispatchers.Main) {
                 // Add "All Sites" option
                 val siteNames = mutableListOf("All sites")
@@ -89,7 +89,7 @@ class StockListActivity : AppCompatActivity() {
 
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
-            products = db.productDao().getAll().first()
+            products = sdk.productRepository.getAll()
             withContext(Dispatchers.Main) {
                 // Add "All Products" option
                 val productNames = mutableListOf("All products")
@@ -122,23 +122,24 @@ class StockListActivity : AppCompatActivity() {
             currentStockItems = when {
                 // All sites, all products
                 selectedSitePosition == 0 && selectedProductPosition == 0 -> {
-                    db.stockMovementDao().getCurrentStockAllSites().first()
+                    sdk.stockRepository.getAllCurrentStock()
                 }
                 // Specific site, all products
                 selectedSitePosition > 0 && selectedProductPosition == 0 -> {
                     val selectedSite = sites[selectedSitePosition - 1]
-                    db.stockMovementDao().getCurrentStockForSite(selectedSite.id).first()
+                    sdk.stockRepository.getCurrentStockForSite(selectedSite.id)
                 }
                 // All sites, specific product
                 selectedSitePosition == 0 && selectedProductPosition > 0 -> {
                     val selectedProduct = products[selectedProductPosition - 1]
-                    db.stockMovementDao().getCurrentStockForProduct(selectedProduct.id).first()
+                    sdk.stockRepository.getAllCurrentStock().filter { it.productId == selectedProduct.id }
                 }
                 // Specific site, specific product
                 else -> {
                     val selectedSite = sites[selectedSitePosition - 1]
                     val selectedProduct = products[selectedProductPosition - 1]
-                    db.stockMovementDao().getCurrentStockForProductAndSite(selectedProduct.id, selectedSite.id).first()
+                    val stock = sdk.stockRepository.getCurrentStockByProductAndSite(selectedProduct.id, selectedSite.id)
+                    if (stock != null) listOf(stock) else emptyList()
                 }
             }
             withContext(Dispatchers.Main) {

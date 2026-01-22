@@ -19,10 +19,18 @@ data class SaleItem(
     val id: String,
     val saleId: String,
     val productId: String,
+    val productName: String = "",
+    val unit: String = "",
     val quantity: Double,
     val unitPrice: Double,
-    val totalPrice: Double
-)
+    val totalPrice: Double,
+    val createdAt: Long = 0,
+    val createdBy: String = ""
+) {
+    // Aliases for backward compatibility
+    val pricePerUnit: Double get() = unitPrice
+    val subtotal: Double get() = totalPrice
+}
 
 @Serializable
 data class SaleWithItems(

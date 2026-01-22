@@ -9,8 +9,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.medistock.MedistockApplication
 import com.medistock.R
-import com.medistock.data.db.AppDatabase
+import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.UserAdapter
 import com.medistock.util.AuthManager
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ import kotlinx.coroutines.withContext
 
 class UserListActivity : AppCompatActivity() {
     private lateinit var adapter: UserAdapter
-    private lateinit var db: AppDatabase
+    private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +39,7 @@ class UserListActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "User Management"
 
-        db = AppDatabase.getInstance(this)
+        sdk = MedistockApplication.sdk
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerUsers)
         val fabAdd = findViewById<FloatingActionButton>(R.id.fabAddUser)
@@ -65,7 +66,7 @@ class UserListActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val users = withContext(Dispatchers.IO) {
-                    db.userDao().getAllUsers()
+                    sdk.userRepository.getAll()
                 }
                 adapter.submitList(users)
             } catch (e: Exception) {

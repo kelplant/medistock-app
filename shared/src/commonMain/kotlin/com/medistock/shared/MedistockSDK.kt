@@ -256,16 +256,24 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     fun createSaleItem(
         saleId: String,
         productId: String,
+        productName: String = "",
+        unit: String = "",
         quantity: Double,
-        unitPrice: Double
+        unitPrice: Double,
+        userId: String = "ios"
     ): SaleItem {
+        val now = Clock.System.now().toEpochMilliseconds()
         return SaleItem(
             id = generateId(prefix = "saleitem"),
             saleId = saleId,
             productId = productId,
+            productName = productName,
+            unit = unit,
             quantity = quantity,
             unitPrice = unitPrice,
-            totalPrice = quantity * unitPrice
+            totalPrice = quantity * unitPrice,
+            createdAt = now,
+            createdBy = userId
         )
     }
 
@@ -321,6 +329,9 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         level1Name: String,
         level2Name: String? = null,
         level2Quantity: Int? = null,
+        defaultConversionFactor: Double? = null,
+        isActive: Boolean = true,
+        displayOrder: Int = 0,
         userId: String = "ios"
     ): PackagingType {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -330,6 +341,9 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             level1Name = level1Name,
             level2Name = level2Name,
             level2Quantity = level2Quantity,
+            defaultConversionFactor = defaultConversionFactor,
+            isActive = isActive,
+            displayOrder = displayOrder,
             createdAt = now,
             updatedAt = now,
             createdBy = userId,

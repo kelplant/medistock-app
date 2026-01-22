@@ -7,7 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.PackagingType
+import com.medistock.shared.domain.model.PackagingType
 
 class PackagingTypeAdapter(
     private val onEdit: (PackagingType) -> Unit,

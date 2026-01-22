@@ -3,7 +3,7 @@ package com.medistock.ui.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.medistock.data.entities.Site
+import com.medistock.shared.domain.model.Site
 import com.medistock.databinding.ItemSiteBinding
 
 class SiteAdapter(

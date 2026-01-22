@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.User
+import com.medistock.shared.domain.model.User
 
 class UserAdapter(
     private val onClick: (User) -> Unit

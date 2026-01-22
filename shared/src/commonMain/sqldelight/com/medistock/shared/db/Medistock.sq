@@ -29,6 +29,9 @@ CREATE TABLE packaging_types (
     level1_name TEXT NOT NULL,
     level2_name TEXT,
     level2_quantity INTEGER,
+    default_conversion_factor REAL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    display_order INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
@@ -174,9 +177,13 @@ CREATE TABLE sale_items (
     id TEXT NOT NULL PRIMARY KEY,
     sale_id TEXT NOT NULL,
     product_id TEXT NOT NULL,
+    product_name TEXT NOT NULL DEFAULT '',
+    unit TEXT NOT NULL DEFAULT '',
     quantity REAL NOT NULL,
     unit_price REAL NOT NULL,
     total_price REAL NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (sale_id) REFERENCES sales(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
@@ -379,8 +386,8 @@ getSaleItemsBySale:
 SELECT * FROM sale_items WHERE sale_id = ?;
 
 insertSaleItem:
-INSERT INTO sale_items(id, sale_id, product_id, quantity, unit_price, total_price)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO sale_items(id, sale_id, product_id, product_name, unit, quantity, unit_price, total_price, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- ============================================
 -- QUERIES - Users
@@ -496,11 +503,17 @@ getPackagingTypeById:
 SELECT * FROM packaging_types WHERE id = ?;
 
 insertPackagingType:
-INSERT INTO packaging_types(id, name, level1_name, level2_name, level2_quantity, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO packaging_types(id, name, level1_name, level2_name, level2_quantity, default_conversion_factor, is_active, display_order, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updatePackagingType:
-UPDATE packaging_types SET name = ?, level1_name = ?, level2_name = ?, level2_quantity = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE packaging_types SET name = ?, level1_name = ?, level2_name = ?, level2_quantity = ?, default_conversion_factor = ?, is_active = ?, display_order = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+getActivePackagingTypes:
+SELECT * FROM packaging_types WHERE is_active = 1 ORDER BY display_order, name;
+
+setPackagingTypeActive:
+UPDATE packaging_types SET is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 deletePackagingType:
 DELETE FROM packaging_types WHERE id = ?;

@@ -24,8 +24,3 @@ data class Product(
     val updatedBy: String = ""
 )
 
-@Serializable
-data class ProductWithCategory(
-    val product: Product,
-    val categoryName: String?
-)

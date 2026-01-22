@@ -7,7 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.data.entities.SaleWithItems
+import com.medistock.shared.domain.model.SaleWithItems
 import java.text.SimpleDateFormat
 import java.util.*
 
