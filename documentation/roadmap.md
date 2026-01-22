@@ -114,15 +114,15 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ `UserPermissionRepository` dans shared
 - ✅ Android et iOS utilisent les modules shared
 
-### 2.3. Permissions offline-first
-- Définir une stratégie commune (cache local + refresh distant).
+### 2.3. Permissions offline-first ❌ NON RETENU
+- ~~Définir une stratégie commune (cache local + refresh distant).~~
+- *Non retenu : la stratégie actuelle (cache local iOS/Android + sync Supabase) est suffisante.*
 
-### 2.4. Sécurisation de la configuration Supabase
-- Actuellement stockée en clair dans UserDefaults (iOS) / SharedPreferences (Android).
-- Investiguer des solutions de stockage sécurisé :
-  - **iOS** : Keychain Services
-  - **Android** : EncryptedSharedPreferences / Android Keystore
-- Empêcher la lecture des credentials par d'autres apps ou en cas de backup non chiffré.
+### 2.4. Sécurisation de la configuration Supabase ✅
+- ✅ iOS : `KeychainService.swift` utilisant Keychain Services
+- ✅ Android : `SecureSupabasePreferences.kt` utilisant EncryptedSharedPreferences
+- ✅ Migration automatique depuis l'ancien stockage non sécurisé
+- ✅ Chiffrement AES-256 des credentials
 
 ### Livrables
 - Auth partagée.
@@ -160,37 +160,76 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 ---
 
-## Phase 4 — UX / Écrans manquants (2–3 semaines)
+## Phase 4 — UX / Écrans manquants (2–3 semaines) ✅ TERMINÉE
 
-### 4.1. Mouvements de stock iOS
-- Ajouter un écran de création (in/out) aligné Android.
-- **Ne jamais bloquer** si stock insuffisant.
-- Avertissement non bloquant possible.
+### 4.1. Mouvements de stock iOS ✅
+- ✅ Écran `StockMovementCreationView` (in/out) aligné Android
+- ✅ Stock négatif autorisé avec avertissement non bloquant
+- ✅ Navigation depuis la liste des mouvements
 
-### 4.2. Update flow iOS
-- Ajouter un écran “version obsolète” similaire au flow Android.
-- Définir politique de distribution iOS (App Store / MDM / etc.).
+### 4.2. Update flow iOS ✅
+- ✅ `CompatibilityChecker` partagé dans shared module
+- ✅ `CompatibilityManager` iOS pour vérification via Supabase RPC
+- ✅ `AppUpdateRequiredView` écran de blocage version
+- ✅ Tests unitaires pour CompatibilityChecker
 
-### Livrables
-- UI iOS alignée.
-- Parité fonctionnelle complète.
+### Livrables ✅
+- ✅ UI iOS alignée
+- ✅ Parité fonctionnelle complète
 
 ---
 
-## Phase 5 — Durcissement Android (1–2 semaines)
+## Phase 5 — Durcissement Android (1–2 semaines) ✅ TERMINÉE
 
-### 5.1. Auth Android alignée shared
-- Remplacer la logique locale pure par celle de `shared`.
+### 5.1. Auth Android alignée shared ✅
+- ✅ Android utilise `AuthService` du module shared
 
-### 5.2. Résolution de conflits explicite
-- Centraliser la policy de résolution et l’exposer dans `shared`.
+### 5.2. Résolution de conflits explicite ✅
+- ✅ Policy "server wins" centralisée via `RealtimeSyncService`
 
-### 5.3. Audit & sync
-- Garantir que toutes les opérations syncées génèrent un audit.
+### 5.3. Audit & sync ✅
+- ✅ Toutes les opérations via UseCases génèrent un audit
 
-### Livrables
-- Android conforme aux mêmes règles que iOS.
-- Cohérence audit & sync.
+### Livrables ✅
+- ✅ Android conforme aux mêmes règles que iOS
+- ✅ Cohérence audit & sync
+
+---
+
+## Phase 6 — Consolidation Services (1 semaine) ✅ TERMINÉE
+
+> But : Extraire les services communs dans `shared` pour réduire la duplication de code entre Android et iOS.
+
+### 6.1. PermissionService partagé ✅
+
+**Implémenté dans `shared/domain/permission/` :**
+- ✅ `PermissionService` - Service de vérification des permissions
+- ✅ `ModulePermissions` - Data class pour les permissions CRUD d'un module
+- ✅ Méthodes `canView`, `canCreate`, `canEdit`, `canDelete`
+- ✅ Méthode `getModulePermissions` pour récupérer toutes les permissions d'un module
+- ✅ Méthode `getAllModulePermissions` pour récupérer les permissions de tous les modules
+- ✅ Exposé via `MedistockSDK.permissionService`
+
+### 6.2. SyncOrchestrator partagé ✅
+
+**Implémenté dans `shared/domain/sync/` :**
+- ✅ `SyncEntity` enum - Entités synchronisables avec ordre de dépendance
+- ✅ `SyncDirection` enum - Direction de synchronisation (local→remote, remote→local, bidirectional)
+- ✅ `EntitySyncResult` sealed class - Résultat de sync par entité (Success, Error, Skipped)
+- ✅ `SyncResult` data class - Résultat global de synchronisation
+- ✅ `SyncProgressListener` interface - Callbacks de progression
+- ✅ `SyncOrchestrator` class - Orchestration de la sync avec messages localisés
+- ✅ Android `SyncManager` utilise `SyncOrchestrator` pour les messages de progression
+- ✅ iOS `BidirectionalSyncManager` utilise `SyncOrchestrator` pour les messages de progression
+- ✅ Exposé via `MedistockSDK.syncOrchestrator`
+
+### 6.3. Tests unitaires ✅
+- ✅ `PermissionAndSyncTests.kt` - Tests pour ModulePermissions, Module, SyncEntity, SyncOrchestrator
+
+### Livrables ✅
+- ✅ Services partagés PermissionService et SyncOrchestrator
+- ✅ Tests unitaires couvrant les nouveaux services
+- ✅ Android et iOS utilisent les services partagés
 
 ---
 
@@ -198,9 +237,9 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 - ✅ Toutes les opérations métier passent par `shared` (UseCases)
 - ✅ Sync bidirectionnelle et offline-first sur les deux plateformes
-- ⏳ Auth / permissions identiques Android et iOS (Phase 2 - en cours)
+- ✅ Auth / permissions identiques Android et iOS
 - ✅ Règle "stock négatif autorisé" appliquée partout (`BusinessWarning.InsufficientStock`)
-- ⏳ Parité UI complète (Phase 4 - à faire)
+- ✅ Parité UI complète (écrans stock + version blocking)
 
 ---
 
@@ -210,9 +249,23 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 |-------|--------|-------|
 | Phase 0 - Cadrage | ✅ Terminée | Règles métier documentées |
 | Phase 1 - UseCases shared | ✅ Terminée | 4 UseCases + tests |
-| Phase 2 - Auth & Permissions | ✅ Terminée | Auth ✅, Modules ✅ (2.3/2.4 différées) |
+| Phase 2 - Auth & Permissions | ✅ Terminée | Auth ✅, Modules ✅, Secure storage ✅ |
 | Phase 3 - Sync iOS | ✅ Terminée | Bidirectionnel + Realtime |
-| Phase 4 - UX iOS | ⏳ À faire | Écrans manquants |
+| Phase 4 - UX iOS | ✅ Terminée | Stock movements + version blocking |
 | Phase 5 - Durcissement Android | ✅ Terminée | ViewModels migrés |
+| Phase 6 - Consolidation Services | ✅ Terminée | PermissionService + SyncOrchestrator |
 
-**Dernière mise à jour :** Janvier 2026
+**Dernière mise à jour :** 22 Janvier 2026
+
+---
+
+## Tâches différées
+
+### 2.3. Permissions offline-first ❌ NON RETENU
+- ~~Définir une stratégie commune (cache local + refresh distant).~~
+- *Non retenu : la stratégie actuelle (cache local iOS/Android + sync Supabase) est suffisante.*
+
+### 2.4. Sécurisation de la configuration Supabase ✅ TERMINÉE
+- ✅ iOS : Keychain Services (`KeychainService.swift`)
+- ✅ Android : EncryptedSharedPreferences (`SecureSupabasePreferences.kt`)
+- ✅ Migration automatique transparente

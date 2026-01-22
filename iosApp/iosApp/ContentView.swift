@@ -5,32 +5,74 @@ struct ContentView: View {
     let sdk: MedistockSDK
     @ObservedObject private var session = SessionManager.shared
     @ObservedObject private var syncStatus = SyncStatusManager.shared
+    @ObservedObject private var compatibilityManager = CompatibilityManager.shared
+
+    @State private var hasCheckedCompatibility = false
+    @State private var isCheckingCompatibility = false
 
     var body: some View {
-        NavigationView {
-            Group {
-                if session.isLoggedIn {
-                    HomeView(
-                        sdk: sdk,
-                        session: session
-                    )
-                } else {
-                    LoginView(sdk: sdk) { user in
-                        session.loginWithAuth(user: user, sdk: sdk)
+        Group {
+            // Check if app requires update
+            if let appTooOld = compatibilityManager.compatibilityResult as? shared.CompatibilityResult.AppTooOld {
+                // Show update required screen (blocking)
+                AppUpdateRequiredView(
+                    appVersion: Int(appTooOld.appVersion),
+                    minRequired: Int(appTooOld.minRequired),
+                    dbVersion: Int(appTooOld.dbVersion)
+                )
+            } else if isCheckingCompatibility && !hasCheckedCompatibility {
+                // Show loading while checking compatibility
+                VStack(spacing: 16) {
+                    ProgressView()
+                    Text("Vérification de la compatibilité...")
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                // Normal app flow
+                NavigationView {
+                    Group {
+                        if session.isLoggedIn {
+                            HomeView(
+                                sdk: sdk,
+                                session: session
+                            )
+                        } else {
+                            LoginView(sdk: sdk) { user in
+                                session.loginWithAuth(user: user, sdk: sdk)
+                            }
+                        }
                     }
                 }
+                .navigationViewStyle(.stack)
             }
         }
-        .navigationViewStyle(.stack)
         .onAppear {
             // Initialize Supabase from stored configuration
             initializeSupabase()
+
+            // Check compatibility
+            Task {
+                await checkCompatibilityIfNeeded()
+            }
 
             // If user is already logged in (session restored), start sync
             if session.isLoggedIn {
                 startSyncForRestoredSession()
             }
         }
+    }
+
+    private func checkCompatibilityIfNeeded() async {
+        guard !hasCheckedCompatibility else { return }
+        guard SupabaseService.shared.isConfigured else {
+            hasCheckedCompatibility = true
+            return
+        }
+
+        isCheckingCompatibility = true
+        _ = await compatibilityManager.checkCompatibility()
+        hasCheckedCompatibility = true
+        isCheckingCompatibility = false
     }
 
     private func initializeSupabase() {
@@ -65,20 +107,14 @@ struct ContentView: View {
             return
         }
 
-        let migrationManager = MigrationManager()
-
-        // Check compatibility first
-        let compat = await migrationManager.checkCompatibility()
-        switch compat {
-        case .compatible:
-            print("✅ App compatible avec la base de données")
-        case .appTooOld(let appVersion, let minRequired, let dbVersion):
-            print("❌ App trop ancienne: app=\(appVersion), min=\(minRequired), db=\(dbVersion)")
-            // TODO: Show update required screen
+        // Check compatibility using shared CompatibilityManager
+        // If app is too old, the UI will show the blocking screen
+        if compatibilityManager.requiresUpdate {
+            print("❌ App trop ancienne - migrations ignorées")
             return
-        case .unknown(let reason):
-            print("⚠️ Impossible de vérifier la compatibilité: \(reason)")
         }
+
+        let migrationManager = MigrationManager()
 
         // Run pending migrations
         let result = await migrationManager.runPendingMigrations(appliedBy: "ios_app")

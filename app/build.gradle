@@ -87,6 +87,9 @@ dependencies {
     // BCrypt for password hashing
     implementation "at.favre.lib:bcrypt:0.10.2"
 
+    // Security - Encrypted SharedPreferences for secure credential storage
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+
     // Supabase - Using stable 2.x version (2.2.2) for better Ktor compatibility
     def supabase_version = "2.2.2"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabase_version"

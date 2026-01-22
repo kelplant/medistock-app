@@ -5,6 +5,8 @@ import com.medistock.shared.db.MedistockDatabase
 import com.medistock.shared.domain.auth.AuthService
 import com.medistock.shared.domain.auth.PasswordVerifier
 import com.medistock.shared.domain.model.*
+import com.medistock.shared.domain.permission.PermissionService
+import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.shared.domain.usecase.*
 import kotlinx.datetime.Clock
 import kotlin.random.Random
@@ -33,6 +35,10 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val stockRepository: StockRepository by lazy { StockRepository(database) }
     val saleBatchAllocationRepository: SaleBatchAllocationRepository by lazy { SaleBatchAllocationRepository(database) }
     val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
+
+    // Services - Shared business services
+    val permissionService: PermissionService by lazy { PermissionService(userPermissionRepository) }
+    val syncOrchestrator: SyncOrchestrator by lazy { SyncOrchestrator() }
 
     /**
      * Create an AuthService with a platform-specific PasswordVerifier.

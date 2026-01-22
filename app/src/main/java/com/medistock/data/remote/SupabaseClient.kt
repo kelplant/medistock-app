@@ -1,7 +1,7 @@
 package com.medistock.data.remote
 
 import android.content.Context
-import com.medistock.util.SupabasePreferences
+import com.medistock.util.SecureSupabasePreferences
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -34,7 +34,7 @@ object SupabaseClientProvider {
      * @return true si les credentials sont configurés, false sinon
      */
     fun isConfigured(context: Context): Boolean {
-        val prefs = SupabasePreferences(context)
+        val prefs = SecureSupabasePreferences(context)
         return prefs.isConfigured()
     }
 
@@ -45,7 +45,7 @@ object SupabaseClientProvider {
     fun initialize(context: Context) {
         try {
             appContext = context.applicationContext
-            val prefs = SupabasePreferences(appContext!!)
+            val prefs = SecureSupabasePreferences(appContext!!)
             clientId = prefs.getOrCreateClientId()
 
             val url = prefs.getSupabaseUrl()
@@ -99,7 +99,7 @@ object SupabaseClientProvider {
      */
     fun getClientId(): String? {
         if (clientId == null && appContext != null) {
-            clientId = SupabasePreferences(appContext!!).getOrCreateClientId()
+            clientId = SecureSupabasePreferences(appContext!!).getOrCreateClientId()
         }
         return clientId
     }

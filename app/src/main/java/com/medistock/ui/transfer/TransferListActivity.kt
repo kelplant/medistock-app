@@ -14,8 +14,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.ProductTransfer
+import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
-import com.medistock.util.Modules
 import com.medistock.util.PermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -48,7 +48,7 @@ class TransferListActivity : AppCompatActivity() {
 
         // Check create permission
         lifecycleScope.launch {
-            val canCreate = permissionManager.canCreate(Modules.TRANSFERS)
+            val canCreate = permissionManager.canCreate(Module.TRANSFERS)
             fab.isEnabled = canCreate
             if (!canCreate) {
                 fab.hide()
@@ -57,7 +57,7 @@ class TransferListActivity : AppCompatActivity() {
 
         fab.setOnClickListener {
             lifecycleScope.launch {
-                if (permissionManager.canCreate(Modules.TRANSFERS)) {
+                if (permissionManager.canCreate(Module.TRANSFERS)) {
                     startActivity(Intent(this@TransferListActivity, TransferActivity::class.java))
                 } else {
                     Toast.makeText(
@@ -98,7 +98,7 @@ class TransferListActivity : AppCompatActivity() {
 
     private fun editTransfer(transfer: ProductTransfer) {
         lifecycleScope.launch {
-            if (permissionManager.canEdit(Modules.TRANSFERS)) {
+            if (permissionManager.canEdit(Module.TRANSFERS)) {
                 Toast.makeText(
                     this@TransferListActivity,
                     "Edit transfer functionality is not available. Please create a new transfer instead.",
@@ -118,7 +118,7 @@ class TransferListActivity : AppCompatActivity() {
 
     private fun confirmDeleteTransfer(transfer: ProductTransfer) {
         lifecycleScope.launch {
-            if (!permissionManager.canDelete(Modules.TRANSFERS)) {
+            if (!permissionManager.canDelete(Module.TRANSFERS)) {
                 Toast.makeText(
                     this@TransferListActivity,
                     "You don't have permission to delete transfers",

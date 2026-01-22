@@ -7,28 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Module names for permission management.
- * @deprecated Use [Module] enum from shared module instead.
- * Kept for backward compatibility during migration.
- */
-@Deprecated("Use Module enum from shared module", ReplaceWith("Module", "com.medistock.shared.domain.model.Module"))
-object Modules {
-    const val STOCK = "STOCK"
-    const val SALES = "SALES"
-    const val PURCHASES = "PURCHASES"
-    const val INVENTORY = "INVENTORY"
-    const val TRANSFERS = "TRANSFERS"
-    const val ADMIN = "ADMIN"
-    const val PRODUCTS = "PRODUCTS"
-    const val SITES = "SITES"
-    const val CATEGORIES = "CATEGORIES"
-    const val USERS = "USERS"
-    const val CUSTOMERS = "CUSTOMERS"
-    const val AUDIT = "AUDIT"
-    const val PACKAGING_TYPES = "PACKAGING_TYPES"
-}
-
-/**
  * Manages user permissions
  */
 class PermissionManager(

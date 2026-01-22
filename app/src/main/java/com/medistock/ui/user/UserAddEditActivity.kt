@@ -17,8 +17,8 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
+import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
-import com.medistock.util.Modules
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,14 +45,14 @@ class UserAddEditActivity : AppCompatActivity() {
     private val permissionViews = mutableMapOf<String, PermissionCheckboxes>()
 
     private val modules = listOf(
-        Modules.STOCK to "Stock",
-        Modules.SALES to "Sales",
-        Modules.PURCHASES to "Purchases",
-        Modules.INVENTORY to "Inventory",
-        Modules.PRODUCTS to "Products",
-        Modules.SITES to "Sites",
-        Modules.CATEGORIES to "Categories",
-        Modules.ADMIN to "Administration"
+        Module.STOCK to "Stock",
+        Module.SALES to "Sales",
+        Module.PURCHASES to "Purchases",
+        Module.INVENTORY to "Inventory",
+        Module.PRODUCTS to "Products",
+        Module.SITES to "Sites",
+        Module.CATEGORIES to "Categories",
+        Module.ADMIN to "Administration"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,7 +151,7 @@ class UserAddEditActivity : AppCompatActivity() {
             checkCanEdit.setOnCheckedChangeListener { _, _ -> updateAllCheckbox() }
             checkCanDelete.setOnCheckedChangeListener { _, _ -> updateAllCheckbox() }
 
-            permissionViews[moduleKey] = permCheckboxes
+            permissionViews[moduleKey.name] = permCheckboxes
         }
     }
 

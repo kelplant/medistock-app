@@ -7,7 +7,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import com.medistock.data.migration.CompatibilityResult
+import com.medistock.shared.domain.compatibility.CompatibilityResult
 import com.medistock.data.migration.MigrationManager
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler

@@ -2,6 +2,7 @@ package com.medistock.util
 
 import com.medistock.data.dao.UserPermissionDao
 import com.medistock.data.entities.UserPermission
+import com.medistock.shared.domain.model.Module
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -29,7 +30,7 @@ class PermissionManagerTest {
         whenever(authManager.isAdmin()).thenReturn(true)
 
         // When
-        val result = permissionManager.canView(Modules.STOCK)
+        val result = permissionManager.canView(Module.STOCK)
 
         // Then
         assertTrue(result)
@@ -44,17 +45,17 @@ class PermissionManagerTest {
         val permission = UserPermission(
             id = "perm-1",
             userId = "user-1",
-            module = Modules.STOCK,
+            module = Module.STOCK.name,
             canView = true,
             canCreate = false,
             canEdit = false,
             canDelete = false
         )
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.STOCK))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.STOCK.name))
             .thenReturn(permission)
 
         // When
-        val result = permissionManager.canView(Modules.STOCK)
+        val result = permissionManager.canView(Module.STOCK)
 
         // Then
         assertTrue(result)
@@ -68,17 +69,17 @@ class PermissionManagerTest {
         val permission = UserPermission(
             id = "perm-1",
             userId = "user-1",
-            module = Modules.STOCK,
+            module = Module.STOCK.name,
             canView = false,
             canCreate = false,
             canEdit = false,
             canDelete = false
         )
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.STOCK))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.STOCK.name))
             .thenReturn(permission)
 
         // When
-        val result = permissionManager.canView(Modules.STOCK)
+        val result = permissionManager.canView(Module.STOCK)
 
         // Then
         assertFalse(result)
@@ -91,7 +92,7 @@ class PermissionManagerTest {
         whenever(authManager.getUserId()).thenReturn(null)
 
         // When
-        val result = permissionManager.canView(Modules.STOCK)
+        val result = permissionManager.canView(Module.STOCK)
 
         // Then
         assertFalse(result)
@@ -102,11 +103,11 @@ class PermissionManagerTest {
         // Given
         whenever(authManager.isAdmin()).thenReturn(false)
         whenever(authManager.getUserId()).thenReturn("user-1")
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.STOCK))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.STOCK.name))
             .thenReturn(null)
 
         // When
-        val result = permissionManager.canView(Modules.STOCK)
+        val result = permissionManager.canView(Module.STOCK)
 
         // Then
         assertFalse(result)
@@ -118,7 +119,7 @@ class PermissionManagerTest {
         whenever(authManager.isAdmin()).thenReturn(true)
 
         // When
-        val result = permissionManager.canCreate(Modules.SALES)
+        val result = permissionManager.canCreate(Module.SALES)
 
         // Then
         assertTrue(result)
@@ -132,17 +133,17 @@ class PermissionManagerTest {
         val permission = UserPermission(
             id = "perm-1",
             userId = "user-1",
-            module = Modules.SALES,
+            module = Module.SALES.name,
             canView = true,
             canCreate = true,
             canEdit = false,
             canDelete = false
         )
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.SALES))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.SALES.name))
             .thenReturn(permission)
 
         // When
-        val result = permissionManager.canCreate(Modules.SALES)
+        val result = permissionManager.canCreate(Module.SALES)
 
         // Then
         assertTrue(result)
@@ -154,7 +155,7 @@ class PermissionManagerTest {
         whenever(authManager.isAdmin()).thenReturn(true)
 
         // When
-        val result = permissionManager.canEdit(Modules.PURCHASES)
+        val result = permissionManager.canEdit(Module.PURCHASES)
 
         // Then
         assertTrue(result)
@@ -168,17 +169,17 @@ class PermissionManagerTest {
         val permission = UserPermission(
             id = "perm-1",
             userId = "user-1",
-            module = Modules.PURCHASES,
+            module = Module.PURCHASES.name,
             canView = true,
             canCreate = true,
             canEdit = true,
             canDelete = false
         )
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.PURCHASES))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.PURCHASES.name))
             .thenReturn(permission)
 
         // When
-        val result = permissionManager.canEdit(Modules.PURCHASES)
+        val result = permissionManager.canEdit(Module.PURCHASES)
 
         // Then
         assertTrue(result)
@@ -190,7 +191,7 @@ class PermissionManagerTest {
         whenever(authManager.isAdmin()).thenReturn(true)
 
         // When
-        val result = permissionManager.canDelete(Modules.INVENTORY)
+        val result = permissionManager.canDelete(Module.INVENTORY)
 
         // Then
         assertTrue(result)
@@ -204,17 +205,17 @@ class PermissionManagerTest {
         val permission = UserPermission(
             id = "perm-1",
             userId = "user-1",
-            module = Modules.INVENTORY,
+            module = Module.INVENTORY.name,
             canView = true,
             canCreate = true,
             canEdit = true,
             canDelete = true
         )
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.INVENTORY))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.INVENTORY.name))
             .thenReturn(permission)
 
         // When
-        val result = permissionManager.canDelete(Modules.INVENTORY)
+        val result = permissionManager.canDelete(Module.INVENTORY)
 
         // Then
         assertTrue(result)
@@ -229,7 +230,7 @@ class PermissionManagerTest {
             UserPermission(
                 id = "perm-1",
                 userId = userId,
-                module = Modules.STOCK,
+                module = Module.STOCK.name,
                 canView = true,
                 canCreate = true,
                 canEdit = false,
@@ -238,7 +239,7 @@ class PermissionManagerTest {
             UserPermission(
                 id = "perm-2",
                 userId = userId,
-                module = Modules.SALES,
+                module = Module.SALES.name,
                 canView = true,
                 canCreate = false,
                 canEdit = false,
@@ -252,8 +253,8 @@ class PermissionManagerTest {
 
         // Then
         assertEquals(2, result.size)
-        assertEquals(Modules.STOCK, result[0].module)
-        assertEquals(Modules.SALES, result[1].module)
+        assertEquals(Module.STOCK.name, result[0].module)
+        assertEquals(Module.SALES.name, result[1].module)
     }
 
     @Test
@@ -274,16 +275,16 @@ class PermissionManagerTest {
         whenever(authManager.isAdmin()).thenReturn(true)
 
         // When/Then - Test all modules
-        assertTrue(permissionManager.canView(Modules.STOCK))
-        assertTrue(permissionManager.canView(Modules.SALES))
-        assertTrue(permissionManager.canView(Modules.PURCHASES))
-        assertTrue(permissionManager.canView(Modules.INVENTORY))
-        assertTrue(permissionManager.canView(Modules.TRANSFERS))
-        assertTrue(permissionManager.canView(Modules.ADMIN))
-        assertTrue(permissionManager.canView(Modules.PRODUCTS))
-        assertTrue(permissionManager.canView(Modules.SITES))
-        assertTrue(permissionManager.canView(Modules.CATEGORIES))
-        assertTrue(permissionManager.canView(Modules.USERS))
+        assertTrue(permissionManager.canView(Module.STOCK))
+        assertTrue(permissionManager.canView(Module.SALES))
+        assertTrue(permissionManager.canView(Module.PURCHASES))
+        assertTrue(permissionManager.canView(Module.INVENTORY))
+        assertTrue(permissionManager.canView(Module.TRANSFERS))
+        assertTrue(permissionManager.canView(Module.ADMIN))
+        assertTrue(permissionManager.canView(Module.PRODUCTS))
+        assertTrue(permissionManager.canView(Module.SITES))
+        assertTrue(permissionManager.canView(Module.CATEGORIES))
+        assertTrue(permissionManager.canView(Module.USERS))
     }
 
     @Test
@@ -294,19 +295,19 @@ class PermissionManagerTest {
         val permission = UserPermission(
             id = "perm-1",
             userId = "user-1",
-            module = Modules.PRODUCTS,
+            module = Module.PRODUCTS.name,
             canView = true,
             canCreate = false,
             canEdit = false,
             canDelete = false
         )
-        whenever(userPermissionDao.getPermissionForModule("user-1", Modules.PRODUCTS))
+        whenever(userPermissionDao.getPermissionForModule("user-1", Module.PRODUCTS.name))
             .thenReturn(permission)
 
         // When/Then
-        assertTrue(permissionManager.canView(Modules.PRODUCTS))
-        assertFalse(permissionManager.canCreate(Modules.PRODUCTS))
-        assertFalse(permissionManager.canEdit(Modules.PRODUCTS))
-        assertFalse(permissionManager.canDelete(Modules.PRODUCTS))
+        assertTrue(permissionManager.canView(Module.PRODUCTS))
+        assertFalse(permissionManager.canCreate(Module.PRODUCTS))
+        assertFalse(permissionManager.canEdit(Module.PRODUCTS))
+        assertFalse(permissionManager.canDelete(Module.PRODUCTS))
     }
 }

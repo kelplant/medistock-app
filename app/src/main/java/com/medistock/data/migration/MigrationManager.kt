@@ -3,6 +3,9 @@ package com.medistock.data.migration
 import android.content.Context
 import com.medistock.data.remote.repository.MigrationRepository
 import com.medistock.data.remote.repository.MigrationResult
+import com.medistock.shared.domain.compatibility.CompatibilityChecker
+import com.medistock.shared.domain.compatibility.CompatibilityResult
+import com.medistock.shared.domain.compatibility.SchemaVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
@@ -37,24 +40,6 @@ data class MigrationRunResult(
     val systemNotInstalled: Boolean = false,
     val errorMessage: String? = null
 )
-
-/**
- * Résultat de la vérification de compatibilité app/DB
- */
-sealed class CompatibilityResult {
-    /** L'app est compatible avec la base de données */
-    object Compatible : CompatibilityResult()
-
-    /** L'app est trop ancienne pour cette DB - mise à jour requise */
-    data class AppTooOld(
-        val appVersion: Int,
-        val minRequired: Int,
-        val dbVersion: Int
-    ) : CompatibilityResult()
-
-    /** Impossible de vérifier (système non installé ou erreur réseau) */
-    data class Unknown(val reason: String) : CompatibilityResult()
-}
 
 /**
  * Callback pour suivre la progression des migrations
@@ -92,15 +77,10 @@ class MigrationManager(
 
         /**
          * Version du schéma supportée par cette version de l'app.
-         *
-         * IMPORTANT: Incrémentez cette valeur quand vous ajoutez une migration
-         * qui modifie le schéma de façon incompatible avec les anciennes versions.
-         *
-         * Historique:
-         * - Version 1: Schéma initial
-         * - Version 2: Ajout du système de migration et versioning
+         * @see CompatibilityChecker.APP_SCHEMA_VERSION for the actual value
          */
-        const val APP_SCHEMA_VERSION = 2
+        val APP_SCHEMA_VERSION: Int
+            get() = CompatibilityChecker.APP_SCHEMA_VERSION
     }
 
     /**
@@ -113,29 +93,24 @@ class MigrationManager(
      */
     suspend fun checkCompatibility(): CompatibilityResult {
         return try {
-            val schemaVersion = repository.getSchemaVersion()
+            val schemaVersionDto = repository.getSchemaVersion()
 
-            if (schemaVersion == null) {
-                // Le système de versioning n'est pas installé
-                // On considère que c'est compatible (ancienne DB sans versioning)
-                println("⚠️ Système de versioning non installé - compatibilité assumée")
-                CompatibilityResult.Compatible
-            } else {
-                val dbVersion = schemaVersion.schemaVersion
-                val minAppVersion = schemaVersion.minAppVersion
-
-                if (APP_SCHEMA_VERSION < minAppVersion) {
-                    println("❌ App trop ancienne: app=$APP_SCHEMA_VERSION, min=$minAppVersion, db=$dbVersion")
-                    CompatibilityResult.AppTooOld(
-                        appVersion = APP_SCHEMA_VERSION,
-                        minRequired = minAppVersion,
-                        dbVersion = dbVersion
-                    )
-                } else {
-                    println("✅ App compatible: app=$APP_SCHEMA_VERSION, min=$minAppVersion, db=$dbVersion")
-                    CompatibilityResult.Compatible
-                }
+            // Convert DTO to shared model
+            val schemaVersion = schemaVersionDto?.let {
+                SchemaVersion(
+                    schemaVersion = it.schemaVersion,
+                    minAppVersion = it.minAppVersion,
+                    updatedAt = it.updatedAt
+                )
             }
+
+            // Use shared compatibility checker
+            val result = CompatibilityChecker.checkCompatibility(schemaVersion)
+
+            // Log the result
+            println(CompatibilityChecker.formatCompatibilityInfo(result))
+
+            result
         } catch (e: Exception) {
             println("⚠️ Impossible de vérifier la compatibilité: ${e.message}")
             CompatibilityResult.Unknown(e.message ?: "Unknown error")

@@ -6,6 +6,8 @@ import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.remote.repository.*
 import com.medistock.data.sync.SyncMapper.toDto
 import com.medistock.data.sync.SyncMapper.toEntity
+import com.medistock.shared.domain.sync.SyncDirection
+import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +23,7 @@ class SyncManager(
 ) {
     private val database = AppDatabase.getInstance(context)
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val orchestrator = SyncOrchestrator()
 
     // Repositories Supabase
     private val productRepo by lazy { ProductSupabaseRepository() }
@@ -94,7 +97,7 @@ class SyncManager(
             onProgress?.invoke("Synchronisation des mouvements de stock...")
             syncStockMovementsToRemote(onError)
 
-            onProgress?.invoke("Synchronisation terminée ✅")
+            onProgress?.invoke(orchestrator.getCompletionMessage(SyncDirection.LOCAL_TO_REMOTE))
         } catch (e: Exception) {
             onError?.invoke("Sync générale", e)
         }
@@ -159,7 +162,7 @@ class SyncManager(
             onProgress?.invoke("Récupération des mouvements de stock...")
             syncStockMovementsFromRemote(onError)
 
-            onProgress?.invoke("Récupération terminée ✅")
+            onProgress?.invoke(orchestrator.getCompletionMessage(SyncDirection.REMOTE_TO_LOCAL))
         } catch (e: Exception) {
             onError?.invoke("Sync générale", e)
         }

@@ -19,6 +19,7 @@ class BidirectionalSyncManager: ObservableObject {
     private let supabase = SupabaseService.shared
     private let statusManager = SyncStatusManager.shared
     private let queueProcessor = SyncQueueProcessor.shared
+    private let orchestrator = SyncOrchestrator()
 
     private init() {}
 
@@ -62,7 +63,7 @@ class BidirectionalSyncManager: ObservableObject {
 
         await MainActor.run {
             isSyncing = false
-            progress = "Terminé"
+            progress = orchestrator.getCompletionMessage(direction: .bidirectional)
             statusManager.recordSyncSuccess()
         }
     }
@@ -122,7 +123,7 @@ class BidirectionalSyncManager: ObservableObject {
 
             await MainActor.run {
                 isSyncing = false
-                progress = "Récupération terminée"
+                progress = orchestrator.getCompletionMessage(direction: .remoteToLocal)
             }
 
         } catch {

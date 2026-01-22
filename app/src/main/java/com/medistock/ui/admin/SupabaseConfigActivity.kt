@@ -15,7 +15,7 @@ import com.medistock.R
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncManager
 import com.medistock.data.sync.SyncScheduler
-import com.medistock.util.SupabasePreferences
+import com.medistock.util.SecureSupabasePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,7 +43,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
     private lateinit var tvRealtimeStatus: TextView
     private lateinit var tvRealtimeIndicator: TextView
     private lateinit var btnTestRealtime: Button
-    private lateinit var preferences: SupabasePreferences
+    private lateinit var preferences: SecureSupabasePreferences
     private lateinit var syncManager: SyncManager
     private var realtimeStatusJob: Job? = null
     private var lastRealtimeStatus: Realtime.Status? = null
@@ -55,7 +55,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Configuration Supabase"
 
-        preferences = SupabasePreferences(this)
+        preferences = SecureSupabasePreferences(this)
         syncManager = SyncManager(this)
 
         etUrl = findViewById(R.id.etSupabaseUrl)

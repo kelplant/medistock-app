@@ -7,13 +7,17 @@ class SupabaseService {
     static let shared = SupabaseService()
 
     private var client: SupabaseClient?
-    private let configKey = "medistock_supabase_config"
+    private let keychain = KeychainService.shared
+
+    // Legacy key for migration from UserDefaults
+    private let legacyConfigKey = "medistock_supabase_config"
 
     var isConfigured: Bool {
         client != nil
     }
 
     private init() {
+        migrateFromUserDefaultsIfNeeded()
         loadConfiguration()
     }
 
@@ -34,36 +38,60 @@ class SupabaseService {
             supabaseKey: anonKey
         )
 
-        // Save configuration
-        let config = SupabaseConfig(url: url, anonKey: anonKey)
-        if let data = try? JSONEncoder().encode(config) {
-            UserDefaults.standard.set(data, forKey: configKey)
-        }
+        // Save configuration securely to Keychain
+        keychain.save(url, for: .supabaseUrl)
+        keychain.save(anonKey, for: .supabaseAnonKey)
 
         print("[SupabaseService] Configured with URL: \(url)")
     }
 
     func disconnect() {
         client = nil
-        UserDefaults.standard.removeObject(forKey: configKey)
+        keychain.clearAll()
         print("[SupabaseService] Disconnected")
     }
 
     /// Returns the stored configuration if available
     func getStoredConfig() -> SupabaseConfig? {
-        guard let data = UserDefaults.standard.data(forKey: configKey),
-              let config = try? JSONDecoder().decode(SupabaseConfig.self, from: data) else {
+        guard let url = keychain.get(.supabaseUrl),
+              let anonKey = keychain.get(.supabaseAnonKey) else {
             return nil
         }
-        return config
+        return SupabaseConfig(url: url, anonKey: anonKey)
     }
 
     private func loadConfiguration() {
-        guard let data = UserDefaults.standard.data(forKey: configKey),
+        guard let url = keychain.get(.supabaseUrl),
+              let anonKey = keychain.get(.supabaseAnonKey) else {
+            return
+        }
+        configure(url: url, anonKey: anonKey)
+    }
+
+    /// Migrate credentials from legacy UserDefaults to secure Keychain
+    private func migrateFromUserDefaultsIfNeeded() {
+        // Check if we have legacy data in UserDefaults
+        guard let data = UserDefaults.standard.data(forKey: legacyConfigKey),
               let config = try? JSONDecoder().decode(SupabaseConfig.self, from: data) else {
             return
         }
-        configure(url: config.url, anonKey: config.anonKey)
+
+        // Check if already migrated to Keychain
+        if keychain.hasStoredCredentials {
+            // Already have Keychain data, just clean up UserDefaults
+            UserDefaults.standard.removeObject(forKey: legacyConfigKey)
+            print("[SupabaseService] Cleaned up legacy UserDefaults (already migrated)")
+            return
+        }
+
+        // Migrate to Keychain
+        keychain.save(config.url, for: .supabaseUrl)
+        keychain.save(config.anonKey, for: .supabaseAnonKey)
+
+        // Remove from UserDefaults
+        UserDefaults.standard.removeObject(forKey: legacyConfigKey)
+
+        print("[SupabaseService] Migrated credentials from UserDefaults to Keychain")
     }
 
     // MARK: - Database Operations
@@ -215,6 +243,36 @@ class SupabaseService {
             .delete()
             .eq("id", value: id)
             .execute()
+    }
+
+    // MARK: - RPC Functions
+
+    /// Call a Supabase RPC function
+    func rpc<T: Decodable, P: Encodable>(function: String, params: P) async throws -> T? {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        let response: T = try await client.database
+            .rpc(function, params: params)
+            .execute()
+            .value
+
+        return response
+    }
+
+    /// Call a Supabase RPC function with no parameters
+    func rpc<T: Decodable>(function: String) async throws -> T? {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        let response: T = try await client.database
+            .rpc(function)
+            .execute()
+            .value
+
+        return response
     }
 
     // MARK: - Realtime

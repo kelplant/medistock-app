@@ -47,6 +47,9 @@
 		A1SVC003BBBB000100000003 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC003BBBB000000000003 /* AuthService.swift */; };
 		A1SVC006BBBB000100000006 /* PasswordHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC006BBBB000000000006 /* PasswordHasher.swift */; };
 		A1SVC007BBBB000100000007 /* MigrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC007BBBB000000000007 /* MigrationManager.swift */; };
+		A1SVC008BBBB000100000008 /* CompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC008BBBB000000000008 /* CompatibilityManager.swift */; };
+		A1SVC009BBBB000100000009 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC009BBBB000000000009 /* KeychainService.swift */; };
+		A1000014AAAA000100000014 /* AppUpdateRequiredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */; };
 		A1SYNC01CCCC000100000001 /* SyncQueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC01CCCC000000000001 /* SyncQueueItem.swift */; };
 		A1SYNC02CCCC000100000002 /* SyncQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC02CCCC000000000002 /* SyncQueueStore.swift */; };
 		A1SYNC03CCCC000100000003 /* SyncQueueHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC03CCCC000000000003 /* SyncQueueHelper.swift */; };
@@ -113,6 +116,9 @@
 		A1SYNC09CCCC000000000009 /* RealtimeSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeSyncService.swift; sourceTree = "<group>"; };
 		A1SYNC10CCCC000000000010 /* SyncScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncScheduler.swift; sourceTree = "<group>"; };
 		A1SYNC11CCCC000000000011 /* OnlineFirstHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineFirstHelper.swift; sourceTree = "<group>"; };
+		A1SVC008BBBB000000000008 /* CompatibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityManager.swift; sourceTree = "<group>"; };
+		A1SVC009BBBB000000000009 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateRequiredView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -212,6 +218,8 @@
 				A1SVC003BBBB000000000003 /* AuthService.swift */,
 				A1SVC006BBBB000000000006 /* PasswordHasher.swift */,
 				A1SVC007BBBB000000000007 /* MigrationManager.swift */,
+				A1SVC008BBBB000000000008 /* CompatibilityManager.swift */,
+				A1SVC009BBBB000000000009 /* KeychainService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -254,6 +262,7 @@
 				A100000FAAAA00000000000F /* SupabaseViews.swift */,
 				A1000010AAAA000000000010 /* CommonViews.swift */,
 				A1000013AAAA000000000013 /* ProfileViews.swift */,
+				A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -410,6 +419,9 @@
 				A1000013AAAA000100000013 /* ProfileViews.swift in Sources */,
 				A1SVC006BBBB000100000006 /* PasswordHasher.swift in Sources */,
 				A1SVC007BBBB000100000007 /* MigrationManager.swift in Sources */,
+				A1SVC008BBBB000100000008 /* CompatibilityManager.swift in Sources */,
+				A1SVC009BBBB000100000009 /* KeychainService.swift in Sources */,
+				A1000014AAAA000100000014 /* AppUpdateRequiredView.swift in Sources */,
 				A1SYNC01CCCC000100000001 /* SyncQueueItem.swift in Sources */,
 				A1SYNC02CCCC000100000002 /* SyncQueueStore.swift in Sources */,
 				A1SYNC03CCCC000100000003 /* SyncQueueHelper.swift in Sources */,

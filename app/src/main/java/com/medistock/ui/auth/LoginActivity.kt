@@ -14,7 +14,7 @@ import com.medistock.R
 import com.medistock.data.db.AppDatabase
 import com.medistock.data.entities.User
 import com.medistock.data.entities.UserPermission
-import com.medistock.data.migration.CompatibilityResult
+import com.medistock.shared.domain.compatibility.CompatibilityResult
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.HomeActivity
@@ -24,7 +24,6 @@ import com.medistock.shared.domain.auth.AuthService
 import com.medistock.shared.domain.auth.PasswordVerifier
 import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
-import com.medistock.util.Modules
 import com.medistock.util.PasswordHasher
 import com.medistock.util.PasswordMigration
 import com.medistock.util.AppUpdateManager
@@ -189,14 +188,14 @@ class LoginActivity : AppCompatActivity() {
 
                 // Give admin all permissions (though admin check bypasses this)
                 val modules = listOf(
-                    Modules.STOCK, Modules.SALES, Modules.PURCHASES,
-                    Modules.INVENTORY, Modules.ADMIN, Modules.PRODUCTS,
-                    Modules.SITES, Modules.CATEGORIES, Modules.USERS
+                    Module.STOCK, Module.SALES, Module.PURCHASES,
+                    Module.INVENTORY, Module.ADMIN, Module.PRODUCTS,
+                    Module.SITES, Module.CATEGORIES, Module.USERS
                 )
                 val permissions = modules.map { module ->
                     UserPermission(
                         userId = adminUser.id,
-                        module = module,
+                        module = module.name,
                         canView = true,
                         canCreate = true,
                         canEdit = true,

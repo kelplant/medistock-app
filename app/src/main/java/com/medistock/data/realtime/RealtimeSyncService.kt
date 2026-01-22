@@ -3,7 +3,7 @@ package com.medistock.data.realtime
 import android.content.Context
 import android.util.Log
 import com.medistock.data.remote.SupabaseClientProvider
-import com.medistock.util.SupabasePreferences
+import com.medistock.util.SecureSupabasePreferences
 import io.github.jan.supabase.realtime.PostgresAction
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -32,8 +32,8 @@ object RealtimeSyncService {
     }
 
     fun isRealtimeEnabled(context: Context): Boolean {
-        val prefs = SupabasePreferences(context)
-        return prefs.getSyncMode() == SupabasePreferences.SyncMode.REALTIME
+        val prefs = SecureSupabasePreferences(context)
+        return prefs.getSyncMode() == SecureSupabasePreferences.SyncMode.REALTIME
     }
 
     /**

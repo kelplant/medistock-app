@@ -15,7 +15,7 @@ import androidx.work.workDataOf
 import com.medistock.data.realtime.RealtimeSyncService
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.util.NetworkStatus
-import com.medistock.util.SupabasePreferences
+import com.medistock.util.SecureSupabasePreferences
 import java.util.concurrent.TimeUnit
 
 object SyncScheduler {
@@ -115,12 +115,12 @@ object SyncScheduler {
     }
 
     private fun updateSyncMode(context: Context, isOnline: Boolean) {
-        val preferences = SupabasePreferences(context)
+        val preferences = SecureSupabasePreferences(context)
         val configured = SupabaseClientProvider.isConfigured(context)
         val mode = if (configured && isOnline) {
-            SupabasePreferences.SyncMode.REALTIME
+            SecureSupabasePreferences.SyncMode.REALTIME
         } else {
-            SupabasePreferences.SyncMode.LOCAL
+            SecureSupabasePreferences.SyncMode.LOCAL
         }
         preferences.setSyncMode(mode)
     }

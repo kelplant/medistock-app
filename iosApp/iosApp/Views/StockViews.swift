@@ -222,12 +222,19 @@ struct StockItemRowView: View {
 // MARK: - Stock Movements List View
 struct StockMovementsListView: View {
     let sdk: MedistockSDK
+    let siteId: String?
 
     @State private var movements: [StockMovement] = []
     @State private var products: [Product] = []
     @State private var sites: [Site] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var showingCreation = false
+
+    init(sdk: MedistockSDK, siteId: String? = nil) {
+        self.sdk = sdk
+        self.siteId = siteId
+    }
 
     var body: some View {
         List {
@@ -269,11 +276,31 @@ struct StockMovementsListView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Mouvements de stock")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showingCreation = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showingCreation) {
+            StockMovementCreationView(sdk: sdk, siteId: siteId)
+        }
         .refreshable {
             await loadData()
         }
         .task {
             await loadData()
+        }
+        .onChange(of: showingCreation) { isShowing in
+            if !isShowing {
+                // Refresh after creation
+                Task {
+                    await loadData()
+                }
+            }
         }
     }
 
@@ -374,4 +401,286 @@ struct StockMovementRowView: View {
 extension StockMovement: @retroactive Identifiable {}
 extension CurrentStock: @retroactive Identifiable {
     public var id: String { "\(productId)-\(siteId)" }
+}
+
+// MARK: - Stock Movement Creation View
+struct StockMovementCreationView: View {
+    let sdk: MedistockSDK
+    let siteId: String?
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var products: [Product] = []
+    @State private var selectedProduct: Product?
+    @State private var movementType: MovementTypeOption = .stockIn
+    @State private var quantity: String = ""
+    @State private var notes: String = ""
+    @State private var isLoading = true
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+    @State private var showingWarning = false
+    @State private var warningMessage: String = ""
+
+    enum MovementTypeOption: String, CaseIterable {
+        case stockIn = "Entrée"
+        case stockOut = "Sortie"
+
+        var movementTypeValue: String {
+            switch self {
+            case .stockIn: return "MANUAL_IN"
+            case .stockOut: return "MANUAL_OUT"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .stockIn: return "arrow.down.circle.fill"
+            case .stockOut: return "arrow.up.circle.fill"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .stockIn: return .green
+            case .stockOut: return .red
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                    }
+                }
+
+                if isLoading {
+                    Section {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                    }
+                } else {
+                    // Product selection
+                    Section(header: Text("Produit")) {
+                        Picker("Sélectionner un produit", selection: $selectedProduct) {
+                            Text("Choisir un produit").tag(nil as Product?)
+                            ForEach(products, id: \.id) { product in
+                                Text("\(product.name) (\(product.unit))")
+                                    .tag(product as Product?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+
+                    // Movement type
+                    Section(header: Text("Type de mouvement")) {
+                        Picker("Type", selection: $movementType) {
+                            ForEach(MovementTypeOption.allCases, id: \.self) { type in
+                                Label(type.rawValue, systemImage: type.icon)
+                                    .tag(type)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    // Quantity
+                    Section(header: Text("Quantité")) {
+                        HStack {
+                            TextField("Quantité", text: $quantity)
+                                .keyboardType(.decimalPad)
+
+                            if let product = selectedProduct {
+                                Text(product.unit)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
+                    // Notes (optional)
+                    Section(header: Text("Notes (optionnel)")) {
+                        TextEditor(text: $notes)
+                            .frame(minHeight: 60)
+                            .overlay(
+                                Group {
+                                    if notes.isEmpty {
+                                        Text("Ajouter une note...")
+                                            .foregroundColor(.secondary)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 8)
+                                    }
+                                },
+                                alignment: .topLeading
+                            )
+                    }
+
+                    // Preview
+                    if let product = selectedProduct, let qty = Double(quantity.replacingOccurrences(of: ",", with: ".")), qty > 0 {
+                        Section(header: Text("Aperçu")) {
+                            HStack {
+                                Image(systemName: movementType.icon)
+                                    .foregroundColor(movementType.color)
+                                Text(product.name)
+                                Spacer()
+                                Text("\(movementType == .stockIn ? "+" : "-")\(String(format: "%.1f", qty)) \(product.unit)")
+                                    .foregroundColor(movementType.color)
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Mouvement de stock")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Enregistrer") {
+                        Task {
+                            await saveMovement()
+                        }
+                    }
+                    .disabled(!canSave || isSaving)
+                }
+            }
+            .task {
+                await loadProducts()
+            }
+            .alert("Attention", isPresented: $showingWarning) {
+                Button("Continuer", role: .destructive) {
+                    Task {
+                        await performSave()
+                    }
+                }
+                Button("Annuler", role: .cancel) {}
+            } message: {
+                Text(warningMessage)
+            }
+            .overlay {
+                if isSaving {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    ProgressView("Enregistrement...")
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                }
+            }
+        }
+    }
+
+    private var canSave: Bool {
+        guard let _ = selectedProduct,
+              let qty = Double(quantity.replacingOccurrences(of: ",", with: ".")),
+              qty > 0 else {
+            return false
+        }
+        return true
+    }
+
+    @MainActor
+    private func loadProducts() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let allProducts = try await sdk.productRepository.getAll()
+            // Filter by site if needed
+            if let siteId = siteId {
+                products = allProducts.filter { $0.siteId == siteId }
+            } else {
+                products = allProducts
+            }
+        } catch {
+            errorMessage = "Erreur: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+
+    @MainActor
+    private func saveMovement() async {
+        guard let product = selectedProduct,
+              let qty = Double(quantity.replacingOccurrences(of: ",", with: ".")),
+              qty > 0 else {
+            return
+        }
+
+        // For stock out, check if there's enough stock (warning only, not blocking)
+        if movementType == .stockOut {
+            do {
+                let allStock = try await sdk.stockRepository.getAllCurrentStock()
+                let currentStock = allStock.first { $0.productId == product.id && $0.siteId == product.siteId }
+                let stockLevel = currentStock?.totalStock ?? 0
+
+                if stockLevel < qty {
+                    warningMessage = "Le stock actuel (\(String(format: "%.1f", stockLevel)) \(product.unit)) est inférieur à la quantité demandée (\(String(format: "%.1f", qty)) \(product.unit)).\n\nLe stock deviendra négatif. Voulez-vous continuer ?"
+                    showingWarning = true
+                    return
+                }
+            } catch {
+                // If we can't check stock, proceed anyway
+                print("[StockMovementCreation] Could not check stock: \(error)")
+            }
+        }
+
+        await performSave()
+    }
+
+    @MainActor
+    private func performSave() async {
+        guard let product = selectedProduct,
+              let qty = Double(quantity.replacingOccurrences(of: ",", with: ".")),
+              qty > 0 else {
+            return
+        }
+
+        isSaving = true
+        errorMessage = nil
+
+        do {
+            let userId = SessionManager.shared.userId.isEmpty ? "ios" : SessionManager.shared.userId
+
+            // Calculate quantity with sign based on movement type
+            // unitVolume conversion like Android
+            let quantityInBaseUnit = qty * product.unitVolume
+            let finalQuantity = movementType == .stockIn ? quantityInBaseUnit : -quantityInBaseUnit
+
+            // Create movement using SDK
+            let movement = sdk.createStockMovement(
+                productId: product.id,
+                siteId: product.siteId,
+                quantity: finalQuantity,
+                movementType: movementType.movementTypeValue,
+                referenceId: nil,
+                notes: notes.isEmpty ? nil : notes,
+                userId: userId
+            )
+
+            // Save to database
+            try await sdk.stockMovementRepository.insert(movement: movement)
+
+            // Enqueue for sync if online
+            if SyncStatusManager.shared.isOnline && SupabaseService.shared.isConfigured {
+                SyncQueueHelper.shared.enqueueStockMovementInsert(
+                    movement,
+                    userId: userId,
+                    siteId: product.siteId
+                )
+            }
+
+            dismiss()
+        } catch {
+            errorMessage = "Erreur lors de l'enregistrement: \(error.localizedDescription)"
+        }
+
+        isSaving = false
+    }
 }
