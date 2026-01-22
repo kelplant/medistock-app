@@ -17,6 +17,7 @@ import shared
 struct SiteDTO: Codable {
     let id: String
     let name: String
+    let isActive: Bool
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -25,6 +26,7 @@ struct SiteDTO: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, name
+        case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -35,6 +37,7 @@ struct SiteDTO: Codable {
     init(from site: Site) {
         self.id = site.id
         self.name = site.name
+        self.isActive = site.isActive
         self.createdAt = site.createdAt
         self.updatedAt = site.updatedAt
         self.createdBy = site.createdBy
@@ -46,6 +49,7 @@ struct SiteDTO: Codable {
         Site(
             id: id,
             name: name,
+            isActive: isActive,
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,
@@ -57,6 +61,7 @@ struct SiteDTO: Codable {
 struct CategoryDTO: Codable {
     let id: String
     let name: String
+    let isActive: Bool
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -65,6 +70,7 @@ struct CategoryDTO: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, name
+        case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -75,6 +81,7 @@ struct CategoryDTO: Codable {
     init(from category: shared.Category) {
         self.id = category.id
         self.name = category.name
+        self.isActive = category.isActive
         self.createdAt = category.createdAt
         self.updatedAt = category.updatedAt
         self.createdBy = category.createdBy
@@ -86,6 +93,7 @@ struct CategoryDTO: Codable {
         shared.Category(
             id: id,
             name: name,
+            isActive: isActive,
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,
@@ -173,6 +181,7 @@ struct ProductDTO: Codable {
     let siteId: String?
     let minStock: Double?
     let maxStock: Double?
+    let isActive: Bool
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -191,6 +200,7 @@ struct ProductDTO: Codable {
         case siteId = "site_id"
         case minStock = "min_stock"
         case maxStock = "max_stock"
+        case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -213,6 +223,7 @@ struct ProductDTO: Codable {
         self.siteId = product.siteId
         self.minStock = product.minStock?.doubleValue
         self.maxStock = product.maxStock?.doubleValue
+        self.isActive = product.isActive
         self.createdAt = product.createdAt
         self.updatedAt = product.updatedAt
         self.createdBy = product.createdBy
@@ -236,6 +247,7 @@ struct ProductDTO: Codable {
             siteId: siteId ?? "",
             minStock: minStock.map { KotlinDouble(double: $0) },
             maxStock: maxStock.map { KotlinDouble(double: $0) },
+            isActive: isActive,
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,
@@ -252,6 +264,7 @@ struct CustomerDTO: Codable {
     let address: String?
     let notes: String?
     let siteId: String?
+    let isActive: Bool
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
@@ -261,6 +274,7 @@ struct CustomerDTO: Codable {
     enum CodingKeys: String, CodingKey {
         case id, name, phone, email, address, notes
         case siteId = "site_id"
+        case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case createdBy = "created_by"
@@ -276,6 +290,7 @@ struct CustomerDTO: Codable {
         self.address = customer.address
         self.notes = customer.notes
         self.siteId = customer.siteId
+        self.isActive = customer.isActive
         self.createdAt = customer.createdAt
         self.updatedAt = customer.updatedAt
         self.createdBy = customer.createdBy
@@ -292,6 +307,7 @@ struct CustomerDTO: Codable {
             address: address,
             notes: notes,
             siteId: siteId,
+            isActive: isActive,
             createdAt: createdAt,
             updatedAt: updatedAt,
             createdBy: createdBy,

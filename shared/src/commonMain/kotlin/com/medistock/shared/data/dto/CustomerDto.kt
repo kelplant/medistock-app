@@ -16,6 +16,7 @@ data class CustomerDto(
     val address: String? = null,
     val notes: String? = null,
     @SerialName("site_id") val siteId: String? = null,
+    @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("created_at") val createdAt: Long,
     @SerialName("updated_at") val updatedAt: Long,
     @SerialName("created_by") val createdBy: String,
@@ -29,6 +30,8 @@ data class CustomerDto(
         email = email,
         address = address,
         notes = notes,
+        siteId = siteId,
+        isActive = isActive,
         createdAt = createdAt,
         updatedAt = updatedAt,
         createdBy = createdBy,
@@ -36,14 +39,15 @@ data class CustomerDto(
     )
 
     companion object {
-        fun fromModel(customer: Customer, siteId: String? = null, clientId: String? = null): CustomerDto = CustomerDto(
+        fun fromModel(customer: Customer, clientId: String? = null): CustomerDto = CustomerDto(
             id = customer.id,
             name = customer.name,
             phone = customer.phone,
             email = customer.email,
             address = customer.address,
             notes = customer.notes,
-            siteId = siteId,
+            siteId = customer.siteId,
+            isActive = customer.isActive,
             createdAt = customer.createdAt,
             updatedAt = customer.updatedAt,
             createdBy = customer.createdBy,

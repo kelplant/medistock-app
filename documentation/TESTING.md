@@ -544,6 +544,61 @@ chmod +x scripts/run_tests_*.sh
 
 ---
 
+### 3.11 Phase 11 - Integrite Referentielle & Soft Delete
+
+#### Statut de l'implementation
+
+La Phase 11 introduit la desactivation (soft delete) pour Sites, Categories, Products, et Customers via le champ `is_active`. Le schema et le service `ReferentialIntegrityService` sont implementes, mais **l'UI n'a pas encore ete modifiee** pour utiliser ces fonctionnalites.
+
+#### Impact sur les tests E2E existants
+
+✅ **Aucun impact sur les tests actuels** :
+- Les 22 tests E2E existants (11 Android + 11 iOS) continuent de fonctionner
+- Les tests creent et suppriment des entites propres (non utilisees ailleurs)
+- Le champ `is_active` a une valeur par defaut de 1 (actif)
+- L'UI n'integre pas encore les appels au `ReferentialIntegrityService`
+
+#### Tests futurs a ajouter (quand l'UI sera implementee)
+
+Lorsque l'UI de desactivation sera prete, ajouter ~16-18 nouveaux tests :
+
+| Test | Description | Fichiers |
+|------|-------------|----------|
+| Desactivation Sites | Tenter de supprimer un site utilise, verifier dialogue de desactivation | `12_deactivation_sites.yaml` |
+| Desactivation Products | Tenter de supprimer un produit utilise, verifier desactivation | `13_deactivation_products.yaml` |
+| Desactivation Categories | Tenter de supprimer une categorie utilisee | `14_deactivation_categories.yaml` |
+| Desactivation Customers | Tenter de supprimer un client utilise | `15_deactivation_customers.yaml` |
+| Filtres Inactifs | Basculer affichage entites inactives dans ecrans admin | `16_inactive_filters.yaml` |
+| Reactivation | Reactiver une entite desactivee | `17_reactivation.yaml` |
+
+#### Scenarios de test Phase 11
+
+**Scenario 1 : Desactivation d'un site utilise**
+1. Creer Site A
+2. Creer Produit X au Site A
+3. Tenter de supprimer Site A
+4. Verifier dialogue : "Site utilise dans 1 produit"
+5. Confirmer desactivation
+6. Verifier Site A marque "Inactive"
+7. Verifier Site A absent des dropdowns de creation
+
+**Scenario 2 : Suppression d'une entite propre**
+1. Creer Categorie Z
+2. Tenter de supprimer Categorie Z (non utilisee)
+3. Confirmer suppression directe (pas de desactivation)
+4. Verifier Categorie Z completement supprimee
+
+**Scenario 3 : Filtrage des entites inactives**
+1. Acceder a l'ecran "Site Management"
+2. Activer le toggle "Afficher inactifs"
+3. Verifier que les sites inactifs apparaissent avec indicateur
+4. Desactiver le toggle
+5. Verifier que les sites inactifs sont masques
+
+📋 **Documentation complete** : Voir `.maestro/PHASE11_E2E_ANALYSIS.md` pour l'analyse detaillee, les user journeys complets, et les templates de tests.
+
+---
+
 ## 5. CI/CD
 
 Le workflow GitHub Actions (`.github/workflows/ci.yml`) execute automatiquement les tests :

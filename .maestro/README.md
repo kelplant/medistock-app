@@ -142,6 +142,40 @@ maestro test .maestro/ --format junit --output report.xml
 | 8. Transferts inter-sites | 04_transfers.yaml |
 | 9. Inventaire | 05_inventory.yaml |
 
+## Phase 11 - Intégrité Référentielle & Soft Delete
+
+### Statut de l'implémentation
+
+La Phase 11 ajoute le soft delete (`is_active`) pour Sites, Categories, Products, et Customers. Le schéma et le service `ReferentialIntegrityService` sont implémentés, mais **l'UI n'est pas encore modifiée**.
+
+### Impact sur les tests E2E existants
+
+✅ **Les tests existants continuent de fonctionner** sans modification car :
+- Les tests créent et suppriment des entités propres (non utilisées)
+- Le champ `is_active` a une valeur par défaut de 1 (actif)
+- L'UI n'appelle pas encore le `ReferentialIntegrityService`
+
+### Tests futurs à ajouter (quand l'UI sera implémentée)
+
+Lorsque l'UI de désactivation sera implémentée, il faudra ajouter :
+
+1. **Tests de désactivation** (`12_deactivation_*.yaml`) :
+   - Tenter de supprimer une entité utilisée
+   - Vérifier le dialogue de désactivation
+   - Confirmer la désactivation
+   - Vérifier l'indicateur "Inactive"
+
+2. **Tests de filtrage** (`16_inactive_filters.yaml`) :
+   - Basculer l'affichage des entités inactives
+   - Vérifier que les dropdowns excluent les entités inactives
+   - Vérifier que l'historique affiche les entités inactives
+
+3. **Tests de réactivation** (`17_reactivation.yaml`) :
+   - Réactiver une entité désactivée
+   - Vérifier qu'elle réapparaît dans les dropdowns
+
+📋 **Documentation détaillée** : Voir `PHASE11_E2E_ANALYSIS.md` pour l'analyse complète, les scénarios de test détaillés, et les user journeys.
+
 ## Dépannage
 
 ### L'application ne se lance pas

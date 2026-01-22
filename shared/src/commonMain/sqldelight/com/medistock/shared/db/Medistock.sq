@@ -8,6 +8,7 @@
 CREATE TABLE sites (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
@@ -17,6 +18,7 @@ CREATE TABLE sites (
 CREATE TABLE categories (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
@@ -53,6 +55,7 @@ CREATE TABLE products (
     site_id TEXT NOT NULL,
     min_stock REAL DEFAULT 0.0,
     max_stock REAL DEFAULT 0.0,
+    is_active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
@@ -187,6 +190,7 @@ CREATE TABLE customers (
     address TEXT,
     notes TEXT,
     site_id TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
@@ -332,11 +336,11 @@ getSiteById:
 SELECT * FROM sites WHERE id = ?;
 
 insertSite:
-INSERT INTO sites(id, name, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO sites(id, name, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 updateSite:
-UPDATE sites SET name = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE sites SET name = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 deleteSite:
 DELETE FROM sites WHERE id = ?;
@@ -352,11 +356,11 @@ getCategoryById:
 SELECT * FROM categories WHERE id = ?;
 
 insertCategory:
-INSERT INTO categories(id, name, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO categories(id, name, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 updateCategory:
-UPDATE categories SET name = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE categories SET name = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 deleteCategory:
 DELETE FROM categories WHERE id = ?;
@@ -375,11 +379,11 @@ getProductById:
 SELECT * FROM products WHERE id = ?;
 
 insertProduct:
-INSERT INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateProduct:
-UPDATE products SET name = ?, unit = ?, unit_volume = ?, packaging_type_id = ?, selected_level = ?, conversion_factor = ?, category_id = ?, margin_type = ?, margin_value = ?, description = ?, min_stock = ?, max_stock = ?, updated_at = ?, updated_by = ?
+UPDATE products SET name = ?, unit = ?, unit_volume = ?, packaging_type_id = ?, selected_level = ?, conversion_factor = ?, category_id = ?, margin_type = ?, margin_value = ?, description = ?, min_stock = ?, max_stock = ?, is_active = ?, updated_at = ?, updated_by = ?
 WHERE id = ?;
 
 deleteProduct:
@@ -654,11 +658,11 @@ getCustomerById:
 SELECT * FROM customers WHERE id = ?;
 
 insertCustomer:
-INSERT INTO customers(id, name, phone, email, address, notes, site_id, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO customers(id, name, phone, email, address, notes, site_id, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateCustomer:
-UPDATE customers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, site_id = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE customers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, site_id = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 deleteCustomer:
 DELETE FROM customers WHERE id = ?;
@@ -781,6 +785,9 @@ SELECT * FROM app_users WHERE username = ? AND is_active = 1 LIMIT 1;
 
 deactivateUser:
 UPDATE app_users SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+activateUser:
+UPDATE app_users SET is_active = 1, updated_at = ?, updated_by = ? WHERE id = ?;
 
 countActiveAdmins:
 SELECT COUNT(*) FROM app_users WHERE is_admin = 1 AND is_active = 1;
@@ -987,24 +994,24 @@ SELECT COUNT(*) > 0 FROM products WHERE packaging_type_id = ?;
 -- ============================================
 
 upsertSite:
-INSERT OR REPLACE INTO sites(id, name, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO sites(id, name, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 upsertCategory:
-INSERT OR REPLACE INTO categories(id, name, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO categories(id, name, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 upsertProduct:
-INSERT OR REPLACE INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertPackagingType:
 INSERT OR REPLACE INTO packaging_types(id, name, level1_name, level2_name, level2_quantity, default_conversion_factor, is_active, display_order, created_at, updated_at, created_by, updated_by)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertCustomer:
-INSERT OR REPLACE INTO customers(id, name, phone, email, address, notes, site_id, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO customers(id, name, phone, email, address, notes, site_id, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertUser:
 INSERT OR REPLACE INTO app_users(id, username, password, full_name, is_admin, is_active, created_at, updated_at, created_by, updated_by)
@@ -1045,3 +1052,170 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 upsertProductPrice:
 INSERT OR REPLACE INTO product_prices(id, product_id, effective_date, purchase_price, selling_price, source, site_id, price, created_at, updated_at, created_by, updated_by)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- ============================================
+-- REFERENTIAL INTEGRITY - Active Entities Queries
+-- ============================================
+
+-- Get active sites only (for dropdowns/pickers)
+getActiveSites:
+SELECT * FROM sites WHERE is_active = 1 ORDER BY name;
+
+-- Get active categories only
+getActiveCategories:
+SELECT * FROM categories WHERE is_active = 1 ORDER BY name;
+
+-- Get active products only
+getActiveProducts:
+SELECT * FROM products WHERE is_active = 1 ORDER BY name;
+
+-- Get active products by site
+getActiveProductsBySite:
+SELECT * FROM products WHERE site_id = ? AND is_active = 1 ORDER BY name;
+
+-- Get active customers only
+getActiveCustomers:
+SELECT * FROM customers WHERE is_active = 1 ORDER BY name;
+
+-- Get active customers by site
+getActiveCustomersBySite:
+SELECT * FROM customers WHERE site_id = ? AND is_active = 1 ORDER BY name;
+
+-- ============================================
+-- REFERENTIAL INTEGRITY - Check Usage Queries
+-- ============================================
+
+-- Check if a site is used anywhere
+isSiteUsedInProducts:
+SELECT COUNT(*) FROM products WHERE site_id = ?;
+
+isSiteUsedInPurchaseBatches:
+SELECT COUNT(*) FROM purchase_batches WHERE site_id = ?;
+
+isSiteUsedInStockMovements:
+SELECT COUNT(*) FROM stock_movements WHERE site_id = ?;
+
+isSiteUsedInTransfersFrom:
+SELECT COUNT(*) FROM product_transfers WHERE from_site_id = ?;
+
+isSiteUsedInTransfersTo:
+SELECT COUNT(*) FROM product_transfers WHERE to_site_id = ?;
+
+isSiteUsedInInventories:
+SELECT COUNT(*) FROM inventories WHERE site_id = ?;
+
+isSiteUsedInInventoryItems:
+SELECT COUNT(*) FROM inventory_items WHERE site_id = ?;
+
+isSiteUsedInCustomers:
+SELECT COUNT(*) FROM customers WHERE site_id = ?;
+
+isSiteUsedInSales:
+SELECT COUNT(*) FROM sales WHERE site_id = ?;
+
+-- Check if a category is used
+isCategoryUsedInProducts:
+SELECT COUNT(*) FROM products WHERE category_id = ?;
+
+-- Check if a product is used anywhere
+isProductUsedInPurchaseBatches:
+SELECT COUNT(*) FROM purchase_batches WHERE product_id = ?;
+
+isProductUsedInStockMovements:
+SELECT COUNT(*) FROM stock_movements WHERE product_id = ?;
+
+isProductUsedInTransfers:
+SELECT COUNT(*) FROM product_transfers WHERE product_id = ?;
+
+isProductUsedInInventoryItems:
+SELECT COUNT(*) FROM inventory_items WHERE product_id = ?;
+
+isProductUsedInSaleItems:
+SELECT COUNT(*) FROM sale_items WHERE product_id = ?;
+
+isProductUsedInProductPrices:
+SELECT COUNT(*) FROM product_prices WHERE product_id = ?;
+
+-- Check if a customer is used
+isCustomerUsedInSales:
+SELECT COUNT(*) FROM sales WHERE customer_id = ?;
+
+-- Check if a user is used
+isUserUsedInPermissions:
+SELECT COUNT(*) FROM user_permissions WHERE user_id = ?;
+
+isUserUsedInAuditHistory:
+SELECT COUNT(*) FROM audit_history WHERE user_id = ?;
+
+-- ============================================
+-- REFERENTIAL INTEGRITY - Deactivate Entities
+-- ============================================
+
+deactivateSite:
+UPDATE sites SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+activateSite:
+UPDATE sites SET is_active = 1, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deactivateCategory:
+UPDATE categories SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+activateCategory:
+UPDATE categories SET is_active = 1, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deactivateProduct:
+UPDATE products SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+activateProduct:
+UPDATE products SET is_active = 1, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deactivateCustomer:
+UPDATE customers SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+activateCustomer:
+UPDATE customers SET is_active = 1, updated_at = ?, updated_by = ? WHERE id = ?;
+
+-- ============================================
+-- REFERENTIAL INTEGRITY - Get Usage Details
+-- ============================================
+
+-- Get detailed usage counts for a site
+getSiteUsageDetails:
+SELECT
+    (SELECT COUNT(*) FROM products WHERE site_id = :siteId) AS products_count,
+    (SELECT COUNT(*) FROM purchase_batches WHERE site_id = :siteId) AS batches_count,
+    (SELECT COUNT(*) FROM stock_movements WHERE site_id = :siteId) AS movements_count,
+    (SELECT COUNT(*) FROM product_transfers WHERE from_site_id = :siteId OR to_site_id = :siteId) AS transfers_count,
+    (SELECT COUNT(*) FROM inventories WHERE site_id = :siteId) AS inventories_count,
+    (SELECT COUNT(*) FROM customers WHERE site_id = :siteId) AS customers_count,
+    (SELECT COUNT(*) FROM sales WHERE site_id = :siteId) AS sales_count;
+
+-- Get detailed usage counts for a category
+getCategoryUsageDetails:
+SELECT
+    (SELECT COUNT(*) FROM products WHERE category_id = :categoryId) AS products_count;
+
+-- Get detailed usage counts for a product
+getProductUsageDetails:
+SELECT
+    (SELECT COUNT(*) FROM purchase_batches WHERE product_id = :productId) AS batches_count,
+    (SELECT COUNT(*) FROM stock_movements WHERE product_id = :productId) AS movements_count,
+    (SELECT COUNT(*) FROM product_transfers WHERE product_id = :productId) AS transfers_count,
+    (SELECT COUNT(*) FROM inventory_items WHERE product_id = :productId) AS inventory_items_count,
+    (SELECT COUNT(*) FROM sale_items WHERE product_id = :productId) AS sale_items_count;
+
+-- Get detailed usage counts for a customer
+getCustomerUsageDetails:
+SELECT
+    (SELECT COUNT(*) FROM sales WHERE customer_id = :customerId) AS sales_count;
+
+-- Get detailed usage counts for a packaging type
+getPackagingTypeUsageDetails:
+SELECT
+    (SELECT COUNT(*) FROM products WHERE packaging_type_id = :packagingTypeId) AS products_count;
+
+-- Get detailed usage counts for a user
+getUserUsageDetails:
+SELECT
+    (SELECT COUNT(*) FROM user_permissions WHERE user_id = :userId) AS permissions_count,
+    (SELECT COUNT(*) FROM audit_history WHERE user_id = :userId) AS audit_count;

@@ -13,6 +13,7 @@ import com.medistock.shared.domain.sync.RetryConfiguration
 import com.medistock.shared.domain.sync.SyncEnqueueService
 import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.shared.domain.usecase.*
+import com.medistock.shared.domain.validation.ReferentialIntegrityService
 import kotlinx.datetime.Clock
 import kotlin.random.Random
 
@@ -53,6 +54,9 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val auditService: AuditService by lazy { AuditService(auditRepository) }
     val defaultAdminService: DefaultAdminService by lazy {
         DefaultAdminService(userRepository, userPermissionRepository)
+    }
+    val referentialIntegrityService: ReferentialIntegrityService by lazy {
+        ReferentialIntegrityService(database)
     }
 
     /**

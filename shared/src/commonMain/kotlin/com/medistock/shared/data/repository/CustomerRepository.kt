@@ -8,6 +8,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 class CustomerRepository(private val database: MedistockDatabase) {
 
@@ -15,6 +16,20 @@ class CustomerRepository(private val database: MedistockDatabase) {
 
     suspend fun getAll(): List<Customer> = withContext(Dispatchers.Default) {
         queries.getAllCustomers().executeAsList().map { it.toModel() }
+    }
+
+    /**
+     * Get only active customers (for dropdowns/pickers in operational screens).
+     */
+    suspend fun getActive(): List<Customer> = withContext(Dispatchers.Default) {
+        queries.getActiveCustomers().executeAsList().map { it.toModel() }
+    }
+
+    /**
+     * Get only active customers for a site.
+     */
+    suspend fun getActiveBySite(siteId: String): List<Customer> = withContext(Dispatchers.Default) {
+        queries.getActiveCustomersBySite(siteId).executeAsList().map { it.toModel() }
     }
 
     suspend fun getById(id: String): Customer? = withContext(Dispatchers.Default) {
@@ -30,6 +45,7 @@ class CustomerRepository(private val database: MedistockDatabase) {
             address = customer.address,
             notes = customer.notes,
             site_id = customer.siteId,
+            is_active = if (customer.isActive) 1L else 0L,
             created_at = customer.createdAt,
             updated_at = customer.updatedAt,
             created_by = customer.createdBy,
@@ -45,6 +61,7 @@ class CustomerRepository(private val database: MedistockDatabase) {
             address = customer.address,
             notes = customer.notes,
             site_id = customer.siteId,
+            is_active = if (customer.isActive) 1L else 0L,
             updated_at = customer.updatedAt,
             updated_by = customer.updatedBy,
             id = customer.id
@@ -64,6 +81,22 @@ class CustomerRepository(private val database: MedistockDatabase) {
     }
 
     /**
+     * Deactivate a customer (soft delete).
+     */
+    suspend fun deactivate(id: String, updatedBy: String) = withContext(Dispatchers.Default) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        queries.deactivateCustomer(now, updatedBy, id)
+    }
+
+    /**
+     * Reactivate a previously deactivated customer.
+     */
+    suspend fun activate(id: String, updatedBy: String) = withContext(Dispatchers.Default) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        queries.activateCustomer(now, updatedBy, id)
+    }
+
+    /**
      * Upsert (INSERT OR REPLACE) a customer.
      * Use this for sync operations to handle both new and existing records.
      */
@@ -76,6 +109,7 @@ class CustomerRepository(private val database: MedistockDatabase) {
             address = customer.address,
             notes = customer.notes,
             site_id = customer.siteId,
+            is_active = if (customer.isActive) 1L else 0L,
             created_at = customer.createdAt,
             updated_at = customer.updatedAt,
             created_by = customer.createdBy,
@@ -90,6 +124,26 @@ class CustomerRepository(private val database: MedistockDatabase) {
             .map { list -> list.map { it.toModel() } }
     }
 
+    /**
+     * Observe only active customers.
+     */
+    fun observeActive(): Flow<List<Customer>> {
+        return queries.getActiveCustomers()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.map { it.toModel() } }
+    }
+
+    /**
+     * Observe only active customers for a specific site.
+     */
+    fun observeActiveBySite(siteId: String): Flow<List<Customer>> {
+        return queries.getActiveCustomersBySite(siteId)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.map { it.toModel() } }
+    }
+
     private fun com.medistock.shared.db.Customers.toModel(): Customer {
         return Customer(
             id = id,
@@ -99,6 +153,7 @@ class CustomerRepository(private val database: MedistockDatabase) {
             address = address,
             notes = notes,
             siteId = site_id,
+            isActive = is_active == 1L,
             createdAt = created_at,
             updatedAt = updated_at,
             createdBy = created_by,

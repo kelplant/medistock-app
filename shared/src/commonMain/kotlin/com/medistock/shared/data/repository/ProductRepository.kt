@@ -9,6 +9,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 class ProductRepository(private val database: MedistockDatabase) {
 
@@ -18,8 +19,22 @@ class ProductRepository(private val database: MedistockDatabase) {
         queries.getAllProducts().executeAsList().map { it.toModel() }
     }
 
+    /**
+     * Get only active products (for dropdowns/pickers in operational screens).
+     */
+    suspend fun getActive(): List<Product> = withContext(Dispatchers.Default) {
+        queries.getActiveProducts().executeAsList().map { it.toModel() }
+    }
+
     suspend fun getBySite(siteId: String): List<Product> = withContext(Dispatchers.Default) {
         queries.getProductsBySite(siteId).executeAsList().map { it.toModel() }
+    }
+
+    /**
+     * Get only active products for a site.
+     */
+    suspend fun getActiveBySite(siteId: String): List<Product> = withContext(Dispatchers.Default) {
+        queries.getActiveProductsBySite(siteId).executeAsList().map { it.toModel() }
     }
 
     suspend fun getById(id: String): Product? = withContext(Dispatchers.Default) {
@@ -42,6 +57,7 @@ class ProductRepository(private val database: MedistockDatabase) {
             site_id = product.siteId,
             min_stock = product.minStock,
             max_stock = product.maxStock,
+            is_active = if (product.isActive) 1L else 0L,
             created_at = product.createdAt,
             updated_at = product.updatedAt,
             created_by = product.createdBy,
@@ -63,6 +79,7 @@ class ProductRepository(private val database: MedistockDatabase) {
             description = product.description,
             min_stock = product.minStock,
             max_stock = product.maxStock,
+            is_active = if (product.isActive) 1L else 0L,
             updated_at = product.updatedAt,
             updated_by = product.updatedBy,
             id = product.id
@@ -71,6 +88,22 @@ class ProductRepository(private val database: MedistockDatabase) {
 
     suspend fun delete(id: String) = withContext(Dispatchers.Default) {
         queries.deleteProduct(id)
+    }
+
+    /**
+     * Deactivate a product (soft delete).
+     */
+    suspend fun deactivate(id: String, updatedBy: String) = withContext(Dispatchers.Default) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        queries.deactivateProduct(now, updatedBy, id)
+    }
+
+    /**
+     * Reactivate a previously deactivated product.
+     */
+    suspend fun activate(id: String, updatedBy: String) = withContext(Dispatchers.Default) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        queries.activateProduct(now, updatedBy, id)
     }
 
     /**
@@ -93,6 +126,7 @@ class ProductRepository(private val database: MedistockDatabase) {
             site_id = product.siteId,
             min_stock = product.minStock,
             max_stock = product.maxStock,
+            is_active = if (product.isActive) 1L else 0L,
             created_at = product.createdAt,
             updated_at = product.updatedAt,
             created_by = product.createdBy,
@@ -109,6 +143,26 @@ class ProductRepository(private val database: MedistockDatabase) {
 
     fun observeBySite(siteId: String): Flow<List<Product>> {
         return queries.getProductsBySite(siteId)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.map { it.toModel() } }
+    }
+
+    /**
+     * Observe only active products.
+     */
+    fun observeActive(): Flow<List<Product>> {
+        return queries.getActiveProducts()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { list -> list.map { it.toModel() } }
+    }
+
+    /**
+     * Observe only active products for a specific site.
+     */
+    fun observeActiveBySite(siteId: String): Flow<List<Product>> {
+        return queries.getActiveProductsBySite(siteId)
             .asFlow()
             .mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toModel() } }
@@ -187,6 +241,7 @@ class ProductRepository(private val database: MedistockDatabase) {
             siteId = site_id,
             minStock = min_stock,
             maxStock = max_stock,
+            isActive = is_active == 1L,
             createdAt = created_at,
             updatedAt = updated_at,
             createdBy = created_by,
