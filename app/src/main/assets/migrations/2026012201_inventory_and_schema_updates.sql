@@ -15,7 +15,7 @@
 -- counted vs theoretical quantities with discrepancy tracking.
 
 CREATE TABLE IF NOT EXISTS inventory_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     inventory_id UUID REFERENCES inventories(id) ON DELETE SET NULL,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
