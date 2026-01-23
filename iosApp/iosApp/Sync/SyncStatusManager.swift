@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import Network
+import shared
 
 /// Manages and exposes sync state to UI
 /// Mirrors Android's SyncStatusManager
