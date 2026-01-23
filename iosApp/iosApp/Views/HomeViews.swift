@@ -261,7 +261,9 @@ struct AdminMenuView: View {
 
     var body: some View {
         List {
+            // Management section - order aligned with Android
             Section(header: Text("Management")) {
+                // 1. Site Management (Android #1)
                 if permissions.canView(.sites) {
                     NavigationLink(destination: SitesListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "building.2.fill", title: "Site Management", color: .blue)
@@ -269,6 +271,7 @@ struct AdminMenuView: View {
                     .accessibilityIdentifier("sites-link")
                 }
 
+                // 2. Manage Products (Android #2 - submenu in Android, flat here)
                 if permissions.canView(.products) {
                     NavigationLink(destination: ProductsListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "cube.box.fill", title: "Manage Products", color: .green)
@@ -276,6 +279,7 @@ struct AdminMenuView: View {
                     .accessibilityIdentifier("products-link")
                 }
 
+                // 2b. Manage Categories (part of Android #2 submenu)
                 if permissions.canView(.categories) {
                     NavigationLink(destination: CategoriesListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "folder.fill", title: "Manage Categories", color: .orange)
@@ -283,50 +287,57 @@ struct AdminMenuView: View {
                     .accessibilityIdentifier("categories-link")
                 }
 
-                if permissions.canView(.customers) {
-                    NavigationLink(destination: CustomersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "person.2.fill", title: "Manage Customers", color: .purple)
+                // 3. Stock Movement (Android #3 - moved up from History section)
+                if permissions.canView(.stock) {
+                    NavigationLink(destination: StockMovementsListView(sdk: sdk)) {
+                        HomeMenuRow(icon: "arrow.up.arrow.down", title: "Stock Movement", color: .cyan)
                     }
-                    .accessibilityIdentifier("customers-link")
+                    .accessibilityIdentifier("stock-movement-link")
                 }
 
+                // 4. Packaging Types (Android #4)
                 if permissions.canView(.packagingTypes) {
                     NavigationLink(destination: PackagingTypesListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "shippingbox", title: "Packaging Types", color: .teal)
                     }
                     .accessibilityIdentifier("packaging-types-link")
                 }
+
+                // 5. Manage Customers (Android #5 - now in both platforms)
+                if permissions.canView(.customers) {
+                    NavigationLink(destination: CustomersListView(sdk: sdk, session: session)) {
+                        HomeMenuRow(icon: "person.2.fill", title: "Manage Customers", color: .purple)
+                    }
+                    .accessibilityIdentifier("customers-link")
+                }
             }
 
-            // Users section
+            // Users section (Android #6)
             if permissions.canView(.users) {
                 Section(header: Text("Users")) {
                     NavigationLink(destination: UsersListView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "person.3.fill", title: "User Management", color: .indigo)
                     }
+                    .accessibilityIdentifier("users-link")
                 }
             }
 
-            if permissions.canView(.stock) || permissions.canView(.audit) {
+            // History section (Android #6 - Audit only, Stock Movement moved to Management)
+            if permissions.canView(.audit) {
                 Section(header: Text("History")) {
-                    if permissions.canView(.stock) {
-                        NavigationLink(destination: StockMovementsListView(sdk: sdk)) {
-                            HomeMenuRow(icon: "arrow.up.arrow.down", title: "Stock Movement", color: .cyan)
-                        }
+                    NavigationLink(destination: AuditHistoryListView(sdk: sdk)) {
+                        HomeMenuRow(icon: "clock.arrow.circlepath", title: "Audit History", color: .brown)
                     }
-
-                    if permissions.canView(.audit) {
-                        NavigationLink(destination: AuditHistoryListView(sdk: sdk)) {
-                            HomeMenuRow(icon: "clock.arrow.circlepath", title: "Audit History", color: .brown)
-                        }
-                    }
+                    .accessibilityIdentifier("audit-link")
                 }
             }
 
+            // Configuration section (Android #7)
             Section(header: Text("Configuration")) {
                 NavigationLink(destination: SupabaseConfigView(sdk: sdk)) {
                     HomeMenuRow(icon: "server.rack", title: "Supabase Configuration", color: .mint)
                 }
+                .accessibilityIdentifier("supabase-config-link")
             }
         }
         .listStyle(.insetGrouped)

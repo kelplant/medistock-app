@@ -42,6 +42,26 @@
     <string name="install_permission_required">Veuillez autoriser l\'installation d\'applications inconnues</string>
     <string name="install_button">Installer</string>
 
+    <!-- Admin Menu -->
+    <string name="site_management">Site Management</string>
+    <string name="manage_products">Manage Products</string>
+    <string name="manage_categories">Manage Categories</string>
+    <string name="packaging_types">Packaging Types</string>
+    <string name="manage_customers">Manage Customers</string>
+    <string name="user_management">User Management</string>
+    <string name="audit_history">Audit History</string>
+    <string name="supabase_configuration">Supabase Configuration</string>
+
+    <!-- Accessibility descriptions -->
+    <string name="site_management_icon_desc">Site management icon</string>
+    <string name="manage_products_icon_desc">Manage products icon</string>
+    <string name="stock_movement_icon_desc">Stock movement icon</string>
+    <string name="packaging_types_icon_desc">Packaging types icon</string>
+    <string name="manage_customers_icon_desc">Manage customers icon</string>
+    <string name="user_management_icon_desc">User management icon</string>
+    <string name="audit_history_icon_desc">Audit history icon</string>
+    <string name="supabase_config_icon_desc">Supabase configuration icon</string>
+
     <!-- Sync Indicator -->
     <string name="sync_indicator_description">Indicateur de synchronisation</string>
     <string name="sync_status_synced">Synchronisé</string>

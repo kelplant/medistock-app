@@ -339,7 +339,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ Base de données unique (SQLDelight) sur Android
 - ⏳ Stratégies de sync unifiées (ConflictResolver, RetryStrategy)
 - ⏳ Tests de parité Android/iOS
-- ⏳ Intégrité référentielle (soft delete, validation suppression)
+- ✅ Intégrité référentielle (soft delete, validation suppression)
 - ⏳ Multi-langue (EN/FR/ES minimum avec sélecteur dans profil)
 
 ---
@@ -359,7 +359,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 8 - Consolidation Sync | ✅ Partiellement | ConflictResolver ✅, RetryStrategy ✅, DTOs ⚠️ |
 | Phase 9 - Tests de Parité | ⏳ À faire | Tests d'intégration Android/iOS |
 | Phase 10 - Parité Écrans Android | ⏳ À faire | Clients, Liste Achats, Liste Inventaires |
-| Phase 11 - Intégrité Référentielle | ⏳ À faire | Soft delete, validation suppression références |
+| Phase 11 - Intégrité Référentielle | ✅ Terminée | ReferentialIntegrityService + is_active |
 | Phase 12 - Internationalisation | ✅ Partiellement | 8 langues (EN/FR/DE/ES/IT/RU/Bemba/Nyanja), sélecteur profil iOS |
 | Phase 13 - Améliorations Sécurité | ⏳ À faire | Password complexity |
 
@@ -391,7 +391,7 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 |----------|-------|-------|--------|
 | 🔴 Haute | Double DB Android (Room + SQLDelight) | Phase 7 | ✅ Fait |
 | 🔴 Haute | Écrans Clients manquants Android | Phase 10 | ⏳ À faire |
-| 🔴 Haute | Suppression références utilisées non bloquée | Phase 11 | ⏳ À faire |
+| 🔴 Haute | Suppression références utilisées non bloquée | Phase 11 | ✅ Fait |
 | 🟡 Moyenne | ConflictResolver non partagé | Phase 8 | ✅ Fait |
 | 🟡 Moyenne | RetryStrategy différente | Phase 8 | ✅ Fait |
 | 🟡 Moyenne | Liste Achats manquante Android | Phase 10 | ⏳ À faire |
@@ -505,7 +505,7 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 
 ---
 
-## Phase 11 — Intégrité Référentielle et Soft Delete (2-3 semaines) ⏳ À FAIRE
+## Phase 11 — Intégrité Référentielle et Soft Delete (2-3 semaines) ✅ TERMINÉE
 
 > But : Empêcher la suppression des références utilisées et implémenter un système de désactivation (soft delete) pour les entités référencées.
 
@@ -1312,3 +1312,266 @@ val passwordStrong: String // "Strong"
 - Indicateur visuel de force
 - Strings localisés
 - Tests unitaires
+
+---
+
+## Phase 14 — Tests Maestro Permissions Granulaires (2-3 semaines) ⏳ À FAIRE
+
+> But : Tester de manière exhaustive le système de permissions avec des tests E2E Maestro, en vérifiant que chaque permission contrôle correctement la visibilité des modules.
+
+### 14.1. Préparation des comptes de test 🔴 PRIORITAIRE
+
+**Comptes à créer pour les tests :**
+```
+| Username           | Role     | Permissions                          |
+|--------------------|----------|--------------------------------------|
+| test_no_permission | User     | Aucune permission                    |
+| test_sites_only    | User     | Sites: view, create, edit, delete    |
+| test_products_only | User     | Products: view, create, edit, delete |
+| test_categories_only| User    | Categories: view, create, edit, delete|
+| test_customers_only| User     | Customers: view, create, edit, delete|
+| test_packaging_only| User     | PackagingTypes: view, create, edit, delete|
+| test_stock_only    | User     | Stock: view                          |
+| test_purchases_only| User     | Purchases: view, create, edit, delete|
+| test_sales_only    | User     | Sales: view, create, edit, delete    |
+| test_transfers_only| User     | Transfers: view, create, edit, delete|
+| test_inventory_only| User     | Inventory: view, create, edit, delete|
+| test_users_only    | User     | Users: view, create, edit, delete    |
+| test_audit_only    | User     | Audit: view                          |
+| admin              | Admin    | Toutes permissions                   |
+```
+
+**Script de création des comptes de test :**
+- [ ] Créer script SQL/migration pour insérer les comptes de test
+- [ ] Créer script Supabase pour les comptes distants
+- [ ] Documenter les credentials de test
+
+### 14.2. Tests de visibilité par module (écran Home) 🔴
+
+**Principe du test :**
+1. Se connecter avec un compte ayant UNE SEULE permission
+2. Vérifier que SEUL ce module est visible dans le menu
+3. Vérifier que les autres modules sont ABSENTS
+
+**Tests Maestro à créer dans `.maestro/permissions/` :**
+
+```yaml
+# 01_no_permission_visibility.yaml
+# Utilisateur sans aucune permission
+- launchApp
+- login: test_no_permission / password
+- assertNotVisible: "Purchase Products"
+- assertNotVisible: "Sell Products"
+- assertNotVisible: "Transfer Products"
+- assertNotVisible: "View Stock"
+- assertNotVisible: "Inventory"
+- assertNotVisible: "Administration"
+
+# 02_sites_only_visibility.yaml
+# Utilisateur avec permission Sites uniquement
+- launchApp
+- login: test_sites_only / password
+- assertVisible: "Administration"
+- tapOn: "Administration"
+- assertVisible: "Site Management"
+- assertNotVisible: "Manage Products"
+- assertNotVisible: "Manage Categories"
+- assertNotVisible: "Manage Customers"
+- assertNotVisible: "User Management"
+
+# 03_products_only_visibility.yaml
+# Utilisateur avec permission Products uniquement
+- launchApp
+- login: test_products_only / password
+- assertVisible: "Administration"
+- tapOn: "Administration"
+- assertVisible: "Manage Products"
+- assertNotVisible: "Site Management"
+- assertNotVisible: "Manage Categories"
+- assertNotVisible: "User Management"
+
+# ... et ainsi de suite pour chaque module
+```
+
+**Fichiers de test à créer :**
+- [ ] `.maestro/permissions/android/01_no_permission_visibility.yaml`
+- [ ] `.maestro/permissions/android/02_sites_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/03_products_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/04_categories_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/05_customers_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/06_packaging_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/07_stock_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/08_purchases_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/09_sales_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/10_transfers_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/11_inventory_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/12_users_only_visibility.yaml`
+- [ ] `.maestro/permissions/android/13_audit_only_visibility.yaml`
+- [ ] Dupliquer pour iOS dans `.maestro/permissions/ios/`
+
+### 14.3. Tests de modification de permission dynamique 🟡
+
+**Principe du test :**
+1. Se connecter avec un compte ayant permission A
+2. Vérifier que module A est visible
+3. (Via admin) Retirer permission A, ajouter permission B
+4. Rafraîchir/se reconnecter
+5. Vérifier que module A est ABSENT et module B est VISIBLE
+
+**Test Maestro :**
+```yaml
+# permission_change_test.yaml
+# Test de changement de permission
+
+# Étape 1: Login avec permission Sites
+- launchApp
+- login: test_dynamic_user / password
+- assertVisible: "Administration"
+- tapOn: "Administration"
+- assertVisible: "Site Management"
+- assertNotVisible: "Manage Products"
+- logout
+
+# Étape 2: Modifier les permissions via admin
+- login: admin / admin
+- tapOn: "Administration"
+- tapOn: "User Management"
+- tapOn: "test_dynamic_user"
+- # Retirer Sites, Ajouter Products
+- uncheckPermission: Sites
+- checkPermission: Products
+- tapOn: "Save"
+- logout
+
+# Étape 3: Vérifier les nouvelles permissions
+- login: test_dynamic_user / password
+- tapOn: "Administration"
+- assertNotVisible: "Site Management"
+- assertVisible: "Manage Products"
+```
+
+### 14.4. Tests des actions CRUD par permission 🟡
+
+**Principe du test :**
+- View only → peut voir la liste, pas créer/éditer/supprimer
+- Create → peut créer
+- Edit → peut modifier
+- Delete → peut supprimer
+
+**Tests par niveau de permission :**
+```yaml
+# products_view_only.yaml
+- login: test_products_view_only / password
+- tapOn: "Administration"
+- tapOn: "Manage Products"
+- assertVisible: "Product 1"  # Peut voir
+- assertNotVisible: "Add"      # Pas de bouton créer
+- tapOn: "Product 1"
+- assertNotVisible: "Edit"     # Pas de bouton éditer
+- assertNotVisible: "Delete"   # Pas de bouton supprimer
+
+# products_create_only.yaml
+- login: test_products_create_only / password
+- tapOn: "Administration"
+- tapOn: "Manage Products"
+- assertVisible: "Add"         # Peut créer
+- tapOn: "Add"
+- inputText: "New Product"
+- tapOn: "Save"
+- assertVisible: "New Product" # Création réussie
+
+# products_full_crud.yaml
+- login: test_products_full_crud / password
+- tapOn: "Administration"
+- tapOn: "Manage Products"
+- assertVisible: "Add"         # Peut créer
+- tapOn: "Product 1"
+- assertVisible: "Edit"        # Peut éditer
+- assertVisible: "Delete"      # Peut supprimer
+```
+
+**Fichiers de test CRUD à créer :**
+- [ ] `.maestro/permissions/crud/01_products_view_only.yaml`
+- [ ] `.maestro/permissions/crud/02_products_create_only.yaml`
+- [ ] `.maestro/permissions/crud/03_products_edit_only.yaml`
+- [ ] `.maestro/permissions/crud/04_products_delete_only.yaml`
+- [ ] `.maestro/permissions/crud/05_products_full_crud.yaml`
+- [ ] Répéter pour chaque module (Sites, Categories, Customers, etc.)
+
+### 14.5. Tests de combinaison de permissions 🟢
+
+**Principe du test :**
+Vérifier que les combinaisons de permissions fonctionnent correctement.
+
+```yaml
+# multi_permission_test.yaml
+- login: test_sites_and_products / password
+- assertVisible: "Administration"
+- tapOn: "Administration"
+- assertVisible: "Site Management"
+- assertVisible: "Manage Products"
+- assertNotVisible: "Manage Categories"
+- assertNotVisible: "User Management"
+```
+
+### 14.6. Tests de régression après sync 🟢
+
+**Principe du test :**
+Vérifier que les permissions sont correctement synchronisées avec Supabase.
+
+```yaml
+# permission_sync_test.yaml
+# Modifier les permissions côté Supabase, vérifier la sync
+
+# 1. Login et vérifier état initial
+- login: test_sync_user / password
+- assertVisible: "Site Management"
+
+# 2. Forcer une sync
+- pullToRefresh
+
+# 3. Vérifier que les permissions sont à jour
+# (après modification côté Supabase)
+```
+
+### 14.7. Structure des fichiers de test 🟢
+
+**Organisation des dossiers :**
+```
+.maestro/
+├── permissions/
+│   ├── android/
+│   │   ├── visibility/
+│   │   │   ├── 01_no_permission.yaml
+│   │   │   ├── 02_sites_only.yaml
+│   │   │   ├── 03_products_only.yaml
+│   │   │   └── ...
+│   │   ├── crud/
+│   │   │   ├── 01_view_only.yaml
+│   │   │   ├── 02_create_permission.yaml
+│   │   │   └── ...
+│   │   └── dynamic/
+│   │       ├── 01_permission_change.yaml
+│   │       └── 02_permission_sync.yaml
+│   ├── ios/
+│   │   └── (même structure que android)
+│   └── shared/
+│       └── test_users_setup.yaml
+└── config.yaml
+```
+
+### 14.8. Automatisation CI/CD 🟢
+
+**Intégration dans le pipeline CI :**
+- [ ] Ajouter job `maestro-permission-tests` dans GitHub Actions
+- [ ] Exécuter les tests sur émulateur/simulateur
+- [ ] Reporter les résultats avec screenshots
+
+### Livrables
+- 13+ comptes de test avec permissions granulaires
+- Suite de tests Maestro pour chaque permission individuelle
+- Tests de modification dynamique de permissions
+- Tests CRUD par niveau de permission
+- Tests de combinaisons de permissions
+- Intégration CI/CD
+- Documentation des scénarios de test
