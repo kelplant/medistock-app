@@ -267,7 +267,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 ---
 
-## Phase 8 — Consolidation Sync (2-3 semaines) ✅ PARTIELLEMENT TERMINÉE
+## Phase 8 — Consolidation Sync (2-3 semaines) ✅ TERMINÉE
 
 > But : Unifier les stratégies de synchronisation entre Android et iOS.
 
@@ -289,20 +289,27 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 ### 8.3. DTOs Sync unifiés ✅
 
-- ✅ Créé 13 DTOs dans `shared/data/dto/` avec sérialisation snake_case
+- ✅ Créé 17 DTOs dans `shared/data/dto/` avec sérialisation snake_case
+- ✅ Nouveaux DTOs ajoutés : `ProductPriceDto`, `CurrentStockDto`, `AuditHistoryDto`
+- ✅ `SaleDto` étendu avec champs iOS optionnels (discountAmount, finalAmount, paymentMethod, status, notes)
 - ✅ Tests unitaires de sérialisation/désérialisation (`DtoTests.kt`)
-- ⚠️ Android utilise encore ses propres DTOs dans `data/remote/dto/` (migration partielle)
-- ⚠️ iOS utilise encore `SyncDTOs.swift` (migration partielle)
+- ✅ Android migré vers DTOs shared (anciens fichiers `data/remote/dto/` supprimés)
+- ✅ iOS `SyncDTOs.swift` conservé pour Codable (requis par Supabase Swift), avec conversions vers shared
 
-### 8.4. SyncStatusManager partagé ⏳
+### 8.4. SyncStatusModel partagé ✅
 
-- [ ] Évaluer si `SyncStatusManager` doit être dans shared
-- [ ] Si oui, créer une interface commune avec implémentations platform-specific
+- ✅ Créé `SyncStatusModel.kt` dans `shared/domain/sync/`
+- ✅ Modèles partagés : `SyncMode`, `LastSyncInfo`, `GlobalSyncStatus`, `SyncIndicatorColor`
+- ✅ Logique computed properties partagée (isFullySynced, hasIssues, indicatorColor)
+- ✅ Android `SyncStatusManager` utilise les modèles shared
+- ✅ iOS `SyncStatusManager` avec conversions vers/depuis Kotlin
+- ✅ 37 tests unitaires (`SyncStatusModelTest.kt`)
 
 ### Livrables ✅
 - ✅ ConflictResolver et RetryStrategy partagés
-- ✅ Tests unitaires pour les nouvelles classes shared (`SyncInfrastructureTests.kt`)
-- ⚠️ Migration DTOs à finaliser (utiliser shared DTOs dans Android/iOS)
+- ✅ DTOs sync unifiés (17 DTOs dans shared)
+- ✅ SyncStatusModel partagé avec tests
+- ✅ Tests unitaires complets (`DtoTests.kt`, `SyncStatusModelTest.kt`, `SyncInfrastructureTests.kt`)
 
 ---
 
@@ -337,7 +344,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ Règle "stock négatif autorisé" appliquée partout (`BusinessWarning.InsufficientStock`)
 - ✅ Parité UI complète (écrans stock + version blocking)
 - ✅ Base de données unique (SQLDelight) sur Android
-- ⏳ Stratégies de sync unifiées (ConflictResolver, RetryStrategy)
+- ✅ Stratégies de sync unifiées (ConflictResolver, RetryStrategy, SyncStatusModel)
 - ⏳ Tests de parité Android/iOS
 - ✅ Intégrité référentielle (soft delete, validation suppression)
 - ⏳ Multi-langue (EN/FR/ES minimum avec sélecteur dans profil)
@@ -356,7 +363,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 5 - Durcissement Android | ✅ Terminée | ViewModels migrés |
 | Phase 6 - Consolidation Services | ✅ Terminée | PermissionService + SyncOrchestrator |
 | Phase 7 - Unification DB Android | ✅ Terminée | Room supprimé, SQLDelight seul |
-| Phase 8 - Consolidation Sync | ✅ Partiellement | ConflictResolver ✅, RetryStrategy ✅, DTOs ⚠️ |
+| Phase 8 - Consolidation Sync | ✅ Terminée | ConflictResolver ✅, RetryStrategy ✅, DTOs ✅, SyncStatusModel ✅ |
 | Phase 9 - Tests de Parité | ⏳ À faire | Tests d'intégration Android/iOS |
 | Phase 10 - Parité Écrans Android | ✅ Terminée | Clients ✅, Achats ✅, Inventaires ✅, Profil ✅, Menu align ✅ |
 | Phase 11 - Intégrité Référentielle | ✅ Terminée | ReferentialIntegrityService + is_active |
@@ -399,7 +406,7 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 | 🟡 Moyenne | Liste Inventaires manquante Android | Phase 10 | ✅ Fait |
 | 🟡 Moyenne | Application mono-langue (EN seulement) | Phase 12 | ✅ Fait (8 langues) |
 | 🟡 Moyenne | Password complexity obligatoire | Phase 13 | ✅ Fait |
-| 🟢 Basse | DTOs sync partiellement dupliqués | Phase 8 | ⚠️ Partiel |
+| 🟢 Basse | DTOs sync partiellement dupliqués | Phase 8 | ✅ Fait |
 | 🟢 Basse | Menu Profil manquant Android | Phase 10 | ✅ Fait |
 | 🟡 Moyenne | Ordre menus iOS différent d'Android | Phase 10 | ✅ Fait |
 
