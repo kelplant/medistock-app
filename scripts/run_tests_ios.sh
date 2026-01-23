@@ -70,9 +70,24 @@ echo "=========================================="
 
 # Run tests with iOS platform flag
 cd "$PROJECT_DIR"
-"$MAESTRO_BIN" -p ios test .maestro/ios/
 
-EXIT_CODE=$?
+# Run main iOS tests
+echo ">>> Running main iOS tests..."
+"$MAESTRO_BIN" -p ios test .maestro/ios/
+MAIN_EXIT_CODE=$?
+
+# Run permission tests
+echo ""
+echo ">>> Running permission tests (iOS)..."
+"$MAESTRO_BIN" -p ios test .maestro/permissions/ios/
+PERM_EXIT_CODE=$?
+
+# Combine exit codes
+if [ $MAIN_EXIT_CODE -eq 0 ] && [ $PERM_EXIT_CODE -eq 0 ]; then
+    EXIT_CODE=0
+else
+    EXIT_CODE=1
+fi
 
 echo ""
 echo "=========================================="

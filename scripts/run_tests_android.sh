@@ -67,9 +67,24 @@ echo "=========================================="
 
 # Run tests
 cd "$PROJECT_DIR"
-"$MAESTRO_BIN" test .maestro/android/
 
-EXIT_CODE=$?
+# Run main Android tests
+echo ">>> Running main Android tests..."
+"$MAESTRO_BIN" test .maestro/android/
+MAIN_EXIT_CODE=$?
+
+# Run permission tests
+echo ""
+echo ">>> Running permission tests (Android)..."
+"$MAESTRO_BIN" test .maestro/permissions/android/
+PERM_EXIT_CODE=$?
+
+# Combine exit codes
+if [ $MAIN_EXIT_CODE -eq 0 ] && [ $PERM_EXIT_CODE -eq 0 ]; then
+    EXIT_CODE=0
+else
+    EXIT_CODE=1
+fi
 
 echo ""
 echo "=========================================="
