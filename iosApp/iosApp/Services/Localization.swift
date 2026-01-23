@@ -164,10 +164,25 @@ enum Localized {
     static var selectLanguage: String { strings.selectLanguage }
 
     // Users
+    static var users: String { strings.users }
     static var fullName: String { strings.fullName }
     static var role: String { strings.role }
     static var admin: String { strings.admin }
     static var user: String { strings.user }
+    static var addUser: String { strings.addUser }
+    static var editUser: String { strings.editUser }
+    static var deleteUser: String { strings.deleteUser }
+    static var permissions: String { strings.permissions }
+    static var canView: String { strings.canView }
+    static var canCreate: String { strings.canCreate }
+    static var canEdit: String { strings.canEdit }
+    static var canDelete: String { strings.canDelete }
+
+    // Referential Integrity / Status
+    static var active: String { strings.active }
+    static var inactive: String { strings.inactive }
+    static var deactivate: String { strings.deactivate }
+    static var reactivate: String { strings.reactivate }
 }
 
 /// Available app languages

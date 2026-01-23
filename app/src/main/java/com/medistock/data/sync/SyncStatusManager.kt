@@ -5,6 +5,10 @@ import android.content.SharedPreferences
 import com.medistock.MedistockApplication
 import com.medistock.shared.data.repository.SyncQueueRepository
 import com.medistock.shared.domain.model.SyncStatus
+import com.medistock.shared.domain.sync.GlobalSyncStatus
+import com.medistock.shared.domain.sync.LastSyncInfo
+import com.medistock.shared.domain.sync.SyncIndicatorColor
+import com.medistock.shared.domain.sync.SyncMode
 import com.medistock.util.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -213,73 +217,7 @@ class SyncStatusManager private constructor(private val context: Context) {
             diff < 60_000 -> "à l'instant"
             diff < 3600_000 -> "${diff / 60_000} min"
             diff < 86400_000 -> "${diff / 3600_000}h"
-            else -> SimpleDateFormat("dd/MM HH:mm", Locale.FRANCE).format(Date(timestamp))
+            else -> SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(timestamp))
         }
     }
-}
-
-/**
- * Modes de synchronisation
- */
-enum class SyncMode {
-    /** Synchronisation automatique en arrière-plan */
-    AUTOMATIC,
-    /** Synchronisation manuelle uniquement */
-    MANUAL,
-    /** Mode hors ligne forcé (pas de sync même si connecté) */
-    OFFLINE_FORCED
-}
-
-/**
- * Informations sur la dernière synchronisation
- */
-data class LastSyncInfo(
-    val timestamp: Long? = null,
-    val success: Boolean = true,
-    val error: String? = null
-) {
-    val hasEverSynced: Boolean get() = timestamp != null
-}
-
-/**
- * État global de synchronisation
- */
-data class GlobalSyncStatus(
-    val pendingCount: Int = 0,
-    val conflictCount: Int = 0,
-    val isOnline: Boolean = false,
-    val syncMode: SyncMode = SyncMode.AUTOMATIC,
-    val lastSyncInfo: LastSyncInfo = LastSyncInfo(),
-    val isSyncing: Boolean = false
-) {
-    /** Indique si tout est synchronisé */
-    val isFullySynced: Boolean get() = pendingCount == 0 && conflictCount == 0
-
-    /** Indique s'il y a des problèmes nécessitant attention */
-    val hasIssues: Boolean get() = conflictCount > 0 || (!lastSyncInfo.success && lastSyncInfo.hasEverSynced)
-
-    /** Couleur suggérée pour l'indicateur UI */
-    val indicatorColor: SyncIndicatorColor get() = when {
-        hasIssues -> SyncIndicatorColor.ERROR
-        !isOnline -> SyncIndicatorColor.OFFLINE
-        isSyncing -> SyncIndicatorColor.SYNCING
-        pendingCount > 0 -> SyncIndicatorColor.PENDING
-        else -> SyncIndicatorColor.SYNCED
-    }
-}
-
-/**
- * Couleurs pour l'indicateur de sync UI
- */
-enum class SyncIndicatorColor {
-    /** Vert - tout est synchronisé */
-    SYNCED,
-    /** Jaune - modifications en attente */
-    PENDING,
-    /** Bleu - synchronisation en cours */
-    SYNCING,
-    /** Gris - hors ligne */
-    OFFLINE,
-    /** Rouge - erreur ou conflits */
-    ERROR
 }

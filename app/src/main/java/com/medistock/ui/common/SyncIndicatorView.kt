@@ -10,9 +10,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.medistock.R
-import com.medistock.data.sync.GlobalSyncStatus
-import com.medistock.data.sync.SyncIndicatorColor
 import com.medistock.data.sync.SyncStatusManager
+import com.medistock.shared.domain.sync.GlobalSyncStatus
+import com.medistock.shared.domain.sync.SyncIndicatorColor
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

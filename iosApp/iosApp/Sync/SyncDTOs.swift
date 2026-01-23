@@ -7,9 +7,19 @@ import shared
 // They exist because:
 // 1. Swift's Codable is required for Supabase JSON encoding on iOS
 // 2. Kotlin's kotlinx.serialization doesn't automatically provide Swift Codable conformance
+// 3. KMP interop doesn't support Swift Codable protocol conformance on Kotlin types
 //
-// The authoritative DTOs are in Kotlin. When updating field mappings or adding new DTOs,
-// update both the Kotlin DTOs and these Swift DTOs to maintain consistency.
+// AUTHORITATIVE SOURCE: The Kotlin DTOs in shared module are the source of truth.
+// When updating field mappings or adding new DTOs:
+// 1. First update the Kotlin DTOs in shared/src/commonMain/kotlin/com/medistock/shared/data/dto/
+// 2. Then update these Swift DTOs to maintain consistency
+//
+// Available shared DTOs (Kotlin):
+// - SiteDto, CategoryDto, ProductDto, CustomerDto, UserDto, UserPermissionDto
+// - SaleDto, SaleItemDto, SaleBatchAllocationDto
+// - PurchaseBatchDto, StockMovementDto, ProductTransferDto
+// - InventoryDto, PackagingTypeDto
+// - ProductPriceDto, CurrentStockDto, AuditHistoryDto (added in Phase 8)
 //
 // Note: The shared module's repositories, services, and business logic ARE used directly
 // from iOS. Only the JSON encoding layer uses these Swift-specific DTOs.

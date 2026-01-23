@@ -17,7 +17,13 @@ data class SaleDto(
     @SerialName("site_id") val siteId: String,
     @SerialName("created_at") val createdAt: Long,
     @SerialName("created_by") val createdBy: String,
-    @SerialName("client_id") val clientId: String? = null
+    @SerialName("client_id") val clientId: String? = null,
+    // Optional fields for iOS compatibility
+    @SerialName("discount_amount") val discountAmount: Double? = null,
+    @SerialName("final_amount") val finalAmount: Double? = null,
+    @SerialName("payment_method") val paymentMethod: String? = null,
+    val status: String? = null,
+    val notes: String? = null
 ) {
     fun toModel(): Sale = Sale(
         id = id,
