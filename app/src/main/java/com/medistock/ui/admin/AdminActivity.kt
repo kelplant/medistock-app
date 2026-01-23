@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
+import com.medistock.ui.customer.CustomerListActivity
 import com.medistock.ui.manage.ManageProductMenuActivity
 import com.medistock.ui.site.SiteListActivity
 import com.medistock.ui.movement.StockMovementListActivity
@@ -37,6 +38,11 @@ class AdminActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.btnManagePackagingTypes).setOnClickListener {
             startActivity(Intent(this, PackagingTypeListActivity::class.java))
+        }
+
+        // Customers management - visible for all admins
+        findViewById<android.view.View>(R.id.btnManageCustomers).setOnClickListener {
+            startActivity(Intent(this, CustomerListActivity::class.java))
         }
 
         // User management button - only visible for admins

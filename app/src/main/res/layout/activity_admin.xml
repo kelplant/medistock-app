@@ -26,12 +26,13 @@
                 android:layout_height="48dp"
                 android:text="📍"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/site_management_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Site Management"
+                android:text="@string/site_management"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
@@ -60,12 +61,13 @@
                 android:layout_height="48dp"
                 android:text="📦"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/manage_products_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Manage Products"
+                android:text="@string/manage_products"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
@@ -94,7 +96,8 @@
                 android:layout_height="48dp"
                 android:text="🔄"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/stock_movement_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -126,14 +129,50 @@
             <TextView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="📦"
+                android:text="🗃️"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/packaging_types_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Packaging Types"
+                android:text="@string/packaging_types"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp" />
+
+        <LinearLayout
+            android:id="@+id/btnManageCustomers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="👤"
+                android:gravity="center"
+                android:textSize="32sp"
+                android:contentDescription="@string/manage_customers_icon_desc" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_customers"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
@@ -162,12 +201,13 @@
                 android:layout_height="48dp"
                 android:text="👥"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/user_management_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="User Management"
+                android:text="@string/user_management"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
@@ -196,12 +236,13 @@
                 android:layout_height="48dp"
                 android:text="🧾"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/audit_history_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Audit History"
+                android:text="@string/audit_history"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
@@ -230,12 +271,13 @@
                 android:layout_height="48dp"
                 android:text="🔑"
                 android:gravity="center"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                android:contentDescription="@string/supabase_config_icon_desc" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Configuration Supabase"
+                android:text="@string/supabase_configuration"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
