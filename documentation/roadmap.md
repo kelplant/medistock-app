@@ -370,7 +370,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ Stratégies de sync unifiées (ConflictResolver, RetryStrategy, SyncStatusModel)
 - ✅ Tests de parité Android/iOS (~115 tests)
 - ✅ Intégrité référentielle (soft delete, validation suppression)
-- ⏳ Multi-langue (EN/FR/ES minimum avec sélecteur dans profil)
+- ✅ Multi-langue (8 langues avec sélecteur dans profil)
 
 ---
 
@@ -891,7 +891,7 @@ class SiteAdapter : RecyclerView.Adapter<SiteViewHolder>() {
 
 ---
 
-## Phase 12 — Internationalisation (i18n) Multi-langue (2-3 semaines) ⏳ À FAIRE
+## Phase 12 — Internationalisation (i18n) Multi-langue (2-3 semaines) ✅ TERMINÉE
 
 > But : Transformer les deux applications en multi-langue avec un système de gestion des traductions centralisé.
 
