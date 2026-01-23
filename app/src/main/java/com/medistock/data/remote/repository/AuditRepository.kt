@@ -1,6 +1,6 @@
 package com.medistock.data.remote.repository
 
-import com.medistock.data.remote.dto.AuditHistoryDto
+import com.medistock.shared.data.dto.AuditHistoryDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 

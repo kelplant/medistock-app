@@ -1,8 +1,8 @@
 package com.medistock.data.remote.repository
 
 import com.medistock.shared.data.dto.ProductDto
-import com.medistock.data.remote.dto.ProductPriceDto
-import com.medistock.data.remote.dto.CurrentStockDto
+import com.medistock.shared.data.dto.ProductPriceDto
+import com.medistock.shared.data.dto.CurrentStockDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 
