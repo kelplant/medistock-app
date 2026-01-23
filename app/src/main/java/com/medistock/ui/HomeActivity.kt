@@ -2,6 +2,7 @@ package com.medistock.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Module
 import com.medistock.shared.domain.model.Site
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.sales.SaleListActivity
@@ -60,6 +62,14 @@ class HomeActivity : AppCompatActivity() {
             showSiteSelectionDialog()
         }
 
+        // Setup button click handlers
+        setupButtonClickHandlers()
+
+        // Apply permission-based visibility
+        applyPermissionVisibility()
+    }
+
+    private fun setupButtonClickHandlers() {
         findViewById<android.view.View>(R.id.viewStockButton).setOnClickListener {
             startActivity(Intent(this, StockListActivity::class.java))
         }
@@ -82,6 +92,57 @@ class HomeActivity : AppCompatActivity() {
 
         findViewById<android.view.View>(R.id.adminButton).setOnClickListener {
             startActivity(Intent(this, AdminActivity::class.java))
+        }
+    }
+
+    /**
+     * Apply permission-based visibility to UI elements.
+     * Each operation button is shown/hidden based on the user's module permissions.
+     */
+    private fun applyPermissionVisibility() {
+        val userId = authManager.getUserId() ?: return // Not logged in, should not happen
+        val isAdmin = authManager.isAdmin()
+
+        lifecycleScope.launch {
+            try {
+                // Get all permissions at once for efficiency
+                val permissions = withContext(Dispatchers.IO) {
+                    sdk.permissionService.getAllModulePermissions(userId, isAdmin)
+                }
+
+                // Operations section
+                findViewById<View>(R.id.purchaseButton).visibility =
+                    if (permissions[Module.PURCHASES]?.canView == true) View.VISIBLE else View.GONE
+
+                findViewById<View>(R.id.sellProductButton).visibility =
+                    if (permissions[Module.SALES]?.canView == true) View.VISIBLE else View.GONE
+
+                findViewById<View>(R.id.transferProductButton).visibility =
+                    if (permissions[Module.TRANSFERS]?.canView == true) View.VISIBLE else View.GONE
+
+                findViewById<View>(R.id.viewStockButton).visibility =
+                    if (permissions[Module.STOCK]?.canView == true) View.VISIBLE else View.GONE
+
+                findViewById<View>(R.id.inventoryButton).visibility =
+                    if (permissions[Module.INVENTORY]?.canView == true) View.VISIBLE else View.GONE
+
+                // Administration button - show if user has ANY admin-level permission
+                val hasAnyAdminPermission = permissions[Module.ADMIN]?.canView == true ||
+                    permissions[Module.SITES]?.canView == true ||
+                    permissions[Module.PRODUCTS]?.canView == true ||
+                    permissions[Module.CATEGORIES]?.canView == true ||
+                    permissions[Module.PACKAGING_TYPES]?.canView == true ||
+                    permissions[Module.CUSTOMERS]?.canView == true ||
+                    permissions[Module.USERS]?.canView == true ||
+                    permissions[Module.AUDIT]?.canView == true
+
+                findViewById<View>(R.id.adminButton).visibility =
+                    if (hasAnyAdminPermission) View.VISIBLE else View.GONE
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // On error, show all buttons (fail-open for usability)
+            }
         }
     }
 

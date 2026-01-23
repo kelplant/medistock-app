@@ -5,7 +5,11 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
+import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.Module
 import com.medistock.ui.customer.CustomerListActivity
 import com.medistock.ui.manage.ManageProductMenuActivity
 import com.medistock.ui.site.SiteListActivity
@@ -13,8 +17,14 @@ import com.medistock.ui.movement.StockMovementListActivity
 import com.medistock.ui.user.UserListActivity
 import com.medistock.ui.packaging.PackagingTypeListActivity
 import com.medistock.util.AuthManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AdminActivity : AppCompatActivity() {
+
+    private lateinit var authManager: AuthManager
+    private lateinit var sdk: MedistockSDK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,51 +32,110 @@ class AdminActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Administration"
 
-        val authManager = AuthManager.getInstance(this)
+        authManager = AuthManager.getInstance(this)
+        sdk = MedistockApplication.sdk
 
-        findViewById<android.view.View>(R.id.btnManageSites).setOnClickListener {
+        // Setup click handlers
+        setupButtonClickHandlers()
+
+        // Apply permission-based visibility
+        applyPermissionVisibility()
+    }
+
+    private fun setupButtonClickHandlers() {
+        findViewById<View>(R.id.btnManageSites).setOnClickListener {
             startActivity(Intent(this, SiteListActivity::class.java))
         }
 
-        findViewById<android.view.View>(R.id.btnManageProducts).setOnClickListener {
+        findViewById<View>(R.id.btnManageProducts).setOnClickListener {
             startActivity(Intent(this, ManageProductMenuActivity::class.java))
         }
 
-        findViewById<android.view.View>(R.id.btnStockMovement).setOnClickListener {
+        findViewById<View>(R.id.btnStockMovement).setOnClickListener {
             startActivity(Intent(this, StockMovementListActivity::class.java))
         }
 
-        findViewById<android.view.View>(R.id.btnManagePackagingTypes).setOnClickListener {
+        findViewById<View>(R.id.btnManagePackagingTypes).setOnClickListener {
             startActivity(Intent(this, PackagingTypeListActivity::class.java))
         }
 
-        // Customers management - visible for all admins
-        findViewById<android.view.View>(R.id.btnManageCustomers).setOnClickListener {
+        findViewById<View>(R.id.btnManageCustomers).setOnClickListener {
             startActivity(Intent(this, CustomerListActivity::class.java))
         }
 
-        // User management button - only visible for admins
-        val btnManageUsers = findViewById<android.view.View>(R.id.btnManageUsers)
-        val btnAuditHistory = findViewById<android.view.View>(R.id.btnAuditHistory)
-
-        if (authManager.isAdmin()) {
-            btnManageUsers.visibility = View.VISIBLE
-            btnManageUsers.setOnClickListener {
-                startActivity(Intent(this, UserListActivity::class.java))
-            }
-
-            btnAuditHistory.visibility = View.VISIBLE
-            btnAuditHistory.setOnClickListener {
-                startActivity(Intent(this, AuditHistoryActivity::class.java))
-            }
-        } else {
-            btnManageUsers.visibility = View.GONE
-            btnAuditHistory.visibility = View.GONE
+        findViewById<View>(R.id.btnManageUsers).setOnClickListener {
+            startActivity(Intent(this, UserListActivity::class.java))
         }
 
-        // Supabase configuration - visible for all admins
-        findViewById<android.view.View>(R.id.btnSupabaseConfig).setOnClickListener {
+        findViewById<View>(R.id.btnAuditHistory).setOnClickListener {
+            startActivity(Intent(this, AuditHistoryActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnSupabaseConfig).setOnClickListener {
             startActivity(Intent(this, SupabaseConfigActivity::class.java))
+        }
+    }
+
+    /**
+     * Apply permission-based visibility to admin menu items.
+     * Each button is shown/hidden based on the user's module permissions.
+     */
+    private fun applyPermissionVisibility() {
+        val userId = authManager.getUserId() ?: return // Not logged in
+        val isAdmin = authManager.isAdmin()
+
+        lifecycleScope.launch {
+            try {
+                // Get all permissions at once for efficiency
+                val permissions = withContext(Dispatchers.IO) {
+                    sdk.permissionService.getAllModulePermissions(userId, isAdmin)
+                }
+
+                // Sites management
+                findViewById<View>(R.id.btnManageSites).visibility =
+                    if (permissions[Module.SITES]?.canView == true) View.VISIBLE else View.GONE
+
+                // Products management (includes Products and Categories)
+                val canViewProducts = permissions[Module.PRODUCTS]?.canView == true ||
+                    permissions[Module.CATEGORIES]?.canView == true
+                findViewById<View>(R.id.btnManageProducts).visibility =
+                    if (canViewProducts) View.VISIBLE else View.GONE
+
+                // Stock movements
+                findViewById<View>(R.id.btnStockMovement).visibility =
+                    if (permissions[Module.STOCK]?.canView == true) View.VISIBLE else View.GONE
+
+                // Packaging types
+                findViewById<View>(R.id.btnManagePackagingTypes).visibility =
+                    if (permissions[Module.PACKAGING_TYPES]?.canView == true) View.VISIBLE else View.GONE
+
+                // Customers management
+                findViewById<View>(R.id.btnManageCustomers).visibility =
+                    if (permissions[Module.CUSTOMERS]?.canView == true) View.VISIBLE else View.GONE
+
+                // User management
+                findViewById<View>(R.id.btnManageUsers).visibility =
+                    if (permissions[Module.USERS]?.canView == true) View.VISIBLE else View.GONE
+
+                // Audit history
+                findViewById<View>(R.id.btnAuditHistory).visibility =
+                    if (permissions[Module.AUDIT]?.canView == true) View.VISIBLE else View.GONE
+
+                // Supabase configuration - always visible for admins, or if user has ADMIN permission
+                findViewById<View>(R.id.btnSupabaseConfig).visibility =
+                    if (isAdmin || permissions[Module.ADMIN]?.canView == true) View.VISIBLE else View.GONE
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // On error, fallback to legacy behavior (only admins see Users/Audit)
+                if (isAdmin) {
+                    findViewById<View>(R.id.btnManageUsers).visibility = View.VISIBLE
+                    findViewById<View>(R.id.btnAuditHistory).visibility = View.VISIBLE
+                } else {
+                    findViewById<View>(R.id.btnManageUsers).visibility = View.GONE
+                    findViewById<View>(R.id.btnAuditHistory).visibility = View.GONE
+                }
+            }
         }
     }
 
