@@ -139,7 +139,7 @@ class MigrationManager {
                 let filePath = (migrationsPath as NSString).appendingPathComponent(fileName)
                 if let sql = try? String(contentsOfFile: filePath, encoding: .utf8) {
                     let name = String(fileName.dropLast(4)) // Remove .sql
-                    let checksum = sql.md5()
+                    let checksum = sql.sha256()
                     migrations.append((name: name, sql: sql, checksum: checksum))
                 }
             }
@@ -364,18 +364,19 @@ class MigrationManager {
 }
 #endif
 
-// MARK: - String MD5 Extension
+// MARK: - String SHA-256 Extension
 
 extension String {
-    func md5() -> String {
+    /// Calculate SHA-256 checksum (matches Edge Function implementation)
+    func sha256() -> String {
         let data = Data(self.utf8)
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
         _ = data.withUnsafeBytes {
-            CC_MD5($0.baseAddress, CC_LONG(data.count), &digest)
+            CC_SHA256($0.baseAddress, CC_LONG(data.count), &digest)
         }
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 }
 
-// Import CommonCrypto for MD5
+// Import CommonCrypto for SHA-256
 import CommonCrypto

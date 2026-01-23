@@ -299,6 +299,104 @@ WHERE username = 'le_username';
 
 ---
 
+## Sécurité
+
+### Architecture de sécurité
+
+L'authentification MediStock repose sur plusieurs couches de sécurité:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Couche 1: JWT                      │
+│  - Tokens signés par Supabase                        │
+│  - Expiration: 1 heure (configurable)                │
+│  - Refresh automatique via refresh_token             │
+└─────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────┐
+│              Couche 2: RLS Policies                  │
+│  - is_admin(): vérifie admin + is_active             │
+│  - has_site_access(): vérifie accès site + is_active │
+│  - Toutes les tables ont RLS activé                  │
+└─────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────┐
+│            Couche 3: Edge Functions                  │
+│  - requireAuth(): valide le JWT                      │
+│  - requireAdmin(): vérifie les droits admin          │
+│  - Vérification GitHub pour les migrations           │
+└─────────────────────────────────────────────────────┘
+```
+
+### Bonnes pratiques
+
+#### 1. Rate Limiting (Recommandé)
+
+L'endpoint `migrate-user-to-auth` ne requiert pas d'authentification (c'est le login).
+Il est recommandé d'activer le rate limiting au niveau Supabase:
+
+**Dashboard → Edge Functions → Settings → Rate Limiting**
+
+Configuration recommandée:
+- 10 requêtes par IP par minute pour `migrate-user-to-auth`
+- 100 requêtes par IP par minute pour les autres endpoints
+
+#### 2. JWT Expiration
+
+Pour une sécurité optimale, réduire la durée du JWT:
+
+**Dashboard → Settings → API → JWT Settings**
+- Expiration recommandée: 3600 secondes (1 heure)
+- L'app gère automatiquement le refresh
+
+#### 3. Désactivation d'utilisateur
+
+Quand un utilisateur est désactivé (`is_active = 0`):
+- Les RLS policies bloquent immédiatement l'accès aux données
+- L'utilisateur peut toujours avoir un JWT valide temporairement
+- Le JWT expirera naturellement (max 1 heure)
+
+Pour forcer la déconnexion immédiate:
+```sql
+-- Révoquer toutes les sessions d'un utilisateur
+SELECT auth.admin.delete_user_sessions('user-uuid-here');
+```
+
+#### 4. Audit des accès
+
+Les accès sont tracés dans `audit_history`:
+```sql
+SELECT * FROM audit_history
+WHERE user_id = 'user-uuid'
+ORDER BY timestamp DESC
+LIMIT 100;
+```
+
+### Vérification de l'intégrité des migrations
+
+Les migrations sont vérifiées contre le repository GitHub:
+
+1. L'app calcule le checksum SHA-256 du SQL
+2. L'Edge Function télécharge le fichier officiel depuis GitHub
+3. Comparaison des checksums
+4. Exécution uniquement si les checksums correspondent
+
+Cela empêche l'exécution de SQL malveillant même si un attaquant contrôle l'app.
+
+### Variables d'environnement requises
+
+| Variable | Description | Obligatoire |
+|----------|-------------|-------------|
+| `SUPABASE_URL` | URL du projet | Auto |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé admin | Auto |
+| `GITHUB_REPO` | Repo pour vérification migrations | Oui |
+| `GITHUB_BRANCH` | Branche (default: main) | Oui |
+| `GITHUB_TOKEN` | Token pour repos privés | Si privé |
+
+---
+
 ## Support
 
 Pour toute question ou problème:

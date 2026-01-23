@@ -16,12 +16,13 @@ function getGitHubConfig() {
 }
 
 /**
- * Calculate MD5 checksum of a string
+ * Calculate SHA-256 checksum of a string
+ * Note: SHA-256 is used instead of MD5 for better cryptographic security
  */
 export async function calculateChecksum(content: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(content)
-  const hashBuffer = await crypto.subtle.digest('MD5', data)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   return encodeHex(new Uint8Array(hashBuffer))
 }
 

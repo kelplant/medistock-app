@@ -410,22 +410,29 @@ class SupabaseService {
 
     // MARK: - Edge Functions
 
+    /// User data from migrate-user-to-auth response
+    struct MigrateUserData: Codable {
+        let id: String
+        let username: String
+        let name: String
+        let isAdmin: Bool
+    }
+
+    /// Session data from migrate-user-to-auth response
+    struct MigrateSessionData: Codable {
+        let accessToken: String
+        let refreshToken: String
+        let expiresAt: Int64?
+    }
+
     /// Response structure for migrate-user-to-auth Edge Function
+    /// Matches the nested structure returned by the Edge Function
     struct MigrateUserResponse: Codable {
         let success: Bool
         let message: String?
-        let accessToken: String?
-        let refreshToken: String?
-        let expiresAt: Int64?
-        let userId: String?
-
-        enum CodingKeys: String, CodingKey {
-            case success, message
-            case accessToken = "access_token"
-            case refreshToken = "refresh_token"
-            case expiresAt = "expires_at"
-            case userId = "user_id"
-        }
+        let error: String?
+        let user: MigrateUserData?
+        let session: MigrateSessionData?
     }
 
     /// Request structure for migrate-user-to-auth Edge Function
@@ -455,17 +462,15 @@ class SupabaseService {
 
         if response.success {
             // Store the tokens if migration was successful
-            if let accessToken = response.accessToken,
-               let refreshToken = response.refreshToken,
-               let expiresAt = response.expiresAt,
-               let userId = response.userId {
+            if let session = response.session,
+               let user = response.user {
                 keychain.storeAuthTokens(
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                    expiresAt: expiresAt,
-                    userId: userId
+                    accessToken: session.accessToken,
+                    refreshToken: session.refreshToken,
+                    expiresAt: session.expiresAt ?? 0,
+                    userId: user.id
                 )
-                debugLog("SupabaseService", "Migration successful, tokens stored")
+                debugLog("SupabaseService", "Migration successful, tokens stored for user: \(user.username)")
             }
         }
 
