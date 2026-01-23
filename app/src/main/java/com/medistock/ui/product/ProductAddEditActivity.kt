@@ -38,6 +38,7 @@ class ProductAddEditActivity : AppCompatActivity() {
     private lateinit var textMarginInfo: TextView
     private lateinit var btnSave: Button
     private lateinit var btnDelete: Button
+    private lateinit var editMinStock: EditText
 
     private var categories: List<Category> = emptyList()
     private var packagingTypes: List<PackagingType> = emptyList()
@@ -71,6 +72,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         textMarginInfo = findViewById(R.id.textMarginInfo)
         btnSave = findViewById(R.id.btnSaveProduct)
         btnDelete = findViewById(R.id.btnDeleteProduct)
+        editMinStock = findViewById(R.id.editMinStock)
 
         currentSiteId = PrefsHelper.getActiveSiteId(this)
 
@@ -276,6 +278,10 @@ class ProductAddEditActivity : AppCompatActivity() {
 
                 selectedCategoryId = product.categoryId
                 selectedMarginType = product.marginType ?: "percentage"
+
+                // Load min stock threshold
+                val minStock = product.minStock ?: 0.0
+                editMinStock.setText(if (minStock > 0) minStock.toString() else "")
             }
         }
     }
@@ -327,6 +333,9 @@ class ProductAddEditActivity : AppCompatActivity() {
         val effectiveUnitVolume = enteredConversionFactor ?: packagingType?.defaultConversionFactor ?: 1.0
         val currentUser = authManager.getUsername().ifBlank { "system" }
 
+        // Stock alert threshold (0 = disabled)
+        val minStock = editMinStock.text.toString().toDoubleOrNull() ?: 0.0
+
         // Create/Update product
         val currentTime = System.currentTimeMillis()
         val product = if (productId == null) {
@@ -341,6 +350,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
+                minStock = minStock,
                 description = descriptionText,
                 siteId = currentSiteId!!,
                 createdAt = currentTime,
@@ -362,6 +372,7 @@ class ProductAddEditActivity : AppCompatActivity() {
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
+                minStock = minStock,
                 description = descriptionText,
                 siteId = currentSiteId!!,
                 createdAt = createdAt,

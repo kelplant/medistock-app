@@ -1219,3 +1219,114 @@ getUserUsageDetails:
 SELECT
     (SELECT COUNT(*) FROM user_permissions WHERE user_id = :userId) AS permissions_count,
     (SELECT COUNT(*) FROM audit_history WHERE user_id = :userId) AS audit_count;
+
+-- ============================================
+-- NOTIFICATION SYSTEM
+-- ============================================
+
+-- Table locale pour cache des notifications (sync depuis Supabase)
+CREATE TABLE notification_events_local (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    reference_id TEXT,
+    reference_type TEXT,
+    site_id TEXT,
+    deep_link TEXT,
+    created_at INTEGER NOT NULL,
+    is_displayed INTEGER NOT NULL DEFAULT 0,
+    is_dismissed INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_notification_events_displayed ON notification_events_local(is_displayed);
+CREATE INDEX idx_notification_events_dismissed ON notification_events_local(is_dismissed);
+CREATE INDEX idx_notification_events_created_at ON notification_events_local(created_at DESC);
+
+-- ============================================
+-- QUERIES - Notifications
+-- ============================================
+
+-- Get all notifications
+getAllNotifications:
+SELECT * FROM notification_events_local ORDER BY created_at DESC;
+
+-- Get undisplayed notifications (not yet shown to user)
+getUndisplayedNotifications:
+SELECT * FROM notification_events_local
+WHERE is_displayed = 0 AND is_dismissed = 0
+ORDER BY created_at DESC;
+
+-- Get undismissed notifications (shown but not acknowledged)
+getUndismissedNotifications:
+SELECT * FROM notification_events_local
+WHERE is_dismissed = 0
+ORDER BY created_at DESC;
+
+-- Get notification by ID
+getNotificationById:
+SELECT * FROM notification_events_local WHERE id = ?;
+
+-- Get notifications by type
+getNotificationsByType:
+SELECT * FROM notification_events_local WHERE type = ? ORDER BY created_at DESC;
+
+-- Get notifications by site
+getNotificationsBySite:
+SELECT * FROM notification_events_local WHERE site_id = ? ORDER BY created_at DESC;
+
+-- Count undisplayed notifications
+countUndisplayedNotifications:
+SELECT COUNT(*) FROM notification_events_local WHERE is_displayed = 0 AND is_dismissed = 0;
+
+-- Count undismissed notifications
+countUndismissedNotifications:
+SELECT COUNT(*) FROM notification_events_local WHERE is_dismissed = 0;
+
+-- Mark notification as displayed
+markNotificationAsDisplayed:
+UPDATE notification_events_local SET is_displayed = 1 WHERE id = ?;
+
+-- Mark notification as dismissed
+markNotificationAsDismissed:
+UPDATE notification_events_local SET is_dismissed = 1 WHERE id = ?;
+
+-- Dismiss all notifications
+dismissAllNotifications:
+UPDATE notification_events_local SET is_dismissed = 1;
+
+-- Insert notification
+insertNotification:
+INSERT INTO notification_events_local(id, type, priority, title, message, reference_id, reference_type, site_id, deep_link, created_at, is_displayed, is_dismissed)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Upsert notification (preserve display/dismiss state if exists)
+upsertNotification:
+INSERT OR REPLACE INTO notification_events_local(id, type, priority, title, message, reference_id, reference_type, site_id, deep_link, created_at, is_displayed, is_dismissed)
+VALUES (
+    :id,
+    :type,
+    :priority,
+    :title,
+    :message,
+    :referenceId,
+    :referenceType,
+    :siteId,
+    :deepLink,
+    :createdAt,
+    COALESCE((SELECT is_displayed FROM notification_events_local WHERE id = :id), 0),
+    COALESCE((SELECT is_dismissed FROM notification_events_local WHERE id = :id), 0)
+);
+
+-- Delete notification
+deleteNotification:
+DELETE FROM notification_events_local WHERE id = ?;
+
+-- Delete old notifications (cleanup - older than X days)
+deleteOldNotifications:
+DELETE FROM notification_events_local WHERE created_at < ?;
+
+-- Delete dismissed notifications
+deleteDismissedNotifications:
+DELETE FROM notification_events_local WHERE is_dismissed = 1;

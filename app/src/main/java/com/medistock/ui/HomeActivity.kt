@@ -1,14 +1,23 @@
 package com.medistock.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
 import com.medistock.R
+import com.medistock.notification.NotificationSyncObserver
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Module
 import com.medistock.shared.domain.model.Site
@@ -19,6 +28,7 @@ import com.medistock.ui.purchase.PurchaseActivity
 import com.medistock.ui.inventory.InventoryActivity
 import com.medistock.ui.admin.AdminActivity
 import com.medistock.ui.transfer.TransferListActivity
+import com.medistock.ui.notification.NotificationCenterActivity
 import com.medistock.util.AuthManager
 import com.medistock.util.AppUpdateManager
 import com.medistock.util.PrefsHelper
@@ -31,8 +41,18 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var authManager: AuthManager
     private lateinit var sdk: MedistockSDK
+    private lateinit var notificationObserver: NotificationSyncObserver
     private var sites: List<Site> = emptyList()
     private var currentSite: Site? = null
+    private var notificationBadge: TextView? = null
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            notificationObserver.checkMissedNotifications()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +87,40 @@ class HomeActivity : AppCompatActivity() {
 
         // Apply permission-based visibility
         applyPermissionVisibility()
+
+        // Initialize notification observer and check for missed notifications
+        initializeNotifications()
+    }
+
+    private fun initializeNotifications() {
+        notificationObserver = NotificationSyncObserver(this, lifecycleScope)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    notificationObserver.checkMissedNotifications()
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Show explanation and then request
+                    AlertDialog.Builder(this)
+                        .setTitle("Notifications")
+                        .setMessage("Les notifications vous alertent des produits expirés et du stock faible.")
+                        .setPositiveButton("Activer") { _, _ ->
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        .setNegativeButton("Plus tard", null)
+                        .show()
+                }
+                else -> {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            notificationObserver.checkMissedNotifications()
+        }
     }
 
     private fun setupButtonClickHandlers() {
@@ -306,5 +360,58 @@ class HomeActivity : AppCompatActivity() {
     private fun navigateToUpdateScreen() {
         val intent = Intent(this, AppUpdateRequiredActivity::class.java)
         startActivity(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateNotificationBadge()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_home, menu)
+
+        // Setup notification badge
+        val menuItem = menu.findItem(R.id.action_notifications)
+        val actionView = menuItem.actionView as? FrameLayout
+        notificationBadge = actionView?.findViewById(R.id.notificationBadge)
+        actionView?.setOnClickListener {
+            startActivity(Intent(this, NotificationCenterActivity::class.java))
+        }
+
+        updateNotificationBadge()
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_notifications -> {
+                startActivity(Intent(this, NotificationCenterActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    /**
+     * Update the notification badge count in the action bar.
+     */
+    private fun updateNotificationBadge() {
+        lifecycleScope.launch {
+            try {
+                val count = withContext(Dispatchers.IO) {
+                    sdk.notificationRepository.countUndismissed()
+                }
+                notificationBadge?.apply {
+                    if (count > 0) {
+                        text = if (count > 99) "99+" else count.toString()
+                        visibility = View.VISIBLE
+                    } else {
+                        visibility = View.GONE
+                    }
+                }
+            } catch (e: Exception) {
+                notificationBadge?.visibility = View.GONE
+            }
+        }
     }
 }

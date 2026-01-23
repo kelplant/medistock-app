@@ -8,6 +8,9 @@
     <!-- Permission pour installer des APK (mise à jour auto via GitHub) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Permission pour les notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".MedistockApplication"
         android:allowBackup="true"
@@ -52,6 +55,7 @@
         <activity android:name=".ui.admin.AdminActivity" android:exported="false" />
         <activity android:name=".ui.admin.AuditHistoryActivity" android:exported="false" />
         <activity android:name=".ui.admin.SupabaseConfigActivity" android:exported="false" />
+        <activity android:name=".ui.admin.NotificationSettingsActivity" android:exported="false" />
         <activity android:name=".ui.AppUpdateRequiredActivity" android:exported="false" />
         <activity android:name=".ui.site.SiteListActivity" android:exported="false" />
         <activity android:name=".ui.site.SiteAddEditActivity" android:exported="false" />
@@ -64,6 +68,9 @@
         <activity android:name=".ui.customer.CustomerListActivity" android:exported="false" />
         <activity android:name=".ui.customer.CustomerAddEditActivity" android:exported="false" />
         <activity android:name=".ui.profile.ProfileActivity" android:exported="false" />
+
+        <!-- Notifications -->
+        <activity android:name=".ui.notification.NotificationCenterActivity" android:exported="false" />
 
         <!-- FileProvider pour partager les APK de mise à jour -->
         <provider

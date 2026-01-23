@@ -154,6 +154,47 @@
             android:textStyle="italic"
             android:layout_marginBottom="24dp" />
 
+        <!-- Stock Alert Section -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Alertes de stock"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Seuil d'alerte stock"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
+
+        <EditText
+            android:id="@+id/editMinStock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0 = pas d'alerte"
+            android:inputType="numberDecimal"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Une notification sera envoyée quand le stock descend sous ce seuil. Laissez à 0 pour désactiver les alertes."
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="italic"
+            android:layout_marginBottom="24dp" />
+
         <!-- Save button -->
         <Button
             android:id="@+id/btnSaveProduct"

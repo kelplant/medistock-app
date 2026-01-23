@@ -8,10 +8,13 @@ struct HomeView: View {
     @ObservedObject var session: SessionManager
     @ObservedObject private var permissions = PermissionManager.shared
     @ObservedObject private var syncStatus = SyncStatusManager.shared
+    @ObservedObject private var notificationObserver = NotificationObserver.shared
     @State private var selectedSite: Site?
     @State private var sites: [Site] = []
     @State private var showSiteSelector = false
     @State private var showProfileSheet = false
+    @State private var showNotificationPermissionAlert = false
+    @State private var showNotificationCenter = false
 
     var body: some View {
         List {
@@ -95,8 +98,15 @@ struct HomeView: View {
         .navigationTitle("MediStock")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showProfileSheet = true }) {
-                    ProfileBadgeView(session: session)
+                HStack(spacing: 16) {
+                    Button(action: { showNotificationCenter = true }) {
+                        NotificationBadgeView()
+                    }
+                    .accessibilityIdentifier("notifications-button")
+
+                    Button(action: { showProfileSheet = true }) {
+                        ProfileBadgeView(session: session)
+                    }
                 }
             }
         }
@@ -105,6 +115,16 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showProfileSheet) {
             ProfileMenuView(sdk: sdk, session: session)
+        }
+        .sheet(isPresented: $showNotificationCenter) {
+            NavigationView {
+                NotificationCenterView(sdk: sdk)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Fermer") { showNotificationCenter = false }
+                        }
+                    }
+            }
         }
         .task {
             // Start sync scheduler
@@ -120,6 +140,22 @@ struct HomeView: View {
             if selectedSite == nil {
                 selectedSite = sites.first
             }
+
+            // Initialize notifications
+            await initializeNotifications()
+        }
+        .alert("Notifications", isPresented: $showNotificationPermissionAlert) {
+            Button("Activer") {
+                Task {
+                    await notificationObserver.requestPermission()
+                    if notificationObserver.hasPermission {
+                        await notificationObserver.checkMissedNotifications()
+                    }
+                }
+            }
+            Button("Plus tard", role: .cancel) {}
+        } message: {
+            Text("Les notifications vous alertent des produits expirés et du stock faible.")
         }
         .onChange(of: selectedSite) { newSite in
             session.currentSiteId = newSite?.id
@@ -127,6 +163,18 @@ struct HomeView: View {
         .refreshable {
             await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
             await loadSites()
+        }
+    }
+
+    @MainActor
+    private func initializeNotifications() async {
+        await notificationObserver.checkPermissionStatus()
+
+        if notificationObserver.hasPermission {
+            await notificationObserver.checkMissedNotifications()
+        } else {
+            // Show permission request alert
+            showNotificationPermissionAlert = true
         }
     }
 
@@ -345,6 +393,14 @@ struct AdminMenuView: View {
 
             // Configuration section (Android #7)
             Section(header: Text("Configuration")) {
+                // Notification Settings - admin only
+                if session.isAdmin || permissions.canView(.admin) {
+                    NavigationLink(destination: NotificationSettingsView(sdk: sdk, session: session)) {
+                        HomeMenuRow(icon: "bell.badge", title: "Notification Settings", color: .red)
+                    }
+                    .accessibilityIdentifier("notification-settings-link")
+                }
+
                 NavigationLink(destination: SupabaseConfigView(sdk: sdk)) {
                     HomeMenuRow(icon: "server.rack", title: "Supabase Configuration", color: .mint)
                 }

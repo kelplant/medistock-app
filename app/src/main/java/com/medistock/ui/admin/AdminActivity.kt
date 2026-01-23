@@ -71,6 +71,10 @@ class AdminActivity : AppCompatActivity() {
             startActivity(Intent(this, AuditHistoryActivity::class.java))
         }
 
+        findViewById<View>(R.id.btnNotificationSettings).setOnClickListener {
+            startActivity(Intent(this, NotificationSettingsActivity::class.java))
+        }
+
         findViewById<View>(R.id.btnSupabaseConfig).setOnClickListener {
             startActivity(Intent(this, SupabaseConfigActivity::class.java))
         }
@@ -121,19 +125,25 @@ class AdminActivity : AppCompatActivity() {
                 findViewById<View>(R.id.btnAuditHistory).visibility =
                     if (permissions[Module.AUDIT]?.canView == true) View.VISIBLE else View.GONE
 
+                // Notification settings - visible for admins only
+                findViewById<View>(R.id.btnNotificationSettings).visibility =
+                    if (isAdmin || permissions[Module.ADMIN]?.canView == true) View.VISIBLE else View.GONE
+
                 // Supabase configuration - always visible for admins, or if user has ADMIN permission
                 findViewById<View>(R.id.btnSupabaseConfig).visibility =
                     if (isAdmin || permissions[Module.ADMIN]?.canView == true) View.VISIBLE else View.GONE
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // On error, fallback to legacy behavior (only admins see Users/Audit)
+                // On error, fallback to legacy behavior (only admins see Users/Audit/NotificationSettings)
                 if (isAdmin) {
                     findViewById<View>(R.id.btnManageUsers).visibility = View.VISIBLE
                     findViewById<View>(R.id.btnAuditHistory).visibility = View.VISIBLE
+                    findViewById<View>(R.id.btnNotificationSettings).visibility = View.VISIBLE
                 } else {
                     findViewById<View>(R.id.btnManageUsers).visibility = View.GONE
                     findViewById<View>(R.id.btnAuditHistory).visibility = View.GONE
+                    findViewById<View>(R.id.btnNotificationSettings).visibility = View.GONE
                 }
             }
         }

@@ -1,0 +1,125 @@
+# MediStock iOS - Notification Center Tests
+# Tests: View notifications, dismiss single notification, dismiss all
+appId: com.medistock.ios
+---
+
+# Pre-requisite: Login first
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login
+- assertVisible: "MediStock"
+- assertVisible: "Login"
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+# Take screenshot of home
+- takeScreenshot: "ios_notif_01_home"
+
+# ========================================
+# Test 1: Navigate to Notification Center
+# ========================================
+
+# Tap on notification badge button in toolbar
+- tapOn:
+    id: "notifications-button"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Take screenshot of notification center
+- takeScreenshot: "ios_notif_02_notification_center"
+
+# Verify notification center is displayed
+- assertVisible: "Notifications"
+
+# ========================================
+# Test 2: Handle empty state or notifications
+# ========================================
+
+# Check for empty state OR notification list
+# If empty state:
+- assertVisible:
+    id: "empty-notifications-view"
+    optional: true
+
+# If notifications exist, see the list
+- assertVisible:
+    id: "notifications-list"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "ios_notif_03_notification_list_or_empty"
+
+# ========================================
+# Test 3: Dismiss single notification (if exists)
+# ========================================
+
+# Try to find and tap dismiss button on first notification
+# Note: In iOS, dismiss buttons have IDs like dismiss-notification-{uuid}
+# We use a wildcard pattern
+- tapOn:
+    text: ".*xmark.*"
+    optional: true
+- tapOn:
+    id: "dismiss-notification-.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Take screenshot after dismiss attempt
+- takeScreenshot: "ios_notif_04_after_dismiss_single"
+
+# ========================================
+# Test 4: Dismiss all (if button visible)
+# ========================================
+
+# Try to tap "Tout acquitter" button (if visible)
+- tapOn:
+    text: "Tout acquitter"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Take screenshot after dismiss all
+- takeScreenshot: "ios_notif_05_after_dismiss_all"
+
+# Verify empty state is now shown (if all dismissed)
+- assertVisible:
+    id: "empty-notifications-view"
+    optional: true
+
+# ========================================
+# Test 5: Close notification center
+# ========================================
+
+# Tap "Fermer" button to close the sheet
+- tapOn:
+    text: "Fermer"
+
+- waitForAnimationToEnd
+
+# Verify back on home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "ios_notif_06_back_to_home"
