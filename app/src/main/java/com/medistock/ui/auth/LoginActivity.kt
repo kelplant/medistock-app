@@ -13,6 +13,8 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.compatibility.CompatibilityResult
+import com.medistock.data.remote.SupabaseAuthService
+import com.medistock.data.remote.SupabaseAuthResult
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.HomeActivity
@@ -55,6 +57,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var authManager: AuthManager
     private lateinit var sdk: MedistockSDK
     private lateinit var sharedAuthService: AuthService
+    private lateinit var supabaseAuthService: SupabaseAuthService
     private var realtimeJob: kotlinx.coroutines.Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +68,7 @@ class LoginActivity : AppCompatActivity() {
         authManager = AuthManager.getInstance(this)
         sdk = MedistockApplication.sdk
         sharedAuthService = sdk.createAuthService(AndroidPasswordVerifier)
+        supabaseAuthService = SupabaseAuthService()
 
         // Initialize views
         editUsername = findViewById(R.id.editUsername)
@@ -124,14 +128,82 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
+        // Disable button and hide previous error
+        btnLogin.isEnabled = false
+        tvError.visibility = View.GONE
+
         lifecycleScope.launch {
             try {
-                // Use shared AuthService for authentication
-                val result = sharedAuthService.authenticate(username, password)
+                // Step 1: Look up user in local DB to get UUID
+                val localUser = withContext(Dispatchers.IO) {
+                    sharedAuthService.getUserByUsername(username)
+                }
 
-                when (result) {
+                if (localUser == null) {
+                    // User not in local DB, try Supabase Auth migration Edge Function
+                    // This handles the case where user exists in Supabase but not locally
+                    val migrationResult = withContext(Dispatchers.IO) {
+                        supabaseAuthService.migrateUserToAuth(username, password)
+                    }
+                    handleSupabaseAuthResult(migrationResult)
+                    return@launch
+                }
+
+                // Check if user is active locally
+                if (!localUser.isActive) {
+                    showError("Ce compte est désactivé")
+                    return@launch
+                }
+
+                // Step 2: Try Supabase Auth if configured
+                if (SupabaseClientProvider.isConfigured(this@LoginActivity)) {
+                    val supabaseResult = withContext(Dispatchers.IO) {
+                        supabaseAuthService.authenticateWithSupabaseAuth(
+                            uuid = localUser.id,
+                            password = password,
+                            localUser = localUser
+                        )
+                    }
+
+                    when (supabaseResult) {
+                        is SupabaseAuthResult.Success -> {
+                            // Login with Supabase Auth session
+                            authManager.loginWithSession(supabaseResult.user, supabaseResult.session)
+                            navigateToHome()
+                            return@launch
+                        }
+                        is SupabaseAuthResult.NotConfigured -> {
+                            // Fall back to local authentication
+                            println("Supabase not configured, falling back to local auth")
+                        }
+                        is SupabaseAuthResult.InvalidCredentials -> {
+                            showError("Nom d'utilisateur ou mot de passe incorrect")
+                            return@launch
+                        }
+                        is SupabaseAuthResult.UserNotFound -> {
+                            showError("Utilisateur non trouvé")
+                            return@launch
+                        }
+                        is SupabaseAuthResult.UserInactive -> {
+                            showError("Ce compte est désactivé")
+                            return@launch
+                        }
+                        is SupabaseAuthResult.Error -> {
+                            // Log the error but try local auth as fallback
+                            println("Supabase Auth error: ${supabaseResult.message}, falling back to local auth")
+                        }
+                    }
+                }
+
+                // Step 3: Fall back to local authentication (offline mode)
+                val localResult = withContext(Dispatchers.IO) {
+                    sharedAuthService.authenticate(username, password)
+                }
+
+                when (localResult) {
                     is AuthResult.Success -> {
-                        authManager.login(result.user)
+                        // Local auth only (no Supabase session)
+                        authManager.login(localResult.user)
                         navigateToHome()
                     }
                     is AuthResult.InvalidCredentials -> {
@@ -144,13 +216,45 @@ class LoginActivity : AppCompatActivity() {
                         showError("Ce compte est désactivé")
                     }
                     is AuthResult.Error -> {
-                        showError("Erreur: ${result.message}")
+                        showError("Erreur: ${localResult.message}")
                     }
                 }
             } catch (e: Exception) {
                 showError("Erreur de connexion: ${e.message}")
+            } finally {
+                withContext(Dispatchers.Main) {
+                    btnLogin.isEnabled = true
+                }
             }
         }
+    }
+
+    /**
+     * Handle the result from Supabase Auth operations
+     */
+    private fun handleSupabaseAuthResult(result: SupabaseAuthResult) {
+        when (result) {
+            is SupabaseAuthResult.Success -> {
+                authManager.loginWithSession(result.user, result.session)
+                navigateToHome()
+            }
+            is SupabaseAuthResult.InvalidCredentials -> {
+                showError("Nom d'utilisateur ou mot de passe incorrect")
+            }
+            is SupabaseAuthResult.UserNotFound -> {
+                showError("Utilisateur non trouvé")
+            }
+            is SupabaseAuthResult.UserInactive -> {
+                showError("Ce compte est désactivé")
+            }
+            is SupabaseAuthResult.NotConfigured -> {
+                showError("Supabase n'est pas configuré")
+            }
+            is SupabaseAuthResult.Error -> {
+                showError("Erreur: ${result.message}")
+            }
+        }
+        btnLogin.isEnabled = true
     }
 
     private suspend fun createDefaultAdminIfNeeded() {

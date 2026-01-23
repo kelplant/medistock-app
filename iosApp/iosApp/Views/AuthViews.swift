@@ -142,6 +142,11 @@ class SessionManager: ObservableObject {
         didSet { UserDefaults.standard.set(currentSiteId, forKey: "medistock_current_site") }
     }
 
+    /// Whether the user has a valid Supabase Auth session
+    @Published var hasAuthSession: Bool = false
+
+    private let keychain = KeychainService.shared
+
     private init() {
         self.isLoggedIn = UserDefaults.standard.bool(forKey: "medistock_is_logged_in")
         self.userId = UserDefaults.standard.string(forKey: "medistock_user_id") ?? ""
@@ -149,6 +154,9 @@ class SessionManager: ObservableObject {
         self.fullName = UserDefaults.standard.string(forKey: "medistock_fullname") ?? ""
         self.isAdmin = UserDefaults.standard.bool(forKey: "medistock_is_admin")
         self.currentSiteId = UserDefaults.standard.string(forKey: "medistock_current_site")
+
+        // Check for stored auth tokens
+        self.hasAuthSession = keychain.hasAuthTokens && !keychain.areAuthTokensExpired
 
         // Load permissions if already logged in
         if isLoggedIn && !userId.isEmpty {
@@ -163,6 +171,8 @@ class SessionManager: ObservableObject {
         self.fullName = fullName
         self.isAdmin = isAdmin
         self.isLoggedIn = true
+        // Update auth session status
+        self.hasAuthSession = keychain.hasAuthTokens && !keychain.areAuthTokensExpired
     }
 
     func logout() {
@@ -172,6 +182,22 @@ class SessionManager: ObservableObject {
         self.fullName = ""
         self.isAdmin = false
         self.currentSiteId = nil
+        self.hasAuthSession = false
         PermissionManager.shared.clearPermissions()
+
+        // Sign out from Supabase Auth
+        Task {
+            await AuthService.shared.signOut()
+        }
+    }
+
+    /// Refresh auth session status
+    func refreshAuthStatus() {
+        hasAuthSession = keychain.hasAuthTokens && !keychain.areAuthTokensExpired
+    }
+
+    /// Check if we need to re-authenticate (token expired)
+    var needsReauthentication: Bool {
+        return isLoggedIn && !hasAuthSession && SupabaseService.shared.isConfigured
     }
 }

@@ -76,9 +76,11 @@ class MigrationManager {
 
     private let supabase: SupabaseClient
 
-    init() {
+    /// Creates a MigrationManager. Returns nil if Supabase client is not configured.
+    init?() {
         guard let client = SupabaseService.shared.currentClient() else {
-            fatalError("Supabase client not configured for migrations")
+            debugLog("MigrationManager", "Supabase client not configured - cannot initialize")
+            return nil
         }
         self.supabase = client
     }
@@ -137,7 +139,7 @@ class MigrationManager {
                 let filePath = (migrationsPath as NSString).appendingPathComponent(fileName)
                 if let sql = try? String(contentsOfFile: filePath, encoding: .utf8) {
                     let name = String(fileName.dropLast(4)) // Remove .sql
-                    let checksum = sql.md5()
+                    let checksum = sql.sha256()
                     migrations.append((name: name, sql: sql, checksum: checksum))
                 }
             }
@@ -180,8 +182,41 @@ class MigrationManager {
 
     // MARK: - Apply Migration
 
-    /// Applique une migration
+    /// Applique une migration via Edge Function (requires auth)
+    /// This method requires the user to be authenticated with Supabase Auth
     func applyMigration(name: String, sql: String, checksum: String?, appliedBy: String = "ios_app") async -> MigrationResult {
+        do {
+            // Use the Edge Function instead of direct RPC
+            // This requires a valid auth session
+            let response = try await SupabaseService.shared.applyMigration(
+                name: name,
+                sql: sql,
+                checksum: checksum,
+                appliedBy: appliedBy
+            )
+
+            return MigrationResult(
+                success: response.success,
+                alreadyApplied: response.alreadyApplied,
+                message: response.message,
+                executionTimeMs: response.executionTimeMs,
+                error: response.error
+            )
+        } catch {
+            print("Erreur lors de l'application de la migration \(name): \(error.localizedDescription)")
+            return MigrationResult(
+                success: false,
+                alreadyApplied: false,
+                message: "Failed to apply migration: \(error.localizedDescription)",
+                executionTimeMs: nil,
+                error: error.localizedDescription
+            )
+        }
+    }
+
+    /// Applique une migration via RPC direct (fallback, no auth required)
+    /// Use this for migrations that don't require authentication
+    func applyMigrationDirect(name: String, sql: String, checksum: String?, appliedBy: String = "ios_app") async -> MigrationResult {
         do {
             let params: [String: AnyJSON] = [
                 "p_name": .string(name),
@@ -207,7 +242,7 @@ class MigrationManager {
 
             return MigrationResult(success: false, alreadyApplied: false, message: "Failed to parse response", executionTimeMs: nil, error: nil)
         } catch {
-            print("❌ Erreur lors de l'application de la migration \(name): \(error.localizedDescription)")
+            print("Erreur lors de l'application de la migration \(name): \(error.localizedDescription)")
             return MigrationResult(
                 success: false,
                 alreadyApplied: false,
@@ -329,18 +364,19 @@ class MigrationManager {
 }
 #endif
 
-// MARK: - String MD5 Extension
+// MARK: - String SHA-256 Extension
 
 extension String {
-    func md5() -> String {
+    /// Calculate SHA-256 checksum (matches Edge Function implementation)
+    func sha256() -> String {
         let data = Data(self.utf8)
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
         _ = data.withUnsafeBytes {
-            CC_MD5($0.baseAddress, CC_LONG(data.count), &digest)
+            CC_SHA256($0.baseAddress, CC_LONG(data.count), &digest)
         }
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 }
 
-// Import CommonCrypto for MD5
+// Import CommonCrypto for SHA-256
 import CommonCrypto

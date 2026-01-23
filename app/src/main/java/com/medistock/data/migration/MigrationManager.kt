@@ -167,12 +167,18 @@ class MigrationManager(
     /**
      * Exécute toutes les migrations en attente
      *
+     * IMPORTANT: This method now requires authentication. Pass the Supabase Auth
+     * access token to use the secure Edge Function for migration execution.
+     * If no token is provided, falls back to direct RPC (legacy mode).
+     *
      * @param listener Callback optionnel pour suivre la progression
      * @param appliedBy Identifiant de l'utilisateur/app qui applique les migrations
+     * @param accessToken Supabase Auth access token for Edge Function authentication
      */
     suspend fun runPendingMigrations(
         listener: MigrationProgressListener? = null,
-        appliedBy: String = "app"
+        appliedBy: String = "app",
+        accessToken: String? = null
     ): MigrationRunResult {
         // Vérifier si le système de migration est installé
         if (!repository.isMigrationSystemInstalled()) {
@@ -201,7 +207,12 @@ class MigrationManager(
             return result
         }
 
-        println("📦 ${pendingMigrations.size} migration(s) en attente")
+        println("Pending migrations: ${pendingMigrations.size} migration(s)")
+        if (accessToken != null) {
+            println("Using Edge Function for secure migration execution")
+        } else {
+            println("Warning: No access token provided, using legacy RPC method")
+        }
 
         val applied = mutableListOf<String>()
         val failed = mutableListOf<Pair<String, String>>()
@@ -209,28 +220,29 @@ class MigrationManager(
 
         pendingMigrations.forEachIndexed { index, migration ->
             listener?.onMigrationStart(migration.name, index + 1, pendingMigrations.size)
-            println("⏳ Application de ${migration.name}...")
+            println("Applying migration: ${migration.name}...")
 
             val result = repository.applyMigration(
                 name = migration.name,
                 sql = migration.sql,
                 checksum = migration.checksum,
-                appliedBy = appliedBy
+                appliedBy = appliedBy,
+                accessToken = accessToken
             )
 
             listener?.onMigrationComplete(migration.name, result)
 
             when {
                 result.alreadyApplied -> {
-                    println("⏭️ ${migration.name} déjà appliquée")
+                    println("Skipped: ${migration.name} (already applied)")
                     skipped.add(migration.name)
                 }
                 result.success -> {
-                    println("✅ ${migration.name} appliquée en ${result.executionTimeMs}ms")
+                    println("Success: ${migration.name} applied in ${result.executionTimeMs}ms")
                     applied.add(migration.name)
                 }
                 else -> {
-                    println("❌ ${migration.name} échouée: ${result.error}")
+                    println("Failed: ${migration.name} - ${result.error}")
                     failed.add(migration.name to (result.error ?: "Unknown error"))
                     // On arrête en cas d'échec pour éviter les problèmes de dépendances
                     val runResult = MigrationRunResult(

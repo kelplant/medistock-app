@@ -138,7 +138,10 @@ struct ContentView: View {
             return
         }
 
-        let migrationManager = MigrationManager()
+        guard let migrationManager = MigrationManager() else {
+            print("⚠️ MigrationManager non initialisé - migrations ignorées")
+            return
+        }
 
         // Run pending migrations
         let result = await migrationManager.runPendingMigrations(appliedBy: "ios_app")

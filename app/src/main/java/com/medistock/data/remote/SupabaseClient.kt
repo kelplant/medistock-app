@@ -4,6 +4,9 @@ import android.content.Context
 import com.medistock.util.SecureSupabasePreferences
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
+import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 import io.ktor.client.engine.okhttp.OkHttp
@@ -36,6 +39,23 @@ object SupabaseClientProvider {
     fun isConfigured(context: Context): Boolean {
         val prefs = SecureSupabasePreferences(context)
         return prefs.isConfigured()
+    }
+
+    /**
+     * Check if client is configured using stored application context
+     * @return true if configured, false if not or if context is not available
+     */
+    fun isConfigured(): Boolean {
+        val ctx = appContext ?: return false
+        return isConfigured(ctx)
+    }
+
+    /**
+     * Check if client is initialized and ready to use
+     * @return true if client is available
+     */
+    fun isInitialized(): Boolean {
+        return _client != null
     }
 
     /**
@@ -81,6 +101,15 @@ object SupabaseClientProvider {
 
                 // Installation du module Realtime pour les subscriptions
                 install(Realtime)
+
+                // Installation du module Auth pour Supabase Auth
+                install(Auth) {
+                    // Auto-refresh tokens
+                    alwaysAutoRefresh = true
+                }
+
+                // Installation du module Functions pour les Edge Functions
+                install(Functions)
             }
 
             if (SupabaseConfig.DEBUG_MODE) {

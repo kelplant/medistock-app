@@ -146,8 +146,13 @@ struct NotificationSettingsView: View {
         }
 
         do {
-            let settings: NotificationSettingsDto? = try await SupabaseService.shared.client
-                .from("notification_settings")
+            guard let query = SupabaseService.shared.from("notification_settings") else {
+                errorMessage = "Supabase client not available"
+                isLoading = false
+                return
+            }
+
+            let settings: NotificationSettingsDto? = try await query
                 .select()
                 .single()
                 .execute()
@@ -214,8 +219,13 @@ struct NotificationSettingsView: View {
                     updated_by: session.userId
                 )
 
-                try await SupabaseService.shared.client
-                    .from("notification_settings")
+                guard let query = SupabaseService.shared.from("notification_settings") else {
+                    errorMessage = "Supabase client not available"
+                    isSaving = false
+                    return
+                }
+
+                try await query
                     .upsert(settings)
                     .execute()
 

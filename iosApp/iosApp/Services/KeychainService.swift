@@ -11,6 +11,10 @@ class KeychainService {
     enum KeychainKey: String {
         case supabaseUrl = "supabase_url"
         case supabaseAnonKey = "supabase_anon_key"
+        case authAccessToken = "auth_access_token"
+        case authRefreshToken = "auth_refresh_token"
+        case authExpiresAt = "auth_expires_at"
+        case authUserId = "auth_user_id"
     }
 
     private init() {}
@@ -103,5 +107,58 @@ class KeychainService {
     /// Check if Supabase credentials are stored
     var hasStoredCredentials: Bool {
         return get(.supabaseUrl) != nil && get(.supabaseAnonKey) != nil
+    }
+
+    // MARK: - Auth Token Management
+
+    /// Store auth session tokens securely
+    /// - Parameters:
+    ///   - accessToken: The JWT access token
+    ///   - refreshToken: The refresh token for token renewal
+    ///   - expiresAt: Token expiration timestamp (Unix epoch)
+    ///   - userId: The Supabase Auth user ID
+    func storeAuthTokens(accessToken: String, refreshToken: String, expiresAt: Int64, userId: String) {
+        save(accessToken, for: .authAccessToken)
+        save(refreshToken, for: .authRefreshToken)
+        save(String(expiresAt), for: .authExpiresAt)
+        save(userId, for: .authUserId)
+        debugLog("KeychainService", "Stored auth tokens for user: \(userId)")
+    }
+
+    /// Retrieve stored auth tokens
+    /// - Returns: Tuple of (accessToken, refreshToken, expiresAt, userId) or nil if not stored
+    func getAuthTokens() -> (accessToken: String, refreshToken: String, expiresAt: Int64, userId: String)? {
+        guard let accessToken = get(.authAccessToken),
+              let refreshToken = get(.authRefreshToken),
+              let expiresAtStr = get(.authExpiresAt),
+              let expiresAt = Int64(expiresAtStr),
+              let userId = get(.authUserId) else {
+            return nil
+        }
+        return (accessToken, refreshToken, expiresAt, userId)
+    }
+
+    /// Clear auth tokens from Keychain
+    func clearAuthTokens() {
+        delete(.authAccessToken)
+        delete(.authRefreshToken)
+        delete(.authExpiresAt)
+        delete(.authUserId)
+        debugLog("KeychainService", "Cleared auth tokens")
+    }
+
+    /// Check if auth tokens are stored
+    var hasAuthTokens: Bool {
+        return get(.authAccessToken) != nil && get(.authRefreshToken) != nil
+    }
+
+    /// Check if stored auth tokens are expired
+    var areAuthTokensExpired: Bool {
+        guard let expiresAtStr = get(.authExpiresAt),
+              let expiresAt = Int64(expiresAtStr) else {
+            return true
+        }
+        // Add 300 second (5 minute) buffer to account for clock skew and match Android behavior
+        return Int64(Date().timeIntervalSince1970) >= (expiresAt - 300)
     }
 }
