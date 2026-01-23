@@ -1,0 +1,259 @@
+# MediStock Android - Language Switching Tests
+# Tests: Language selection, UI updates, and persistence
+#
+# This test verifies:
+# 1. Language can be changed from profile settings
+# 2. UI updates immediately after language change
+# 3. Language preference persists after app restart
+#
+# Supported languages: EN, FR, DE, ES, IT, RU, BM, NY
+
+appId: com.medistock
+---
+
+# ============================================
+# SETUP: Login
+# ============================================
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+
+- takeScreenshot: "android_language_test_start_english"
+
+# ============================================
+# TEST 1: Navigate to Profile and Language Settings
+# ============================================
+
+# Tap on profile in toolbar
+- tapOn:
+    id: ".*profile.*"
+    optional: true
+- tapOn:
+    text: ".*Profile.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify profile screen opened
+- assertVisible: "Profile"
+
+# Tap on Language option
+- tapOn:
+    text: "Language"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Take screenshot of language dialog
+- takeScreenshot: "android_language_dialog_opened"
+
+# ============================================
+# TEST 2: Verify All Languages Listed in Dialog
+# ============================================
+
+# Verify all 8 languages are displayed in the dialog
+- assertVisible: "English"
+- assertVisible: "Français"
+- assertVisible: "Deutsch"
+- assertVisible: "Español"
+- assertVisible: "Italiano"
+- assertVisible: "Русский"
+- assertVisible: "Ichibemba"
+- assertVisible: "Chinyanja"
+
+# ============================================
+# TEST 3: Switch to French
+# ============================================
+
+- tapOn: "Français"
+
+# Wait for activity to recreate
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Activity is recreated, should show French current language
+- assertVisible:
+    text: "Français"
+
+- takeScreenshot: "android_language_switched_to_french"
+
+# ============================================
+# TEST 4: Switch to German
+# ============================================
+
+# Tap on Language again (layout shows "Language" or localized)
+- tapOn:
+    text: "Language"
+    optional: true
+- tapOn:
+    text: ".*Language.*|.*Langue.*|.*Sprache.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch to German
+- tapOn: "Deutsch"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify German is now selected
+- assertVisible:
+    text: "Deutsch"
+
+- takeScreenshot: "android_language_switched_to_german"
+
+# ============================================
+# TEST 5: Switch to Spanish
+# ============================================
+
+- tapOn:
+    text: ".*Language.*|.*Langue.*|.*Sprache.*|.*Idioma.*"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch to Spanish
+- tapOn: "Español"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify Spanish is now selected
+- assertVisible:
+    text: "Español"
+
+- takeScreenshot: "android_language_switched_to_spanish"
+
+# ============================================
+# TEST 6: Switch Back to English
+# ============================================
+
+- tapOn:
+    text: ".*Language.*|.*Langue.*|.*Sprache.*|.*Idioma.*"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch back to English
+- tapOn: "English"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify English is now selected
+- assertVisible:
+    text: "English"
+
+- takeScreenshot: "android_language_switched_back_to_english"
+
+# ============================================
+# TEST 7: Persistence - Set to French and Restart
+# ============================================
+
+# Change to French
+- tapOn:
+    text: "Language"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- tapOn: "Français"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify French is active
+- assertVisible:
+    text: "Français"
+
+# Go back to home
+- back
+
+- waitForAnimationToEnd
+
+# Stop and restart the app
+- stopApp
+
+- launchApp
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ============================================
+# TEST 8: Verify Language Persisted After Restart
+# ============================================
+
+# Login again
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to profile
+- tapOn:
+    id: ".*profile.*"
+    optional: true
+- tapOn:
+    text: ".*Profile.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify language is still French
+- assertVisible:
+    text: "Français"
+
+- takeScreenshot: "android_language_persisted_french"
+
+# ============================================
+# CLEANUP: Reset to English
+# ============================================
+
+- tapOn:
+    text: ".*Language.*|.*Langue.*"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch back to English
+- tapOn: "English"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify English is restored
+- assertVisible:
+    text: "English"
+
+- takeScreenshot: "android_language_test_cleanup_complete"

@@ -28,14 +28,29 @@ class ProfileActivity : AppCompatActivity() {
         private const val PREFS_NAME = "medistock_prefs"
         private const val KEY_LANGUAGE = "selected_language"
 
-        fun getSavedLanguageCode(context: Context): String {
+        fun getSavedLanguageCode(context: Context): String? {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            return prefs.getString(KEY_LANGUAGE, SupportedLocale.DEFAULT.code) ?: SupportedLocale.DEFAULT.code
+            return prefs.getString(KEY_LANGUAGE, null)
         }
 
+        /**
+         * Initialize language from saved preference or system language.
+         * Matches iOS behavior: tries saved preference first, then system language, then defaults to English.
+         */
         fun initializeLanguage(context: Context) {
-            val code = getSavedLanguageCode(context)
-            LocalizationManager.setLocaleByCode(code)
+            val savedCode = getSavedLanguageCode(context)
+            if (savedCode != null) {
+                // Use saved preference
+                LocalizationManager.setLocaleByCode(savedCode)
+            } else {
+                // Try system language (first 2 chars of locale)
+                val systemLanguage = java.util.Locale.getDefault().language
+                val found = LocalizationManager.setLocaleByCode(systemLanguage)
+                if (!found) {
+                    // Fall back to English
+                    LocalizationManager.setLocale(SupportedLocale.DEFAULT)
+                }
+            }
         }
     }
 
@@ -126,10 +141,7 @@ class ProfileActivity : AppCompatActivity() {
         // Update LocalizationManager
         LocalizationManager.setLocale(locale)
 
-        // Update UI
-        textCurrentLanguage.text = locale.nativeDisplayName
-
-        // Recreate activity to apply new language
+        // Recreate activity to apply new language (UI will be updated automatically)
         recreate()
     }
 
