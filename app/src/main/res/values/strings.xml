@@ -52,6 +52,10 @@
     <string name="audit_history">Audit History</string>
     <string name="supabase_configuration">Supabase Configuration</string>
 
+    <!-- Language -->
+    <string name="language">Language</string>
+    <string name="select_language">Select Language</string>
+
     <!-- Accessibility descriptions -->
     <string name="site_management_icon_desc">Site management icon</string>
     <string name="manage_products_icon_desc">Manage products icon</string>

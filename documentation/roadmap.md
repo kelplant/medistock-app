@@ -360,7 +360,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 9 - Tests de Parité | ⏳ À faire | Tests d'intégration Android/iOS |
 | Phase 10 - Parité Écrans Android | ✅ Terminée | Clients ✅, Achats ✅, Inventaires ✅, Profil ✅, Menu align ✅ |
 | Phase 11 - Intégrité Référentielle | ✅ Terminée | ReferentialIntegrityService + is_active |
-| Phase 12 - Internationalisation | ✅ Partiellement | 8 langues, sélecteur iOS ✅, sélecteur Android ⏳ |
+| Phase 12 - Internationalisation | ✅ Terminée | 8 langues, sélecteur iOS ✅, sélecteur Android ✅ |
 | Phase 13 - Améliorations Sécurité | ⏳ À faire | Password complexity |
 | Phase 14 - Tests Maestro Permissions | ⏳ À faire | Tests granulaires par permission |
 

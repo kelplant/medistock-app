@@ -1,5 +1,6 @@
 package com.medistock.ui.profile
 
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -9,6 +10,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.medistock.R
+import com.medistock.shared.i18n.LocalizationManager
+import com.medistock.shared.i18n.SupportedLocale
 import com.medistock.ui.auth.ChangePasswordActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.customer.CustomerListActivity
@@ -19,6 +22,22 @@ import com.medistock.util.AuthManager
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var authManager: AuthManager
+    private lateinit var textCurrentLanguage: TextView
+
+    companion object {
+        private const val PREFS_NAME = "medistock_prefs"
+        private const val KEY_LANGUAGE = "selected_language"
+
+        fun getSavedLanguageCode(context: Context): String {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            return prefs.getString(KEY_LANGUAGE, SupportedLocale.DEFAULT.code) ?: SupportedLocale.DEFAULT.code
+        }
+
+        fun initializeLanguage(context: Context) {
+            val code = getSavedLanguageCode(context)
+            LocalizationManager.setLocaleByCode(code)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +49,7 @@ class ProfileActivity : AppCompatActivity() {
 
         setupUserInfo()
         setupMenuItems()
+        setupLanguage()
         setupLogout()
         setupAppVersion()
     }
@@ -71,6 +91,46 @@ class ProfileActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.btnInventoryHistory).setOnClickListener {
             startActivity(Intent(this, InventoryListActivity::class.java))
         }
+    }
+
+    private fun setupLanguage() {
+        textCurrentLanguage = findViewById(R.id.textCurrentLanguage)
+        textCurrentLanguage.text = LocalizationManager.getCurrentLocaleDisplayName()
+
+        findViewById<android.view.View>(R.id.btnLanguage).setOnClickListener {
+            showLanguageDialog()
+        }
+    }
+
+    private fun showLanguageDialog() {
+        val locales = SupportedLocale.entries.toTypedArray()
+        val languageNames = locales.map { it.nativeDisplayName }.toTypedArray()
+        val currentIndex = locales.indexOf(LocalizationManager.locale)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.select_language)
+            .setSingleChoiceItems(languageNames, currentIndex) { dialog, which ->
+                val selectedLocale = locales[which]
+                setLanguage(selectedLocale)
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun setLanguage(locale: SupportedLocale) {
+        // Save to SharedPreferences
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_LANGUAGE, locale.code).apply()
+
+        // Update LocalizationManager
+        LocalizationManager.setLocale(locale)
+
+        // Update UI
+        textCurrentLanguage.text = locale.nativeDisplayName
+
+        // Recreate activity to apply new language
+        recreate()
     }
 
     private fun setupLogout() {

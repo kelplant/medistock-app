@@ -16,6 +16,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
+import com.medistock.ui.profile.ProfileActivity
 import com.medistock.util.AppUpdateManager
 import com.medistock.util.UpdateCheckResult
 import io.github.jan.supabase.realtime.realtime
@@ -292,6 +293,10 @@ class MedistockApplication : Application() {
             println("❌ Failed to initialize MedistockSDK: ${e.message}")
             e.printStackTrace()
         }
+
+        // Initialize language from saved preference
+        ProfileActivity.initializeLanguage(this)
+        println("✅ Language initialized: ${com.medistock.shared.i18n.LocalizationManager.getCurrentLocaleDisplayName()}")
 
         // Initialiser le client Supabase au démarrage de l'app
         // Version downgradée à Supabase 2.2.2 + Ktor 2.3.4 pour résoudre le problème HttpTimeout
