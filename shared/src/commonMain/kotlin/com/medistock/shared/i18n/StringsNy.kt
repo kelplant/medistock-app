@@ -230,6 +230,33 @@ object StringsNy : Strings {
     override val generateReport = "Pangani lipoti"
 
     // ============================================
+    // PROFILE
+    // ============================================
+    override val profile = "Mbiri"
+    override val myProfile = "Mbiri yanga"
+    override val information = "Zambiri"
+    override val currentPassword = "Mawu achinsinsi apano"
+    override val newPassword = "Mawu achinsinsi atsopano"
+    override val confirmPassword = "Tsimikizani mawu achinsinsi"
+    override val passwordsDoNotMatch = "Mawu achinsinsi sakufanana"
+    override val passwordChangedSuccessfully = "Mawu achinsinsi asinthidwa bwino"
+    override val userNotFound = "Wogwiritsa sanapezekedwa"
+    override val incorrectPassword = "Mawu achinsinsi apano si olondola"
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    override val synced = "Yasync"
+    override val pendingChanges = "{count} zosintha zikudikirira"
+    override val conflictsToResolve = "{count} mkangano woti muthane nawo"
+    override val online = "Pa intaneti"
+    override val offline = "Opanda intaneti"
+    override val realtimeConnected = "Realtime yaphatikizidwa"
+    override val realtimeDisconnected = "Realtime sichinayambe"
+    override val lastError = "Vuto lomaliza"
+    override val offlineMode = "Njira yopanda intaneti"
+
+    // ============================================
     // SETTINGS
     // ============================================
     override val settings = "Zosintha"

@@ -229,6 +229,33 @@ object StringsEn : Strings {
     override val generateReport = "Generate Report"
 
     // ============================================
+    // PROFILE
+    // ============================================
+    override val profile = "Profile"
+    override val myProfile = "My Profile"
+    override val information = "Information"
+    override val currentPassword = "Current Password"
+    override val newPassword = "New Password"
+    override val confirmPassword = "Confirm Password"
+    override val passwordsDoNotMatch = "Passwords do not match"
+    override val passwordChangedSuccessfully = "Password changed successfully"
+    override val userNotFound = "User not found"
+    override val incorrectPassword = "Current password incorrect"
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    override val synced = "Synced"
+    override val pendingChanges = "{count} pending change(s)"
+    override val conflictsToResolve = "{count} conflict(s) to resolve"
+    override val online = "Online"
+    override val offline = "Offline"
+    override val realtimeConnected = "Realtime connected"
+    override val realtimeDisconnected = "Realtime disconnected"
+    override val lastError = "Last error"
+    override val offlineMode = "Offline mode"
+
+    // ============================================
     // SETTINGS
     // ============================================
     override val settings = "Settings"

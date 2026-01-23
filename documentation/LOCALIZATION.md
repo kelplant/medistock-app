@@ -36,7 +36,7 @@ iosApp/iosApp/Services/Localization.swift
 | `es` | Spanish | Español |
 | `it` | Italian | Italiano |
 | `ru` | Russian | Русский |
-| `bm` | Bemba | Ichibemba |
+| `bem` | Bemba | Ichibemba |
 | `ny` | Nyanja | Chinyanja |
 
 ## Ajouter une nouvelle langue

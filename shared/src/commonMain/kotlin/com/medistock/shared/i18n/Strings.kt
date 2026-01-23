@@ -235,6 +235,33 @@ interface Strings {
     val generateReport: String
 
     // ============================================
+    // PROFILE
+    // ============================================
+    val profile: String
+    val myProfile: String
+    val information: String
+    val currentPassword: String
+    val newPassword: String
+    val confirmPassword: String
+    val passwordsDoNotMatch: String
+    val passwordChangedSuccessfully: String
+    val userNotFound: String
+    val incorrectPassword: String
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    val synced: String
+    val pendingChanges: String // Parameter: {count}
+    val conflictsToResolve: String // Parameter: {count}
+    val online: String
+    val offline: String
+    val realtimeConnected: String
+    val realtimeDisconnected: String
+    val lastError: String
+    val offlineMode: String
+
+    // ============================================
     // SETTINGS
     // ============================================
     val settings: String

@@ -95,18 +95,18 @@ struct ProfileBadgeView: View {
     }
 
     private var statusAccessibilityLabel: String {
-        var label = "Profile - "
+        var label = "\(Localized.profile) - "
         switch syncStatus.indicatorColor {
         case .synced:
-            label += "Synced"
+            label += Localized.synced
         case .syncing:
-            label += "Syncing"
+            label += Localized.syncing
         case .pending:
-            label += "\(syncStatus.pendingCount) pending changes"
+            label += Localized.format(Localized.pendingChanges, "count", syncStatus.pendingCount)
         case .offline:
-            label += "Offline mode"
+            label += Localized.offlineMode
         case .error:
-            label += "Sync error"
+            label += Localized.strings.syncError
         }
         return label
     }
@@ -124,27 +124,27 @@ struct ProfileMenuView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Information")) {
+                Section(header: Text(Localized.information)) {
                     LabeledContentCompat {
-                        Text("Username")
+                        Text(Localized.username)
                     } content: {
                         Text(session.username)
                     }
 
                     LabeledContentCompat {
-                        Text("Full name")
+                        Text(Localized.fullName)
                     } content: {
                         Text(session.fullName)
                     }
 
                     LabeledContentCompat {
-                        Text("Role")
+                        Text(Localized.role)
                     } content: {
-                        Text(session.isAdmin ? "Administrator" : "User")
+                        Text(session.isAdmin ? Localized.admin : Localized.user)
                     }
                 }
 
-                Section(header: Text("Sync")) {
+                Section(header: Text(Localized.strings.syncSettings)) {
                     // Status indicator
                     HStack {
                         Circle()
@@ -167,7 +167,7 @@ struct ProfileMenuView: View {
                         HStack {
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .foregroundColor(.orange)
-                            Text("\(syncStatus.pendingCount) pending change(s)")
+                            Text(Localized.format(Localized.pendingChanges, "count", syncStatus.pendingCount))
                                 .font(.subheadline)
                         }
                     }
@@ -177,7 +177,7 @@ struct ProfileMenuView: View {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.red)
-                            Text("\(syncStatus.conflictCount) conflict(s) to resolve")
+                            Text(Localized.format(Localized.conflictsToResolve, "count", syncStatus.conflictCount))
                                 .font(.subheadline)
                                 .foregroundColor(.red)
                         }
@@ -187,7 +187,7 @@ struct ProfileMenuView: View {
                     HStack {
                         Image(systemName: syncStatus.isOnline ? "wifi" : "wifi.slash")
                             .foregroundColor(syncStatus.isOnline ? .green : .gray)
-                        Text(syncStatus.isOnline ? "Online" : "Offline")
+                        Text(syncStatus.isOnline ? Localized.online : Localized.offline)
                             .font(.subheadline)
                     }
 
@@ -195,7 +195,7 @@ struct ProfileMenuView: View {
                     HStack {
                         Image(systemName: realtimeService.isConnected ? "bolt.fill" : "bolt.slash")
                             .foregroundColor(realtimeService.isConnected ? .green : .gray)
-                        Text(realtimeService.isConnected ? "Realtime connected" : "Realtime disconnected")
+                        Text(realtimeService.isConnected ? Localized.realtimeConnected : Localized.realtimeDisconnected)
                             .font(.subheadline)
                     }
 
@@ -203,14 +203,14 @@ struct ProfileMenuView: View {
                     Button(action: triggerSync) {
                         HStack {
                             Image(systemName: "arrow.clockwise")
-                            Text("Sync now")
+                            Text(Localized.syncNow)
                         }
                     }
                     .disabled(!syncStatus.isOnline || syncStatus.isSyncing)
                 }
 
                 if let error = syncStatus.lastSyncInfo.error {
-                    Section(header: Text("Last error")) {
+                    Section(header: Text(Localized.lastError)) {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(.red)
@@ -242,10 +242,10 @@ struct ProfileMenuView: View {
                     }
                 }
             }
-            .navigationTitle("My Profile")
+            .navigationTitle(Localized.myProfile)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") { dismiss() }
+                    Button(Localized.close) { dismiss() }
                 }
             }
         }
@@ -290,13 +290,13 @@ struct ChangePasswordView: View {
 
     var body: some View {
         Form {
-            Section(header: Text("Current password")) {
-                SecureField("Current password", text: $currentPassword)
+            Section(header: Text(Localized.currentPassword)) {
+                SecureField(Localized.currentPassword, text: $currentPassword)
             }
 
-            Section(header: Text("New password")) {
-                SecureField("New password", text: $newPassword)
-                SecureField("Confirm password", text: $confirmPassword)
+            Section(header: Text(Localized.newPassword)) {
+                SecureField(Localized.newPassword, text: $newPassword)
+                SecureField(Localized.confirmPassword, text: $confirmPassword)
             }
 
             if let errorMessage {
@@ -318,13 +318,13 @@ struct ChangePasswordView: View {
                     if isLoading {
                         ProgressView()
                     } else {
-                        Text("Change password")
+                        Text(Localized.changePassword)
                     }
                 }
                 .disabled(isLoading || !isFormValid)
             }
         }
-        .navigationTitle("Change Password")
+        .navigationTitle(Localized.changePassword)
     }
 
     private var isFormValid: Bool {
@@ -337,9 +337,9 @@ struct ChangePasswordView: View {
     private func changePassword() {
         guard isFormValid else {
             if newPassword != confirmPassword {
-                errorMessage = "Passwords do not match"
+                errorMessage = Localized.passwordsDoNotMatch
             } else if newPassword.count < 4 {
-                errorMessage = "Password must be at least 4 characters"
+                errorMessage = Localized.strings.passwordTooShort
             }
             return
         }
@@ -397,7 +397,7 @@ struct ChangePasswordView: View {
 
                 await MainActor.run {
                     isLoading = false
-                    successMessage = "Password changed successfully"
+                    successMessage = Localized.passwordChangedSuccessfully
                     currentPassword = ""
                     newPassword = ""
                     confirmPassword = ""
@@ -425,11 +425,11 @@ enum PasswordChangeError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .userNotFound:
-            return "User not found"
+            return Localized.userNotFound
         case .incorrectPassword:
-            return "Current password incorrect"
+            return Localized.incorrectPassword
         case .hashingFailed:
-            return "Error hashing password"
+            return Localized.error
         }
     }
 }

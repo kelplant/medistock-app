@@ -133,10 +133,41 @@ enum Localized {
     static var loginErrorInvalidCredentials: String { strings.loginErrorInvalidCredentials }
     static var welcomeBack: String { strings.welcomeBack }
 
+    // Profile
+    static var profile: String { strings.profile }
+    static var myProfile: String { strings.myProfile }
+    static var information: String { strings.information }
+    static var currentPassword: String { strings.currentPassword }
+    static var newPassword: String { strings.newPassword }
+    static var confirmPassword: String { strings.confirmPassword }
+    static var passwordsDoNotMatch: String { strings.passwordsDoNotMatch }
+    static var passwordChangedSuccessfully: String { strings.passwordChangedSuccessfully }
+    static var userNotFound: String { strings.userNotFound }
+    static var incorrectPassword: String { strings.incorrectPassword }
+
+    // Sync Status
+    static var synced: String { strings.synced }
+    static var pendingChanges: String { strings.pendingChanges }
+    static var conflictsToResolve: String { strings.conflictsToResolve }
+    static var online: String { strings.online }
+    static var offline: String { strings.offline }
+    static var realtimeConnected: String { strings.realtimeConnected }
+    static var realtimeDisconnected: String { strings.realtimeDisconnected }
+    static var lastError: String { strings.lastError }
+    static var offlineMode: String { strings.offlineMode }
+    static var syncing: String { strings.syncing }
+    static var syncNow: String { strings.syncNow }
+
     // Settings
     static var settings: String { strings.settings }
     static var language: String { strings.language }
     static var selectLanguage: String { strings.selectLanguage }
+
+    // Users
+    static var fullName: String { strings.fullName }
+    static var role: String { strings.role }
+    static var admin: String { strings.admin }
+    static var user: String { strings.user }
 }
 
 /// Available app languages
@@ -147,7 +178,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case spanish = "es"
     case italian = "it"
     case russian = "ru"
-    case bemba = "bm"
+    case bemba = "bem"
     case nyanja = "ny"
 
     var id: String { rawValue }

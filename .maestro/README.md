@@ -130,6 +130,15 @@ maestro test .maestro/ --format junit --output report.xml
 - Validation et ajustement du stock
 - Vérification de l'audit
 
+### 12. Language Switching (12_language_switching.yaml) - iOS Only
+- Navigation vers les paramètres de langue
+- Vérification de toutes les langues disponibles (EN, FR, DE, ES, IT, RU, BM, NY)
+- Changement de langue vers français
+- Changement de langue vers allemand
+- Changement de langue vers espagnol
+- Retour à l'anglais
+- Test de persistance après redémarrage de l'application
+
 ## Correspondance avec le Cahier de Recette
 
 | Section du Cahier | Test Maestro |

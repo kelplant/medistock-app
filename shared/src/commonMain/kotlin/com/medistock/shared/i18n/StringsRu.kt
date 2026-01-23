@@ -229,6 +229,33 @@ object StringsRu : Strings {
     override val generateReport = "Сформировать отчёт"
 
     // ============================================
+    // PROFILE
+    // ============================================
+    override val profile = "Профиль"
+    override val myProfile = "Мой профиль"
+    override val information = "Информация"
+    override val currentPassword = "Текущий пароль"
+    override val newPassword = "Новый пароль"
+    override val confirmPassword = "Подтвердите пароль"
+    override val passwordsDoNotMatch = "Пароли не совпадают"
+    override val passwordChangedSuccessfully = "Пароль успешно изменён"
+    override val userNotFound = "Пользователь не найден"
+    override val incorrectPassword = "Неверный текущий пароль"
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    override val synced = "Синхронизировано"
+    override val pendingChanges = "{count} ожидающих изменений"
+    override val conflictsToResolve = "{count} конфликтов для решения"
+    override val online = "Онлайн"
+    override val offline = "Офлайн"
+    override val realtimeConnected = "Режим реального времени подключён"
+    override val realtimeDisconnected = "Режим реального времени отключён"
+    override val lastError = "Последняя ошибка"
+    override val offlineMode = "Офлайн-режим"
+
+    // ============================================
     // SETTINGS
     // ============================================
     override val settings = "Настройки"

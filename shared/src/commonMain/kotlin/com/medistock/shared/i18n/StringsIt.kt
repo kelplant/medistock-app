@@ -229,6 +229,33 @@ object StringsIt : Strings {
     override val generateReport = "Genera report"
 
     // ============================================
+    // PROFILE
+    // ============================================
+    override val profile = "Profilo"
+    override val myProfile = "Il mio profilo"
+    override val information = "Informazioni"
+    override val currentPassword = "Password attuale"
+    override val newPassword = "Nuova password"
+    override val confirmPassword = "Conferma password"
+    override val passwordsDoNotMatch = "Le password non corrispondono"
+    override val passwordChangedSuccessfully = "Password cambiata con successo"
+    override val userNotFound = "Utente non trovato"
+    override val incorrectPassword = "Password attuale errata"
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    override val synced = "Sincronizzato"
+    override val pendingChanges = "{count} modifica/e in sospeso"
+    override val conflictsToResolve = "{count} conflitto/i da risolvere"
+    override val online = "Online"
+    override val offline = "Offline"
+    override val realtimeConnected = "Tempo reale connesso"
+    override val realtimeDisconnected = "Tempo reale disconnesso"
+    override val lastError = "Ultimo errore"
+    override val offlineMode = "Modalità offline"
+
+    // ============================================
     // SETTINGS
     // ============================================
     override val settings = "Impostazioni"

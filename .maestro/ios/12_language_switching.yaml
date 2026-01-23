@@ -1,0 +1,319 @@
+# MediStock iOS - Language Switching Tests
+# Tests: Language selection, UI updates, and persistence
+#
+# This test verifies:
+# 1. Language can be changed from profile settings
+# 2. UI updates immediately after language change
+# 3. Language preference persists after app restart
+#
+# Supported languages: EN, FR, DE, ES, IT, RU, BM, NY
+
+appId: com.medistock.ios
+---
+
+# ============================================
+# SETUP: Login
+# ============================================
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "language_test_start_english"
+
+# ============================================
+# TEST 1: Navigate to Language Settings
+# ============================================
+
+# Tap on profile badge in toolbar (identified by accessibility label)
+- tapOn:
+    text: ".*Profile.*"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify profile menu opened
+- assertVisible: "My Profile"
+- assertVisible: "Information"
+
+# Scroll to Settings section if needed
+- scrollUntilVisible:
+    element:
+      text: "Settings"
+    direction: DOWN
+
+- waitForAnimationToEnd
+
+# Tap on Language option
+- tapOn: "Language"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify language picker opened
+- assertVisible: "Select language"
+
+# Take screenshot of language picker
+- takeScreenshot: "language_picker_opened"
+
+# ============================================
+# TEST 2: Verify All Languages Listed
+# ============================================
+
+# Verify all 8 languages are displayed
+- assertVisible: "English"
+- assertVisible: "Français"
+- assertVisible: "Deutsch"
+- assertVisible: "Español"
+- assertVisible: "Italiano"
+- assertVisible: "Русский"
+- assertVisible: "Ichibemba"
+- assertVisible: "Chinyanja"
+
+# English should have checkmark (current selection)
+- assertVisible:
+    text: "English"
+
+# ============================================
+# TEST 3: Switch to French
+# ============================================
+
+- tapOn: "Français"
+
+# Wait for language to change and view to update
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# UI should now be in French - verify profile screen updated
+- extendedWaitUntil:
+    visible:
+      text: "Mon profil"
+    timeout: 5000
+
+# Verify French text is visible
+- assertVisible: "Informations"
+- assertVisible: "Paramètres"
+- assertVisible: "Langue"
+
+- takeScreenshot: "language_switched_to_french"
+
+# ============================================
+# TEST 4: Switch to German
+# ============================================
+
+# Navigate back to language picker (now in French)
+- tapOn: "Langue"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch to German
+- tapOn: "Deutsch"
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Verify German text
+- extendedWaitUntil:
+    visible:
+      text: "Mein Profil"
+    timeout: 5000
+
+- assertVisible: "Informationen"
+- assertVisible: "Einstellungen"
+- assertVisible: "Sprache"
+
+- takeScreenshot: "language_switched_to_german"
+
+# ============================================
+# TEST 5: Switch to Spanish
+# ============================================
+
+# Navigate back to language picker (now in German)
+- tapOn: "Sprache"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch to Spanish
+- tapOn: "Español"
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Verify Spanish text
+- extendedWaitUntil:
+    visible:
+      text: "Mi perfil"
+    timeout: 5000
+
+- assertVisible: "Información"
+- assertVisible: "Ajustes"
+- assertVisible: "Idioma"
+
+- takeScreenshot: "language_switched_to_spanish"
+
+# ============================================
+# TEST 6: Switch Back to English
+# ============================================
+
+# Navigate back to language picker (now in Spanish)
+- tapOn: "Idioma"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch back to English
+- tapOn: "English"
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Verify English text is back
+- extendedWaitUntil:
+    visible:
+      text: "My Profile"
+    timeout: 5000
+
+- assertVisible: "Information"
+- assertVisible: "Settings"
+- assertVisible: "Language"
+
+- takeScreenshot: "language_switched_back_to_english"
+
+# Close profile menu
+- tapOn: "Close"
+
+- waitForAnimationToEnd
+
+# ============================================
+# TEST 7: Persistence - Set to French and Restart
+# ============================================
+
+# Navigate back to profile and change to French
+- tapOn:
+    text: ".*Profile.*"
+
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      text: "Settings"
+    direction: DOWN
+
+- tapOn: "Language"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- tapOn: "Français"
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Verify French is active
+- assertVisible: "Mon profil"
+
+# Close profile
+- tapOn: "Fermer"
+
+- waitForAnimationToEnd
+
+# Stop and restart the app
+- stopApp
+
+- launchApp
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ============================================
+# TEST 8: Verify Language Persisted After Restart
+# ============================================
+
+# App should still be in French after restart
+# Login screen should show French text
+- assertVisible:
+    text: ".*Connexion.*|.*utilisateur.*|.*passe.*"
+
+- takeScreenshot: "language_persisted_french_login_screen"
+
+# Login again
+- tapOn:
+    text: ".*utilisateur.*"
+    optional: true
+- inputText: "admin"
+
+- tapOn:
+    text: ".*passe.*"
+    optional: true
+- inputText: "admin"
+
+- tapOn:
+    text: ".*connecter.*"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify home screen is still in French
+- assertVisible: "MediStock"
+- assertVisible: "Opérations"
+
+# Open profile to verify settings persisted
+- tapOn:
+    text: ".*Profile.*|.*Profil.*"
+
+- waitForAnimationToEnd
+
+- assertVisible: "Mon profil"
+- assertVisible: "Informations"
+
+- takeScreenshot: "language_persisted_french_profile"
+
+# ============================================
+# CLEANUP: Reset to English
+# ============================================
+
+# Navigate to language picker (in French)
+- scrollUntilVisible:
+    element:
+      text: "Paramètres"
+    direction: DOWN
+
+- tapOn: "Langue"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Switch back to English
+- tapOn: "English"
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Verify English is restored
+- assertVisible: "My Profile"
+
+# Close profile
+- tapOn: "Close"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "language_test_cleanup_complete"

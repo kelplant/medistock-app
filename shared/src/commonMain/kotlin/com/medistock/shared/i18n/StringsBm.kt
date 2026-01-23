@@ -230,6 +230,33 @@ object StringsBm : Strings {
     override val generateReport = "Panga lipoti"
 
     // ============================================
+    // PROFILE
+    // ============================================
+    override val profile = "Ubumi"
+    override val myProfile = "Ubumi bwandi"
+    override val information = "Imfundisho"
+    override val currentPassword = "Akapasiwedi ka nomba"
+    override val newPassword = "Akapasiwedi akashya"
+    override val confirmPassword = "Tsimikishapo akapasiwedi"
+    override val passwordsDoNotMatch = "Amapasiwedi tayalinga bwino"
+    override val passwordChangedSuccessfully = "Akapasiwedi kaalulwa bwino"
+    override val userNotFound = "User tabasangwike"
+    override val incorrectPassword = "Akapasiwedi ka nomba takali bwino"
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    override val synced = "Yasynca"
+    override val pendingChanges = "{count} fyo kulindila ukushintilila"
+    override val conflictsToResolve = "{count} ubulubilo bwo kulondolola"
+    override val online = "Online"
+    override val offline = "Offline"
+    override val realtimeConnected = "Realtime yalipangwa"
+    override val realtimeDisconnected = "Realtime tayalipangwa"
+    override val lastError = "Ifyaposa fya nyuma"
+    override val offlineMode = "Offline mode"
+
+    // ============================================
     // SETTINGS
     // ============================================
     override val settings = "Ifyopangwa"
@@ -259,7 +286,7 @@ object StringsBm : Strings {
     override val fullName = "Ishina lyonse"
     override val role = "Role"
     override val admin = "Administrator"
-    override val permissions = "Permissons"
+    override val permissions = "Permissions"
     override val canView = "Akapala ukulola"
     override val canCreate = "Akapala ukupanga"
     override val canEdit = "Akapala ukulunganya"

@@ -229,6 +229,33 @@ object StringsEs : Strings {
     override val generateReport = "Generar informe"
 
     // ============================================
+    // PROFILE
+    // ============================================
+    override val profile = "Perfil"
+    override val myProfile = "Mi perfil"
+    override val information = "Información"
+    override val currentPassword = "Contraseña actual"
+    override val newPassword = "Nueva contraseña"
+    override val confirmPassword = "Confirmar contraseña"
+    override val passwordsDoNotMatch = "Las contraseñas no coinciden"
+    override val passwordChangedSuccessfully = "Contraseña cambiada exitosamente"
+    override val userNotFound = "Usuario no encontrado"
+    override val incorrectPassword = "Contraseña actual incorrecta"
+
+    // ============================================
+    // SYNC STATUS
+    // ============================================
+    override val synced = "Sincronizado"
+    override val pendingChanges = "{count} cambio(s) pendiente(s)"
+    override val conflictsToResolve = "{count} conflicto(s) por resolver"
+    override val online = "En línea"
+    override val offline = "Sin conexión"
+    override val realtimeConnected = "Tiempo real conectado"
+    override val realtimeDisconnected = "Tiempo real desconectado"
+    override val lastError = "Último error"
+    override val offlineMode = "Modo sin conexión"
+
+    // ============================================
     // SETTINGS
     // ============================================
     override val settings = "Configuración"

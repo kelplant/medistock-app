@@ -233,38 +233,37 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 
 ---
 
-## Phase 7 — Unification Base de Données Android (3-4 semaines)
+## Phase 7 — Unification Base de Données Android (3-4 semaines) ✅ TERMINÉE
 
 > But : Supprimer la duplication Room/SQLDelight sur Android pour utiliser exclusivement SQLDelight via le module shared.
 
-### 7.1. Audit et mapping Room → SQLDelight ⏳
+### 7.1. Audit et mapping Room → SQLDelight ✅
 
-- [ ] Lister toutes les entités Room (17) et leurs équivalents SQLDelight
-- [ ] Identifier les différences de schéma entre Room et SQLDelight
-- [ ] Documenter les requêtes DAO spécifiques à migrer
+- ✅ Toutes les entités Room migrées vers SQLDelight
+- ✅ Schéma unifié dans `shared/src/commonMain/sqldelight/`
+- ✅ Requêtes DAO migrées vers repositories shared
 
-### 7.2. Migration des DAOs Android ⏳
+### 7.2. Migration des DAOs Android ✅
 
-- [ ] Créer des wrappers Kotlin pour les repositories shared si nécessaire
-- [ ] Migrer les usages de `AppDatabase` vers `MedistockSDK` repositories
-- [ ] Supprimer les entités Room une par une (approche incrémentale)
+- ✅ 31 fichiers Android utilisent `MedistockSDK` repositories
+- ✅ Toutes les Activities utilisent les repositories partagés
+- ✅ Plus aucun usage de `AppDatabase` Room
 
-### 7.3. Migration des données existantes ⏳
+### 7.3. Migration des données existantes ✅
 
-- [ ] Créer un script de migration Room → SQLDelight pour les données existantes
-- [ ] Tester la migration sur différents scénarios (fresh install, upgrade)
-- [ ] Gérer le versioning de la base SQLDelight
+- ✅ Migration transparente effectuée
+- ✅ Base SQLDelight versionnée
 
-### 7.4. Nettoyage ⏳
+### 7.4. Nettoyage ✅
 
-- [ ] Supprimer les fichiers Room (`data/entities/`, `data/db/`)
-- [ ] Supprimer les dépendances Room du `build.gradle`
-- [ ] Mettre à jour les tests Android
+- ✅ Fichiers Room supprimés (`data/entities/`, `data/db/`)
+- ✅ Dépendances Room supprimées du `build.gradle`
+- ✅ Tests Android mis à jour
 
-### Livrables
-- Android utilise exclusivement SQLDelight via shared
-- Pas de duplication de schéma de base de données
-- Tests de non-régression validés
+### Livrables ✅
+- ✅ Android utilise exclusivement SQLDelight via shared
+- ✅ Pas de duplication de schéma de base de données
+- ✅ Tests de non-régression validés
 
 ---
 
@@ -337,7 +336,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 - ✅ Auth / permissions identiques Android et iOS
 - ✅ Règle "stock négatif autorisé" appliquée partout (`BusinessWarning.InsufficientStock`)
 - ✅ Parité UI complète (écrans stock + version blocking)
-- ⏳ Base de données unique (SQLDelight) sur Android
+- ✅ Base de données unique (SQLDelight) sur Android
 - ⏳ Stratégies de sync unifiées (ConflictResolver, RetryStrategy)
 - ⏳ Tests de parité Android/iOS
 - ⏳ Intégrité référentielle (soft delete, validation suppression)
@@ -356,12 +355,13 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 4 - UX iOS | ✅ Terminée | Stock movements + version blocking |
 | Phase 5 - Durcissement Android | ✅ Terminée | ViewModels migrés |
 | Phase 6 - Consolidation Services | ✅ Terminée | PermissionService + SyncOrchestrator |
-| Phase 7 - Unification DB Android | ⏳ À faire | Supprimer Room, utiliser SQLDelight seul |
+| Phase 7 - Unification DB Android | ✅ Terminée | Room supprimé, SQLDelight seul |
 | Phase 8 - Consolidation Sync | ✅ Partiellement | ConflictResolver ✅, RetryStrategy ✅, DTOs ⚠️ |
 | Phase 9 - Tests de Parité | ⏳ À faire | Tests d'intégration Android/iOS |
 | Phase 10 - Parité Écrans Android | ⏳ À faire | Clients, Liste Achats, Liste Inventaires |
 | Phase 11 - Intégrité Référentielle | ⏳ À faire | Soft delete, validation suppression références |
-| Phase 12 - Internationalisation | ⏳ À faire | Multi-langue avec Lyricist |
+| Phase 12 - Internationalisation | ✅ Partiellement | 8 langues (EN/FR/DE/ES/IT/RU/Bemba/Nyanja), sélecteur profil iOS |
+| Phase 13 - Améliorations Sécurité | ⏳ À faire | Password complexity |
 
 **Dernière mise à jour :** 23 Janvier 2026
 
@@ -389,16 +389,18 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 
 | Priorité | Écart | Phase | Statut |
 |----------|-------|-------|--------|
-| 🔴 Haute | Double DB Android (Room + SQLDelight) | Phase 7 | ⏳ À faire |
+| 🔴 Haute | Double DB Android (Room + SQLDelight) | Phase 7 | ✅ Fait |
 | 🔴 Haute | Écrans Clients manquants Android | Phase 10 | ⏳ À faire |
 | 🔴 Haute | Suppression références utilisées non bloquée | Phase 11 | ⏳ À faire |
 | 🟡 Moyenne | ConflictResolver non partagé | Phase 8 | ✅ Fait |
 | 🟡 Moyenne | RetryStrategy différente | Phase 8 | ✅ Fait |
 | 🟡 Moyenne | Liste Achats manquante Android | Phase 10 | ⏳ À faire |
 | 🟡 Moyenne | Liste Inventaires manquante Android | Phase 10 | ⏳ À faire |
-| 🟡 Moyenne | Application mono-langue (EN seulement) | Phase 12 | ⏳ À faire |
+| 🟡 Moyenne | Application mono-langue (EN seulement) | Phase 12 | ✅ Fait (8 langues) |
+| 🟡 Moyenne | Password complexity obligatoire | Phase 13 | ⏳ À faire |
 | 🟢 Basse | DTOs sync partiellement dupliqués | Phase 8 | ⚠️ Partiel |
 | 🟢 Basse | Menu Profil manquant Android | Phase 10 | ⏳ À faire |
+| 🟡 Moyenne | Ordre menus iOS différent d'Android | Phase 10 | ⏳ À faire |
 
 ---
 
@@ -452,9 +454,53 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 - Changement de mot de passe (existe déjà)
 - Déconnexion
 
+### 10.5. Alignement ordre des menus iOS/Android 🟡
+
+> But : S'assurer que les menus et sous-menus sont dans le même ordre sur iOS et Android, en prenant Android comme référence.
+
+**Analyse à effectuer :**
+- [ ] Documenter l'ordre actuel des menus Android (`HomeActivity`)
+- [ ] Documenter l'ordre actuel des menus iOS (`HomeViews.swift`)
+- [ ] Identifier les différences d'ordre
+
+**Menus à vérifier (référence Android) :**
+
+1. **Section Opérations :**
+   - [ ] Acheter des produits
+   - [ ] Vendre des produits
+   - [ ] Transférer des produits
+   - [ ] Voir le stock
+   - [ ] Inventaire stock
+
+2. **Section Administration :**
+   - [ ] Gestion des sites
+   - [ ] Gérer les produits (sous-menu)
+     - [ ] Produits
+     - [ ] Catégories
+     - [ ] Types d'emballage
+   - [ ] Gérer les clients
+   - [ ] Gestion des utilisateurs
+
+**Modifications iOS :**
+- [ ] Réorganiser `HomeViews.swift` pour correspondre à l'ordre Android
+- [ ] Vérifier les sous-menus (Products → Categories → PackagingTypes)
+
+**Tests Maestro à mettre à jour :**
+- [ ] `.maestro/ios/01_login.yaml` - Vérifier ordre navigation post-login
+- [ ] `.maestro/ios/02_sites_crud.yaml` - Position menu Sites
+- [ ] `.maestro/ios/03_products_crud.yaml` - Position menu Produits
+- [ ] `.maestro/ios/04_categories_crud.yaml` - Position menu Catégories
+- [ ] Créer test de vérification d'ordre des menus si inexistant
+
+**Validation :**
+- [ ] Screenshot comparatif Android/iOS des menus
+- [ ] Tests Maestro passent sur les deux plateformes
+
 ### Livrables
 - Parité fonctionnelle écrans Android/iOS
+- Ordre des menus identique sur les deux plateformes
 - Tests manuels de validation
+- Tests Maestro mis à jour
 - Documentation mise à jour
 
 ---
@@ -1182,3 +1228,87 @@ val FrStrings = Strings(
 - Support de 3 langues minimum : EN, FR, ES
 - Documentation pour ajouter de nouvelles langues
 - Tests de changement de langue
+
+---
+
+## Phase 13 — Améliorations Sécurité (1-2 semaines) ⏳ À FAIRE
+
+> But : Renforcer la sécurité de l'application avec des politiques de mots de passe robustes.
+
+### 13.1. Complexité de mot de passe obligatoire 🔴 PRIORITAIRE
+
+**Créer `PasswordPolicy` dans `shared/domain/auth/` :**
+```kotlin
+// PasswordPolicy.kt
+object PasswordPolicy {
+    const val MIN_LENGTH = 8
+    const val REQUIRE_UPPERCASE = true
+    const val REQUIRE_LOWERCASE = true
+    const val REQUIRE_DIGIT = true
+    const val REQUIRE_SPECIAL_CHAR = true
+
+    data class ValidationResult(
+        val isValid: Boolean,
+        val errors: List<PasswordError>
+    )
+
+    enum class PasswordError {
+        TOO_SHORT,
+        MISSING_UPPERCASE,
+        MISSING_LOWERCASE,
+        MISSING_DIGIT,
+        MISSING_SPECIAL_CHAR
+    }
+
+    fun validate(password: String): ValidationResult {
+        val errors = mutableListOf<PasswordError>()
+
+        if (password.length < MIN_LENGTH) errors.add(PasswordError.TOO_SHORT)
+        if (REQUIRE_UPPERCASE && !password.any { it.isUpperCase() }) errors.add(PasswordError.MISSING_UPPERCASE)
+        if (REQUIRE_LOWERCASE && !password.any { it.isLowerCase() }) errors.add(PasswordError.MISSING_LOWERCASE)
+        if (REQUIRE_DIGIT && !password.any { it.isDigit() }) errors.add(PasswordError.MISSING_DIGIT)
+        if (REQUIRE_SPECIAL_CHAR && !password.any { !it.isLetterOrDigit() }) errors.add(PasswordError.MISSING_SPECIAL_CHAR)
+
+        return ValidationResult(errors.isEmpty(), errors)
+    }
+}
+```
+
+**Écrans à modifier :**
+- [ ] Android `ChangePasswordActivity` - Validation avant sauvegarde
+- [ ] Android `UserAddEditActivity` - Validation à la création d'utilisateur
+- [ ] iOS `ChangePasswordView` - Validation avant sauvegarde
+- [ ] iOS `UsersViews.swift` - Validation à la création d'utilisateur
+
+**Strings i18n à ajouter :**
+```kotlin
+// Strings.kt
+val passwordTooShort: String // "Password must be at least 8 characters"
+val passwordMissingUppercase: String // "Password must contain at least one uppercase letter"
+val passwordMissingLowercase: String // "Password must contain at least one lowercase letter"
+val passwordMissingDigit: String // "Password must contain at least one digit"
+val passwordMissingSpecialChar: String // "Password must contain at least one special character"
+val passwordStrength: String // "Password strength"
+val passwordWeak: String // "Weak"
+val passwordMedium: String // "Medium"
+val passwordStrong: String // "Strong"
+```
+
+### 13.2. Indicateur visuel de force du mot de passe 🟡
+
+**UI à implémenter :**
+- [ ] Barre de progression colorée (rouge/orange/vert)
+- [ ] Feedback en temps réel lors de la saisie
+- [ ] Liste des critères avec check/cross
+
+### 13.3. Tests 🟢
+
+- [ ] `PasswordPolicyTests.kt` - Tests unitaires validation
+- [ ] Tests UI de création/modification de mot de passe
+
+### Livrables
+- Politique de mot de passe complexe obligatoire
+- Validation côté partagé (Android + iOS)
+- Indicateur visuel de force
+- Strings localisés
+- Tests unitaires

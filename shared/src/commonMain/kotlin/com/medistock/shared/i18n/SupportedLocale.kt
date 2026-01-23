@@ -19,7 +19,7 @@ enum class SupportedLocale(
     SPANISH("es", "Spanish", "Español"),
     ITALIAN("it", "Italian", "Italiano"),
     RUSSIAN("ru", "Russian", "Русский"),
-    BEMBA("bm", "Bemba", "Ichibemba"),
+    BEMBA("bem", "Bemba", "Ichibemba"),
     NYANJA("ny", "Nyanja", "Chinyanja");
 
     companion object {
