@@ -1,5 +1,8 @@
 import Foundation
 import Supabase
+import Auth
+import PostgREST
+import Functions
 
 /// Supabase service using the official Swift SDK
 /// Replaces the custom SupabaseClient
@@ -12,8 +15,24 @@ class SupabaseService {
     // Legacy key for migration from UserDefaults
     private let legacyConfigKey = "medistock_supabase_config"
 
+    /// Email domain used for UUID-based auth emails
+    static let authEmailDomain = "medistock.local"
+
     var isConfigured: Bool {
         client != nil
+    }
+
+    /// Check if user is authenticated with Supabase Auth
+    var isAuthenticated: Bool {
+        get async {
+            guard let client = client else { return false }
+            do {
+                _ = try await client.auth.session
+                return true
+            } catch {
+                return false
+            }
+        }
     }
 
     private init() {
@@ -280,6 +299,275 @@ class SupabaseService {
     /// Get the Supabase client for realtime subscriptions
     var realtimeClient: SupabaseClient? {
         client
+    }
+
+    // MARK: - Direct Database Access
+
+    /// Access the database from() method directly
+    /// Use this for complex queries that need direct builder access
+    func from(_ table: String) -> PostgrestQueryBuilder? {
+        return client?.from(table)
+    }
+
+    // MARK: - Auth
+
+    /// Generate UUID-based email for Supabase Auth
+    /// - Parameter uuid: The user's UUID from the local database
+    /// - Returns: Email in format {uuid}@medistock.local
+    static func authEmail(for uuid: String) -> String {
+        return "\(uuid)@\(authEmailDomain)"
+    }
+
+    /// Sign in with UUID-based email and password using Supabase Auth
+    /// - Parameters:
+    ///   - uuid: The user's UUID from the local database
+    ///   - password: The user's password
+    /// - Returns: The authenticated session
+    func signIn(uuid: String, password: String) async throws -> Session {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        let email = Self.authEmail(for: uuid)
+        debugLog("SupabaseService", "Signing in with email: \(email)")
+
+        let session = try await client.auth.signIn(email: email, password: password)
+
+        // Store tokens in Keychain
+        keychain.storeAuthTokens(
+            accessToken: session.accessToken,
+            refreshToken: session.refreshToken,
+            expiresAt: Int64(session.expiresAt),
+            userId: session.user.id.uuidString
+        )
+
+        debugLog("SupabaseService", "Sign in successful for user: \(session.user.id)")
+        return session
+    }
+
+    /// Sign out the current user
+    func signOut() async throws {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        try await client.auth.signOut()
+        keychain.clearAuthTokens()
+        debugLog("SupabaseService", "Signed out successfully")
+    }
+
+    /// Get the current session if authenticated
+    func getSession() async throws -> Session? {
+        guard let client = client else {
+            return nil
+        }
+
+        do {
+            return try await client.auth.session
+        } catch {
+            debugLog("SupabaseService", "No active session: \(error)")
+            return nil
+        }
+    }
+
+    /// Refresh the current session token
+    func refreshSession() async throws -> Session {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        let session = try await client.auth.refreshSession()
+
+        // Update stored tokens
+        keychain.storeAuthTokens(
+            accessToken: session.accessToken,
+            refreshToken: session.refreshToken,
+            expiresAt: Int64(session.expiresAt),
+            userId: session.user.id.uuidString
+        )
+
+        debugLog("SupabaseService", "Session refreshed successfully")
+        return session
+    }
+
+    /// Get the current access token, refreshing if needed
+    func getAccessToken() async throws -> String {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        // Check if we need to refresh
+        if keychain.areAuthTokensExpired {
+            debugLog("SupabaseService", "Token expired, refreshing...")
+            let session = try await refreshSession()
+            return session.accessToken
+        }
+
+        // Return current session token
+        let session = try await client.auth.session
+        return session.accessToken
+    }
+
+    // MARK: - Edge Functions
+
+    /// Response structure for migrate-user-to-auth Edge Function
+    struct MigrateUserResponse: Codable {
+        let success: Bool
+        let message: String?
+        let accessToken: String?
+        let refreshToken: String?
+        let expiresAt: Int64?
+        let userId: String?
+
+        enum CodingKeys: String, CodingKey {
+            case success, message
+            case accessToken = "access_token"
+            case refreshToken = "refresh_token"
+            case expiresAt = "expires_at"
+            case userId = "user_id"
+        }
+    }
+
+    /// Request structure for migrate-user-to-auth Edge Function
+    struct MigrateUserRequest: Codable {
+        let username: String
+        let password: String
+    }
+
+    /// Call the migrate-user-to-auth Edge Function
+    /// This handles transparent migration of users from BCrypt to Supabase Auth
+    /// - Parameters:
+    ///   - username: The user's username
+    ///   - password: The user's plain text password
+    /// - Returns: The migration response with session tokens if successful
+    func migrateUserToAuth(username: String, password: String) async throws -> MigrateUserResponse {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        let request = MigrateUserRequest(username: username, password: password)
+        debugLog("SupabaseService", "Calling migrate-user-to-auth for username: \(username)")
+
+        let response: MigrateUserResponse = try await client.functions.invoke(
+            "migrate-user-to-auth",
+            options: FunctionInvokeOptions(body: request)
+        )
+
+        if response.success {
+            // Store the tokens if migration was successful
+            if let accessToken = response.accessToken,
+               let refreshToken = response.refreshToken,
+               let expiresAt = response.expiresAt,
+               let userId = response.userId {
+                keychain.storeAuthTokens(
+                    accessToken: accessToken,
+                    refreshToken: refreshToken,
+                    expiresAt: expiresAt,
+                    userId: userId
+                )
+                debugLog("SupabaseService", "Migration successful, tokens stored")
+            }
+        }
+
+        return response
+    }
+
+    /// Response structure for apply-migration Edge Function
+    struct ApplyMigrationResponse: Codable {
+        let success: Bool
+        let alreadyApplied: Bool
+        let message: String
+        let executionTimeMs: Int?
+        let error: String?
+
+        enum CodingKeys: String, CodingKey {
+            case success
+            case alreadyApplied = "already_applied"
+            case message
+            case executionTimeMs = "execution_time_ms"
+            case error
+        }
+    }
+
+    /// Request structure for apply-migration Edge Function
+    struct ApplyMigrationRequest: Codable {
+        let name: String
+        let sql: String
+        let checksum: String?
+        let appliedBy: String
+
+        enum CodingKeys: String, CodingKey {
+            case name, sql, checksum
+            case appliedBy = "applied_by"
+        }
+    }
+
+    /// Call the apply-migration Edge Function (requires auth)
+    /// - Parameters:
+    ///   - name: Migration name
+    ///   - sql: SQL content to execute
+    ///   - checksum: Optional checksum for integrity verification
+    ///   - appliedBy: Identifier of who is applying the migration
+    /// - Returns: The migration result
+    func applyMigration(name: String, sql: String, checksum: String?, appliedBy: String) async throws -> ApplyMigrationResponse {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        let request = ApplyMigrationRequest(
+            name: name,
+            sql: sql,
+            checksum: checksum,
+            appliedBy: appliedBy
+        )
+
+        debugLog("SupabaseService", "Calling apply-migration for: \(name)")
+
+        let response: ApplyMigrationResponse = try await client.functions.invoke(
+            "apply-migration",
+            options: FunctionInvokeOptions(body: request)
+        )
+
+        return response
+    }
+
+    /// Response structure for Edge Functions that just return success/error
+    struct EdgeFunctionResponse: Codable {
+        let success: Bool
+        let message: String?
+        let error: String?
+    }
+
+    /// Generic method to invoke an Edge Function with typed request/response
+    func invokeFunction<Request: Encodable, Response: Decodable>(
+        _ name: String,
+        request: Request
+    ) async throws -> Response {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        debugLog("SupabaseService", "Invoking Edge Function: \(name)")
+
+        let response: Response = try await client.functions.invoke(
+            name,
+            options: FunctionInvokeOptions(body: request)
+        )
+
+        return response
+    }
+
+    /// Invoke an Edge Function with no request body
+    func invokeFunction<Response: Decodable>(_ name: String) async throws -> Response {
+        guard let client = client else {
+            throw SupabaseServiceError.notConfigured
+        }
+
+        debugLog("SupabaseService", "Invoking Edge Function: \(name)")
+
+        let response: Response = try await client.functions.invoke(name)
+
+        return response
     }
 }
 

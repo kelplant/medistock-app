@@ -3,8 +3,12 @@
 package com.medistock.data.remote.repository
 
 import com.medistock.data.remote.SupabaseClientProvider
+import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
+import io.ktor.client.call.body
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -93,16 +97,41 @@ data class UpdateSchemaVersionParams(
 )
 
 /**
+ * Request body for apply-migration Edge Function
+ */
+@Serializable
+data class ApplyMigrationEdgeFunctionRequest(
+    val name: String,
+    val sql: String,
+    val checksum: String
+)
+
+/**
+ * Response from apply-migration Edge Function
+ */
+@Serializable
+data class ApplyMigrationEdgeFunctionResponse(
+    val success: Boolean,
+    val alreadyApplied: Boolean = false,
+    val message: String? = null,
+    val error: String? = null,
+    val executionTimeMs: Int? = null
+)
+
+/**
  * Repository pour gérer les migrations de schéma Supabase
  *
+ * Uses the apply-migration Edge Function for secure migration execution.
+ * The Edge Function verifies migrations against GitHub before executing.
+ *
  * Utilise les fonctions RPC:
- * - apply_migration(name, sql, checksum, applied_by)
  * - get_applied_migrations()
  * - is_migration_applied(name)
  */
 class MigrationRepository {
 
     private val supabase get() = SupabaseClientProvider.client
+    private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Récupère la liste des migrations déjà appliquées
@@ -135,18 +164,89 @@ class MigrationRepository {
     }
 
     /**
-     * Applique une migration
+     * Applique une migration via l'Edge Function apply-migration.
+     *
+     * The Edge Function:
+     * 1. Requires authentication (any authenticated user)
+     * 2. Verifies migration checksum against GitHub
+     * 3. Executes the SQL using service_role
+     * 4. Records the migration in schema_migrations
      *
      * @param name Nom unique de la migration (ex: "2026011702_add_feature")
      * @param sql Le SQL à exécuter
-     * @param checksum Hash MD5 du SQL pour vérification d'intégrité (optionnel)
-     * @param appliedBy Identifiant de l'utilisateur/système qui applique la migration
+     * @param checksum Hash MD5 du SQL pour vérification d'intégrité
+     * @param appliedBy Identifiant de l'utilisateur/système qui applique la migration (unused with Edge Function)
+     * @param accessToken The Supabase Auth access token for authentication
      */
     suspend fun applyMigration(
         name: String,
         sql: String,
         checksum: String? = null,
-        appliedBy: String = "app"
+        appliedBy: String = "app",
+        accessToken: String? = null
+    ): MigrationResult {
+        // If we have an access token, use the Edge Function
+        if (accessToken != null && checksum != null) {
+            return applyMigrationViaEdgeFunction(name, sql, checksum, accessToken)
+        }
+
+        // Fallback to direct RPC (for legacy support or when no auth)
+        return applyMigrationViaRpc(name, sql, checksum, appliedBy)
+    }
+
+    /**
+     * Apply migration via the apply-migration Edge Function (preferred method)
+     */
+    private suspend fun applyMigrationViaEdgeFunction(
+        name: String,
+        sql: String,
+        checksum: String,
+        accessToken: String
+    ): MigrationResult {
+        return try {
+            val requestBody = json.encodeToString(
+                ApplyMigrationEdgeFunctionRequest.serializer(),
+                ApplyMigrationEdgeFunctionRequest(name, sql, checksum)
+            )
+
+            val response = supabase.functions.invoke(
+                function = "apply-migration",
+                body = requestBody,
+                headers = Headers.build {
+                    append(HttpHeaders.ContentType, "application/json")
+                    append(HttpHeaders.Authorization, "Bearer $accessToken")
+                }
+            )
+
+            val responseBody = response.body<String>()
+            val result = json.decodeFromString<ApplyMigrationEdgeFunctionResponse>(responseBody)
+
+            MigrationResult(
+                success = result.success,
+                alreadyApplied = result.alreadyApplied,
+                message = result.message ?: if (result.success) "Migration applied" else "Migration failed",
+                executionTimeMs = result.executionTimeMs,
+                error = result.error
+            )
+        } catch (e: Exception) {
+            println("Edge Function apply-migration failed: ${e.message}")
+            MigrationResult(
+                success = false,
+                alreadyApplied = false,
+                message = "Edge Function failed: ${e.message}",
+                error = e.message
+            )
+        }
+    }
+
+    /**
+     * Apply migration via direct RPC (fallback for legacy/offline)
+     */
+    private suspend fun applyMigrationViaRpc(
+        name: String,
+        sql: String,
+        checksum: String?,
+        appliedBy: String
     ): MigrationResult {
         return try {
             val params = ApplyMigrationParams(
@@ -173,7 +273,7 @@ class MigrationRepository {
                 error = result["error"]?.jsonPrimitive?.content
             )
         } catch (e: Exception) {
-            println("❌ Erreur lors de l'application de la migration $name: ${e.message}")
+            println("RPC apply_migration failed: ${e.message}")
             MigrationResult(
                 success = false,
                 alreadyApplied = false,

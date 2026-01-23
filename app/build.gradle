@@ -79,6 +79,8 @@ dependencies {
     def supabase_version = "2.2.2"
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$supabase_version"
+    implementation "io.github.jan-tennert.supabase:gotrue-kt:$supabase_version"
+    implementation "io.github.jan-tennert.supabase:functions-kt:$supabase_version"
 
     // Ktor client for Supabase - Using 2.3.4 compatible with Supabase 2.2.2
     def ktor_version = "2.3.4"

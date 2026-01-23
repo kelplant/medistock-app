@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.medistock.R
 import com.medistock.shared.data.dto.NotificationSettingsDto
-import com.medistock.sync.SupabaseClientProvider
+import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.util.AuthManager
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +60,7 @@ class NotificationSettingsActivity : AppCompatActivity() {
         btnSaveSettings.setOnClickListener { saveSettings() }
 
         // Check if Supabase is configured
-        if (!SupabaseClientProvider.isConfigured) {
+        if (!SupabaseClientProvider.isConfigured(this)) {
             Toast.makeText(this, "Supabase not configured. Settings are stored on the server.", Toast.LENGTH_LONG).show()
             btnSaveSettings.isEnabled = false
             return
