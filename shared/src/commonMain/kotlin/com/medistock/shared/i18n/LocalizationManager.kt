@@ -91,6 +91,10 @@ object LocalizationManager {
             SupportedLocale.FRENCH -> StringsFr
             SupportedLocale.GERMAN -> StringsDe
             SupportedLocale.SPANISH -> StringsEs
+            SupportedLocale.ITALIAN -> StringsIt
+            SupportedLocale.RUSSIAN -> StringsRu
+            SupportedLocale.BEMBA -> StringsBm
+            SupportedLocale.NYANJA -> StringsNy
         }
     }
 

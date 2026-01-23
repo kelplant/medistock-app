@@ -144,6 +144,10 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case french = "fr"
     case german = "de"
     case spanish = "es"
+    case italian = "it"
+    case russian = "ru"
+    case bemba = "bm"
+    case nyanja = "ny"
 
     var id: String { rawValue }
     var code: String { rawValue }
@@ -154,6 +158,10 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .french: return "Français"
         case .german: return "Deutsch"
         case .spanish: return "Español"
+        case .italian: return "Italiano"
+        case .russian: return "Русский"
+        case .bemba: return "Ichibemba"
+        case .nyanja: return "Chinyanja"
         }
     }
 
@@ -163,6 +171,10 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .french: return .french
         case .german: return .german
         case .spanish: return .spanish
+        case .italian: return .italian
+        case .russian: return .russian
+        case .bemba: return .bemba
+        case .nyanja: return .nyanja
         }
     }
 
