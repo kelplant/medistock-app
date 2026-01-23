@@ -1,5 +1,6 @@
 package com.medistock.shared
 
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -9,6 +10,11 @@ import kotlin.test.assertTrue
  * These tests ensure Android and iOS produce identical results for the same calculations.
  */
 class FloatingPointParityTests {
+
+    // Helper for floating-point comparison (kotlin.test doesn't have assertEquals with tolerance)
+    private fun assertEqualsWithTolerance(expected: Double, actual: Double, tolerance: Double = 0.00001) {
+        assertTrue(abs(expected - actual) < tolerance, "Expected $expected but was $actual (tolerance: $tolerance)")
+    }
 
     @Test
     fun divisionResultConsistency() {
@@ -92,7 +98,7 @@ class FloatingPointParityTests {
         val revenue = 80.0 * 15.99
         val cost = 875.0
         val profit = revenue - cost
-        assertEquals(404.20, profit, 0.01)
+        assertEqualsWithTolerance(404.20, profit, 0.01)
     }
 
     @Test
