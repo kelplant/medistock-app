@@ -312,7 +312,19 @@ object StringsRu : Strings {
     override val valueTooShort = "Поле {field} должно быть минимум {min} символов"
     override val valueTooLong = "Поле {field} не должно превышать {max} символов"
     override val valueMustBePositive = "Значение должно быть положительным"
-    override val passwordTooShort = "Пароль должен быть минимум 6 символов"
+    override val passwordTooShort = "Пароль должен быть минимум 8 символов"
+
+    // PASSWORD COMPLEXITY
+    override val passwordMinLength = "Минимум 8 символов"
+    override val passwordNeedsUppercase = "Минимум одна заглавная буква (A-Z)"
+    override val passwordNeedsLowercase = "Минимум одна строчная буква (a-z)"
+    override val passwordNeedsDigit = "Минимум одна цифра (0-9)"
+    override val passwordNeedsSpecial = "Минимум один специальный символ (!@#\$%...)"
+    override val passwordStrengthWeak = "Слабый"
+    override val passwordStrengthMedium = "Средний"
+    override val passwordStrengthStrong = "Сильный"
+    override val passwordRequirements = "Требования к паролю:"
+    override val passwordStrength = "Надёжность пароля:"
 
     // ============================================
     // REFERENTIAL INTEGRITY

@@ -321,6 +321,20 @@ interface Strings {
     val passwordTooShort: String
 
     // ============================================
+    // PASSWORD COMPLEXITY
+    // ============================================
+    val passwordMinLength: String        // "Password must be at least 8 characters"
+    val passwordNeedsUppercase: String   // "Must contain at least one uppercase letter"
+    val passwordNeedsLowercase: String   // "Must contain at least one lowercase letter"
+    val passwordNeedsDigit: String       // "Must contain at least one digit"
+    val passwordNeedsSpecial: String     // "Must contain at least one special character"
+    val passwordStrengthWeak: String     // "Weak"
+    val passwordStrengthMedium: String   // "Medium"
+    val passwordStrengthStrong: String   // "Strong"
+    val passwordRequirements: String     // "Password requirements:"
+    val passwordStrength: String         // "Password strength:"
+
+    // ============================================
     // REFERENTIAL INTEGRITY
     // ============================================
     val cannotDelete: String

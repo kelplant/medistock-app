@@ -313,7 +313,19 @@ object StringsNy : Strings {
     override val valueTooShort = "{field} iyenera kukhala osachepera {min} characters"
     override val valueTooLong = "{field} siyenera kupitirira {max} characters"
     override val valueMustBePositive = "Mtengo uyenera kukhala positive"
-    override val passwordTooShort = "Mawu achinsinsi ayenera kukhala osachepera 6 characters"
+    override val passwordTooShort = "Mawu achinsinsi ayenera kukhala osachepera 8 characters"
+
+    // PASSWORD COMPLEXITY
+    override val passwordMinLength = "Osachepera zilembo 8"
+    override val passwordNeedsUppercase = "Kamodzi lilembo lalikulu (A-Z)"
+    override val passwordNeedsLowercase = "Kamodzi lilembo laling'ono (a-z)"
+    override val passwordNeedsDigit = "Kamodzi nambala (0-9)"
+    override val passwordNeedsSpecial = "Kamodzi chizindikiro chapadera (!@#\$%...)"
+    override val passwordStrengthWeak = "Yofooka"
+    override val passwordStrengthMedium = "Yapakati"
+    override val passwordStrengthStrong = "Yamphamvu"
+    override val passwordRequirements = "Zofunikira za password:"
+    override val passwordStrength = "Mphamvu ya password:"
 
     // ============================================
     // REFERENTIAL INTEGRITY

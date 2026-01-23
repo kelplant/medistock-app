@@ -288,6 +288,30 @@ struct ChangePasswordView: View {
     @State private var errorMessage: String?
     @State private var successMessage: String?
 
+    // Password validation computed properties
+    private var passwordValidation: PasswordPolicy.ValidationResult {
+        PasswordPolicy.shared.validate(password: newPassword)
+    }
+
+    private var passwordStrength: PasswordPolicy.PasswordStrength {
+        PasswordPolicy.shared.getStrength(password: newPassword)
+    }
+
+    private var passwordRequirements: [PasswordPolicy.PasswordError: KotlinBoolean] {
+        PasswordPolicy.shared.checkRequirements(password: newPassword)
+    }
+
+    private var strengthColor: Color {
+        let rgb = passwordStrength.toRGB()
+        return Color(red: Double(rgb.first!.intValue) / 255.0,
+                     green: Double(rgb.second!.intValue) / 255.0,
+                     blue: Double(rgb.third!.intValue) / 255.0)
+    }
+
+    private var strengthProgress: Double {
+        Double(passwordStrength.toProgress()) / 100.0
+    }
+
     var body: some View {
         Form {
             Section(header: Text(Localized.currentPassword)) {
@@ -296,7 +320,63 @@ struct ChangePasswordView: View {
 
             Section(header: Text(Localized.newPassword)) {
                 SecureField(Localized.newPassword, text: $newPassword)
+
+                // Password strength indicator
+                if !newPassword.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(Localized.strings.passwordStrength)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(PasswordPolicy.shared.getStrengthLabel(strength: passwordStrength, strings: Localized.strings))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(strengthColor)
+                        }
+
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(height: 8)
+
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(strengthColor)
+                                    .frame(width: geometry.size.width * strengthProgress, height: 8)
+                            }
+                        }
+                        .frame(height: 8)
+                    }
+                    .padding(.vertical, 4)
+                }
+
                 SecureField(Localized.confirmPassword, text: $confirmPassword)
+            }
+
+            // Password requirements card
+            Section(header: Text(Localized.strings.passwordRequirements)) {
+                VStack(alignment: .leading, spacing: 8) {
+                    PasswordRequirementRow(
+                        text: Localized.strings.passwordMinLength,
+                        isMet: passwordRequirements[PasswordPolicy.PasswordError.tooShort]?.boolValue ?? false
+                    )
+                    PasswordRequirementRow(
+                        text: Localized.strings.passwordNeedsUppercase,
+                        isMet: passwordRequirements[PasswordPolicy.PasswordError.missingUppercase]?.boolValue ?? false
+                    )
+                    PasswordRequirementRow(
+                        text: Localized.strings.passwordNeedsLowercase,
+                        isMet: passwordRequirements[PasswordPolicy.PasswordError.missingLowercase]?.boolValue ?? false
+                    )
+                    PasswordRequirementRow(
+                        text: Localized.strings.passwordNeedsDigit,
+                        isMet: passwordRequirements[PasswordPolicy.PasswordError.missingDigit]?.boolValue ?? false
+                    )
+                    PasswordRequirementRow(
+                        text: Localized.strings.passwordNeedsSpecial,
+                        isMet: passwordRequirements[PasswordPolicy.PasswordError.missingSpecial]?.boolValue ?? false
+                    )
+                }
             }
 
             if let errorMessage {
@@ -330,17 +410,30 @@ struct ChangePasswordView: View {
     private var isFormValid: Bool {
         !currentPassword.isEmpty &&
         !newPassword.isEmpty &&
-        newPassword.count >= 4 &&
+        passwordValidation.isValid &&
         newPassword == confirmPassword
     }
 
     private func changePassword() {
-        guard isFormValid else {
-            if newPassword != confirmPassword {
-                errorMessage = Localized.passwordsDoNotMatch
-            } else if newPassword.count < 4 {
-                errorMessage = Localized.strings.passwordTooShort
+        guard !currentPassword.isEmpty else {
+            errorMessage = Localized.strings.fieldRequired.replacingOccurrences(of: "{field}", with: Localized.currentPassword)
+            return
+        }
+
+        guard !newPassword.isEmpty else {
+            errorMessage = Localized.strings.fieldRequired.replacingOccurrences(of: "{field}", with: Localized.newPassword)
+            return
+        }
+
+        guard passwordValidation.isValid else {
+            if let firstError = passwordValidation.errors.first {
+                errorMessage = PasswordPolicy.shared.getErrorMessage(error: firstError, strings: Localized.strings)
             }
+            return
+        }
+
+        guard newPassword == confirmPassword else {
+            errorMessage = Localized.passwordsDoNotMatch
             return
         }
 
@@ -469,6 +562,24 @@ struct LanguagePickerView: View {
         // Dismiss to refresh the parent view with new language
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             dismiss()
+        }
+    }
+}
+
+// MARK: - Password Requirement Row
+struct PasswordRequirementRow: View {
+    let text: String
+    let isMet: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: isMet ? "checkmark.circle.fill" : "circle")
+                .foregroundColor(isMet ? .green : .gray)
+                .font(.system(size: 14))
+
+            Text(text)
+                .font(.caption)
+                .foregroundColor(isMet ? .primary : .secondary)
         }
     }
 }

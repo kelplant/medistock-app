@@ -1,17 +1,26 @@
 package com.medistock.ui.user
 
+import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
 import com.medistock.R
@@ -19,6 +28,9 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.User
 import com.medistock.shared.domain.model.UserPermission
 import com.medistock.shared.domain.model.Module
+import com.medistock.shared.domain.validation.PasswordPolicy
+import com.medistock.shared.domain.validation.PasswordPolicy.PasswordError
+import com.medistock.shared.i18n.LocalizationManager
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +49,29 @@ class UserAddEditActivity : AppCompatActivity() {
     private lateinit var btnToggleActive: Button
     private lateinit var tvAdminNote: TextView
     private lateinit var permissionsContainer: LinearLayout
+    private lateinit var tvUserInfoTitle: TextView
+    private lateinit var tvPermissionsTitle: TextView
+    private lateinit var labelPassword: TextView
+
+    // Password strength UI
+    private lateinit var passwordStrengthContainer: LinearLayout
+    private lateinit var progressPasswordStrength: ProgressBar
+    private lateinit var labelPasswordStrength: TextView
+    private lateinit var textPasswordStrength: TextView
+
+    // Password requirements UI
+    private lateinit var cardPasswordRequirements: CardView
+    private lateinit var labelPasswordRequirements: TextView
+    private lateinit var iconReqLength: ImageView
+    private lateinit var iconReqUppercase: ImageView
+    private lateinit var iconReqLowercase: ImageView
+    private lateinit var iconReqDigit: ImageView
+    private lateinit var iconReqSpecial: ImageView
+    private lateinit var textReqLength: TextView
+    private lateinit var textReqUppercase: TextView
+    private lateinit var textReqLowercase: TextView
+    private lateinit var textReqDigit: TextView
+    private lateinit var textReqSpecial: TextView
 
     private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
@@ -61,10 +96,11 @@ class UserAddEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         authManager = AuthManager.getInstance(this)
+        val strings = LocalizationManager.strings
 
         // Check if user is admin
         if (!authManager.isAdmin()) {
-            Toast.makeText(this, "Access denied: Administrators only", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, strings.permissions, Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -74,19 +110,10 @@ class UserAddEditActivity : AppCompatActivity() {
 
         sdk = MedistockApplication.sdk
 
-        // Initialize views
-        editFullName = findViewById(R.id.editFullName)
-        editUsername = findViewById(R.id.editUsername)
-        editPassword = findViewById(R.id.editPassword)
-        checkIsAdmin = findViewById(R.id.checkIsAdmin)
-        checkIsActive = findViewById(R.id.checkIsActive)
-        btnSaveUser = findViewById(R.id.btnSaveUser)
-        btnToggleActive = findViewById(R.id.btnDeleteUser) // Repurposed delete button
-        tvAdminNote = findViewById(R.id.tvAdminNote)
-        permissionsContainer = findViewById(R.id.permissionsContainer)
-
-        // Setup permissions UI
+        initViews()
+        applyLocalizedStrings()
         setupPermissionsUI()
+        setupPasswordValidation()
 
         // Check admin checkbox behavior
         checkIsAdmin.setOnCheckedChangeListener { _, isChecked ->
@@ -97,19 +124,157 @@ class UserAddEditActivity : AppCompatActivity() {
         userId = intent.getStringExtra("USER_ID")?.takeIf { it.isNotBlank() }
         if (userId != null) {
             isEditMode = true
-            supportActionBar?.title = "Edit User"
+            supportActionBar?.title = strings.editUser
             loadUser()
             btnToggleActive.visibility = View.VISIBLE
+            // Hide password requirements card in edit mode (password is optional)
+            cardPasswordRequirements.visibility = View.GONE
         } else {
-            supportActionBar?.title = "New User"
+            supportActionBar?.title = strings.addUser
         }
 
         btnSaveUser.setOnClickListener { saveUser() }
         btnToggleActive.setOnClickListener { toggleUserActiveStatus() }
     }
 
+    private fun initViews() {
+        editFullName = findViewById(R.id.editFullName)
+        editUsername = findViewById(R.id.editUsername)
+        editPassword = findViewById(R.id.editPassword)
+        checkIsAdmin = findViewById(R.id.checkIsAdmin)
+        checkIsActive = findViewById(R.id.checkIsActive)
+        btnSaveUser = findViewById(R.id.btnSaveUser)
+        btnToggleActive = findViewById(R.id.btnDeleteUser)
+        tvAdminNote = findViewById(R.id.tvAdminNote)
+        permissionsContainer = findViewById(R.id.permissionsContainer)
+        tvUserInfoTitle = findViewById(R.id.tvUserInfoTitle)
+        tvPermissionsTitle = findViewById(R.id.tvPermissionsTitle)
+        labelPassword = findViewById(R.id.labelPassword)
+
+        // Password strength
+        passwordStrengthContainer = findViewById(R.id.passwordStrengthContainer)
+        progressPasswordStrength = findViewById(R.id.progressPasswordStrength)
+        labelPasswordStrength = findViewById(R.id.labelPasswordStrength)
+        textPasswordStrength = findViewById(R.id.textPasswordStrength)
+
+        // Password requirements
+        cardPasswordRequirements = findViewById(R.id.cardPasswordRequirements)
+        labelPasswordRequirements = findViewById(R.id.labelPasswordRequirements)
+        iconReqLength = findViewById(R.id.iconReqLength)
+        iconReqUppercase = findViewById(R.id.iconReqUppercase)
+        iconReqLowercase = findViewById(R.id.iconReqLowercase)
+        iconReqDigit = findViewById(R.id.iconReqDigit)
+        iconReqSpecial = findViewById(R.id.iconReqSpecial)
+        textReqLength = findViewById(R.id.textReqLength)
+        textReqUppercase = findViewById(R.id.textReqUppercase)
+        textReqLowercase = findViewById(R.id.textReqLowercase)
+        textReqDigit = findViewById(R.id.textReqDigit)
+        textReqSpecial = findViewById(R.id.textReqSpecial)
+    }
+
+    private fun applyLocalizedStrings() {
+        val strings = LocalizationManager.strings
+
+        tvUserInfoTitle.text = strings.information
+        editFullName.hint = strings.fullName
+        editUsername.hint = strings.username
+        labelPassword.text = strings.password
+        editPassword.hint = strings.password
+        checkIsAdmin.text = strings.admin
+        checkIsActive.text = strings.active
+        tvPermissionsTitle.text = strings.permissions
+        btnSaveUser.text = strings.save
+
+        // Password strength
+        labelPasswordStrength.text = strings.passwordStrength
+
+        // Password requirements
+        labelPasswordRequirements.text = strings.passwordRequirements
+        textReqLength.text = strings.passwordMinLength
+        textReqUppercase.text = strings.passwordNeedsUppercase
+        textReqLowercase.text = strings.passwordNeedsLowercase
+        textReqDigit.text = strings.passwordNeedsDigit
+        textReqSpecial.text = strings.passwordNeedsSpecial
+    }
+
+    private fun setupPasswordValidation() {
+        editPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val password = s?.toString() ?: ""
+                updatePasswordStrengthUI(password)
+                updateRequirementsUI(password)
+            }
+        })
+    }
+
+    private fun updatePasswordStrengthUI(password: String) {
+        if (password.isEmpty()) {
+            passwordStrengthContainer.visibility = View.GONE
+            return
+        }
+
+        passwordStrengthContainer.visibility = View.VISIBLE
+
+        val strength = PasswordPolicy.getStrength(password)
+        val strings = LocalizationManager.strings
+
+        // Update progress
+        progressPasswordStrength.progress = strength.toProgress()
+
+        // Update label
+        textPasswordStrength.text = PasswordPolicy.getStrengthLabel(strength, strings)
+
+        // Update color
+        val rgb = strength.toRGB()
+        val color = Color.rgb(rgb.first, rgb.second, rgb.third)
+        textPasswordStrength.setTextColor(color)
+
+        // Update progress bar color
+        progressPasswordStrength.progressDrawable?.colorFilter =
+            PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN)
+    }
+
+    private fun updateRequirementsUI(password: String) {
+        val requirements = PasswordPolicy.checkRequirements(password)
+
+        updateRequirementIcon(iconReqLength, requirements[PasswordError.TOO_SHORT] ?: false)
+        updateRequirementIcon(iconReqUppercase, requirements[PasswordError.MISSING_UPPERCASE] ?: false)
+        updateRequirementIcon(iconReqLowercase, requirements[PasswordError.MISSING_LOWERCASE] ?: false)
+        updateRequirementIcon(iconReqDigit, requirements[PasswordError.MISSING_DIGIT] ?: false)
+        updateRequirementIcon(iconReqSpecial, requirements[PasswordError.MISSING_SPECIAL] ?: false)
+    }
+
+    private fun updateRequirementIcon(icon: ImageView, met: Boolean) {
+        if (met) {
+            icon.setImageResource(R.drawable.ic_check_circle)
+            icon.clearColorFilter()
+        } else {
+            icon.setImageResource(R.drawable.ic_circle_outline)
+            icon.setColorFilter(
+                ContextCompat.getColor(this, android.R.color.darker_gray),
+                PorterDuff.Mode.SRC_IN
+            )
+        }
+    }
+
     private fun setupPermissionsUI() {
-        modules.forEach { (moduleKey, moduleName) ->
+        val strings = LocalizationManager.strings
+
+        // Module name translations
+        val moduleNames = mapOf(
+            Module.STOCK to strings.stock,
+            Module.SALES to strings.sales,
+            Module.PURCHASES to strings.purchases,
+            Module.INVENTORY to strings.inventory,
+            Module.PRODUCTS to strings.products,
+            Module.SITES to strings.sites,
+            Module.CATEGORIES to strings.categories,
+            Module.ADMIN to strings.admin
+        )
+
+        modules.forEach { (moduleKey, _) ->
             val permView = LayoutInflater.from(this).inflate(R.layout.item_permission, permissionsContainer, false)
 
             val tvModuleName = permView.findViewById<TextView>(R.id.tvModuleName)
@@ -119,7 +284,12 @@ class UserAddEditActivity : AppCompatActivity() {
             val checkCanEdit = permView.findViewById<CheckBox>(R.id.checkCanEdit)
             val checkCanDelete = permView.findViewById<CheckBox>(R.id.checkCanDelete)
 
-            tvModuleName.text = moduleName
+            tvModuleName.text = moduleNames[moduleKey] ?: moduleKey.name
+            checkCanView.text = strings.canView
+            checkCanCreate.text = strings.canCreate
+            checkCanEdit.text = strings.canEdit
+            checkCanDelete.text = strings.canDelete
+
             permissionsContainer.addView(permView)
 
             val permCheckboxes = PermissionCheckboxes(
@@ -158,6 +328,9 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun updatePermissionsVisibility(isAdmin: Boolean) {
+        val strings = LocalizationManager.strings
+        tvAdminNote.text = strings.admin // "Administrators have all permissions"
+
         if (isAdmin) {
             tvAdminNote.visibility = View.VISIBLE
             permissionsContainer.alpha = 0.5f
@@ -172,6 +345,8 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun loadUser() {
+        val strings = LocalizationManager.strings
+
         lifecycleScope.launch {
             try {
                 val (user, permissions) = withContext(Dispatchers.IO) {
@@ -185,7 +360,7 @@ class UserAddEditActivity : AppCompatActivity() {
 
                     editFullName.setText(user.fullName)
                     editUsername.setText(user.username)
-                    editPassword.hint = "Leave blank to keep unchanged"
+                    editPassword.hint = strings.password // Leave blank to keep unchanged
                     checkIsAdmin.isChecked = user.isAdmin
                     checkIsActive.isChecked = user.isActive
 
@@ -204,22 +379,24 @@ class UserAddEditActivity : AppCompatActivity() {
                     updatePermissionsVisibility(user.isAdmin)
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@UserAddEditActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UserAddEditActivity, "${strings.error}: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun updateToggleButtonText() {
+        val strings = LocalizationManager.strings
         if (currentUserIsActive) {
-            btnToggleActive.text = "Deactivate User"
+            btnToggleActive.text = strings.deactivate
             btnToggleActive.setBackgroundColor(getColor(android.R.color.holo_orange_dark))
         } else {
-            btnToggleActive.text = "Reactivate User"
+            btnToggleActive.text = strings.reactivate
             btnToggleActive.setBackgroundColor(getColor(android.R.color.holo_green_dark))
         }
     }
 
     private fun saveUser() {
+        val strings = LocalizationManager.strings
         val fullName = editFullName.text.toString().trim()
         val username = editUsername.text.toString().trim()
         val password = editPassword.text.toString()
@@ -227,13 +404,25 @@ class UserAddEditActivity : AppCompatActivity() {
         val isActive = checkIsActive.isChecked
 
         if (fullName.isEmpty() || username.isEmpty()) {
-            Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.fieldRequired.replace("{field}", strings.fullName), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (!isEditMode && password.isEmpty()) {
-            Toast.makeText(this, "Password is required for new users", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.fieldRequired.replace("{field}", strings.password), Toast.LENGTH_SHORT).show()
             return
+        }
+
+        // Validate password complexity for new users or when password is provided in edit mode
+        if (password.isNotEmpty()) {
+            val validationResult = PasswordPolicy.validate(password)
+            if (!validationResult.isValid) {
+                val firstError = validationResult.errors.firstOrNull()
+                if (firstError != null) {
+                    Toast.makeText(this, PasswordPolicy.getErrorMessage(firstError, strings), Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
         }
 
         lifecycleScope.launch {
@@ -269,7 +458,7 @@ class UserAddEditActivity : AppCompatActivity() {
                             savePermissions(existingUser.id, currentUser, timestamp)
 
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@UserAddEditActivity, "User updated", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@UserAddEditActivity, strings.success, Toast.LENGTH_SHORT).show()
                             }
                         }
                     } else {
@@ -277,7 +466,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         val existingUser = sdk.userRepository.getByUsername(username)
                         if (existingUser != null) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@UserAddEditActivity, "Username already exists", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@UserAddEditActivity, strings.username, Toast.LENGTH_SHORT).show()
                             }
                             return@withContext
                         }
@@ -302,14 +491,14 @@ class UserAddEditActivity : AppCompatActivity() {
                         savePermissions(newUserId, currentUser, timestamp)
 
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@UserAddEditActivity, "User created", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@UserAddEditActivity, strings.success, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
 
                 finish()
             } catch (e: Exception) {
-                Toast.makeText(this@UserAddEditActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UserAddEditActivity, "${strings.error}: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -338,13 +527,13 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun toggleUserActiveStatus() {
-        val action = if (currentUserIsActive) "deactivate" else "reactivate"
-        val actionCapitalized = if (currentUserIsActive) "Deactivate" else "Reactivate"
+        val strings = LocalizationManager.strings
+        val actionText = if (currentUserIsActive) strings.deactivate else strings.reactivate
 
         AlertDialog.Builder(this)
-            .setTitle("Confirm Action")
-            .setMessage("Do you want to $action this user?")
-            .setPositiveButton(actionCapitalized) { _, _ ->
+            .setTitle(strings.confirm)
+            .setMessage("${strings.confirm}?")
+            .setPositiveButton(actionText) { _, _ ->
                 lifecycleScope.launch {
                     try {
                         val (user, shouldContinue) = withContext(Dispatchers.IO) {
@@ -366,7 +555,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         if (!shouldContinue) {
                             Toast.makeText(
                                 this@UserAddEditActivity,
-                                "Cannot deactivate the last active administrator",
+                                strings.cannotDelete,
                                 Toast.LENGTH_LONG
                             ).show()
                             return@launch
@@ -388,15 +577,15 @@ class UserAddEditActivity : AppCompatActivity() {
                             checkIsActive.isChecked = newStatus
                             updateToggleButtonText()
 
-                            val message = if (newStatus) "User reactivated" else "User deactivated"
+                            val message = if (newStatus) strings.reactivate else strings.deactivate
                             Toast.makeText(this@UserAddEditActivity, message, Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
-                        Toast.makeText(this@UserAddEditActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@UserAddEditActivity, "${strings.error}: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(strings.cancel, null)
             .show()
     }
 
