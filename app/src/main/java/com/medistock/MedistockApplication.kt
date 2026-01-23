@@ -1,6 +1,7 @@
 package com.medistock
 
 import android.app.Application
+import android.content.pm.ApplicationInfo
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -18,6 +19,7 @@ import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
 import com.medistock.ui.profile.ProfileActivity
 import com.medistock.util.AppUpdateManager
+import com.medistock.util.TestUserSeeder
 import com.medistock.util.UpdateCheckResult
 import io.github.jan.supabase.realtime.realtime
 import org.conscrypt.Conscrypt
@@ -289,6 +291,21 @@ class MedistockApplication : Application() {
             val driverFactory = DatabaseDriverFactory(this)
             _sdk = MedistockSDK(driverFactory)
             println("✅ MedistockSDK initialized")
+
+            // Seed test users in debug builds (for Maestro E2E permission tests)
+            val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+            if (isDebug) {
+                appScope.launch {
+                    try {
+                        val seededCount = TestUserSeeder.seedTestUsers(sdk)
+                        if (seededCount > 0) {
+                            println("✅ Seeded $seededCount test users for E2E testing")
+                        }
+                    } catch (e: Exception) {
+                        println("⚠️ Failed to seed test users: ${e.message}")
+                    }
+                }
+            }
         } catch (e: Exception) {
             println("❌ Failed to initialize MedistockSDK: ${e.message}")
             e.printStackTrace()
