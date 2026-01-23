@@ -8,7 +8,7 @@
 -- ============================================================================
 -- FIX 1: Update has_site_access to check if user is active
 -- ============================================================================
-CREATE OR REPLACE FUNCTION has_site_access(p_site_id TEXT)
+CREATE OR REPLACE FUNCTION has_site_access(p_site_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     -- Admins have access to all sites
@@ -19,7 +19,7 @@ BEGIN
     -- Check that the user is active (prevents access with stale JWT tokens)
     IF NOT EXISTS (
         SELECT 1 FROM app_users
-        WHERE id = auth.uid()::text
+        WHERE id = auth.uid()
         AND is_active = 1
     ) THEN
         RETURN FALSE;

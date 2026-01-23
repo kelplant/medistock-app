@@ -12,7 +12,7 @@ BEGIN
     -- Check if user exists in users table and is admin
     RETURN EXISTS (
         SELECT 1 FROM app_users
-        WHERE id = auth.uid()::text
+        WHERE id = auth.uid()
         AND is_admin = 1
         AND is_active = 1
     );
@@ -22,7 +22,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 -- ============================================================================
 -- HELPER FUNCTION: Check if user has access to a site
 -- ============================================================================
-CREATE OR REPLACE FUNCTION has_site_access(p_site_id TEXT)
+CREATE OR REPLACE FUNCTION has_site_access(p_site_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     -- Admins have access to all sites
@@ -84,7 +84,7 @@ DROP POLICY IF EXISTS "Allow all operations on audit_history" ON audit_history;
 -- ============================================================================
 -- Users can read their own record, admins can read all
 CREATE POLICY "users_select_policy" ON app_users FOR SELECT TO authenticated
-USING (id = auth.uid()::text OR is_admin());
+USING (id = auth.uid() OR is_admin());
 
 -- Only admins can insert/update/delete users (managed via Edge Functions)
 CREATE POLICY "users_admin_insert" ON app_users FOR INSERT TO authenticated
@@ -111,7 +111,7 @@ USING (is_admin());
 -- USER_PERMISSIONS TABLE POLICIES
 -- ============================================================================
 CREATE POLICY "user_permissions_select" ON user_permissions FOR SELECT TO authenticated
-USING (user_id = auth.uid()::text OR is_admin());
+USING (user_id = auth.uid() OR is_admin());
 
 CREATE POLICY "user_permissions_admin_all" ON user_permissions FOR ALL TO authenticated
 USING (is_admin())
