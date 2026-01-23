@@ -12,7 +12,7 @@ BEGIN
     -- Check if user exists in users table and is admin
     RETURN EXISTS (
         SELECT 1 FROM app_users
-        WHERE id = auth.uid()::text
+        WHERE id = auth.uid()
         AND is_admin = 1
         AND is_active = 1
     );
@@ -33,7 +33,7 @@ BEGIN
     -- Check user_sites table for access
     RETURN EXISTS (
         SELECT 1 FROM user_sites
-        WHERE user_id = auth.uid()::text
+        WHERE user_id = auth.uid()
         AND site_id = p_site_id
     );
 END;
@@ -86,7 +86,7 @@ DROP POLICY IF EXISTS "Allow all operations on audit_history" ON audit_history;
 -- ============================================================================
 -- Users can read their own record, admins can read all
 CREATE POLICY "users_select_policy" ON app_users FOR SELECT TO authenticated
-USING (id = auth.uid()::text OR is_admin());
+USING (id = auth.uid() OR is_admin());
 
 -- Only admins can insert/update/delete users (managed via Edge Functions)
 CREATE POLICY "users_admin_insert" ON app_users FOR INSERT TO authenticated
@@ -103,7 +103,7 @@ USING (is_admin());
 -- USER_SITES TABLE POLICIES
 -- ============================================================================
 CREATE POLICY "user_sites_select" ON user_sites FOR SELECT TO authenticated
-USING (user_id = auth.uid()::text OR is_admin());
+USING (user_id = auth.uid() OR is_admin());
 
 CREATE POLICY "user_sites_admin_all" ON user_sites FOR ALL TO authenticated
 USING (is_admin())
@@ -113,7 +113,7 @@ WITH CHECK (is_admin());
 -- USER_PERMISSIONS TABLE POLICIES
 -- ============================================================================
 CREATE POLICY "user_permissions_select" ON user_permissions FOR SELECT TO authenticated
-USING (user_id = auth.uid()::text OR is_admin());
+USING (user_id = auth.uid() OR is_admin());
 
 CREATE POLICY "user_permissions_admin_all" ON user_permissions FOR ALL TO authenticated
 USING (is_admin())
@@ -314,16 +314,16 @@ WITH CHECK (true);
 -- Users can only see and manage their own sync items
 -- ============================================================================
 CREATE POLICY "sync_queue_select" ON sync_queue FOR SELECT TO authenticated
-USING (user_id = auth.uid()::text OR is_admin());
+USING (user_id = auth.uid() OR is_admin());
 
 CREATE POLICY "sync_queue_insert" ON sync_queue FOR INSERT TO authenticated
-WITH CHECK (user_id = auth.uid()::text);
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "sync_queue_update" ON sync_queue FOR UPDATE TO authenticated
-USING (user_id = auth.uid()::text OR is_admin());
+USING (user_id = auth.uid() OR is_admin());
 
 CREATE POLICY "sync_queue_delete" ON sync_queue FOR DELETE TO authenticated
-USING (user_id = auth.uid()::text OR is_admin());
+USING (user_id = auth.uid() OR is_admin());
 
 -- ============================================================================
 -- Verification

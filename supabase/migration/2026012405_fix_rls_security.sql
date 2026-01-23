@@ -19,7 +19,7 @@ BEGIN
     -- Check that the user is active (prevents access with stale JWT tokens)
     IF NOT EXISTS (
         SELECT 1 FROM app_users
-        WHERE id = auth.uid()::text
+        WHERE id = auth.uid()
         AND is_active = 1
     ) THEN
         RETURN FALSE;
@@ -28,7 +28,7 @@ BEGIN
     -- Check user_sites table for access
     RETURN EXISTS (
         SELECT 1 FROM user_sites
-        WHERE user_id = auth.uid()::text
+        WHERE user_id = auth.uid()
         AND site_id = p_site_id
     );
 END;
