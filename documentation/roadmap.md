@@ -361,7 +361,7 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 10 - Parité Écrans Android | ✅ Terminée | Clients ✅, Achats ✅, Inventaires ✅, Profil ✅, Menu align ✅ |
 | Phase 11 - Intégrité Référentielle | ✅ Terminée | ReferentialIntegrityService + is_active |
 | Phase 12 - Internationalisation | ✅ Terminée | 8 langues, sélecteur iOS ✅, sélecteur Android ✅ |
-| Phase 13 - Améliorations Sécurité | ⏳ À faire | Password complexity |
+| Phase 13 - Améliorations Sécurité | ✅ Terminée | Password complexity ✅ |
 | Phase 14 - Tests Maestro Permissions | ⏳ À faire | Tests granulaires par permission |
 
 **Dernière mise à jour :** 23 Janvier 2026
@@ -398,7 +398,7 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 | 🟡 Moyenne | Liste Achats manquante Android | Phase 10 | ✅ Fait |
 | 🟡 Moyenne | Liste Inventaires manquante Android | Phase 10 | ✅ Fait |
 | 🟡 Moyenne | Application mono-langue (EN seulement) | Phase 12 | ✅ Fait (8 langues) |
-| 🟡 Moyenne | Password complexity obligatoire | Phase 13 | ⏳ À faire |
+| 🟡 Moyenne | Password complexity obligatoire | Phase 13 | ✅ Fait |
 | 🟢 Basse | DTOs sync partiellement dupliqués | Phase 8 | ⚠️ Partiel |
 | 🟢 Basse | Menu Profil manquant Android | Phase 10 | ✅ Fait |
 | 🟡 Moyenne | Ordre menus iOS différent d'Android | Phase 10 | ✅ Fait |
@@ -1210,87 +1210,64 @@ val FrStrings = Strings(
 
 ---
 
-## Phase 13 — Améliorations Sécurité (1-2 semaines) ⏳ À FAIRE
+## Phase 13 — Améliorations Sécurité (1-2 semaines) ✅ TERMINÉE
 
 > But : Renforcer la sécurité de l'application avec des politiques de mots de passe robustes.
 
-### 13.1. Complexité de mot de passe obligatoire 🔴 PRIORITAIRE
+### 13.1. Complexité de mot de passe obligatoire ✅
 
-**Créer `PasswordPolicy` dans `shared/domain/auth/` :**
-```kotlin
-// PasswordPolicy.kt
-object PasswordPolicy {
-    const val MIN_LENGTH = 8
-    const val REQUIRE_UPPERCASE = true
-    const val REQUIRE_LOWERCASE = true
-    const val REQUIRE_DIGIT = true
-    const val REQUIRE_SPECIAL_CHAR = true
+**`PasswordPolicy` créé dans `shared/domain/validation/` :**
+- ✅ Validation : min 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial
+- ✅ Calcul de force : Weak (0-2 critères), Medium (3-4 critères), Strong (5 critères)
+- ✅ Helpers UI : `toProgress()`, `toRGB()`, `toColorHex()`
+- ✅ Messages localisés via `getErrorMessage()` et `getStrengthLabel()`
 
-    data class ValidationResult(
-        val isValid: Boolean,
-        val errors: List<PasswordError>
-    )
+**Écrans modifiés :**
+- ✅ Android `ChangePasswordActivity` - Validation + indicateur de force
+- ✅ Android `UserAddEditActivity` - Validation + indicateur de force
+- ✅ iOS `ChangePasswordView` - Validation + indicateur de force
+- ✅ iOS `UsersViews.swift` - Validation + indicateur de force
 
-    enum class PasswordError {
-        TOO_SHORT,
-        MISSING_UPPERCASE,
-        MISSING_LOWERCASE,
-        MISSING_DIGIT,
-        MISSING_SPECIAL_CHAR
-    }
+**Strings i18n ajoutées (8 langues : EN, FR, DE, ES, IT, RU, Bemba, Nyanja) :**
+- ✅ `passwordMinLength` - "At least 8 characters"
+- ✅ `passwordNeedsUppercase` - "At least one uppercase letter (A-Z)"
+- ✅ `passwordNeedsLowercase` - "At least one lowercase letter (a-z)"
+- ✅ `passwordNeedsDigit` - "At least one digit (0-9)"
+- ✅ `passwordNeedsSpecial` - "At least one special character (!@#$%...)"
+- ✅ `passwordStrengthWeak` - "Weak"
+- ✅ `passwordStrengthMedium` - "Medium"
+- ✅ `passwordStrengthStrong` - "Strong"
+- ✅ `passwordRequirements` - "Password requirements:"
+- ✅ `passwordStrength` - "Password strength:"
+- ✅ `passwordMustBeDifferent` - "New password must be different from current password"
+- ✅ `usernameAlreadyExists` - "Username already exists"
 
-    fun validate(password: String): ValidationResult {
-        val errors = mutableListOf<PasswordError>()
+### 13.2. Indicateur visuel de force du mot de passe ✅
 
-        if (password.length < MIN_LENGTH) errors.add(PasswordError.TOO_SHORT)
-        if (REQUIRE_UPPERCASE && !password.any { it.isUpperCase() }) errors.add(PasswordError.MISSING_UPPERCASE)
-        if (REQUIRE_LOWERCASE && !password.any { it.isLowerCase() }) errors.add(PasswordError.MISSING_LOWERCASE)
-        if (REQUIRE_DIGIT && !password.any { it.isDigit() }) errors.add(PasswordError.MISSING_DIGIT)
-        if (REQUIRE_SPECIAL_CHAR && !password.any { !it.isLetterOrDigit() }) errors.add(PasswordError.MISSING_SPECIAL_CHAR)
+**UI implémentée :**
+- ✅ Barre de progression colorée (rouge/orange/vert)
+- ✅ Feedback en temps réel lors de la saisie
+- ✅ Liste des critères avec check/cross (icônes dynamiques)
+- ✅ Couleurs : Weak=#F44336 (rouge), Medium=#FF9800 (orange), Strong=#4CAF50 (vert)
 
-        return ValidationResult(errors.isEmpty(), errors)
-    }
-}
-```
+### 13.3. Tests ✅
 
-**Écrans à modifier :**
-- [ ] Android `ChangePasswordActivity` - Validation avant sauvegarde
-- [ ] Android `UserAddEditActivity` - Validation à la création d'utilisateur
-- [ ] iOS `ChangePasswordView` - Validation avant sauvegarde
-- [ ] iOS `UsersViews.swift` - Validation à la création d'utilisateur
+- ✅ `PasswordPolicyTest.kt` - 27 tests unitaires validation
+- ✅ `.maestro/android/13_password_complexity.yaml` - Tests E2E Android
+- ✅ `.maestro/ios/13_password_complexity.yaml` - Tests E2E iOS
 
-**Strings i18n à ajouter :**
-```kotlin
-// Strings.kt
-val passwordTooShort: String // "Password must be at least 8 characters"
-val passwordMissingUppercase: String // "Password must contain at least one uppercase letter"
-val passwordMissingLowercase: String // "Password must contain at least one lowercase letter"
-val passwordMissingDigit: String // "Password must contain at least one digit"
-val passwordMissingSpecialChar: String // "Password must contain at least one special character"
-val passwordStrength: String // "Password strength"
-val passwordWeak: String // "Weak"
-val passwordMedium: String // "Medium"
-val passwordStrong: String // "Strong"
-```
+### 13.4. Agents KMP ✅
 
-### 13.2. Indicateur visuel de force du mot de passe 🟡
+- ✅ KMP Consistency Checker : Rating **Excellent** - 100% shared logic
+- ✅ Code Reviewer : 4 bugs trouvés et corrigés
 
-**UI à implémenter :**
-- [ ] Barre de progression colorée (rouge/orange/vert)
-- [ ] Feedback en temps réel lors de la saisie
-- [ ] Liste des critères avec check/cross
-
-### 13.3. Tests 🟢
-
-- [ ] `PasswordPolicyTests.kt` - Tests unitaires validation
-- [ ] Tests UI de création/modification de mot de passe
-
-### Livrables
-- Politique de mot de passe complexe obligatoire
-- Validation côté partagé (Android + iOS)
-- Indicateur visuel de force
-- Strings localisés
-- Tests unitaires
+### Livrables ✅
+- ✅ Politique de mot de passe complexe obligatoire
+- ✅ Validation côté partagé (Android + iOS)
+- ✅ Indicateur visuel de force
+- ✅ Strings localisés (8 langues)
+- ✅ Tests unitaires (27 tests)
+- ✅ Tests E2E Maestro
 
 ---
 

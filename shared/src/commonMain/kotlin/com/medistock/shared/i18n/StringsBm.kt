@@ -313,7 +313,21 @@ object StringsBm : Strings {
     override val valueTooShort = "{field} fyalefwaya nibumbi {min} characters"
     override val valueTooLong = "{field} filefwaya ukushila pa {max} characters"
     override val valueMustBePositive = "Ubulamba bufwile ukuba bwabwino (positive)"
-    override val passwordTooShort = "Akapasiwedi kayafwile ukuba nibumbi 6 characters"
+    override val passwordTooShort = "Akapasiwedi kayafwile ukuba nibumbi 8 characters"
+
+    // PASSWORD COMPLEXITY
+    override val passwordMinLength = "Nibumbi 8 characters"
+    override val passwordNeedsUppercase = "Kalata konse akakulu (A-Z)"
+    override val passwordNeedsLowercase = "Kalata konse akanono (a-z)"
+    override val passwordNeedsDigit = "Inombala imo (0-9)"
+    override val passwordNeedsSpecial = "Icishibilo icisoselwe imo (!@#\$%...)"
+    override val passwordStrengthWeak = "Ukufisama"
+    override val passwordStrengthMedium = "Pakati"
+    override val passwordStrengthStrong = "Ukosa"
+    override val passwordRequirements = "Ifyafwaikwa ku password:"
+    override val passwordStrength = "Amaka ya password:"
+    override val passwordMustBeDifferent = "Password ipya ikafwile ukupusana ne ya kale"
+    override val usernameAlreadyExists = "Username yalipo kale"
 
     // ============================================
     // REFERENTIAL INTEGRITY

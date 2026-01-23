@@ -197,30 +197,169 @@ struct UserEditorView: View {
 
     var isEditing: Bool { user != nil }
 
+    // Password validation computed properties
+    private var passwordValidation: PasswordPolicy.ValidationResult {
+        PasswordPolicy.shared.validate(password: password)
+    }
+
+    private var passwordStrength: PasswordPolicy.PasswordStrength {
+        PasswordPolicy.shared.getStrength(password: password)
+    }
+
+    private var passwordRequirements: [PasswordPolicy.PasswordError: KotlinBoolean] {
+        PasswordPolicy.shared.checkRequirements(password: password)
+    }
+
+    private var strengthColor: Color {
+        let rgb = passwordStrength.toRGB()
+        return Color(red: Double(rgb.first!.intValue) / 255.0,
+                     green: Double(rgb.second!.intValue) / 255.0,
+                     blue: Double(rgb.third!.intValue) / 255.0)
+    }
+
+    private var strengthProgress: Double {
+        Double(passwordStrength.toProgress()) / 100.0
+    }
+
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Information")) {
-                    TextField("Username", text: $username)
+                Section(header: Text(Localized.information)) {
+                    TextField(Localized.username, text: $username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .disabled(isEditing)
 
-                    if !isEditing {
-                        SecureField("Password", text: $password)
-                    }
-
-                    TextField("Full name", text: $fullName)
+                    TextField(Localized.fullName, text: $fullName)
                 }
 
-                Section(header: Text("Permissions")) {
-                    Toggle("Administrator", isOn: $isAdmin)
-                    Toggle("Active account", isOn: $isActive)
+                if !isEditing {
+                    Section(header: Text(Localized.password)) {
+                        SecureField(Localized.password, text: $password)
+
+                        // Password strength indicator
+                        if !password.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(Localized.strings.passwordStrength)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text(PasswordPolicy.shared.getStrengthLabel(strength: passwordStrength, strings: Localized.strings))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(strengthColor)
+                                }
+
+                                GeometryReader { geometry in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(height: 8)
+
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(strengthColor)
+                                            .frame(width: geometry.size.width * strengthProgress, height: 8)
+                                    }
+                                }
+                                .frame(height: 8)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+
+                    // Password requirements card
+                    Section(header: Text(Localized.strings.passwordRequirements)) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            PasswordRequirementRow(
+                                text: Localized.strings.passwordMinLength,
+                                isMet: passwordRequirements[PasswordPolicy.PasswordError.tooShort]?.boolValue ?? false
+                            )
+                            PasswordRequirementRow(
+                                text: Localized.strings.passwordNeedsUppercase,
+                                isMet: passwordRequirements[PasswordPolicy.PasswordError.missingUppercase]?.boolValue ?? false
+                            )
+                            PasswordRequirementRow(
+                                text: Localized.strings.passwordNeedsLowercase,
+                                isMet: passwordRequirements[PasswordPolicy.PasswordError.missingLowercase]?.boolValue ?? false
+                            )
+                            PasswordRequirementRow(
+                                text: Localized.strings.passwordNeedsDigit,
+                                isMet: passwordRequirements[PasswordPolicy.PasswordError.missingDigit]?.boolValue ?? false
+                            )
+                            PasswordRequirementRow(
+                                text: Localized.strings.passwordNeedsSpecial,
+                                isMet: passwordRequirements[PasswordPolicy.PasswordError.missingSpecial]?.boolValue ?? false
+                            )
+                        }
+                    }
+                }
+
+                Section(header: Text(Localized.permissions)) {
+                    Toggle(Localized.admin, isOn: $isAdmin)
+                    Toggle(Localized.active, isOn: $isActive)
                 }
 
                 if isEditing {
-                    Section(header: Text("Password")) {
-                        SecureField("New password (leave blank to keep current)", text: $password)
+                    Section(header: Text(Localized.password)) {
+                        SecureField(Localized.newPassword, text: $password)
+
+                        // Password strength indicator (only when password is being changed)
+                        if !password.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(Localized.strings.passwordStrength)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text(PasswordPolicy.shared.getStrengthLabel(strength: passwordStrength, strings: Localized.strings))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(strengthColor)
+                                }
+
+                                GeometryReader { geometry in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(height: 8)
+
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(strengthColor)
+                                            .frame(width: geometry.size.width * strengthProgress, height: 8)
+                                    }
+                                }
+                                .frame(height: 8)
+                            }
+                            .padding(.vertical, 4)
+
+                            // Password requirements
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(Localized.strings.passwordRequirements)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordMinLength,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.tooShort]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsUppercase,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingUppercase]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsLowercase,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingLowercase]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsDigit,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingDigit]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsSpecial,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingSpecial]?.boolValue ?? false
+                                )
+                            }
+                            .padding(.top, 8)
+                        }
                     }
                 }
 
@@ -231,13 +370,13 @@ struct UserEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Edit User" : "New User")
+            .navigationTitle(isEditing ? Localized.editUser : Localized.addUser)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Save" : "Add") {
+                    Button(isEditing ? Localized.save : Localized.add) {
                         saveUser()
                     }
                     .disabled(!canSave || isSaving)
@@ -259,15 +398,28 @@ struct UserEditorView: View {
         let trimmedFullName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if isEditing {
+            // For editing, password is optional but if provided must be valid
+            if !password.isEmpty && !passwordValidation.isValid {
+                return false
+            }
             return !trimmedUsername.isEmpty && !trimmedFullName.isEmpty
         } else {
-            return !trimmedUsername.isEmpty && !trimmedFullName.isEmpty && !password.isEmpty
+            // For new users, password is required and must be valid
+            return !trimmedUsername.isEmpty && !trimmedFullName.isEmpty && !password.isEmpty && passwordValidation.isValid
         }
     }
 
     private func saveUser() {
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedFullName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Validate password complexity for new users or when password is being changed
+        if !password.isEmpty && !passwordValidation.isValid {
+            if let firstError = passwordValidation.errors.first {
+                errorMessage = PasswordPolicy.shared.getErrorMessage(error: firstError, strings: Localized.strings)
+            }
+            return
+        }
 
         isSaving = true
         errorMessage = nil

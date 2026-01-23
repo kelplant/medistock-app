@@ -312,7 +312,21 @@ object StringsFr : Strings {
     override val valueTooShort = "{field} doit contenir au moins {min} caractères"
     override val valueTooLong = "{field} ne doit pas dépasser {max} caractères"
     override val valueMustBePositive = "La valeur doit être positive"
-    override val passwordTooShort = "Le mot de passe doit contenir au moins 6 caractères"
+    override val passwordTooShort = "Le mot de passe doit contenir au moins 8 caractères"
+
+    // PASSWORD COMPLEXITY
+    override val passwordMinLength = "Au moins 8 caractères"
+    override val passwordNeedsUppercase = "Au moins une lettre majuscule (A-Z)"
+    override val passwordNeedsLowercase = "Au moins une lettre minuscule (a-z)"
+    override val passwordNeedsDigit = "Au moins un chiffre (0-9)"
+    override val passwordNeedsSpecial = "Au moins un caractère spécial (!@#\$%...)"
+    override val passwordStrengthWeak = "Faible"
+    override val passwordStrengthMedium = "Moyen"
+    override val passwordStrengthStrong = "Fort"
+    override val passwordRequirements = "Exigences du mot de passe :"
+    override val passwordStrength = "Force du mot de passe :"
+    override val passwordMustBeDifferent = "Le nouveau mot de passe doit être différent de l'actuel"
+    override val usernameAlreadyExists = "Ce nom d'utilisateur existe déjà"
 
     // ============================================
     // REFERENTIAL INTEGRITY
