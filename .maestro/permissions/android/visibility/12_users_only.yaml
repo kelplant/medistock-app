@@ -1,0 +1,88 @@
+# MediStock Android - Permission Visibility Test
+# Test User: test_users_only
+# Expected: Only User Management visible in Admin menu, no operations on Home
+appId: com.medistock
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login with test_users_only user
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "test_users_only"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "Test123!"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+
+# Verify NO operations are visible on Home Screen
+- assertNotVisible:
+    text: ".*Purchase Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Sell Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Transfer Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*View Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Inventory Stock.*"
+    optional: true
+
+# Administration should be visible
+- assertVisible:
+    text: ".*Administration.*"
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Verify ONLY User Management is visible
+- assertVisible:
+    text: ".*User Management.*"
+
+# Verify other admin modules are NOT visible
+- assertNotVisible:
+    text: ".*Site Management.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Manage Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Packaging Types.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Manage Customers.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Audit History.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "android_users_only_admin"

@@ -20,14 +20,66 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 ├── config.yaml              # Configuration globale
 ├── shared/                  # Flows réutilisables
 │   └── login.yaml           # Flow de connexion
-├── android/                 # Tests Android
+├── android/                 # Tests Android (13 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
-│   └── 03_purchase_sale_workflow.yaml
-└── ios/                     # Tests iOS
-    ├── 01_authentication.yaml
-    ├── 02_sites_crud.yaml
-    └── 03_purchase_sale_workflow.yaml
+│   ├── 03_products_crud.yaml
+│   ├── 04_categories_crud.yaml
+│   ├── 05_customers_crud.yaml
+│   ├── 06_packaging_types_crud.yaml
+│   ├── 07_users_crud.yaml
+│   ├── 08_purchases.yaml
+│   ├── 09_sales.yaml
+│   ├── 10_transfers.yaml
+│   ├── 11_inventory.yaml
+│   ├── 12_language_switching.yaml
+│   └── 13_password_complexity.yaml
+├── ios/                     # Tests iOS (13 tests)
+│   ├── 01_authentication.yaml
+│   ├── 02_sites_crud.yaml
+│   ├── 03_products_crud.yaml
+│   ├── 04_categories_crud.yaml
+│   ├── 05_customers_crud.yaml
+│   ├── 06_packaging_types_crud.yaml
+│   ├── 07_users_crud.yaml
+│   ├── 08_purchases.yaml
+│   ├── 09_sales.yaml
+│   ├── 10_transfers.yaml
+│   ├── 11_inventory.yaml
+│   ├── 12_language_switching.yaml
+│   └── 13_password_complexity.yaml
+└── permissions/             # Tests de permissions (26 tests)
+    ├── README.md            # Documentation des tests de permissions
+    ├── android/
+    │   └── visibility/      # Tests de visibilité Android (13 tests)
+    │       ├── 01_no_permission.yaml
+    │       ├── 02_sites_only.yaml
+    │       ├── 03_products_only.yaml
+    │       ├── 04_categories_only.yaml
+    │       ├── 05_customers_only.yaml
+    │       ├── 06_packaging_only.yaml
+    │       ├── 07_stock_only.yaml
+    │       ├── 08_purchases_only.yaml
+    │       ├── 09_sales_only.yaml
+    │       ├── 10_transfers_only.yaml
+    │       ├── 11_inventory_only.yaml
+    │       ├── 12_users_only.yaml
+    │       └── 13_audit_only.yaml
+    └── ios/
+        └── visibility/      # Tests de visibilité iOS (13 tests)
+            ├── 01_no_permission.yaml
+            ├── 02_sites_only.yaml
+            ├── 03_products_only.yaml
+            ├── 04_categories_only.yaml
+            ├── 05_customers_only.yaml
+            ├── 06_packaging_only.yaml
+            ├── 07_stock_only.yaml
+            ├── 08_purchases_only.yaml
+            ├── 09_sales_only.yaml
+            ├── 10_transfers_only.yaml
+            ├── 11_inventory_only.yaml
+            ├── 12_users_only.yaml
+            └── 13_audit_only.yaml
 ```
 
 ## Prérequis
@@ -102,35 +154,60 @@ maestro test .maestro/ --format junit --output report.xml
 
 ## Tests Inclus
 
-### 1. Authentication (01_authentication.yaml)
+### Tests Fonctionnels (26 tests - 13 Android + 13 iOS)
+
+#### 1. Authentication (01_authentication.yaml)
 - Connexion avec identifiants valides
 - Déconnexion
 - Connexion avec identifiants invalides
 
-### 2. Sites CRUD (02_sites_crud.yaml)
+#### 2. Sites CRUD (02_sites_crud.yaml)
 - Création d'un site
 - Modification d'un site
 - Suppression d'un site
 
-### 3. Purchase/Sale Workflow (03_purchase_sale_workflow.yaml)
-- Création d'un achat (ajout de stock)
-- Vérification du stock après achat
-- Création d'une vente (FIFO)
-- Vérification du stock après vente
-- Vérification du calcul des bénéfices
+#### 3. Products CRUD (03_products_crud.yaml)
+- Création d'un produit
+- Modification d'un produit
+- Suppression d'un produit
 
-### 4. Transfers (04_transfers.yaml)
-- Création de sites source et destination
-- Création d'un transfert inter-sites
-- Vérification du stock après transfert
+#### 4. Categories CRUD (04_categories_crud.yaml)
+- Création d'une catégorie
+- Modification d'une catégorie
+- Suppression d'une catégorie
 
-### 5. Inventory (05_inventory.yaml)
-- Démarrage d'une session d'inventaire
-- Comptage avec écart (discrepancy)
-- Validation et ajustement du stock
-- Vérification de l'audit
+#### 5. Customers CRUD (05_customers_crud.yaml)
+- Création d'un client
+- Modification d'un client
+- Suppression d'un client
 
-### 12. Language Switching (12_language_switching.yaml) - iOS Only
+#### 6. Packaging Types CRUD (06_packaging_types_crud.yaml)
+- Création d'un type d'emballage
+- Modification d'un type d'emballage
+- Suppression d'un type d'emballage
+
+#### 7. Users CRUD (07_users_crud.yaml)
+- Création d'un utilisateur
+- Modification d'un utilisateur
+- Suppression d'un utilisateur
+
+#### 8. Purchases (08_purchases.yaml)
+- Navigation vers l'écran d'achats
+- Vérification d'accès à l'interface
+
+#### 9. Sales (09_sales.yaml)
+- Navigation vers l'écran de ventes
+- Vérification d'accès à l'interface
+
+#### 10. Transfers (10_transfers.yaml)
+- Navigation vers l'écran de transferts
+- Vérification d'accès à l'interface
+
+#### 11. Inventory (11_inventory.yaml)
+- Navigation vers l'écran d'inventaire
+- Vérification d'accès à l'interface
+
+#### 12. Language Switching (12_language_switching.yaml)
 - Navigation vers les paramètres de langue
 - Vérification de toutes les langues disponibles (EN, FR, DE, ES, IT, RU, BM, NY)
 - Changement de langue vers français
@@ -138,6 +215,85 @@ maestro test .maestro/ --format junit --output report.xml
 - Changement de langue vers espagnol
 - Retour à l'anglais
 - Test de persistance après redémarrage de l'application
+
+#### 13. Password Complexity (13_password_complexity.yaml)
+- Validation des règles de complexité des mots de passe
+- Tentatives avec mots de passe faibles
+- Validation avec mots de passe conformes
+
+### Tests de Permissions (26 tests - 13 Android + 13 iOS)
+
+Les tests de permissions valident que le système de permissions granulaires fonctionne correctement en vérifiant que chaque utilisateur ne peut voir et accéder qu'aux modules pour lesquels il a les permissions.
+
+#### Modules testés
+
+**Opérations (Home Screen):**
+- STOCK - Visualisation des stocks
+- PURCHASES - Gestion des achats
+- SALES - Gestion des ventes
+- TRANSFERS - Transferts inter-sites
+- INVENTORY - Comptage d'inventaire
+
+**Administration (Admin Menu):**
+- SITES - Gestion des sites
+- PRODUCTS - Gestion des produits
+- CATEGORIES - Gestion des catégories
+- PACKAGING_TYPES - Types d'emballage
+- CUSTOMERS - Gestion des clients
+- USERS - Gestion des utilisateurs
+- AUDIT - Historique d'audit
+
+#### Tests de visibilité (13 tests par plateforme)
+
+1. **01_no_permission.yaml** - Aucune permission: vérification qu'aucun module n'est visible
+2. **02_sites_only.yaml** - Permission SITES uniquement
+3. **03_products_only.yaml** - Permission PRODUCTS uniquement
+4. **04_categories_only.yaml** - Permission CATEGORIES uniquement
+5. **05_customers_only.yaml** - Permission CUSTOMERS uniquement
+6. **06_packaging_only.yaml** - Permission PACKAGING_TYPES uniquement
+7. **07_stock_only.yaml** - Permission STOCK uniquement
+8. **08_purchases_only.yaml** - Permission PURCHASES uniquement
+9. **09_sales_only.yaml** - Permission SALES uniquement
+10. **10_transfers_only.yaml** - Permission TRANSFERS uniquement
+11. **11_inventory_only.yaml** - Permission INVENTORY uniquement
+12. **12_users_only.yaml** - Permission USERS uniquement
+13. **13_audit_only.yaml** - Permission AUDIT uniquement
+
+#### Utilisateurs de test
+
+Tous les utilisateurs de test sont automatiquement créés en mode debug avec le mot de passe: `Test123!`
+
+| Username | Permission | Visibilité attendue |
+|----------|-----------|---------------------|
+| test_no_permission | Aucune | Aucun module visible |
+| test_sites_only | SITES | Seul "Site Management" visible dans Admin |
+| test_products_only | PRODUCTS | Seul "Manage Products" visible dans Admin |
+| test_categories_only | CATEGORIES | Seul "Manage Products" visible dans Admin |
+| test_customers_only | CUSTOMERS | Seul "Manage Customers" visible dans Admin |
+| test_packaging_only | PACKAGING_TYPES | Seul "Packaging Types" visible dans Admin |
+| test_stock_only | STOCK | Seul "View Stock" visible sur l'écran d'accueil |
+| test_purchases_only | PURCHASES | Seul "Purchase Products" visible sur l'écran d'accueil |
+| test_sales_only | SALES | Seul "Sell Products" visible sur l'écran d'accueil |
+| test_transfers_only | TRANSFERS | Seul "Transfer Products" visible sur l'écran d'accueil |
+| test_inventory_only | INVENTORY | Seul "Inventory Stock" visible sur l'écran d'accueil |
+| test_users_only | USERS | Seul "User Management" visible dans Admin |
+| test_audit_only | AUDIT | Seul "Audit History" visible dans Admin |
+
+#### Exécution des tests de permissions
+
+```bash
+# Tous les tests de permissions Android (13 tests)
+maestro test .maestro/permissions/android/visibility/
+
+# Tous les tests de permissions iOS (13 tests)
+maestro -p ios test .maestro/permissions/ios/visibility/
+
+# Un test spécifique
+maestro test .maestro/permissions/android/visibility/01_no_permission.yaml
+maestro -p ios test .maestro/permissions/ios/visibility/07_stock_only.yaml
+```
+
+Pour plus de détails sur les tests de permissions, consultez [permissions/README.md](permissions/README.md).
 
 ## Correspondance avec le Cahier de Recette
 

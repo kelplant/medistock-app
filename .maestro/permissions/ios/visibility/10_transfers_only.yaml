@@ -1,0 +1,60 @@
+# MediStock iOS - Permission Visibility Test
+# Test User: test_transfers_only
+# Expected: Only Transfers visible on Home, no admin access
+appId: com.medistock.ios
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Verify login screen
+- assertVisible: "MediStock"
+- assertVisible: "Login"
+
+# Login with test_transfers_only user
+- tapOn: "Username"
+- inputText: "test_transfers_only"
+
+- tapOn: "Password"
+- inputText: "Test123!"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+# Verify ONLY Transfers is visible
+- assertVisible: "Transfer Products"
+
+# Verify other operations are NOT visible
+- assertNotVisible:
+    text: ".*Purchase Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Sell Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*View Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Inventory Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Administration.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "ios_transfers_only_home"

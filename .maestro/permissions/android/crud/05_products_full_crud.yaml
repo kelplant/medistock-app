@@ -1,0 +1,88 @@
+# MediStock Android - CRUD Permission Test
+# Test User: test_products_only (canView=true, canCreate=true, canEdit=true, canDelete=true)
+# Expected: Full CRUD - can view, add, edit, and delete products
+appId: com.medistock
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login with test_products_only user
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "test_products_only"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "Test123!"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Products
+- assertVisible:
+    text: ".*Manage Products.*"
+
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Products list
+- assertVisible:
+    text: ".*Products.*"
+
+- tapOn:
+    text: ".*Products.*"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify Products list IS visible
+- assertVisible:
+    text: ".*Products.*"
+
+# Verify FAB (Add button) IS visible
+- assertVisible:
+    id: ".*fab.*"
+
+# Wait for product list to load
+- extendedWaitUntil:
+    visible:
+      id: ".*recyclerView.*|.*listView.*"
+    timeout: 10000
+
+# Take screenshot of list with FAB
+- takeScreenshot: "android_products_full_crud_list"
+
+# Tap on the first product in the list
+- tapOn:
+    index: 0
+
+- waitForAnimationToEnd
+
+# Verify Edit button IS visible
+- assertVisible:
+    text: ".*Edit.*"
+
+# Verify Delete button IS visible
+- assertVisible:
+    text: ".*Delete.*"
+
+# Take screenshot
+- takeScreenshot: "android_products_full_crud_detail"

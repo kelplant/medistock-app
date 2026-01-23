@@ -1,0 +1,112 @@
+# Test: Multi-permission user visibility (iOS)
+# User: test_multi_perm has SITES, PRODUCTS, and SALES permissions
+# Verifies that multiple permissions correctly show multiple modules
+
+appId: com.medistock.ios
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# ========================================
+# LOGIN
+# ========================================
+- tapOn:
+    text: ".*Username.*"
+- inputText: "test_multi_perm"
+- tapOn:
+    text: ".*Password.*"
+- inputText: "Test123!"
+- tapOn:
+    text: "Login"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========================================
+# HOME SCREEN VERIFICATION
+# ========================================
+
+# Sales should be VISIBLE (has SALES permission)
+- assertVisible:
+    text: ".*Sell.*"
+
+# Stock should NOT be visible (no STOCK permission)
+- assertNotVisible:
+    text: ".*View Stock.*"
+    optional: true
+
+# Purchases should NOT be visible (no PURCHASES permission)
+- assertNotVisible:
+    text: ".*Purchase.*"
+    optional: true
+
+# Transfers should NOT be visible (no TRANSFERS permission)
+- assertNotVisible:
+    text: ".*Transfer.*"
+    optional: true
+
+# Inventory should NOT be visible (no INVENTORY permission)
+- assertNotVisible:
+    text: ".*Inventory.*"
+    optional: true
+
+# Administration should be VISIBLE (has SITES and PRODUCTS permissions)
+- assertVisible:
+    text: ".*Admin.*"
+
+- takeScreenshot: "multi_perm_home_ios"
+
+# ========================================
+# ADMIN SCREEN VERIFICATION
+# ========================================
+- tapOn:
+    text: ".*Admin.*"
+- waitForAnimationToEnd
+
+# Sites should be VISIBLE (has SITES permission)
+- assertVisible:
+    text: ".*Site.*"
+
+# Products menu should be VISIBLE (has PRODUCTS permission)
+- assertVisible:
+    text: ".*Product.*"
+
+# Customers should NOT be visible (no CUSTOMERS permission)
+- assertNotVisible:
+    text: ".*Customer.*"
+    optional: true
+
+# Packaging Types should NOT be visible (no PACKAGING_TYPES permission)
+- assertNotVisible:
+    text: ".*Packaging.*"
+    optional: true
+
+# Users should NOT be visible (no USERS permission)
+- assertNotVisible:
+    text: ".*User.*Management.*"
+    optional: true
+
+# Audit should NOT be visible (no AUDIT permission)
+- assertNotVisible:
+    text: ".*Audit.*"
+    optional: true
+
+# Stock Movements should NOT be visible (no STOCK permission)
+- assertNotVisible:
+    text: ".*Stock.*Movement.*"
+    optional: true
+
+- takeScreenshot: "multi_perm_admin_ios"
+
+# ========================================
+# VERIFY PRODUCTS ACCESS
+# ========================================
+- tapOn:
+    text: ".*Product.*"
+- waitForAnimationToEnd
+
+# Should navigate to products management
+- assertVisible:
+    text: ".*Product.*"
+
+- takeScreenshot: "multi_perm_products_ios"

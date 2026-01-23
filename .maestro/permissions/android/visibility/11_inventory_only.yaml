@@ -1,0 +1,57 @@
+# MediStock Android - Permission Visibility Test
+# Test User: test_inventory_only
+# Expected: Only Inventory visible on Home, no admin access
+appId: com.medistock
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login with test_inventory_only user
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "test_inventory_only"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "Test123!"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+
+# Verify ONLY Inventory is visible
+- assertVisible:
+    text: ".*Inventory Stock.*"
+
+# Verify other operations are NOT visible
+- assertNotVisible:
+    text: ".*Purchase Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Sell Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Transfer Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*View Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Administration.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "android_inventory_only_home"

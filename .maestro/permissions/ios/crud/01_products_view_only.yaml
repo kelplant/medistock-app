@@ -1,0 +1,102 @@
+# MediStock iOS - CRUD Permission Test
+# Test User: test_products_view (canView=true, canCreate=false, canEdit=false, canDelete=false)
+# Expected: Can view products list and details, but cannot add, edit, or delete
+appId: com.medistock.ios
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Verify login screen
+- assertVisible: "MediStock"
+- assertVisible: "Login"
+
+# Login with test_products_view user
+- tapOn: "Username"
+- inputText: "test_products_view"
+
+- tapOn: "Password"
+- inputText: "Test123!"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+# Navigate to Administration
+- assertVisible: "Administration"
+
+- tapOn: "Administration"
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Products
+- assertVisible: "Manage Products"
+
+- tapOn: "Manage Products"
+
+- waitForAnimationToEnd
+
+# Navigate to Products
+- assertVisible: "Products"
+
+- tapOn: "Products"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify Products list header is visible
+- assertVisible:
+    text: ".*Products.*"
+
+# Verify toolbar "+" button (Add) is NOT visible
+- assertNotVisible:
+    text: ".*\\+.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Add.*"
+    optional: true
+
+# Wait for product list to load
+- extendedWaitUntil:
+    visible:
+      text: ".*"
+    timeout: 10000
+
+# Tap on the first product in the list (skip header row)
+- tapOn:
+    index: 1
+
+- waitForAnimationToEnd
+
+# Verify Edit button is NOT visible in toolbar
+- assertNotVisible:
+    text: ".*Edit.*"
+    optional: true
+
+# Verify Delete button is NOT visible in toolbar
+- assertNotVisible:
+    text: ".*Delete.*"
+    optional: true
+
+# Verify no edit/delete icons in toolbar
+- assertNotVisible:
+    text: ".*pencil.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*trash.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "ios_products_view_only_detail"

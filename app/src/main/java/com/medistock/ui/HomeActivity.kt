@@ -141,7 +141,8 @@ class HomeActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // On error, show all buttons (fail-open for usability)
+                // Fail-closed for security: hide admin features on error
+                findViewById<View>(R.id.adminButton).visibility = View.GONE
             }
         }
     }

@@ -63,7 +63,9 @@ class ManageProductMenuActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // On error, show all buttons
+                // Fail-closed for security: hide all buttons on error
+                binding.btnCategories.visibility = View.GONE
+                binding.btnProducts.visibility = View.GONE
             }
         }
     }

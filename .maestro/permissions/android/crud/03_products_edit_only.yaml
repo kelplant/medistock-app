@@ -1,0 +1,95 @@
+# MediStock Android - CRUD Permission Test
+# Test User: test_products_edit (canView=true, canCreate=false, canEdit=true, canDelete=false)
+# Expected: Can view products and edit them, but cannot add new or delete
+appId: com.medistock
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login with test_products_edit user
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "test_products_edit"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "Test123!"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Products
+- assertVisible:
+    text: ".*Manage Products.*"
+
+- tapOn:
+    text: ".*Manage Products.*"
+
+- waitForAnimationToEnd
+
+# Navigate to Products list
+- assertVisible:
+    text: ".*Products.*"
+
+- tapOn:
+    text: ".*Products.*"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify Products list IS visible
+- assertVisible:
+    text: ".*Products.*"
+
+# Verify FAB (Add button) is NOT visible
+- assertNotVisible:
+    id: ".*fab.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Add.*"
+    optional: true
+
+# Wait for product list to load
+- extendedWaitUntil:
+    visible:
+      id: ".*recyclerView.*|.*listView.*"
+    timeout: 10000
+
+# Tap on the first product in the list
+- tapOn:
+    index: 0
+
+- waitForAnimationToEnd
+
+# Verify Edit button IS visible
+- assertVisible:
+    text: ".*Edit.*"
+
+# Verify Delete button is NOT visible
+- assertNotVisible:
+    text: ".*Delete.*"
+    optional: true
+
+- assertNotVisible:
+    id: ".*menu_delete.*|.*action_delete.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "android_products_edit_only_detail"
