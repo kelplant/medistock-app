@@ -58,7 +58,7 @@ BEGIN
     v_now := (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT;
 
     -- 4. Create or update user in users table
-    INSERT INTO users (
+    INSERT INTO app_users (
         id,
         username,
         password_hash,
@@ -89,7 +89,7 @@ BEGIN
 
     -- If username already existed, get its ID
     IF NOT FOUND THEN
-        SELECT id::uuid INTO v_user_id FROM users WHERE username = p_username;
+        SELECT id::uuid INTO v_user_id FROM app_users WHERE username = p_username;
     END IF;
 
     RETURN jsonb_build_object(

@@ -11,7 +11,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     -- Check if user exists in users table and is admin
     RETURN EXISTS (
-        SELECT 1 FROM users
+        SELECT 1 FROM app_users
         WHERE id = auth.uid()::text
         AND is_admin = 1
         AND is_active = 1
@@ -68,7 +68,7 @@ ALTER TABLE IF EXISTS sync_queue ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all operations on sites" ON sites;
 DROP POLICY IF EXISTS "Allow all operations on categories" ON categories;
 DROP POLICY IF EXISTS "Allow all operations on packaging_types" ON packaging_types;
-DROP POLICY IF EXISTS "Allow all operations on app_users" ON users;
+DROP POLICY IF EXISTS "Allow all operations on app_users" ON app_users;
 DROP POLICY IF EXISTS "Allow all operations on user_permissions" ON user_permissions;
 DROP POLICY IF EXISTS "Allow all operations on customers" ON customers;
 DROP POLICY IF EXISTS "Allow all operations on products" ON products;
@@ -85,18 +85,18 @@ DROP POLICY IF EXISTS "Allow all operations on audit_history" ON audit_history;
 -- USERS TABLE POLICIES
 -- ============================================================================
 -- Users can read their own record, admins can read all
-CREATE POLICY "users_select_policy" ON users FOR SELECT TO authenticated
+CREATE POLICY "users_select_policy" ON app_users FOR SELECT TO authenticated
 USING (id = auth.uid()::text OR is_admin());
 
 -- Only admins can insert/update/delete users (managed via Edge Functions)
-CREATE POLICY "users_admin_insert" ON users FOR INSERT TO authenticated
+CREATE POLICY "users_admin_insert" ON app_users FOR INSERT TO authenticated
 WITH CHECK (is_admin());
 
-CREATE POLICY "users_admin_update" ON users FOR UPDATE TO authenticated
+CREATE POLICY "users_admin_update" ON app_users FOR UPDATE TO authenticated
 USING (is_admin())
 WITH CHECK (is_admin());
 
-CREATE POLICY "users_admin_delete" ON users FOR DELETE TO authenticated
+CREATE POLICY "users_admin_delete" ON app_users FOR DELETE TO authenticated
 USING (is_admin());
 
 -- ============================================================================

@@ -18,7 +18,7 @@ BEGIN
 
     -- Check that the user is active (prevents access with stale JWT tokens)
     IF NOT EXISTS (
-        SELECT 1 FROM users
+        SELECT 1 FROM app_users
         WHERE id = auth.uid()::text
         AND is_active = 1
     ) THEN
