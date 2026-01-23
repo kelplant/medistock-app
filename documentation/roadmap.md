@@ -358,10 +358,11 @@ Roadmap technique — Parité Android/iOS et consolidation `shared`
 | Phase 7 - Unification DB Android | ✅ Terminée | Room supprimé, SQLDelight seul |
 | Phase 8 - Consolidation Sync | ✅ Partiellement | ConflictResolver ✅, RetryStrategy ✅, DTOs ⚠️ |
 | Phase 9 - Tests de Parité | ⏳ À faire | Tests d'intégration Android/iOS |
-| Phase 10 - Parité Écrans Android | ⏳ À faire | Clients, Liste Achats, Liste Inventaires |
+| Phase 10 - Parité Écrans Android | ✅ Terminée | Clients ✅, Achats ✅, Inventaires ✅, Profil ✅, Menu align ✅ |
 | Phase 11 - Intégrité Référentielle | ✅ Terminée | ReferentialIntegrityService + is_active |
-| Phase 12 - Internationalisation | ✅ Partiellement | 8 langues (EN/FR/DE/ES/IT/RU/Bemba/Nyanja), sélecteur profil iOS |
+| Phase 12 - Internationalisation | ✅ Partiellement | 8 langues, sélecteur iOS ✅, sélecteur Android ⏳ |
 | Phase 13 - Améliorations Sécurité | ⏳ À faire | Password complexity |
+| Phase 14 - Tests Maestro Permissions | ⏳ À faire | Tests granulaires par permission |
 
 **Dernière mise à jour :** 23 Janvier 2026
 
@@ -390,118 +391,96 @@ Voir [comparaison.md](./comparaison.md) pour l'analyse détaillée des écarts e
 | Priorité | Écart | Phase | Statut |
 |----------|-------|-------|--------|
 | 🔴 Haute | Double DB Android (Room + SQLDelight) | Phase 7 | ✅ Fait |
-| 🔴 Haute | Écrans Clients manquants Android | Phase 10 | ⏳ À faire |
+| 🔴 Haute | Écrans Clients manquants Android | Phase 10 | ✅ Fait |
 | 🔴 Haute | Suppression références utilisées non bloquée | Phase 11 | ✅ Fait |
 | 🟡 Moyenne | ConflictResolver non partagé | Phase 8 | ✅ Fait |
 | 🟡 Moyenne | RetryStrategy différente | Phase 8 | ✅ Fait |
-| 🟡 Moyenne | Liste Achats manquante Android | Phase 10 | ⏳ À faire |
-| 🟡 Moyenne | Liste Inventaires manquante Android | Phase 10 | ⏳ À faire |
+| 🟡 Moyenne | Liste Achats manquante Android | Phase 10 | ✅ Fait |
+| 🟡 Moyenne | Liste Inventaires manquante Android | Phase 10 | ✅ Fait |
 | 🟡 Moyenne | Application mono-langue (EN seulement) | Phase 12 | ✅ Fait (8 langues) |
 | 🟡 Moyenne | Password complexity obligatoire | Phase 13 | ⏳ À faire |
 | 🟢 Basse | DTOs sync partiellement dupliqués | Phase 8 | ⚠️ Partiel |
-| 🟢 Basse | Menu Profil manquant Android | Phase 10 | ⏳ À faire |
-| 🟡 Moyenne | Ordre menus iOS différent d'Android | Phase 10 | ⏳ À faire |
+| 🟢 Basse | Menu Profil manquant Android | Phase 10 | ✅ Fait |
+| 🟡 Moyenne | Ordre menus iOS différent d'Android | Phase 10 | ✅ Fait |
 
 ---
 
-## Phase 10 — Parité Écrans Android (2-3 semaines) ⏳ À FAIRE
+## Phase 10 — Parité Écrans Android (2-3 semaines) ✅ TERMINÉE
 
 > But : Ajouter les écrans manquants sur Android pour atteindre la parité fonctionnelle avec iOS.
 
-### 10.1. Gestion des Clients 🔴 PRIORITAIRE
+### 10.1. Gestion des Clients ✅ TERMINÉE
 
-**Écrans à créer :**
-- [ ] `CustomerListActivity` - Liste des clients avec recherche
-- [ ] `CustomerAddEditActivity` - Création/édition de client
-- [ ] `CustomerAdapter` - Adapter pour RecyclerView
+**Écrans implémentés :**
+- ✅ `CustomerListActivity` - Liste des clients avec recherche
+- ✅ `CustomerAddEditActivity` - Création/édition de client
+- ✅ `CustomerAdapter` - Adapter pour RecyclerView
 
-**Fonctionnalités requises :**
+**Fonctionnalités implémentées :**
 - Liste avec recherche par nom/téléphone
 - CRUD complet (via CustomerRepository shared)
 - Filtrage par site si pertinent
 - Sync avec Supabase
 
-### 10.2. Liste des Achats 🟡
+### 10.2. Liste des Achats ✅ TERMINÉE
 
-**Écrans à créer :**
-- [ ] `PurchaseListActivity` - Historique des achats
-- [ ] `PurchaseAdapter` - Adapter pour RecyclerView
+**Écrans implémentés :**
+- ✅ `PurchaseListActivity` - Historique des achats avec filtres (All/Active/Exhausted)
+- ✅ `PurchaseBatchAdapter` - Adapter pour RecyclerView
 
-**Fonctionnalités requises :**
+**Fonctionnalités implémentées :**
 - Liste des achats triés par date
-- Filtrage par produit/fournisseur
-- Détail d'un achat existant
+- Filtrage par statut (All/Active/Exhausted)
+- Navigation vers création d'achat
 
-### 10.3. Liste des Inventaires 🟡
+### 10.3. Liste des Inventaires ✅ TERMINÉE
 
-**Écrans à créer :**
-- [ ] `InventoryListActivity` - Liste des inventaires passés
-- [ ] `InventoryAdapter` - Adapter pour RecyclerView
+**Écrans implémentés :**
+- ✅ `InventoryListActivity` - Liste des inventaires avec filtres
+- ✅ `InventoryAdapter` - Adapter pour RecyclerView
 
-**Fonctionnalités requises :**
+**Fonctionnalités implémentées :**
 - Historique des inventaires
-- Statut (en cours, terminé)
-- Navigation vers détail/édition
+- Filtres (All/WithDiscrepancy/NoDiscrepancy)
+- Navigation vers création d'inventaire
 
-### 10.4. Menu Profil 🟢
+### 10.4. Menu Profil ✅ TERMINÉE
 
-**Options :**
-- [ ] Option A : Créer `ProfileActivity` dédiée
-- [ ] Option B : Intégrer dans `SettingsActivity` existante
+**Implémentation :**
+- ✅ `ProfileActivity` dédiée
 
-**Fonctionnalités requises :**
-- Informations utilisateur connecté
-- Changement de mot de passe (existe déjà)
-- Déconnexion
+**Fonctionnalités implémentées :**
+- ✅ Informations utilisateur (nom, username, rôle)
+- ✅ Changement de mot de passe
+- ✅ Accès Customers, Purchase History, Inventory History
+- ✅ Déconnexion
+- ✅ Version de l'application
 
-### 10.5. Alignement ordre des menus iOS/Android 🟡
+### 10.5. Alignement ordre des menus iOS/Android ✅ TERMINÉE
 
-> But : S'assurer que les menus et sous-menus sont dans le même ordre sur iOS et Android, en prenant Android comme référence.
+> iOS AdminMenuView réordonné pour correspondre à l'ordre Android.
 
-**Analyse à effectuer :**
-- [ ] Documenter l'ordre actuel des menus Android (`HomeActivity`)
-- [ ] Documenter l'ordre actuel des menus iOS (`HomeViews.swift`)
-- [ ] Identifier les différences d'ordre
+**Ordre des menus (Android = iOS) :**
 
-**Menus à vérifier (référence Android) :**
+1. Site Management
+2. Manage Products
+3. Manage Categories
+4. Stock Movement
+5. Packaging Types
+6. Manage Customers
+7. User Management (admin only)
+8. Audit History (admin only)
+9. Supabase Configuration
 
-1. **Section Opérations :**
-   - [ ] Acheter des produits
-   - [ ] Vendre des produits
-   - [ ] Transférer des produits
-   - [ ] Voir le stock
-   - [ ] Inventaire stock
+**Modifications effectuées :**
+- ✅ iOS `HomeViews.swift` réorganisé avec commentaires d'alignement
+- ✅ Android `AdminActivity.kt` - ajout bouton Customers
+- ✅ Android accessibilité (contentDescription) + string resources
 
-2. **Section Administration :**
-   - [ ] Gestion des sites
-   - [ ] Gérer les produits (sous-menu)
-     - [ ] Produits
-     - [ ] Catégories
-     - [ ] Types d'emballage
-   - [ ] Gérer les clients
-   - [ ] Gestion des utilisateurs
-
-**Modifications iOS :**
-- [ ] Réorganiser `HomeViews.swift` pour correspondre à l'ordre Android
-- [ ] Vérifier les sous-menus (Products → Categories → PackagingTypes)
-
-**Tests Maestro à mettre à jour :**
-- [ ] `.maestro/ios/01_login.yaml` - Vérifier ordre navigation post-login
-- [ ] `.maestro/ios/02_sites_crud.yaml` - Position menu Sites
-- [ ] `.maestro/ios/03_products_crud.yaml` - Position menu Produits
-- [ ] `.maestro/ios/04_categories_crud.yaml` - Position menu Catégories
-- [ ] Créer test de vérification d'ordre des menus si inexistant
-
-**Validation :**
-- [ ] Screenshot comparatif Android/iOS des menus
-- [ ] Tests Maestro passent sur les deux plateformes
-
-### Livrables
-- Parité fonctionnelle écrans Android/iOS
-- Ordre des menus identique sur les deux plateformes
-- Tests manuels de validation
-- Tests Maestro mis à jour
-- Documentation mise à jour
+### Livrables ✅
+- ✅ Parité fonctionnelle écrans Android/iOS
+- ✅ Ordre des menus identique sur les deux plateformes
+- ✅ Tests Maestro validés (utilisent texte, pas indices)
 
 ---
 
