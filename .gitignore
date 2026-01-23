@@ -18,6 +18,10 @@ local.properties
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Xcode user-specific files
+*.xcuserstate
+xcuserdata/
 /.kotlin/
 **/build/
 
