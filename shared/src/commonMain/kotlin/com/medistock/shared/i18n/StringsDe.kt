@@ -325,6 +325,8 @@ object StringsDe : Strings {
     override val passwordStrengthStrong = "Stark"
     override val passwordRequirements = "Passwortanforderungen:"
     override val passwordStrength = "Passwortstärke:"
+    override val passwordMustBeDifferent = "Das neue Passwort muss sich vom aktuellen unterscheiden"
+    override val usernameAlreadyExists = "Benutzername existiert bereits"
 
     // ============================================
     // REFERENTIAL INTEGRITY

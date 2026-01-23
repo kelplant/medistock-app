@@ -330,6 +330,35 @@ struct UserEditorView: View {
                                 .frame(height: 8)
                             }
                             .padding(.vertical, 4)
+
+                            // Password requirements
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(Localized.strings.passwordRequirements)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordMinLength,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.tooShort]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsUppercase,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingUppercase]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsLowercase,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingLowercase]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsDigit,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingDigit]?.boolValue ?? false
+                                )
+                                PasswordRequirementRow(
+                                    text: Localized.strings.passwordNeedsSpecial,
+                                    isMet: passwordRequirements[PasswordPolicy.PasswordError.missingSpecial]?.boolValue ?? false
+                                )
+                            }
+                            .padding(.top, 8)
                         }
                     }
                 }

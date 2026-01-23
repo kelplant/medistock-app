@@ -326,6 +326,8 @@ object StringsBm : Strings {
     override val passwordStrengthStrong = "Ukosa"
     override val passwordRequirements = "Ifyafwaikwa ku password:"
     override val passwordStrength = "Amaka ya password:"
+    override val passwordMustBeDifferent = "Password ipya ikafwile ukupusana ne ya kale"
+    override val usernameAlreadyExists = "Username yalipo kale"
 
     // ============================================
     // REFERENTIAL INTEGRITY

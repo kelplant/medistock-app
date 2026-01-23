@@ -326,6 +326,8 @@ object StringsNy : Strings {
     override val passwordStrengthStrong = "Yamphamvu"
     override val passwordRequirements = "Zofunikira za password:"
     override val passwordStrength = "Mphamvu ya password:"
+    override val passwordMustBeDifferent = "Password yatsopano iyenera kusiyana ndi yakale"
+    override val usernameAlreadyExists = "Dzina logwiritsira ntchito lilipo kale"
 
     // ============================================
     // REFERENTIAL INTEGRITY

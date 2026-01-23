@@ -333,6 +333,8 @@ interface Strings {
     val passwordStrengthStrong: String   // "Strong"
     val passwordRequirements: String     // "Password requirements:"
     val passwordStrength: String         // "Password strength:"
+    val passwordMustBeDifferent: String  // "New password must be different from current password"
+    val usernameAlreadyExists: String    // "Username already exists"
 
     // ============================================
     // REFERENTIAL INTEGRITY

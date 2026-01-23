@@ -325,6 +325,8 @@ object StringsRu : Strings {
     override val passwordStrengthStrong = "Сильный"
     override val passwordRequirements = "Требования к паролю:"
     override val passwordStrength = "Надёжность пароля:"
+    override val passwordMustBeDifferent = "Новый пароль должен отличаться от текущего"
+    override val usernameAlreadyExists = "Имя пользователя уже существует"
 
     // ============================================
     // REFERENTIAL INTEGRITY

@@ -237,7 +237,7 @@ class ChangePasswordActivity : AppCompatActivity() {
 
         // Validation: new password different from current
         if (currentPassword == newPassword) {
-            Toast.makeText(this, strings.newPassword, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.passwordMustBeDifferent, Toast.LENGTH_SHORT).show()
             return
         }
 

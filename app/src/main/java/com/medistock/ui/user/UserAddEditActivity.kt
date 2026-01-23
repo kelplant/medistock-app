@@ -445,14 +445,6 @@ class UserAddEditActivity : AppCompatActivity() {
                                 updatedBy = currentUser
                             )
                             sdk.userRepository.update(updatedUser)
-                            if (password.isNotEmpty()) {
-                                sdk.userRepository.updatePassword(
-                                    userId = existingUser.id,
-                                    password = PasswordHasher.hashPassword(password),
-                                    updatedAt = timestamp,
-                                    updatedBy = currentUser
-                                )
-                            }
 
                             // Update permissions
                             savePermissions(existingUser.id, currentUser, timestamp)
@@ -466,7 +458,7 @@ class UserAddEditActivity : AppCompatActivity() {
                         val existingUser = sdk.userRepository.getByUsername(username)
                         if (existingUser != null) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@UserAddEditActivity, strings.username, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@UserAddEditActivity, strings.usernameAlreadyExists, Toast.LENGTH_SHORT).show()
                             }
                             return@withContext
                         }
