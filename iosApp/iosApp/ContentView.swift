@@ -65,7 +65,7 @@ struct ContentView: View {
 
     private func checkCompatibilityIfNeeded() async {
         guard !hasCheckedCompatibility else { return }
-        guard SupabaseService.shared.isConfigured else {
+            guard SupabaseService.shared.isConfigured else {
             hasCheckedCompatibility = true
             return
         }

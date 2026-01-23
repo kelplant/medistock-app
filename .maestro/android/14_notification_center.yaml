@@ -1,0 +1,122 @@
+# MediStock Android - Notification Center Tests
+# Tests: View notifications, dismiss single notification, dismiss all
+appId: com.medistock
+---
+
+# Pre-requisite: Login first
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+# Take screenshot of home
+- takeScreenshot: "android_notif_01_home"
+
+# ========================================
+# Test 1: Navigate to Notification Center
+# ========================================
+
+# Tap on notification icon in toolbar
+- tapOn:
+    id: "com.medistock:id/action_notifications"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Take screenshot of notification center
+- takeScreenshot: "android_notif_02_notification_center"
+
+# Verify notification center is displayed
+- assertVisible: "Notifications"
+
+# ========================================
+# Test 2: Handle empty state or notifications
+# ========================================
+
+# Check for empty state OR notification list
+# This handles both scenarios
+
+# If empty state:
+- assertVisible:
+    text: ".*Aucune notification.*"
+    optional: true
+
+# If notifications exist, try to see the list
+- assertVisible:
+    text: ".*notification.*"
+
+# Take screenshot
+- takeScreenshot: "android_notif_03_notification_list_or_empty"
+
+# ========================================
+# Test 3: Dismiss single notification (if exists)
+# ========================================
+
+# Try to tap dismiss button on first notification (if any exist)
+# Using optional to not fail if no notifications
+- tapOn:
+    id: "com.medistock:id/buttonDismiss"
+    index: 0
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Take screenshot after dismiss attempt
+- takeScreenshot: "android_notif_04_after_dismiss_single"
+
+# ========================================
+# Test 4: Dismiss all (if button visible)
+# ========================================
+
+# Try to tap "Tout acquitter" button (if visible/enabled)
+- tapOn:
+    id: "com.medistock:id/buttonDismissAll"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Take screenshot after dismiss all
+- takeScreenshot: "android_notif_05_after_dismiss_all"
+
+# Verify empty state is now shown (if all dismissed)
+- assertVisible:
+    text: ".*Aucune notification.*"
+    optional: true
+
+# ========================================
+# Test 5: Navigate back to home
+# ========================================
+
+# Press back button
+- pressKey: back
+
+- waitForAnimationToEnd
+
+# Verify back on home screen
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+- takeScreenshot: "android_notif_06_back_to_home"

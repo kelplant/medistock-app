@@ -20,7 +20,7 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 ├── config.yaml              # Configuration globale
 ├── shared/                  # Flows réutilisables
 │   └── login.yaml           # Flow de connexion
-├── android/                 # Tests Android (13 tests)
+├── android/                 # Tests Android (14 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
 │   ├── 03_products_crud.yaml
@@ -33,8 +33,9 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── 10_transfers.yaml
 │   ├── 11_inventory.yaml
 │   ├── 12_language_switching.yaml
-│   └── 13_password_complexity.yaml
-├── ios/                     # Tests iOS (13 tests)
+│   ├── 13_password_complexity.yaml
+│   └── 14_notification_center.yaml
+├── ios/                     # Tests iOS (14 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
 │   ├── 03_products_crud.yaml
@@ -47,7 +48,8 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── 10_transfers.yaml
 │   ├── 11_inventory.yaml
 │   ├── 12_language_switching.yaml
-│   └── 13_password_complexity.yaml
+│   ├── 13_password_complexity.yaml
+│   └── 14_notification_center.yaml
 └── permissions/             # Tests de permissions (26 tests)
     ├── README.md            # Documentation des tests de permissions
     ├── android/

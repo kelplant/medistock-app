@@ -69,6 +69,8 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+                // SQLDelight JDBC driver for in-memory testing
+                implementation("app.cash.sqldelight:sqlite-driver:2.0.1")
             }
         }
 

@@ -212,6 +212,7 @@ struct ProductEditorView: View {
     @State private var selectedSiteId: String = ""
     @State private var selectedCategoryId: String = ""
     @State private var description: String = ""
+    @State private var minStockText: String = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -250,6 +251,14 @@ struct ProductEditorView: View {
                     }
                 }
 
+                Section(header: Text("Stock Alerts")) {
+                    TextField("Alert threshold (0 = disabled)", text: $minStockText)
+                        .keyboardType(.decimalPad)
+                    Text("A notification will be sent when stock falls below this threshold. Leave at 0 to disable alerts.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
@@ -277,6 +286,8 @@ struct ProductEditorView: View {
                     selectedSiteId = product.siteId
                     selectedCategoryId = product.categoryId ?? ""
                     description = product.description_ ?? ""
+                    let minStock = product.minStock?.doubleValue ?? 0.0
+                    minStockText = minStock > 0 ? String(format: "%.0f", minStock) : ""
                 } else {
                     selectedSiteId = sites.first?.id ?? ""
                 }
@@ -292,6 +303,7 @@ struct ProductEditorView: View {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedUnit = unit.trimmingCharacters(in: .whitespacesAndNewlines)
         let volume = Double(volumeText.replacingOccurrences(of: ",", with: ".")) ?? 1.0
+        let minStock = Double(minStockText.replacingOccurrences(of: ",", with: ".")) ?? 0.0
 
         isSaving = true
         errorMessage = nil
@@ -315,7 +327,7 @@ struct ProductEditorView: View {
                         marginValue: existingProduct.marginValue,
                         description: description.isEmpty ? nil : description,
                         siteId: selectedSiteId,
-                        minStock: existingProduct.minStock,
+                        minStock: KotlinDouble(value: minStock),
                         maxStock: existingProduct.maxStock,
                         isActive: existingProduct.isActive,
                         createdAt: existingProduct.createdAt,
@@ -324,13 +336,35 @@ struct ProductEditorView: View {
                         updatedBy: session.userId
                     )
                 } else {
-                    savedProduct = sdk.createProduct(
+                    let newProduct = sdk.createProduct(
                         name: trimmedName,
                         siteId: selectedSiteId,
                         unit: trimmedUnit.isEmpty ? "unit" : trimmedUnit,
                         unitVolume: volume,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
                         userId: session.userId
+                    )
+                    // Set minStock on the new product
+                    savedProduct = Product(
+                        id: newProduct.id,
+                        name: newProduct.name,
+                        unit: newProduct.unit,
+                        unitVolume: newProduct.unitVolume,
+                        packagingTypeId: newProduct.packagingTypeId,
+                        selectedLevel: newProduct.selectedLevel,
+                        conversionFactor: newProduct.conversionFactor,
+                        categoryId: newProduct.categoryId,
+                        marginType: newProduct.marginType,
+                        marginValue: newProduct.marginValue,
+                        description: description.isEmpty ? nil : description,
+                        siteId: newProduct.siteId,
+                        minStock: KotlinDouble(value: minStock),
+                        maxStock: newProduct.maxStock,
+                        isActive: newProduct.isActive,
+                        createdAt: newProduct.createdAt,
+                        updatedAt: newProduct.updatedAt,
+                        createdBy: newProduct.createdBy,
+                        updatedBy: newProduct.updatedBy
                     )
                 }
 

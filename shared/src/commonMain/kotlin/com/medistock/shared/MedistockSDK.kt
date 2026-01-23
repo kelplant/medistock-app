@@ -44,6 +44,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val userPermissionRepository: UserPermissionRepository by lazy { UserPermissionRepository(database) }
     val productPriceRepository: ProductPriceRepository by lazy { ProductPriceRepository(database) }
     val syncQueueRepository: SyncQueueRepository by lazy { SyncQueueRepository(database) }
+    val notificationRepository: NotificationRepository by lazy { NotificationRepository(database) }
 
     // Services - Shared business services
     val permissionService: PermissionService by lazy { PermissionService(userPermissionRepository) }
