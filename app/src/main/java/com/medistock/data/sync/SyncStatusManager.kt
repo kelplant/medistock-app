@@ -217,7 +217,7 @@ class SyncStatusManager private constructor(private val context: Context) {
             diff < 60_000 -> "à l'instant"
             diff < 3600_000 -> "${diff / 60_000} min"
             diff < 86400_000 -> "${diff / 3600_000}h"
-            else -> SimpleDateFormat("dd/MM HH:mm", Locale.FRANCE).format(Date(timestamp))
+            else -> SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(timestamp))
         }
     }
 }

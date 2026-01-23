@@ -31,22 +31,24 @@ class SyncStatusManager: ObservableObject {
     }
 
     var isFullySynced: Bool {
-        pendingCount == 0 && conflictCount == 0
+        pendingCount == 0 && conflictCount == 0 && !isSyncing
     }
 
     var hasIssues: Bool {
-        conflictCount > 0 || !lastSyncInfo.success
+        conflictCount > 0 || (!lastSyncInfo.success && lastSyncInfo.hasEverSynced)
     }
 
+    /// Indicator color with same priority order as shared Kotlin model:
+    /// hasIssues > !isOnline > isSyncing > pendingCount > synced
     var indicatorColor: IndicatorColor {
-        if isSyncing {
-            return .syncing
+        if hasIssues {
+            return .error
         }
         if !isOnline {
             return .offline
         }
-        if conflictCount > 0 || !lastSyncInfo.success {
-            return .error
+        if isSyncing {
+            return .syncing
         }
         if pendingCount > 0 {
             return .pending

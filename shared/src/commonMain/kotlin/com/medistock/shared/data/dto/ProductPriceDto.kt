@@ -24,6 +24,8 @@ data class ProductPriceDto(
 ) {
     /**
      * Convert this DTO to a domain model.
+     * Note: Legacy fields (siteId, price) in ProductPrice model are not mapped
+     * as they don't exist in the database table and are kept only for backward compatibility.
      */
     fun toModel(): ProductPrice = ProductPrice(
         id = id,
