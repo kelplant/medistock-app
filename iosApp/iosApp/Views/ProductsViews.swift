@@ -317,6 +317,7 @@ struct ProductEditorView: View {
                         siteId: selectedSiteId,
                         minStock: existingProduct.minStock,
                         maxStock: existingProduct.maxStock,
+                        isActive: existingProduct.isActive,
                         createdAt: existingProduct.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingProduct.createdBy,

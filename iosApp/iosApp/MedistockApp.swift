@@ -10,6 +10,9 @@ struct MedistockApp: App {
     init() {
         // Configure SDK provider for sync services
         SDKProvider.shared.configure(sdk: sdk)
+
+        // Load saved language preference
+        Localized.loadSavedLanguage()
     }
 
     var body: some Scene {

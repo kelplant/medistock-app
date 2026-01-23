@@ -1,0 +1,139 @@
+# MediStock - Language Switching Tests (Template)
+#
+# STATUS: TEMPLATE - Not yet runnable
+# REQUIRES: Settings screen with language picker to be implemented
+#
+# This test will verify:
+# 1. Language can be changed from settings
+# 2. UI updates immediately after language change
+# 3. Language preference persists after app restart
+#
+# Supported languages: EN, FR, DE, ES, IT, RU, BM, NY
+
+appId: com.medistock
+---
+
+# ============================================
+# PREREQUISITE: Login first
+# ============================================
+- runFlow:
+    file: ../shared/login.yaml
+
+# ============================================
+# TEST 1: Open Settings and Change Language
+# ============================================
+
+# Navigate to Settings/Profile
+- tapOn:
+    id: ".*profile.*"
+- waitForAnimationToEnd
+
+# Tap on Language/Langue option
+- tapOn:
+    text: ".*Language.*|.*Langue.*|.*Sprache.*|.*Idioma.*"
+- waitForAnimationToEnd
+
+# Take screenshot of language picker
+- takeScreenshot: "language_picker_open"
+
+# Verify all languages are listed
+- assertVisible: "English"
+- assertVisible: "Français"
+- assertVisible: "Deutsch"
+- assertVisible: "Español"
+- assertVisible: "Italiano"
+- assertVisible: "Русский"
+
+# ============================================
+# TEST 2: Switch to French
+# ============================================
+
+- tapOn: "Français"
+- waitForAnimationToEnd
+
+# Verify UI changed to French
+- assertVisible: "Enregistrer|Annuler|Paramètres"
+- takeScreenshot: "language_french_active"
+
+# ============================================
+# TEST 3: Switch to German
+# ============================================
+
+- tapOn:
+    text: ".*Language.*|.*Langue.*|.*Sprache.*"
+- waitForAnimationToEnd
+
+- tapOn: "Deutsch"
+- waitForAnimationToEnd
+
+# Verify UI changed to German
+- assertVisible: "Speichern|Abbrechen|Einstellungen"
+- takeScreenshot: "language_german_active"
+
+# ============================================
+# TEST 4: Switch to Spanish
+# ============================================
+
+- tapOn:
+    text: ".*Sprache.*"
+- waitForAnimationToEnd
+
+- tapOn: "Español"
+- waitForAnimationToEnd
+
+# Verify UI changed to Spanish
+- assertVisible: "Guardar|Cancelar|Configuración"
+- takeScreenshot: "language_spanish_active"
+
+# ============================================
+# TEST 5: Switch back to English
+# ============================================
+
+- tapOn:
+    text: ".*Idioma.*"
+- waitForAnimationToEnd
+
+- tapOn: "English"
+- waitForAnimationToEnd
+
+# Verify UI changed to English
+- assertVisible: "Save|Cancel|Settings"
+- takeScreenshot: "language_english_active"
+
+# ============================================
+# TEST 6: Persistence after restart
+# ============================================
+
+# Set to French
+- tapOn:
+    text: ".*Language.*"
+- tapOn: "Français"
+- waitForAnimationToEnd
+
+# Close and reopen app
+- stopApp
+- launchApp
+
+# Should still be in French after restart
+- assertVisible: "Connexion|Enregistrer"
+- takeScreenshot: "language_persisted_french"
+
+# ============================================
+# CLEANUP: Reset to English
+# ============================================
+
+# Login again if needed
+- runFlow:
+    file: ../shared/login.yaml
+    when:
+      visible: "Connexion|Login"
+
+# Go to settings and reset to English
+- tapOn:
+    id: ".*profile.*"
+- tapOn:
+    text: ".*Langue.*"
+- tapOn: "English"
+- waitForAnimationToEnd
+
+- takeScreenshot: "language_test_complete"

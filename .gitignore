@@ -3,7 +3,6 @@
 /app/build/
 /.gradle/
 /.idea/
-/.claude/
 
 # Local configuration files
 local.properties

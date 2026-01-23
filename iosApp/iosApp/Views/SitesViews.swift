@@ -217,6 +217,7 @@ struct SiteEditorView: View {
                     savedSite = Site(
                         id: existingSite.id,
                         name: trimmedName,
+                        isActive: existingSite.isActive,
                         createdAt: existingSite.createdAt,
                         updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
                         createdBy: existingSite.createdBy,
