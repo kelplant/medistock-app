@@ -20,11 +20,24 @@ ALTER TABLE product_prices ADD COLUMN IF NOT EXISTS selling_price REAL;
 ALTER TABLE product_prices ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual';
 
 -- Migrate existing data: use price as selling_price, 0 as purchase_price, created_at as effective_date
-UPDATE product_prices
-SET effective_date = created_at,
-    selling_price = price,
-    purchase_price = 0
-WHERE effective_date IS NULL;
+-- Only if the 'price' column exists (backward compatibility)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'product_prices' AND column_name = 'price') THEN
+        UPDATE product_prices
+        SET effective_date = created_at,
+            selling_price = price,
+            purchase_price = 0
+        WHERE effective_date IS NULL;
+    ELSE
+        -- If no 'price' column, just set defaults
+        UPDATE product_prices
+        SET effective_date = COALESCE(effective_date, created_at),
+            selling_price = COALESCE(selling_price, 0),
+            purchase_price = COALESCE(purchase_price, 0)
+        WHERE effective_date IS NULL;
+    END IF;
+END $$;
 
 -- ============================================================================
 -- 2. UPDATE STOCK_MOVEMENTS TABLE
@@ -41,11 +54,20 @@ ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS selling_price_at_movement R
 -- Note: PostgreSQL doesn't support RENAME COLUMN IF EXISTS, so we add 'type' and keep both
 ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS type TEXT;
 
--- Migrate existing data
-UPDATE stock_movements
-SET date = created_at,
-    type = movement_type
-WHERE date IS NULL OR type IS NULL;
+-- Migrate existing data (only if movement_type exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stock_movements' AND column_name = 'movement_type') THEN
+        UPDATE stock_movements
+        SET date = created_at,
+            type = movement_type
+        WHERE date IS NULL OR type IS NULL;
+    ELSE
+        UPDATE stock_movements
+        SET date = COALESCE(date, created_at)
+        WHERE date IS NULL;
+    END IF;
+END $$;
 
 -- ============================================================================
 -- 3. UPDATE SALE_BATCH_ALLOCATIONS TABLE
@@ -60,11 +82,21 @@ ALTER TABLE sale_batch_allocations ADD COLUMN IF NOT EXISTS created_at BIGINT DE
 ALTER TABLE sale_batch_allocations ADD COLUMN IF NOT EXISTS created_by TEXT DEFAULT 'system';
 ALTER TABLE sale_batch_allocations ADD COLUMN IF NOT EXISTS client_id TEXT;
 
--- Migrate existing data
-UPDATE sale_batch_allocations
-SET quantity_allocated = quantity,
-    purchase_price_at_allocation = unit_cost
-WHERE quantity_allocated IS NULL;
+-- Migrate existing data (only if old columns exist)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sale_batch_allocations' AND column_name = 'quantity') THEN
+        UPDATE sale_batch_allocations
+        SET quantity_allocated = quantity,
+            purchase_price_at_allocation = COALESCE(unit_cost, 0)
+        WHERE quantity_allocated IS NULL;
+    ELSE
+        UPDATE sale_batch_allocations
+        SET quantity_allocated = COALESCE(quantity_allocated, 0),
+            purchase_price_at_allocation = COALESCE(purchase_price_at_allocation, 0)
+        WHERE quantity_allocated IS NULL;
+    END IF;
+END $$;
 
 -- Create index for client_id on sale_batch_allocations
 CREATE INDEX IF NOT EXISTS idx_sale_batch_allocations_client_id ON sale_batch_allocations(client_id);

@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
+import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncManager
@@ -142,6 +143,12 @@ class SupabaseConfigActivity : AppCompatActivity() {
         // Reinitialize Supabase client with new configuration
         try {
             SupabaseClientProvider.reinitialize(this)
+
+            // Run pending migrations after Supabase is configured
+            lifecycleScope.launch {
+                MedistockApplication.runMigrationsIfNeeded(this@SupabaseConfigActivity, "config")
+            }
+
             SyncScheduler.start(this)
             SyncScheduler.triggerImmediate(this, "config-saved")
             showStatus("Configuration enregistrée avec succès!", true)

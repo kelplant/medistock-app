@@ -81,6 +81,65 @@ class MedistockApplication : Application() {
         internal fun updateCompatibilityResult(result: CompatibilityResult) {
             compatibilityResult = result
         }
+
+        /**
+         * Exécute les migrations Supabase en attente.
+         * Peut être appelé depuis n'importe quelle Activity après configuration Supabase ou login.
+         *
+         * @param context Le contexte Android
+         * @param appliedBy Identifiant de qui applique les migrations (ex: "app", "login", "config")
+         */
+        suspend fun runMigrationsIfNeeded(context: android.content.Context, appliedBy: String = "app") {
+            try {
+                if (!SupabaseClientProvider.isConfigured(context)) {
+                    println("⚠️ Migrations ignorées: Supabase non configuré")
+                    return
+                }
+
+                val migrationManager = MigrationManager(context)
+
+                // 1. Vérifier la compatibilité app/DB
+                val compat = migrationManager.checkCompatibility()
+                updateCompatibilityResult(compat)
+
+                when (compat) {
+                    is CompatibilityResult.AppTooOld -> {
+                        println("❌ App trop ancienne - migrations ignorées")
+                        return
+                    }
+                    is CompatibilityResult.Unknown -> {
+                        println("⚠️ Compatibilité inconnue: ${compat.reason}")
+                    }
+                    is CompatibilityResult.Compatible -> {
+                        println("✅ App compatible")
+                    }
+                }
+
+                // 2. Exécuter les migrations en attente
+                val result = migrationManager.runPendingMigrations(appliedBy = appliedBy)
+
+                when {
+                    result.systemNotInstalled -> {
+                        println("⚠️ Système de migration non installé")
+                    }
+                    result.migrationsApplied.isNotEmpty() -> {
+                        println("✅ ${result.migrationsApplied.size} migration(s) appliquée(s):")
+                        result.migrationsApplied.forEach { println("   - $it") }
+                    }
+                    result.migrationsFailed.isNotEmpty() -> {
+                        println("❌ ${result.migrationsFailed.size} migration(s) échouée(s):")
+                        result.migrationsFailed.forEach { (name, error) ->
+                            println("   - $name: $error")
+                        }
+                    }
+                    else -> {
+                        println("✅ Aucune nouvelle migration à appliquer")
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ Erreur migrations: ${e.message}")
+            }
+        }
     }
 
     /**

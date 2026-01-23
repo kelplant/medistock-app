@@ -232,7 +232,7 @@ class LoginActivity : AppCompatActivity() {
     /**
      * Handle the result from Supabase Auth operations
      */
-    private fun handleSupabaseAuthResult(result: SupabaseAuthResult) {
+    private suspend fun handleSupabaseAuthResult(result: SupabaseAuthResult) {
         when (result) {
             is SupabaseAuthResult.Success -> {
                 authManager.loginWithSession(result.user, result.session)
@@ -271,7 +271,10 @@ class LoginActivity : AppCompatActivity() {
         tvError.visibility = View.VISIBLE
     }
 
-    private fun navigateToHome() {
+    private suspend fun navigateToHome() {
+        // Run pending migrations after successful login
+        MedistockApplication.runMigrationsIfNeeded(this, "login")
+
         val intent = Intent(this, HomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
