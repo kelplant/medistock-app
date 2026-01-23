@@ -38,6 +38,7 @@ object StringsEs : Strings {
     override val login = "Iniciar sesión"
     override val logout = "Cerrar sesión"
     override val logoutConfirm = "¿Está seguro de que desea cerrar sesión?"
+    override val changePassword = "Cambiar contraseña"
     override val loginError = "Error de inicio de sesión"
     override val loginErrorInvalidCredentials = "Nombre de usuario o contraseña inválidos"
     override val welcomeBack = "¡Bienvenido de nuevo, {name}!"

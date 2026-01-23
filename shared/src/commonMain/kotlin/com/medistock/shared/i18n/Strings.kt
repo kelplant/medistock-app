@@ -44,6 +44,7 @@ interface Strings {
     val login: String
     val logout: String
     val logoutConfirm: String
+    val changePassword: String
     val loginError: String
     val loginErrorInvalidCredentials: String
     val welcomeBack: String // Parameter: {name}

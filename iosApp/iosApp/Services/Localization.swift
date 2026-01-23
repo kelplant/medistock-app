@@ -128,6 +128,7 @@ enum Localized {
     static var login: String { strings.login }
     static var logout: String { strings.logout }
     static var logoutConfirm: String { strings.logoutConfirm }
+    static var changePassword: String { strings.changePassword }
     static var loginError: String { strings.loginError }
     static var loginErrorInvalidCredentials: String { strings.loginErrorInvalidCredentials }
     static var welcomeBack: String { strings.welcomeBack }

@@ -39,6 +39,7 @@ object StringsBm : Strings {
     override val login = "Ingila"
     override val logout = "Fuma"
     override val logoutConfirm = "Nshifwaya ukuti ufunge (logout)?"
+    override val changePassword = "Alula akapasiwedi"
     override val loginError = "Ukwingila kwalipona"
     override val loginErrorInvalidCredentials = "Ishina lya mukonshi nangu akapasiwedi fyaposa"
     override val welcomeBack = "Mwaiseni nakabili, {name}!"

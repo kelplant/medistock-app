@@ -38,6 +38,7 @@ object StringsDe : Strings {
     override val login = "Anmelden"
     override val logout = "Abmelden"
     override val logoutConfirm = "Sind Sie sicher, dass Sie sich abmelden möchten?"
+    override val changePassword = "Passwort ändern"
     override val loginError = "Anmeldung fehlgeschlagen"
     override val loginErrorInvalidCredentials = "Ungültiger Benutzername oder Passwort"
     override val welcomeBack = "Willkommen zurück, {name}!"

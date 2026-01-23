@@ -219,7 +219,18 @@ struct ProfileMenuView: View {
 
                 Section {
                     NavigationLink(destination: ChangePasswordView(sdk: sdk, session: session)) {
-                        Label("Change password", systemImage: "key")
+                        Label(Localized.strings.changePassword, systemImage: "key")
+                    }
+                }
+
+                Section(header: Text(Localized.settings)) {
+                    NavigationLink(destination: LanguagePickerView()) {
+                        HStack {
+                            Label(Localized.language, systemImage: "globe")
+                            Spacer()
+                            Text(Localized.currentLanguageDisplayName)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
 
@@ -227,7 +238,7 @@ struct ProfileMenuView: View {
                     Button(role: .destructive) {
                         logout()
                     } label: {
-                        Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label(Localized.logout, systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }
@@ -419,6 +430,45 @@ enum PasswordChangeError: LocalizedError {
             return "Current password incorrect"
         case .hashingFailed:
             return "Error hashing password"
+        }
+    }
+}
+
+// MARK: - Language Picker View
+struct LanguagePickerView: View {
+    @State private var selectedLanguage: AppLanguage = AppLanguage.from(code: Localized.currentLanguageCode)
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            ForEach(AppLanguage.allCases) { language in
+                Button(action: {
+                    selectLanguage(language)
+                }) {
+                    HStack {
+                        Text(language.displayName)
+                            .foregroundColor(.primary)
+
+                        Spacer()
+
+                        if language == selectedLanguage {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle(Localized.selectLanguage)
+    }
+
+    private func selectLanguage(_ language: AppLanguage) {
+        selectedLanguage = language
+        Localized.setLanguage(language)
+
+        // Dismiss to refresh the parent view with new language
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            dismiss()
         }
     }
 }

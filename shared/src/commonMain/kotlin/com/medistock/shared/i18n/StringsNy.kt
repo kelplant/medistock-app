@@ -39,6 +39,7 @@ object StringsNy : Strings {
     override val login = "Lowani"
     override val logout = "Tulukani"
     override val logoutConfirm = "Mukutsimikiza kuti mukufuna kutuluka?"
+    override val changePassword = "Sinthani mawu achinsinsi"
     override val loginError = "Kulephera kulowa"
     override val loginErrorInvalidCredentials = "Dzina lolowera kapena mawu achinsinsi si olondola"
     override val welcomeBack = "Takulandiraninso, {name}!"

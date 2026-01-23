@@ -38,6 +38,7 @@ object StringsIt : Strings {
     override val login = "Accedi"
     override val logout = "Esci"
     override val logoutConfirm = "Sei sicuro di voler uscire?"
+    override val changePassword = "Cambia password"
     override val loginError = "Accesso non riuscito"
     override val loginErrorInvalidCredentials = "Nome utente o password non validi"
     override val welcomeBack = "Bentornato, {name}!"

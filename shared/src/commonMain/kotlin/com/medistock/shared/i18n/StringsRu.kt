@@ -38,6 +38,7 @@ object StringsRu : Strings {
     override val login = "Войти"
     override val logout = "Выйти"
     override val logoutConfirm = "Вы уверены, что хотите выйти?"
+    override val changePassword = "Изменить пароль"
     override val loginError = "Не удалось войти"
     override val loginErrorInvalidCredentials = "Неверное имя пользователя или пароль"
     override val welcomeBack = "С возвращением, {name}!"
