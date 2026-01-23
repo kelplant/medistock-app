@@ -22,7 +22,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 -- ============================================================================
 -- HELPER FUNCTION: Check if user has access to a site
 -- ============================================================================
-CREATE OR REPLACE FUNCTION has_site_access(p_site_id TEXT)
+CREATE OR REPLACE FUNCTION has_site_access(p_site_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     -- Admins have access to all sites

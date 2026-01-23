@@ -8,7 +8,7 @@
 -- ============================================================================
 -- FIX 1: Update has_site_access to check if user is active
 -- ============================================================================
-CREATE OR REPLACE FUNCTION has_site_access(p_site_id TEXT)
+CREATE OR REPLACE FUNCTION has_site_access(p_site_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
     -- Admins have access to all sites
