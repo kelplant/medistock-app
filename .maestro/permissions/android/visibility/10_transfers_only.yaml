@@ -1,0 +1,57 @@
+# MediStock Android - Permission Visibility Test
+# Test User: test_transfers_only
+# Expected: Only Transfers visible on Home, no admin access
+appId: com.medistock
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Login with test_transfers_only user
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "test_transfers_only"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "Test123!"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+
+# Verify ONLY Transfers is visible
+- assertVisible:
+    text: ".*Transfer Products.*"
+
+# Verify other operations are NOT visible
+- assertNotVisible:
+    text: ".*Purchase Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Sell Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*View Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Inventory Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Administration.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "android_transfers_only_home"

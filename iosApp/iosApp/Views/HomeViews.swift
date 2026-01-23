@@ -70,8 +70,19 @@ struct HomeView: View {
                 }
             }
 
-            // Administration - only show if user has any admin permissions
-            if session.isAdmin || permissions.canView(.admin) {
+            // Administration - only show if user has ANY admin-level permissions
+            // Aligned with Android: checks isAdmin OR any admin module permission
+            let hasAnyAdminPermission = session.isAdmin ||
+                permissions.canView(.admin) ||
+                permissions.canView(.sites) ||
+                permissions.canView(.products) ||
+                permissions.canView(.categories) ||
+                permissions.canView(.packagingTypes) ||
+                permissions.canView(.customers) ||
+                permissions.canView(.users) ||
+                permissions.canView(.audit)
+
+            if hasAnyAdminPermission {
                 Section(header: Text("Administration")) {
                     NavigationLink(destination: AdminMenuView(sdk: sdk, session: session)) {
                         HomeMenuRow(icon: "gearshape.fill", title: "Administration", color: .gray)

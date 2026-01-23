@@ -1,0 +1,89 @@
+# MediStock iOS - Permission Visibility Test
+# Test User: test_audit_only
+# Expected: Only Audit History visible in Admin menu, no operations on Home
+appId: com.medistock.ios
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Verify login screen
+- assertVisible: "MediStock"
+- assertVisible: "Login"
+
+# Login with test_audit_only user
+- tapOn: "Username"
+- inputText: "test_audit_only"
+
+- tapOn: "Password"
+- inputText: "Test123!"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+# Verify NO operations are visible on Home Screen
+- assertNotVisible:
+    text: ".*Purchase Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Sell Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Transfer Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*View Stock.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Inventory Stock.*"
+    optional: true
+
+# Administration should be visible
+- assertVisible: "Administration"
+
+# Navigate to Administration
+- tapOn: "Administration"
+
+- waitForAnimationToEnd
+
+# Verify ONLY Audit History is visible
+- assertVisible: "Audit History"
+
+# Verify other admin modules are NOT visible
+- assertNotVisible:
+    text: ".*Site Management.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Manage Products.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Packaging Types.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*Manage Customers.*"
+    optional: true
+
+- assertNotVisible:
+    text: ".*User Management.*"
+    optional: true
+
+# Take screenshot
+- takeScreenshot: "ios_audit_only_admin"

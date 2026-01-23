@@ -375,7 +375,16 @@ maestro test \
 
 ---
 
-### 3.7 Tests Maestro inclus (22 tests - 11 Android + 11 iOS)
+### 3.7 Tests Maestro inclus (62 tests - 31 Android + 31 iOS)
+
+Les tests Maestro sont organisés en trois catégories principales :
+1. **Tests Fonctionnels** : 26 tests (13 Android + 13 iOS) - Valident les fonctionnalités CRUD et navigation
+2. **Tests de Permissions - Visibilité** : 26 tests (13 Android + 13 iOS) - Valident la visibilité des modules
+3. **Tests de Permissions - CRUD** : 10 tests (5 Android + 5 iOS) - Valident les permissions granulaires CRUD
+
+---
+
+## Tests Fonctionnels (26 tests)
 
 #### 01_authentication.yaml
 **Objectif** : Valider le flux d'authentification complet.
@@ -487,6 +496,229 @@ maestro test \
 | Login | Saisie credentials, Login | Ecran Home affiche |
 | Navigation | Clic "Inventory Stock" | Ecran inventaire accessible |
 | Retour | Clic retour | Retour ecran Home |
+
+#### 12_language_switching.yaml
+**Objectif** : Valider le changement de langue de l'application.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | Saisie credentials, Login | Ecran Home affiche |
+| Navigation | Acces parametres langue | Ecran langues affiche |
+| Test langues | Basculer entre EN/FR/DE/ES | Interface traduite correctement |
+| Persistance | Redemarrage app | Langue selectionnee persistante |
+
+#### 13_password_complexity.yaml
+**Objectif** : Valider les regles de complexite des mots de passe.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Tentative faible | Saisie mot de passe faible | Erreur validation affichee |
+| Tentative valide | Saisie mot de passe conforme | Validation reussie |
+
+---
+
+## Tests de Permissions (26 tests)
+
+Les tests de permissions valident le systeme de permissions granulaires de MediStock, assurant que chaque utilisateur ne peut voir et acceder qu'aux modules pour lesquels il possede les permissions appropriees.
+
+### Modules de permissions
+
+**Operations (Home Screen) :**
+- STOCK - Visualisation des stocks
+- PURCHASES - Gestion des achats
+- SALES - Gestion des ventes
+- TRANSFERS - Transferts inter-sites
+- INVENTORY - Comptage d'inventaire
+
+**Administration (Admin Menu) :**
+- SITES - Gestion des sites
+- PRODUCTS - Gestion des produits
+- CATEGORIES - Gestion des categories
+- PACKAGING_TYPES - Types d'emballage
+- CUSTOMERS - Gestion des clients
+- USERS - Gestion des utilisateurs
+- AUDIT - Historique d'audit
+
+### Utilisateurs de test
+
+Tous les utilisateurs de test sont automatiquement crees en mode debug avec le mot de passe : `Test123!`
+
+| Username | Permission | Visibilite attendue |
+|----------|-----------|---------------------|
+| test_no_permission | Aucune | Aucun module visible |
+| test_sites_only | SITES | Seul "Site Management" dans Admin |
+| test_products_only | PRODUCTS | Seul "Manage Products" dans Admin |
+| test_categories_only | CATEGORIES | Seul "Manage Products" dans Admin |
+| test_customers_only | CUSTOMERS | Seul "Manage Customers" dans Admin |
+| test_packaging_only | PACKAGING_TYPES | Seul "Packaging Types" dans Admin |
+| test_stock_only | STOCK | Seul "View Stock" sur Home |
+| test_purchases_only | PURCHASES | Seul "Purchase Products" sur Home |
+| test_sales_only | SALES | Seul "Sell Products" sur Home |
+| test_transfers_only | TRANSFERS | Seul "Transfer Products" sur Home |
+| test_inventory_only | INVENTORY | Seul "Inventory Stock" sur Home |
+| test_users_only | USERS | Seul "User Management" dans Admin |
+| test_audit_only | AUDIT | Seul "Audit History" dans Admin |
+
+### Tests de visibilite (13 tests par plateforme)
+
+#### 01_no_permission.yaml
+**Objectif** : Verifier qu'un utilisateur sans permission ne voit aucun module.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_no_permission / Test123! | Login reussi |
+| Home | Verification ecran accueil | Aucun bouton operation visible |
+| Admin | Verification menu admin | Bouton "Administration" non visible |
+
+#### 02_sites_only.yaml
+**Objectif** : Verifier que seul le module Sites est visible.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_sites_only / Test123! | Login reussi |
+| Home | Verification ecran accueil | Aucun bouton operation visible |
+| Admin | Clic "Administration" | Menu admin affiche |
+| Verification | Inspection modules admin | Seul "Site Management" visible |
+
+#### 03_products_only.yaml - 13_audit_only.yaml
+**Objectif** : Verifier que seul le module specifique est visible pour chaque utilisateur de test.
+
+Chaque test suit le meme pattern :
+1. Login avec l'utilisateur de test specifique
+2. Verification des operations Home (assertNotVisible pour tous sauf celui autorise)
+3. Navigation vers Admin si permission admin
+4. Verification des modules admin (assertVisible pour celui autorise, assertNotVisible pour les autres)
+5. Screenshot pour evidence
+
+### Execution des tests de permissions
+
+```bash
+# Tous les tests de permissions Android (13 tests)
+maestro test .maestro/permissions/android/visibility/
+
+# Tous les tests de permissions iOS (13 tests)
+maestro -p ios test .maestro/permissions/ios/visibility/
+
+# Test specifique
+maestro test .maestro/permissions/android/visibility/01_no_permission.yaml
+maestro -p ios test .maestro/permissions/ios/visibility/07_stock_only.yaml
+```
+
+### Matrice de couverture des permissions
+
+| Test File | User | Module | Location | Verifie |
+|-----------|------|--------|----------|---------|
+| 01_no_permission | test_no_permission | None | Home | Aucun module visible |
+| 02_sites_only | test_sites_only | SITES | Admin | Seul Sites visible |
+| 03_products_only | test_products_only | PRODUCTS | Admin | Seul Products visible |
+| 04_categories_only | test_categories_only | CATEGORIES | Admin | Seul Categories visible |
+| 05_customers_only | test_customers_only | CUSTOMERS | Admin | Seul Customers visible |
+| 06_packaging_only | test_packaging_only | PACKAGING_TYPES | Admin | Seul Packaging visible |
+| 07_stock_only | test_stock_only | STOCK | Home | Seul Stock visible |
+| 08_purchases_only | test_purchases_only | PURCHASES | Home | Seul Purchases visible |
+| 09_sales_only | test_sales_only | SALES | Home | Seul Sales visible |
+| 10_transfers_only | test_transfers_only | TRANSFERS | Home | Seul Transfers visible |
+| 11_inventory_only | test_inventory_only | INVENTORY | Home | Seul Inventory visible |
+| 12_users_only | test_users_only | USERS | Admin | Seul Users visible |
+| 13_audit_only | test_audit_only | AUDIT | Admin | Seul Audit visible |
+
+Pour plus de details sur les tests de permissions de visibilité, consultez `.maestro/permissions/README.md`.
+
+---
+
+## Tests de Permissions CRUD (10 tests)
+
+Les tests de permissions CRUD valident les permissions granulaires au niveau des actions (Create, Read, Update, Delete) au sein du module Products. Chaque utilisateur de test possède une combinaison différente de permissions CRUD.
+
+### Utilisateurs de test CRUD
+
+Tous les utilisateurs de test CRUD sont automatiquement créés en mode debug avec le mot de passe : `Test123!`
+
+| Username | canView | canCreate | canEdit | canDelete | Comportement attendu |
+|----------|---------|-----------|---------|-----------|---------------------|
+| test_products_view | ✓ | ✗ | ✗ | ✗ | Peut voir la liste et détails, aucun bouton d'action |
+| test_products_create | ✓ | ✓ | ✗ | ✗ | Peut voir et ajouter, pas modifier/supprimer |
+| test_products_edit | ✓ | ✗ | ✓ | ✗ | Peut voir et modifier, pas ajouter/supprimer |
+| test_products_delete | ✓ | ✗ | ✗ | ✓ | Peut voir et supprimer, pas ajouter/modifier |
+| test_products_only | ✓ | ✓ | ✓ | ✓ | CRUD complet - tous les boutons visibles |
+
+### Tests de permissions CRUD (5 tests par plateforme)
+
+#### 01_products_view_only.yaml
+**Objectif** : Vérifier qu'un utilisateur avec permission de lecture seule ne peut effectuer aucune action.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_products_view / Test123! | Login réussi |
+| Navigation | Accès à Products via Admin | Liste produits affichée |
+| Vérification Liste | Inspection bouton Add/FAB | Bouton Add NOT visible |
+| Vérification Détail | Clic sur produit | Boutons Edit et Delete NOT visible |
+
+#### 02_products_create_only.yaml
+**Objectif** : Vérifier qu'un utilisateur peut ajouter mais pas modifier/supprimer.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_products_create / Test123! | Login réussi |
+| Navigation | Accès à Products | Liste produits affichée |
+| Vérification Liste | Inspection bouton Add/FAB | Bouton Add IS visible |
+| Vérification Détail | Clic sur produit | Boutons Edit et Delete NOT visible |
+
+#### 03_products_edit_only.yaml
+**Objectif** : Vérifier qu'un utilisateur peut modifier mais pas ajouter/supprimer.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_products_edit / Test123! | Login réussi |
+| Navigation | Accès à Products | Liste produits affichée |
+| Vérification Liste | Inspection bouton Add/FAB | Bouton Add NOT visible |
+| Vérification Détail | Clic sur produit | Bouton Edit IS visible, Delete NOT visible |
+
+#### 04_products_delete_only.yaml
+**Objectif** : Vérifier qu'un utilisateur peut supprimer mais pas ajouter/modifier.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_products_delete / Test123! | Login réussi |
+| Navigation | Accès à Products | Liste produits affichée |
+| Vérification Liste | Inspection bouton Add/FAB | Bouton Add NOT visible |
+| Vérification Détail | Clic sur produit | Bouton Delete IS visible, Edit NOT visible |
+
+#### 05_products_full_crud.yaml
+**Objectif** : Vérifier qu'un utilisateur avec CRUD complet voit tous les boutons.
+
+| Etape | Action | Validation |
+|-------|--------|------------|
+| Login | test_products_only / Test123! | Login réussi |
+| Navigation | Accès à Products | Liste produits affichée |
+| Vérification Liste | Inspection bouton Add/FAB | Bouton Add IS visible |
+| Vérification Détail | Clic sur produit | Boutons Edit et Delete IS visible |
+
+### Execution des tests de permissions CRUD
+
+```bash
+# Tous les tests de permissions CRUD Android (5 tests)
+maestro test .maestro/permissions/android/crud/
+
+# Tous les tests de permissions CRUD iOS (5 tests)
+maestro -p ios test .maestro/permissions/ios/crud/
+
+# Test spécifique
+maestro test .maestro/permissions/android/crud/01_products_view_only.yaml
+maestro -p ios test .maestro/permissions/ios/crud/03_products_edit_only.yaml
+```
+
+### Matrice de couverture des permissions CRUD
+
+| Test File | User | Add Button | Edit Button | Delete Button |
+|-----------|------|------------|-------------|---------------|
+| 01_products_view_only | test_products_view | NOT visible | NOT visible | NOT visible |
+| 02_products_create_only | test_products_create | VISIBLE | NOT visible | NOT visible |
+| 03_products_edit_only | test_products_edit | NOT visible | VISIBLE | NOT visible |
+| 04_products_delete_only | test_products_delete | NOT visible | NOT visible | VISIBLE |
+| 05_products_full_crud | test_products_only | VISIBLE | VISIBLE | VISIBLE |
+
+Pour plus de détails sur les tests de permissions CRUD, consultez `.maestro/permissions/README.md`.
 
 ---
 
@@ -683,13 +915,35 @@ Avant chaque commit :
 # Tests Android
 ./gradlew :app:testDebugUnitTest
 
-# Tests E2E Android (11 tests)
+# Tests E2E fonctionnels Android (13 tests)
 maestro test .maestro/android/
 
-# Tests E2E iOS (11 tests)
+# Tests E2E fonctionnels iOS (13 tests)
 maestro -p ios test .maestro/ios/
 
-# Tous les tests E2E (Android + iOS)
+# Tests de permissions visibilité Android (13 tests)
+maestro test .maestro/permissions/android/visibility/
+
+# Tests de permissions visibilité iOS (13 tests)
+maestro -p ios test .maestro/permissions/ios/visibility/
+
+# Tests de permissions CRUD Android (5 tests)
+maestro test .maestro/permissions/android/crud/
+
+# Tests de permissions CRUD iOS (5 tests)
+maestro -p ios test .maestro/permissions/ios/crud/
+
+# Tous les tests de permissions (Android + iOS = 36 tests)
+maestro test .maestro/permissions/android/
+maestro -p ios test .maestro/permissions/ios/
+
+# Tous les tests E2E (Android + iOS = 62 tests)
+maestro test .maestro/android/
+maestro -p ios test .maestro/ios/
+maestro test .maestro/permissions/android/
+maestro -p ios test .maestro/permissions/ios/
+
+# Ou utiliser les scripts de lancement
 ./scripts/run_tests_all.sh
 
 # Mode debug Maestro

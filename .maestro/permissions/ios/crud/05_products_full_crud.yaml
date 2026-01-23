@@ -1,0 +1,89 @@
+# MediStock iOS - CRUD Permission Test
+# Test User: test_products_only (canView=true, canCreate=true, canEdit=true, canDelete=true)
+# Expected: Full CRUD - can view, add, edit, and delete products
+appId: com.medistock.ios
+---
+
+# Launch app and login
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# Verify login screen
+- assertVisible: "MediStock"
+- assertVisible: "Login"
+
+# Login with test_products_only user
+- tapOn: "Username"
+- inputText: "test_products_only"
+
+- tapOn: "Password"
+- inputText: "Test123!"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+# Navigate to Administration
+- assertVisible: "Administration"
+
+- tapOn: "Administration"
+
+- waitForAnimationToEnd
+
+# Navigate to Manage Products
+- assertVisible: "Manage Products"
+
+- tapOn: "Manage Products"
+
+- waitForAnimationToEnd
+
+# Navigate to Products
+- assertVisible: "Products"
+
+- tapOn: "Products"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify Products list header is visible
+- assertVisible:
+    text: ".*Products.*"
+
+# Verify toolbar "+" button (Add) IS visible
+- assertVisible:
+    text: ".*\\+.*"
+
+# Take screenshot of list with + button
+- takeScreenshot: "ios_products_full_crud_list"
+
+# Wait for product list to load
+- extendedWaitUntil:
+    visible:
+      text: ".*"
+    timeout: 10000
+
+# Tap on the first product in the list (skip header row)
+- tapOn:
+    index: 1
+
+- waitForAnimationToEnd
+
+# Verify Edit button IS visible in toolbar or as text
+- assertVisible:
+    text: ".*Edit.*"
+
+# Verify Delete button IS visible in toolbar or as text
+- assertVisible:
+    text: ".*Delete.*"
+
+# Take screenshot
+- takeScreenshot: "ios_products_full_crud_detail"

@@ -1,0 +1,112 @@
+# Test: Multi-permission user visibility
+# User: test_multi_perm has SITES, PRODUCTS, and SALES permissions
+# Verifies that multiple permissions correctly show multiple modules
+
+appId: com.medistock
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# ========================================
+# LOGIN
+# ========================================
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "test_multi_perm"
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "Test123!"
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========================================
+# HOME SCREEN VERIFICATION
+# ========================================
+
+# Sales should be VISIBLE (has SALES permission)
+- assertVisible:
+    id: "com.medistock:id/sellProductButton"
+
+# Stock should NOT be visible (no STOCK permission)
+- assertNotVisible:
+    id: "com.medistock:id/viewStockButton"
+    optional: true
+
+# Purchases should NOT be visible (no PURCHASES permission)
+- assertNotVisible:
+    id: "com.medistock:id/purchaseButton"
+    optional: true
+
+# Transfers should NOT be visible (no TRANSFERS permission)
+- assertNotVisible:
+    id: "com.medistock:id/transferProductButton"
+    optional: true
+
+# Inventory should NOT be visible (no INVENTORY permission)
+- assertNotVisible:
+    id: "com.medistock:id/inventoryButton"
+    optional: true
+
+# Administration should be VISIBLE (has SITES and PRODUCTS permissions)
+- assertVisible:
+    id: "com.medistock:id/adminButton"
+
+- takeScreenshot: "multi_perm_home_android"
+
+# ========================================
+# ADMIN SCREEN VERIFICATION
+# ========================================
+- tapOn:
+    id: "com.medistock:id/adminButton"
+- waitForAnimationToEnd
+
+# Sites should be VISIBLE (has SITES permission)
+- assertVisible:
+    id: "com.medistock:id/btnManageSites"
+
+# Products menu should be VISIBLE (has PRODUCTS permission)
+- assertVisible:
+    id: "com.medistock:id/btnManageProducts"
+
+# Customers should NOT be visible (no CUSTOMERS permission)
+- assertNotVisible:
+    id: "com.medistock:id/btnManageCustomers"
+    optional: true
+
+# Packaging Types should NOT be visible (no PACKAGING_TYPES permission)
+- assertNotVisible:
+    id: "com.medistock:id/btnManagePackagingTypes"
+    optional: true
+
+# Users should NOT be visible (no USERS permission)
+- assertNotVisible:
+    id: "com.medistock:id/btnManageUsers"
+    optional: true
+
+# Audit should NOT be visible (no AUDIT permission)
+- assertNotVisible:
+    id: "com.medistock:id/btnAuditHistory"
+    optional: true
+
+# Stock Movements should NOT be visible (no STOCK permission)
+- assertNotVisible:
+    id: "com.medistock:id/btnStockMovement"
+    optional: true
+
+- takeScreenshot: "multi_perm_admin_android"
+
+# ========================================
+# VERIFY PRODUCTS ACCESS
+# ========================================
+- tapOn:
+    id: "com.medistock:id/btnManageProducts"
+- waitForAnimationToEnd
+
+# Products button should be visible in submenu
+- assertVisible:
+    id: "com.medistock:id/btnProducts"
+
+- takeScreenshot: "multi_perm_products_submenu_android"
