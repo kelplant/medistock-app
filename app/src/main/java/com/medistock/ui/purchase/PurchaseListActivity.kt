@@ -3,7 +3,6 @@ package com.medistock.ui.purchase
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
@@ -13,17 +12,22 @@ import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.PurchaseBatch
 import com.medistock.ui.adapters.PurchaseBatchAdapter
+import com.medistock.ui.LocalizedActivity
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class PurchaseListActivity : AppCompatActivity() {
+class PurchaseListActivity : LocalizedActivity() {
     private lateinit var adapter: PurchaseBatchAdapter
     private lateinit var sdk: MedistockSDK
     private var siteId: String? = null
     private var allBatches = listOf<PurchaseBatch>()
     private var productNames = mutableMapOf<String, String>()
+
+    private lateinit var chipAll: Chip
+    private lateinit var chipActive: Chip
+    private lateinit var chipExhausted: Chip
 
     private enum class Filter { ALL, ACTIVE, EXHAUSTED }
     private var currentFilter = Filter.ALL
@@ -32,15 +36,14 @@ class PurchaseListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_purchase_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Purchase History"
         sdk = MedistockApplication.sdk
         siteId = PrefsHelper.getActiveSiteId(this)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerPurchases)
         val fabAdd = findViewById<FloatingActionButton>(R.id.fabAddPurchase)
-        val chipAll = findViewById<Chip>(R.id.chipAll)
-        val chipActive = findViewById<Chip>(R.id.chipActive)
-        val chipExhausted = findViewById<Chip>(R.id.chipExhausted)
+        chipAll = findViewById(R.id.chipAll)
+        chipActive = findViewById(R.id.chipActive)
+        chipExhausted = findViewById(R.id.chipExhausted)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = PurchaseBatchAdapter(productNames) { batch ->
@@ -112,6 +115,13 @@ class PurchaseListActivity : AppCompatActivity() {
             Filter.EXHAUSTED -> allBatches.filter { it.isExhausted || it.remainingQuantity <= 0 }
         }
         adapter.submitList(filtered)
+    }
+
+    override fun applyLocalizedStrings() {
+        supportActionBar?.title = strings.purchaseHistory
+        chipAll.text = strings.all
+        chipActive.text = strings.active
+        chipExhausted.text = strings.exhausted
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

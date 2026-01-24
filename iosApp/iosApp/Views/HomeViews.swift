@@ -26,12 +26,12 @@ struct HomeView: View {
             }
 
             // Site selector section
-            Section(header: Text("Current Site")) {
+            Section(header: Text(Localized.currentSite)) {
                 Button(action: { showSiteSelector = true }) {
                     HStack {
                         Image(systemName: "building.2")
                             .foregroundColor(.accentColor)
-                        Text(selectedSite?.name ?? "Select a site")
+                        Text(selectedSite?.name ?? Localized.selectSite)
                             .foregroundColor(selectedSite == nil ? .secondary : .primary)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -41,34 +41,34 @@ struct HomeView: View {
             }
 
             // Main operations - with permission checks
-            Section(header: Text("Operations")) {
+            Section(header: Text(Localized.operations)) {
                 if permissions.canView(.purchases) {
                     NavigationLink(destination: PurchasesListView(sdk: sdk, session: session, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "shippingbox.fill", title: "Purchase Products", color: .blue)
+                        HomeMenuRow(icon: "shippingbox.fill", title: Localized.purchases, color: .blue)
                     }
                 }
 
                 if permissions.canView(.sales) {
                     NavigationLink(destination: SalesListView(sdk: sdk, session: session, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "cart.fill", title: "Sell Products", color: .green)
+                        HomeMenuRow(icon: "cart.fill", title: Localized.sales, color: .green)
                     }
                 }
 
                 if permissions.canView(.transfers) {
                     NavigationLink(destination: TransfersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "arrow.left.arrow.right", title: "Transfer Products", color: .orange)
+                        HomeMenuRow(icon: "arrow.left.arrow.right", title: Localized.transfers, color: .orange)
                     }
                 }
 
                 if permissions.canView(.stock) {
                     NavigationLink(destination: StockListView(sdk: sdk, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "chart.bar.fill", title: "View Stock", color: .purple)
+                        HomeMenuRow(icon: "chart.bar.fill", title: Localized.viewStock, color: .purple)
                     }
                 }
 
                 if permissions.canView(.inventory) {
                     NavigationLink(destination: InventoryListView(sdk: sdk, session: session, siteId: selectedSite?.id)) {
-                        HomeMenuRow(icon: "list.clipboard.fill", title: "Inventory Stock", color: .teal)
+                        HomeMenuRow(icon: "list.clipboard.fill", title: Localized.inventoryStock, color: .teal)
                     }
                 }
             }
@@ -86,9 +86,9 @@ struct HomeView: View {
                 permissions.canView(.audit)
 
             if hasAnyAdminPermission {
-                Section(header: Text("Administration")) {
+                Section(header: Text(Localized.administration)) {
                     NavigationLink(destination: AdminMenuView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "gearshape.fill", title: "Administration", color: .gray)
+                        HomeMenuRow(icon: "gearshape.fill", title: Localized.administration, color: .gray)
                     }
                     .accessibilityIdentifier("admin-menu-link")
                 }
@@ -121,7 +121,7 @@ struct HomeView: View {
                 NotificationCenterView(sdk: sdk)
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Fermer") { showNotificationCenter = false }
+                            Button(Localized.close) { showNotificationCenter = false }
                         }
                     }
             }
@@ -144,8 +144,8 @@ struct HomeView: View {
             // Initialize notifications
             await initializeNotifications()
         }
-        .alert("Notifications", isPresented: $showNotificationPermissionAlert) {
-            Button("Activer") {
+        .alert(Localized.notifications, isPresented: $showNotificationPermissionAlert) {
+            Button(Localized.enable) {
                 Task {
                     await notificationObserver.requestPermission()
                     if notificationObserver.hasPermission {
@@ -153,9 +153,9 @@ struct HomeView: View {
                     }
                 }
             }
-            Button("Plus tard", role: .cancel) {}
+            Button(Localized.later, role: .cancel) {}
         } message: {
-            Text("Les notifications vous alertent des produits expirés et du stock faible.")
+            Text(Localized.alertsDescription)
         }
         .onChange(of: selectedSite) { newSite in
             session.currentSiteId = newSite?.id
@@ -263,23 +263,23 @@ struct SyncStatusBannerView: View {
 
     private var statusTitle: String {
         if !syncStatus.isOnline {
-            return "Offline Mode"
+            return Localized.offlineMode
         } else if syncStatus.conflictCount > 0 {
-            return "Conflicts Detected"
+            return Localized.strings.conflictsDetected
         } else if syncStatus.pendingCount > 0 {
-            return "Pending Changes"
+            return Localized.strings.pendingChanges
         } else {
-            return "Synchronized"
+            return Localized.synced
         }
     }
 
     private var statusSubtitle: String {
         if !syncStatus.isOnline {
-            return "Changes will sync automatically when online"
+            return Localized.strings.changesWillSyncWhenOnline
         } else if syncStatus.conflictCount > 0 {
-            return "\(syncStatus.conflictCount) conflict(s) to resolve"
+            return Localized.format(Localized.conflictsToResolve, "count", syncStatus.conflictCount)
         } else if syncStatus.pendingCount > 0 {
-            return "\(syncStatus.pendingCount) pending change(s)"
+            return Localized.format(Localized.pendingChanges, "count", syncStatus.pendingCount)
         } else {
             return syncStatus.statusSummary
         }
@@ -321,11 +321,11 @@ struct AdminMenuView: View {
     var body: some View {
         List {
             // Management section - order aligned with Android
-            Section(header: Text("Management")) {
+            Section(header: Text(Localized.management)) {
                 // 1. Site Management (Android #1)
                 if permissions.canView(.sites) {
                     NavigationLink(destination: SitesListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "building.2.fill", title: "Site Management", color: .blue)
+                        HomeMenuRow(icon: "building.2.fill", title: Localized.siteManagement, color: .blue)
                     }
                     .accessibilityIdentifier("sites-link")
                 }
@@ -333,7 +333,7 @@ struct AdminMenuView: View {
                 // 2. Manage Products (Android #2 - submenu in Android, flat here)
                 if permissions.canView(.products) {
                     NavigationLink(destination: ProductsListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "cube.box.fill", title: "Manage Products", color: .green)
+                        HomeMenuRow(icon: "cube.box.fill", title: Localized.manageProducts, color: .green)
                     }
                     .accessibilityIdentifier("products-link")
                 }
@@ -341,7 +341,7 @@ struct AdminMenuView: View {
                 // 2b. Manage Categories (part of Android #2 submenu)
                 if permissions.canView(.categories) {
                     NavigationLink(destination: CategoriesListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "folder.fill", title: "Manage Categories", color: .orange)
+                        HomeMenuRow(icon: "folder.fill", title: Localized.manageCategories, color: .orange)
                     }
                     .accessibilityIdentifier("categories-link")
                 }
@@ -349,7 +349,7 @@ struct AdminMenuView: View {
                 // 3. Stock Movement (Android #3 - moved up from History section)
                 if permissions.canView(.stock) {
                     NavigationLink(destination: StockMovementsListView(sdk: sdk)) {
-                        HomeMenuRow(icon: "arrow.up.arrow.down", title: "Stock Movement", color: .cyan)
+                        HomeMenuRow(icon: "arrow.up.arrow.down", title: Localized.stockMovements, color: .cyan)
                     }
                     .accessibilityIdentifier("stock-movement-link")
                 }
@@ -357,7 +357,7 @@ struct AdminMenuView: View {
                 // 4. Packaging Types (Android #4)
                 if permissions.canView(.packagingTypes) {
                     NavigationLink(destination: PackagingTypesListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "shippingbox", title: "Packaging Types", color: .teal)
+                        HomeMenuRow(icon: "shippingbox", title: Localized.packagingTypes, color: .teal)
                     }
                     .accessibilityIdentifier("packaging-types-link")
                 }
@@ -365,7 +365,7 @@ struct AdminMenuView: View {
                 // 5. Manage Customers (Android #5 - now in both platforms)
                 if permissions.canView(.customers) {
                     NavigationLink(destination: CustomersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "person.2.fill", title: "Manage Customers", color: .purple)
+                        HomeMenuRow(icon: "person.2.fill", title: Localized.manageCustomers, color: .purple)
                     }
                     .accessibilityIdentifier("customers-link")
                 }
@@ -373,9 +373,9 @@ struct AdminMenuView: View {
 
             // Users section (Android #6)
             if permissions.canView(.users) {
-                Section(header: Text("Users")) {
+                Section(header: Text(Localized.users)) {
                     NavigationLink(destination: UsersListView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "person.3.fill", title: "User Management", color: .indigo)
+                        HomeMenuRow(icon: "person.3.fill", title: Localized.userManagement, color: .indigo)
                     }
                     .accessibilityIdentifier("users-link")
                 }
@@ -383,32 +383,40 @@ struct AdminMenuView: View {
 
             // History section (Android #6 - Audit only, Stock Movement moved to Management)
             if permissions.canView(.audit) {
-                Section(header: Text("History")) {
+                Section(header: Text(Localized.history)) {
                     NavigationLink(destination: AuditHistoryListView(sdk: sdk)) {
-                        HomeMenuRow(icon: "clock.arrow.circlepath", title: "Audit History", color: .brown)
+                        HomeMenuRow(icon: "clock.arrow.circlepath", title: Localized.auditHistory, color: .brown)
                     }
                     .accessibilityIdentifier("audit-link")
                 }
             }
 
             // Configuration section (Android #7)
-            Section(header: Text("Configuration")) {
+            Section(header: Text(Localized.configuration)) {
+                // App Settings - admin only
+                if session.isAdmin || permissions.canView(.admin) {
+                    NavigationLink(destination: AppSettingsView(sdk: sdk, session: session)) {
+                        HomeMenuRow(icon: "gearshape.2", title: Localized.strings.appSettings, color: .gray)
+                    }
+                    .accessibilityIdentifier("app-settings-link")
+                }
+
                 // Notification Settings - admin only
                 if session.isAdmin || permissions.canView(.admin) {
                     NavigationLink(destination: NotificationSettingsView(sdk: sdk, session: session)) {
-                        HomeMenuRow(icon: "bell.badge", title: "Notification Settings", color: .red)
+                        HomeMenuRow(icon: "bell.badge", title: Localized.notificationSettings, color: .red)
                     }
                     .accessibilityIdentifier("notification-settings-link")
                 }
 
                 NavigationLink(destination: SupabaseConfigView(sdk: sdk)) {
-                    HomeMenuRow(icon: "server.rack", title: "Supabase Configuration", color: .mint)
+                    HomeMenuRow(icon: "server.rack", title: Localized.supabaseConfiguration, color: .mint)
                 }
                 .accessibilityIdentifier("supabase-config-link")
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Administration")
+        .navigationTitle(Localized.administration)
     }
 }
 
@@ -427,7 +435,7 @@ struct SiteSelectorView: View {
                 if isLoading {
                     ProgressView()
                 } else if sites.isEmpty {
-                    Text("No sites available")
+                    Text(Localized.noSites)
                         .foregroundColor(.secondary)
                 } else {
                     ForEach(sites, id: \.id) { site in
@@ -448,10 +456,10 @@ struct SiteSelectorView: View {
                     }
                 }
             }
-            .navigationTitle("Select a Site")
+            .navigationTitle(Localized.selectSite)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") { dismiss() }
+                    Button(Localized.close) { dismiss() }
                 }
             }
             .task {

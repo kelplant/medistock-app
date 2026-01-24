@@ -17,6 +17,7 @@ import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.PackagingType
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,14 +91,14 @@ class ProductAddEditActivity : AppCompatActivity() {
             if (categories.isEmpty()) {
                 Toast.makeText(
                     this@ProductAddEditActivity,
-                    "No categories available. Please create a category first.",
+                    L.strings.noCategories,
                     Toast.LENGTH_LONG
                 ).show()
                 btnSave.isEnabled = false
             } else if (packagingTypes.isEmpty()) {
                 Toast.makeText(
                     this@ProductAddEditActivity,
-                    "No packaging types available. Please create packaging types first.",
+                    L.strings.packagingTypes,
                     Toast.LENGTH_LONG
                 ).show()
                 btnSave.isEnabled = false
@@ -109,11 +110,11 @@ class ProductAddEditActivity : AppCompatActivity() {
                 // If edit mode, load the product
                 productId = intent.getStringExtra("PRODUCT_ID")?.takeIf { it.isNotBlank() }
                 if (productId != null) {
-                    supportActionBar?.title = "Edit Product"
+                    supportActionBar?.title = L.strings.editProduct
                     btnDelete.visibility = View.VISIBLE
                     loadProduct(productId!!)
                 } else {
-                    supportActionBar?.title = "Add Product"
+                    supportActionBar?.title = L.strings.addProduct
                     // Set default level
                     updateLevelSpinner()
                 }
@@ -296,26 +297,26 @@ class ProductAddEditActivity : AppCompatActivity() {
         enteredConversionFactor = conversionFactorText.toDoubleOrNull()
 
         if (productName.isEmpty()) {
-            Toast.makeText(this, getString(R.string.error_enter_product_name), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
             return
         }
         if (selectedCategoryId == null) {
-            Toast.makeText(this, getString(R.string.error_select_category), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.selectCategory, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedPackagingTypeId == null) {
-            Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.packagingType, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (currentSiteId.isNullOrBlank()) {
-            Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, L.strings.selectSite, Toast.LENGTH_LONG).show()
             return
         }
 
         if (enteredMarginValue <= 0.0) {
-            Toast.makeText(this, "Enter a valid margin", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -323,7 +324,7 @@ class ProductAddEditActivity : AppCompatActivity() {
         val packagingType = packagingTypes.find { it.id == selectedPackagingTypeId }
         if (packagingType != null && packagingType.hasTwoLevels()) {
             if (enteredConversionFactor == null || enteredConversionFactor!! <= 0.0) {
-                Toast.makeText(this, "Enter a valid conversion factor", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                 return
             }
         }
@@ -391,13 +392,12 @@ class ProductAddEditActivity : AppCompatActivity() {
                         sdk.productRepository.update(product)
                     }
                 }
-                val message = if (productId == null) getString(R.string.product_added) else "Product updated successfully"
-                Toast.makeText(this@ProductAddEditActivity, message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ProductAddEditActivity, L.strings.success, Toast.LENGTH_SHORT).show()
                 finish()
             } catch (e: Exception) {
                 Toast.makeText(
                     this@ProductAddEditActivity,
-                    "Error: ${e.message}",
+                    "${L.strings.error}: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -406,12 +406,12 @@ class ProductAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Delete Product")
-            .setMessage("Are you sure you want to delete this product?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle(L.strings.deleteProduct)
+            .setMessage("${L.strings.confirm}?")
+            .setPositiveButton(L.strings.delete) { _, _ ->
                 deleteProduct()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(L.strings.cancel, null)
             .show()
     }
 
@@ -423,12 +423,12 @@ class ProductAddEditActivity : AppCompatActivity() {
                 withContext(Dispatchers.IO) {
                     sdk.productRepository.delete(productId!!)
                 }
-                Toast.makeText(this@ProductAddEditActivity, "Product deleted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ProductAddEditActivity, L.strings.productDeleted, Toast.LENGTH_SHORT).show()
                 finish()
             } catch (e: Exception) {
                 Toast.makeText(
                     this@ProductAddEditActivity,
-                    "Error deleting: ${e.message}",
+                    "${L.strings.error}: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -438,9 +438,9 @@ class ProductAddEditActivity : AppCompatActivity() {
     private fun updateMarginInfo() {
         val marginValue = editMarginValue.text.toString().toDoubleOrNull() ?: 0.0
         val marginInfo = when (selectedMarginType) {
-            "fixed" -> "Selling price will be: Purchase price + $marginValue"
-            "percentage" -> "Selling price will be: Purchase price × (1 + ${marginValue}%)"
-            else -> "Margin configuration"
+            "fixed" -> "${L.strings.sellingPrice}: ${L.strings.purchasePrice} + $marginValue"
+            "percentage" -> "${L.strings.sellingPrice}: ${L.strings.purchasePrice} x (1 + ${marginValue}%)"
+            else -> L.strings.margin
         }
         textMarginInfo.text = marginInfo
     }

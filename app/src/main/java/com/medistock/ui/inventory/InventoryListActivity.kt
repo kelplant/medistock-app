@@ -14,6 +14,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.InventoryItem
 import com.medistock.ui.adapters.InventoryAdapter
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,7 +34,7 @@ class InventoryListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_inventory_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Inventory History"
+        supportActionBar?.title = L.strings.inventory
         sdk = MedistockApplication.sdk
         siteId = PrefsHelper.getActiveSiteId(this)
 

@@ -12,6 +12,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Site
 import com.medistock.ui.MainActivity
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +29,7 @@ class SiteSelectorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_selector)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = L.strings.selectSite
 
         sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)

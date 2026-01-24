@@ -25,7 +25,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.validation.PasswordPolicy
 import com.medistock.shared.domain.validation.PasswordPolicy.PasswordError
 import com.medistock.shared.domain.validation.PasswordPolicy.PasswordStrength
-import com.medistock.shared.i18n.LocalizationManager
+import com.medistock.shared.i18n.L
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +70,7 @@ class ChangePasswordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_change_password)
 
-        val strings = LocalizationManager.strings
+        val strings = L.strings
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = strings.changePassword
 
@@ -119,7 +119,7 @@ class ChangePasswordActivity : AppCompatActivity() {
     }
 
     private fun applyLocalizedStrings() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         labelCurrentPassword.text = strings.currentPassword
         labelNewPassword.text = strings.newPassword
@@ -159,7 +159,7 @@ class ChangePasswordActivity : AppCompatActivity() {
         passwordStrengthContainer.visibility = View.VISIBLE
 
         val strength = PasswordPolicy.getStrength(password)
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         // Update progress
         progressPasswordStrength.progress = strength.toProgress()
@@ -201,7 +201,7 @@ class ChangePasswordActivity : AppCompatActivity() {
     }
 
     private fun changePassword() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
         val currentPassword = editCurrentPassword.text.toString()
         val newPassword = editNewPassword.text.toString()
         val confirmPassword = editConfirmPassword.text.toString()

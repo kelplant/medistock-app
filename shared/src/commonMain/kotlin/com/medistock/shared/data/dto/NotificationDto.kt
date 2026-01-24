@@ -96,6 +96,9 @@ data class NotificationPreferencesDto(
  * DTO for the notification_settings table in Supabase.
  * Global admin-configurable notification settings.
  * These settings control how the pg_cron function generates notifications.
+ *
+ * Note: Notification message texts are not configurable here - they are
+ * handled via the localization system (LocalizationManager / Localized).
  */
 @Serializable
 data class NotificationSettingsDto(
@@ -110,16 +113,6 @@ data class NotificationSettingsDto(
     // Low stock alerts
     @SerialName("low_stock_alert_enabled") val lowStockAlertEnabled: Int = 1,
     @SerialName("low_stock_dedup_days") val lowStockDedupDays: Int = 7,
-
-    // Message templates (with variable placeholders)
-    @SerialName("template_expired_title") val templateExpiredTitle: String = "Produit expiré",
-    @SerialName("template_expired_message") val templateExpiredMessage: String = "{{product_name}} a expiré",
-
-    @SerialName("template_expiring_title") val templateExpiringTitle: String = "Expiration proche",
-    @SerialName("template_expiring_message") val templateExpiringMessage: String = "{{product_name}} expire dans {{days_until}} jour(s)",
-
-    @SerialName("template_low_stock_title") val templateLowStockTitle: String = "Stock faible",
-    @SerialName("template_low_stock_message") val templateLowStockMessage: String = "{{product_name}}: {{current_stock}}/{{min_stock}}",
 
     // Metadata
     @SerialName("updated_at") val updatedAt: Long = 0,

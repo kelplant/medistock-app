@@ -140,6 +140,7 @@ object StringsBm : Strings {
     // ============================================
     override val purchases = "Ifyo wagula"
     override val purchase = "Ukugula"
+    override val newPurchase = "Ukugula ukupya"
     override val addPurchase = "Onjelela ukugula"
     override val purchaseHistory = "Mbiri ya kugula"
     override val supplier = "Uupereka ifintu"
@@ -147,11 +148,19 @@ object StringsBm : Strings {
     override val batchNumber = "Nombala ya batch"
     override val purchaseDate = "Ubushiku bwa kugula"
     override val expiryDate = "Ubushiku bwo kufwa"
+    override val expiryDateOptional = "Ubushiku bwo kufwa (optional)"
     override val quantity = "Ubwingi"
     override val initialQuantity = "Ubwingi bwo kutendeka"
     override val remainingQuantity = "Ubwingi ubushele"
     override val totalAmount = "Total"
     override val purchaseRecorded = "Ukugula kwandikwe"
+    override val unitPurchasePrice = "Unit Purchase Price"
+    override val unitSellingPrice = "Unit Selling Price"
+    override val marginCalculatedAuto = "Margin: calculated automatically"
+    override val sellingPriceNote = "The selling price is calculated automatically based on the product's margin, but you can modify it."
+    override val savePurchase = "Save Purchase"
+    override val enterSupplierName = "Enter supplier name"
+    override val batchNumberExample = "Ex: LOT2024001"
 
     // ============================================
     // SALES
@@ -174,6 +183,14 @@ object StringsBm : Strings {
     override val saleCompleted = "Ukushitisha kwamalizya"
     override val noSaleItems = "Tapali ifintu mu kushitisha"
     override val insufficientStock = "Ifintu ficepe pali {product}: {available} ilipo, {requested} ilefwayika"
+    override val remainingQuantityNeeded = "Ubwingi ubufwile: {quantity} units"
+    override val editSale = "Lungika ukushitisha"
+    override val editPurchase = "Lungika ukugula"
+    override val productsToSell = "Ifintu fya kushitisha"
+    override val addProductToSale = "+ Onjelela chintu"
+    override val enterCustomerName = "Lemba ishina lya customer"
+    override val pricePerUnit = "Mutengo pa unit"
+    override val exampleQuantity = "Ex: 10"
 
     // ============================================
     // INVENTORY
@@ -255,6 +272,8 @@ object StringsBm : Strings {
     override val realtimeDisconnected = "Realtime tayalipangwa"
     override val lastError = "Ifyaposa fya nyuma"
     override val offlineMode = "Offline mode"
+    override val conflictsDetected = "Conflicts detected"
+    override val changesWillSyncWhenOnline = "Changes will sync when you're back online"
 
     // ============================================
     // SETTINGS
@@ -360,4 +379,229 @@ object StringsBm : Strings {
     override val currencyFormat = "{symbol}{amount}"
     override val decimalSeparator = "."
     override val thousandsSeparator = ","
+
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    override val notificationSettings = "Amashiwi ya notification"
+    override val notificationExpiryAlerts = "Amashiwi ya kupwa"
+    override val notificationEnableExpiry = "Senda amashiwi ya kupwa"
+    override val notificationWarningDays = "Inshiku sha kushibilikisha kabla ya kupwa"
+    override val notificationExpiryDescription = "Tambula amashiwi ilyo ifyuma filelela kupwa"
+    override val notificationLowStockAlerts = "Amashiwi ya stock inono"
+    override val notificationEnableLowStock = "Senda amashiwi ya stock inono"
+    override val notificationLowStockDescription = "Tambula amashiwi ilyo stock yaponena panshi pa minimum"
+    override val notificationInvalidDays = "Lemba inshiku ishisuma (1-365)"
+    override val settingsSaved = "Amashiwi yasungwa bwino"
+    override val supabaseNotConfigured = "Supabase taishilongeshiwe"
+    override val notifications = "Amashiwi"
+    override val noNotifications = "Tapali amashiwi"
+    override val dismissAll = "Funga yonse"
+    override val allNotificationsDismissed = "Amashiwi yonse yafungwa"
+
+    // ============================================
+    // HOME / OPERATIONS
+    // ============================================
+    override val currentSite = "Site ya nomba"
+    override val operations = "Imilimo"
+    override val purchaseProducts = "Gula ifintu"
+    override val sellProducts = "Shitisha ifintu"
+    override val transferProducts = "Twala ifintu"
+    override val viewStock = "Lola ifintu ilipo"
+    override val inventoryStock = "Penda ifintu"
+    override val administration = "Ubuntungwa"
+    override val management = "Ubukonshi"
+    override val siteManagement = "Ubukonshi bwa site"
+    override val manageProducts = "Konsha ifintu"
+    override val manageCategories = "Konsha imipasho"
+    override val manageCustomers = "Konsha abashita"
+    override val userManagement = "Ubukonshi bwa ba user"
+    override val history = "Mbiri"
+    override val configuration = "Ifyopangwa"
+
+    // ============================================
+    // PURCHASES EXTENDED
+    // ============================================
+    override val exhausted = "Fyapwa"
+    override val remainingQty = "Ubwingi ubushele"
+    override val noPurchases = "Tapali ifyo wagula"
+
+    // ============================================
+    // SALES EXTENDED
+    // ============================================
+    override val noSales = "Tapali ifyakushitisha"
+    override val saleDetails = "Ukulondolola ukushitisha"
+    override val items = "Ifintu"
+    override val total = "Total"
+    override val date = "Ubushiku"
+
+    // ============================================
+    // INVENTORY EXTENDED
+    // ============================================
+    override val inventories = "Ukupenda"
+    override val noInventories = "Tapali ukupenda"
+    override val inProgress = "Muli mu mulimo"
+    override val completed = "Kwamalizya"
+    override val pending = "Kulindila"
+    override val newInventory = "Ukupenda ukupya"
+    override val start = "Tendeka"
+
+    // ============================================
+    // TRANSFERS EXTENDED
+    // ============================================
+    override val noTransfers = "Tapali ukutwala"
+    override val sourceSite = "Site ya kufumako"
+    override val destinationSite = "Site ya kutwala"
+    override val quantityToTransfer = "Ubwingi bwo kutwala"
+    override val create = "Panga"
+
+    // ============================================
+    // STOCK EXTENDED
+    // ============================================
+    override val noStock = "Tapali ifintu"
+    override val summary = "Ukulondolola"
+    override val outOfStock = "Fyapwa"
+    override val stockByProduct = "Ifintu pa chintu"
+    override val noMovements = "Tapali ifyakushintilila"
+    override val availableStock = "Ifintu ifilipo"
+    override val preview = "Lola kubalilapo"
+
+    // ============================================
+    // PACKAGING EXTENDED
+    // ============================================
+    override val noPackagingTypes = "Tapali ubwina bwa packaging"
+    override val addLevel2 = "Onjelela level 2"
+
+    // ============================================
+    // AUDIT
+    // ============================================
+    override val auditHistory = "Mbiri ya audit"
+    override val noHistory = "Tapali mbiri"
+    override val filterBy = "Salunganya na"
+    override val all = "Fyonse"
+    override val created = "Fyapangwa"
+    override val updated = "Fyalulwa"
+    override val deleted = "Fyafuminwapo"
+    override val details = "Ukulondolola"
+
+    // ============================================
+    // SUPABASE
+    // ============================================
+    override val supabaseConfiguration = "Ifyopangwa fya Supabase"
+    override val projectUrl = "URL ya project"
+    override val anonKey = "Anon key"
+    override val synchronization = "Ukusynca"
+    override val syncData = "Synca data"
+    override val currentStatus = "Status ya nomba"
+    override val configured = "Yapangwa"
+    override val connection = "Ukulumikisha"
+    override val testConnection = "Yesha ukulumikisha"
+    override val clearConfiguration = "Fumyapo ifyopangwa"
+    override val configSaved = "Ifyopangwa fyasungwa"
+    override val syncCompleted = "Ukusynca kwamalizya"
+    override val connectionSuccessful = "Ukulumikisha kwamalizya"
+    override val howToGetInfo = "Ukusanga ifyi fyonse"
+
+    // ============================================
+    // AUTH EXTENDED
+    // ============================================
+    override val configureSupabase = "Panga Supabase"
+    override val authentication = "Ukwingila"
+    override val enterCredentials = "Lemba ifyakwingila"
+    override val invalidPassword = "Akapasiwedi takali bwino"
+    override val accountDisabled = "Account yalekeshiwe"
+    override val connectionError = "Ifyaposa fya kulumikisha"
+    override val firstLoginRequiresInternet = "Ukwingila kwa ntanshi kulefwaya internet"
+
+    // ============================================
+    // UI LABELS
+    // ============================================
+    override val view = "Lola"
+    override val select = "Sankapo"
+    override val chooseProduct = "Sankapo chintu"
+    override val orSelect = "nangu sankapo"
+    override val enable = "Suminisha"
+    override val later = "Panuma"
+    override val alertsDescription = "Tambula amashiwi pa fintu fyalefwaikwa ukulondolwako"
+    override val justNow = "Paba line"
+    override val minutesAgo = "minutes yapita"
+    override val hoursAgo = "ma hour yapita"
+    override val daysAgo = "inshiku shapita"
+    override val critical = "Ifya mweo"
+    override val urgent = "Ifya bwangu"
+    override val info = "Imfundisho"
+    override val low = "Icepeshe"
+    override val nearestExpiry = "Ubushiku bwa kufwa bwa pepi"
+    override val lots = "Ama lot"
+    override val addNote = "Onjelela ifyo walemba"
+    override val saving = "Kusunga..."
+    override val continue_ = "Londoloka"
+    override val unknownSite = "Site itaishibilwe"
+    override val unknownProduct = "Chintu chitaishibilwe"
+
+    // EMPTY STATE MESSAGES (English fallback for Bemba)
+    override val noProductsMessage = "Add your first product to get started"
+    override val noCustomersMessage = "Add your first customer to get started"
+    override val noCategoriesMessage = "Add your first category to get started"
+    override val noSitesMessage = "Add your first site to get started"
+    override val noPackagingTypesMessage = "Add your first packaging type to get started"
+    override val noInventoriesMessage = "No inventory counts have been performed yet"
+    override val noSalesMessage = "No sales have been recorded yet"
+    override val noPurchasesMessage = "No purchases have been recorded yet"
+    override val noTransfersMessage = "No transfers have been recorded yet"
+    override val noStockMessage = "No stock available"
+    override val noMovementsMessage = "No stock movements recorded"
+    override val noUsersMessage = "Add your first user to get started"
+    override val historyWillAppearHere = "Audit history will appear here"
+
+    // ADDITIONAL UI STRINGS
+    override val addSiteFirst = "Add a site first"
+    override val none = "None"
+    override val stockAlerts = "Stock Alerts"
+    override val stockAlertDescription = "Set minimum and maximum stock levels to receive alerts"
+    override val transferIn = "Transfer In"
+    override val transferOut = "Transfer Out"
+    override val batches = "batches"
+    override val noUsers = "No Users"
+    override val adminHasAllPermissions = "Administrators have all permissions"
+    override val create_ = "Create"
+    override val selectSourceSiteFirst = "Select source site first"
+    override val entries = "entries"
+    override val optional = "optional"
+    override val packagingTypeName = "Packaging type name"
+    override val started = "Started"
+    override val saleItem = "Sale Item"
+    override val purchaseBatch = "Purchase Batch"
+    override val stockMovement = "Stock Movement"
+    override val supabaseStep1 = "1. Go to supabase.com and create an account"
+    override val supabaseStep2 = "2. Create a new project"
+    override val supabaseStep3 = "3. Go to Project Settings > API to find your URL and anon key"
+
+    // ============================================
+    // APP UPDATE (English fallback)
+    // ============================================
+    override val updateRequired = "Update Required"
+    override val updateAvailable = "Update Available"
+    override val appVersionIncompatible = "Your app version is not compatible with the database. Please update the app to continue."
+    override val appVersion = "App version"
+    override val minimumRequiredVersion = "Minimum required version"
+    override val databaseVersion = "Database version"
+    override val toUpdate = "To update"
+    override val contactAdminForUpdate = "Contact your administrator to get the latest version of the app."
+    override val checkingCompatibility = "Checking compatibility..."
+    override val download = "Download"
+    override val newVersionAvailable = "A new version of MediStock is available."
+    override val currentVersionLabel = "Current version"
+    override val newVersionLabel = "New version"
+    override val whatsNew = "What's new"
+    override val unableToLoadNotifications = "Unable to load notifications"
+
+    // ============================================
+    // APP SETTINGS (English fallback)
+    // ============================================
+    override val appSettings = "App Settings"
+    override val currencySymbolSetting = "Currency Symbol"
+    override val currencySymbolDescription = "Symbol used to display prices (e.g., F, $, EUR)"
+    override val settingsSavedSuccessfully = "Settings saved successfully"
+    override val invalidCurrencySymbol = "Please enter a valid currency symbol"
 }

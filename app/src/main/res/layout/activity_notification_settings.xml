@@ -11,9 +11,10 @@
 
         <!-- Section: Expiry Alerts -->
         <TextView
+            android:id="@+id/tvExpiryAlertsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Expiry Alerts"
+            android:text="@string/notification_expiry_alerts"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="#333333"
@@ -30,7 +31,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Enable expiry alerts"
+                android:text="@string/notification_enable_expiry"
                 android:textSize="16sp" />
 
             <Switch
@@ -42,7 +43,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Warning days before expiry"
+            android:text="@string/notification_warning_days"
             android:textSize="14sp"
             android:layout_marginTop="8dp" />
 
@@ -57,7 +58,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Products expiring within this many days will trigger a warning notification."
+            android:text="@string/notification_expiry_description"
             android:textSize="12sp"
             android:textColor="#666666"
             android:textStyle="italic"
@@ -72,9 +73,10 @@
 
         <!-- Section: Low Stock Alerts -->
         <TextView
+            android:id="@+id/tvLowStockAlertsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Low Stock Alerts"
+            android:text="@string/notification_low_stock_alerts"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="#333333"
@@ -91,7 +93,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Enable low stock alerts"
+                android:text="@string/notification_enable_low_stock"
                 android:textSize="16sp" />
 
             <Switch
@@ -103,120 +105,10 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stock thresholds are configured per product in the product settings."
+            android:text="@string/notification_low_stock_description"
             android:textSize="12sp"
             android:textColor="#666666"
             android:textStyle="italic"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E0E0E0"
-            android:layout_marginVertical="8dp" />
-
-        <!-- Section: Message Templates -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Message Templates"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#333333"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Use these variables: {{product_name}}, {{days_until}}, {{current_stock}}, {{min_stock}}"
-            android:textSize="12sp"
-            android:textColor="#1976D2"
-            android:textStyle="italic"
-            android:padding="8dp"
-            android:background="#E3F2FD"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Expired product template -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Expired product - Title"
-            android:textSize="14sp"
-            android:layout_marginTop="8dp" />
-
-        <EditText
-            android:id="@+id/editExpiredTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Produit expiré"
-            android:layout_marginBottom="4dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Expired product - Message"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/editExpiredMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="{{product_name}} a expiré"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Expiring soon template -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Expiring soon - Title"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/editExpiringTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Expiration proche"
-            android:layout_marginBottom="4dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Expiring soon - Message"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/editExpiringMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="{{product_name}} expire dans {{days_until}} jour(s)"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Low stock template -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Low stock - Title"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/editLowStockTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Stock faible"
-            android:layout_marginBottom="4dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Low stock - Message"
-            android:textSize="14sp" />
-
-        <EditText
-            android:id="@+id/editLowStockMessage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="{{product_name}}: {{current_stock}}/{{min_stock}}"
             android:layout_marginBottom="24dp" />
 
         <!-- Save button -->
@@ -224,7 +116,7 @@
             android:id="@+id/btnSaveSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save Settings" />
+            android:text="@string/save" />
 
         <!-- Loading indicator -->
         <ProgressBar

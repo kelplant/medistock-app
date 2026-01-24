@@ -340,19 +340,10 @@ class SyncManager(
     // ==================== Synchronisation Users ====================
 
     private suspend fun syncUsersToRemote(onError: ((String, Exception) -> Unit)?) {
-        try {
-            val localUsers = sdk.userRepository.getAll()
-            localUsers.forEach { user ->
-                try {
-                    val dto = UserDto.fromModel(user)
-                    userRepo.upsert(dto)
-                } catch (e: Exception) {
-                    onError?.invoke("User: ${user.username}", e)
-                }
-            }
-        } catch (e: Exception) {
-            onError?.invoke("Users", e)
-        }
+        // Users are managed centrally via Edge Functions (create-user, etc.)
+        // Do NOT sync local users to remote - this would overwrite password hashes
+        // Only sync FROM remote TO local
+        DebugConfig.d("SyncManager", "Skipping users sync to remote - managed via Edge Functions")
     }
 
     private suspend fun syncUsersFromRemote(onError: ((String, Exception) -> Unit)?) {

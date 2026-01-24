@@ -14,6 +14,7 @@ import com.medistock.shared.domain.model.Category
 import com.medistock.shared.domain.model.Product
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,7 +70,7 @@ class ProductAddActivity : AppCompatActivity() {
             if (categories.isEmpty()) {
                 Toast.makeText(
                     this@ProductAddActivity,
-                    "No categories available. Please create a category first.",
+                    L.strings.noCategories,
                     Toast.LENGTH_LONG
                 ).show()
                 btnSave.isEnabled = false
@@ -159,39 +160,31 @@ class ProductAddActivity : AppCompatActivity() {
             enteredUnitVolume = unitVolumeText.toDoubleOrNull() ?: 0.0
 
             if (productName.isEmpty()) {
-                Toast.makeText(this, getString(R.string.error_enter_product_name), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (selectedCategoryId == null) {
-                Toast.makeText(this, getString(R.string.error_select_category), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.selectCategory, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (selectedUnit.isEmpty()) {
-                Toast.makeText(this, "Select a packaging type", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.packagingType, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (currentSiteId.isNullOrBlank()) {
-                Toast.makeText(this, "No active site. Please select a site first.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, L.strings.selectSite, Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
             if (enteredMarginValue <= 0.0) {
-                Toast.makeText(this, "Enter a valid margin", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (enteredUnitVolume <= 0.0) {
-                val volumeLabel = when (selectedUnit) {
-                    "Bottle" -> "volume in ml"
-                    "Box" -> "number of tablets"
-                    "Tablet" -> "quantity"
-                    "ml" -> "volume in ml"
-                    "Units" -> "quantity"
-                    else -> "quantity"
-                }
-                Toast.makeText(this, "Enter $volumeLabel", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -219,12 +212,12 @@ class ProductAddActivity : AppCompatActivity() {
                     withContext(Dispatchers.IO) {
                         sdk.productRepository.insert(product)
                     }
-                    Toast.makeText(this@ProductAddActivity, getString(R.string.product_added), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ProductAddActivity, L.strings.success, Toast.LENGTH_SHORT).show()
                     finish()
                 } catch (e: Exception) {
                     Toast.makeText(
                         this@ProductAddActivity,
-                        "Error adding product: ${e.message}",
+                        "${L.strings.error}: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -235,9 +228,9 @@ class ProductAddActivity : AppCompatActivity() {
     private fun updateMarginInfo() {
         val marginValue = editMarginValue.text.toString().toDoubleOrNull() ?: 0.0
         val marginInfo = when (selectedMarginType) {
-            "fixed" -> "Selling price will be: Purchase price + $marginValue"
-            "percentage" -> "Selling price will be: Purchase price × (1 + ${marginValue}%)"
-            else -> "Margin configuration"
+            "fixed" -> "${L.strings.sellingPrice}: ${L.strings.purchasePrice} + $marginValue"
+            "percentage" -> "${L.strings.sellingPrice}: ${L.strings.purchasePrice} x (1 + ${marginValue}%)"
+            else -> L.strings.margin
         }
         textMarginInfo.text = marginInfo
     }

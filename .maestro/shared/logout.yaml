@@ -1,0 +1,32 @@
+# Logout Flow - Shared between Android and iOS
+# Usage: runFlow to logout from current session
+appId: ${APP_ID}
+---
+# Navigate to profile
+- tapOn:
+    text: ".*Profile.*"
+    optional: true
+- tapOn:
+    text: ".*Admin.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Tap logout button
+- tapOn:
+    text: ".*Logout.*"
+    optional: true
+- tapOn:
+    text: ".*Déconnexion.*"
+    optional: true
+
+# Confirm logout if dialog appears
+- tapOn:
+    text: "OK"
+    optional: true
+- tapOn:
+    text: "Yes"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000

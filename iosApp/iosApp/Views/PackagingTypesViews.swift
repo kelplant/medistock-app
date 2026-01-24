@@ -35,13 +35,13 @@ struct PackagingTypesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "shippingbox",
-                        title: "No packaging types",
-                        message: "Add packaging types for your products."
+                        title: Localized.noPackagingTypes,
+                        message: Localized.strings.noPackagingTypesMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(packagingTypes.count) packaging type(s)")) {
+                Section(header: Text("\(packagingTypes.count) \(Localized.packagingTypes.lowercased())")) {
                     ForEach(packagingTypes, id: \.id) { packagingType in
                         PackagingTypeRowView(packagingType: packagingType)
                             .contentShape(Rectangle())
@@ -54,7 +54,7 @@ struct PackagingTypesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Packaging Types")
+        .navigationTitle(Localized.packagingTypes)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -142,15 +142,15 @@ struct PackagingTypeRowView: View {
             Text(packagingType.name)
                 .font(.headline)
 
-            Text("Level 1: \(packagingType.level1Name)")
+            Text("\(Localized.level1Name): \(packagingType.level1Name)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
             if let level2Name = packagingType.level2Name, !level2Name.isEmpty {
                 HStack {
-                    Text("Level 2: \(level2Name)")
+                    Text("\(Localized.level2Name): \(level2Name)")
                     if let qty = packagingType.level2Quantity {
-                        Text("(\(qty) units)")
+                        Text("(\(qty) \(Localized.unit))")
                     }
                 }
                 .font(.caption)
@@ -183,17 +183,17 @@ struct PackagingTypeEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Information")) {
-                    TextField("Packaging type name", text: $name)
-                    TextField("Level 1 name (e.g., Tablet)", text: $level1Name)
+                Section(header: Text(Localized.information)) {
+                    TextField(Localized.strings.packagingTypeName, text: $name)
+                    TextField(Localized.level1Name, text: $level1Name)
                 }
 
-                Section(header: Text("Level 2 (optional)")) {
-                    Toggle("Add level 2", isOn: $hasLevel2)
+                Section(header: Text("\(Localized.level2Name) (\(Localized.strings.optional))")) {
+                    Toggle(Localized.addLevel2, isOn: $hasLevel2)
 
                     if hasLevel2 {
-                        TextField("Level 2 name (e.g., Box)", text: $level2Name)
-                        TextField("Quantity per level 2", text: $level2QuantityText)
+                        TextField(Localized.level2Name, text: $level2Name)
+                        TextField(Localized.level2Quantity, text: $level2QuantityText)
                             .keyboardType(.numberPad)
                     }
                 }
@@ -205,13 +205,13 @@ struct PackagingTypeEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Edit" : "New Packaging Type")
+            .navigationTitle(isEditing ? Localized.editPackagingType : Localized.addPackagingType)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Save" : "Add") {
+                    Button(isEditing ? Localized.save : Localized.add) {
                         savePackagingType()
                     }
                     .disabled(!canSave || isSaving)

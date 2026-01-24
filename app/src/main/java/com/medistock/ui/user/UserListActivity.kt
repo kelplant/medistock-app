@@ -14,6 +14,7 @@ import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.UserAdapter
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,14 +31,14 @@ class UserListActivity : AppCompatActivity() {
 
         // Check if user is admin
         if (!authManager.isAdmin()) {
-            Toast.makeText(this, "Access denied: Administrators only", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, L.strings.error, Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
         setContentView(R.layout.activity_user_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "User Management"
+        supportActionBar?.title = L.strings.users
 
         sdk = MedistockApplication.sdk
 
@@ -70,7 +71,7 @@ class UserListActivity : AppCompatActivity() {
                 }
                 adapter.submitList(users)
             } catch (e: Exception) {
-                Toast.makeText(this@UserListActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UserListActivity, "${L.strings.error}: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

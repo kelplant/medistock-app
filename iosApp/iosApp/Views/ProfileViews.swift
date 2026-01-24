@@ -224,7 +224,7 @@ struct ProfileMenuView: View {
                 }
 
                 Section(header: Text(Localized.settings)) {
-                    NavigationLink(destination: LanguagePickerView()) {
+                    NavigationLink(destination: LanguagePickerView(sdk: sdk)) {
                         HStack {
                             Label(Localized.language, systemImage: "globe")
                             Spacer()
@@ -466,6 +466,7 @@ struct ChangePasswordView: View {
                     username: user.username,
                     password: hashedPassword,
                     fullName: user.fullName,
+                    language: user.language,
                     isAdmin: user.isAdmin,
                     isActive: user.isActive,
                     createdAt: user.createdAt,
@@ -529,7 +530,9 @@ enum PasswordChangeError: LocalizedError {
 
 // MARK: - Language Picker View
 struct LanguagePickerView: View {
+    let sdk: MedistockSDK
     @State private var selectedLanguage: AppLanguage = AppLanguage.from(code: Localized.currentLanguageCode)
+    @State private var isSaving = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -545,11 +548,17 @@ struct LanguagePickerView: View {
                         Spacer()
 
                         if language == selectedLanguage {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.accentColor)
+                            if isSaving {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.accentColor)
+                            }
                         }
                     }
                 }
+                .disabled(isSaving)
             }
         }
         .navigationTitle(Localized.selectLanguage)
@@ -557,11 +566,18 @@ struct LanguagePickerView: View {
 
     private func selectLanguage(_ language: AppLanguage) {
         selectedLanguage = language
-        Localized.setLanguage(language)
+        isSaving = true
 
-        // Dismiss to refresh the parent view with new language
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            dismiss()
+        Task {
+            await Localized.setLanguageAndSync(language, sdk: sdk)
+
+            await MainActor.run {
+                isSaving = false
+                // Dismiss to refresh the parent view with new language
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    dismiss()
+                }
+            }
         }
     }
 }

@@ -140,6 +140,7 @@ object StringsNy : Strings {
     // ============================================
     override val purchases = "Zogula"
     override val purchase = "Kugula"
+    override val newPurchase = "Kugula kwatsopano"
     override val addPurchase = "Onjezani kugula"
     override val purchaseHistory = "Mbiri ya kugula"
     override val supplier = "Wopereka katundu"
@@ -147,11 +148,19 @@ object StringsNy : Strings {
     override val batchNumber = "Nambala ya batch"
     override val purchaseDate = "Tsiku logulira"
     override val expiryDate = "Tsiku lotha ntchito"
+    override val expiryDateOptional = "Tsiku lotha ntchito (osafunikira)"
     override val quantity = "Kuchuluka"
     override val initialQuantity = "Kuchuluka koyambirira"
     override val remainingQuantity = "Kuchuluka kotsala"
     override val totalAmount = "Chiwerengero chonse"
     override val purchaseRecorded = "Kugula kwalembedwa"
+    override val unitPurchasePrice = "Mtengo wogulira pa unit"
+    override val unitSellingPrice = "Mtengo wogulitsira pa unit"
+    override val marginCalculatedAuto = "Margin: ikusankha yokha"
+    override val sellingPriceNote = "Mtengo wogulitsira umasankha yokha malinga ndi margin ya katundu, koma mutha kusintha."
+    override val savePurchase = "Sungani kugula"
+    override val enterSupplierName = "Lembani dzina la wopereka katundu"
+    override val batchNumberExample = "Mwachitsanzo: LOT2024001"
 
     // ============================================
     // SALES
@@ -174,6 +183,14 @@ object StringsNy : Strings {
     override val saleCompleted = "Kugulitsa kwamalizidwa"
     override val noSaleItems = "Palibe zinthu pa kugulitsa"
     override val insufficientStock = "Katundu sayokwanira pa {product}: {available} ilipo, {requested} yafunsidwa"
+    override val remainingQuantityNeeded = "Kuchuluka kotsala kofunikira: {quantity} ma unit"
+    override val editSale = "Sinthani kugulitsa"
+    override val editPurchase = "Sinthani kugula"
+    override val productsToSell = "Zinthu zogulitsa"
+    override val addProductToSale = "+ Onjezani chinthu"
+    override val enterCustomerName = "Lembani dzina la kasitomala"
+    override val pricePerUnit = "Mtengo pa unit"
+    override val exampleQuantity = "Mwachitsanzo: 10"
 
     // ============================================
     // INVENTORY
@@ -255,6 +272,8 @@ object StringsNy : Strings {
     override val realtimeDisconnected = "Realtime sichinayambe"
     override val lastError = "Vuto lomaliza"
     override val offlineMode = "Njira yopanda intaneti"
+    override val conflictsDetected = "Mapokoso apezeka"
+    override val changesWillSyncWhenOnline = "Zosintha zidzasynkidwa mukabwerera pa intaneti"
 
     // ============================================
     // SETTINGS
@@ -360,4 +379,229 @@ object StringsNy : Strings {
     override val currencyFormat = "{symbol}{amount}"
     override val decimalSeparator = "."
     override val thousandsSeparator = ","
+
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    override val notificationSettings = "Zosintha za zidziwitso"
+    override val notificationExpiryAlerts = "Zidziwitso za kutha"
+    override val notificationEnableExpiry = "Yatsani zidziwitso za kutha"
+    override val notificationWarningDays = "Masiku ochenjeza asanafike kutha"
+    override val notificationExpiryDescription = "Landirani zidziwitso katundu akuyandikira kutha"
+    override val notificationLowStockAlerts = "Zidziwitso za stock yotsika"
+    override val notificationEnableLowStock = "Yatsani zidziwitso za stock yotsika"
+    override val notificationLowStockDescription = "Landirani zidziwitso stock ikatsikira pansi pa minimum"
+    override val notificationInvalidDays = "Lembani masiku oyenera (1-365)"
+    override val settingsSaved = "Zosintha zasungidwa bwino"
+    override val supabaseNotConfigured = "Supabase sinakonzedwe"
+    override val notifications = "Zidziwitso"
+    override val noNotifications = "Palibe zidziwitso"
+    override val dismissAll = "Chotsani zonse"
+    override val allNotificationsDismissed = "Zidziwitso zonse zachotsedwa"
+
+    // ============================================
+    // HOME / OPERATIONS
+    // ============================================
+    override val currentSite = "Malo apano"
+    override val operations = "Ntchito"
+    override val purchaseProducts = "Gulani zinthu"
+    override val sellProducts = "Gulitsani zinthu"
+    override val transferProducts = "Samutsani zinthu"
+    override val viewStock = "Onani katundu"
+    override val inventoryStock = "Werengani katundu"
+    override val administration = "Ulamuliro"
+    override val management = "Kasamalidwe"
+    override val siteManagement = "Kasamalidwe ka malo"
+    override val manageProducts = "Samalani zinthu"
+    override val manageCategories = "Samalani magulu"
+    override val manageCustomers = "Samalani makasitomala"
+    override val userManagement = "Kasamalidwe ka ogwiritsa"
+    override val history = "Mbiri"
+    override val configuration = "Zosintha"
+
+    // ============================================
+    // PURCHASES EXTENDED
+    // ============================================
+    override val exhausted = "Yatha"
+    override val remainingQty = "Kuchuluka kotsala"
+    override val noPurchases = "Palibe zogula"
+
+    // ============================================
+    // SALES EXTENDED
+    // ============================================
+    override val noSales = "Palibe zogulitsa"
+    override val saleDetails = "Zambiri za kugulitsa"
+    override val items = "Zinthu"
+    override val total = "Chiwerengero"
+    override val date = "Tsiku"
+
+    // ============================================
+    // INVENTORY EXTENDED
+    // ============================================
+    override val inventories = "Kuwerengera"
+    override val noInventories = "Palibe kuwerengera"
+    override val inProgress = "Ikuchitika"
+    override val completed = "Yamalizidwa"
+    override val pending = "Ikudikirira"
+    override val newInventory = "Kuwerengera kwatsopano"
+    override val start = "Yambani"
+
+    // ============================================
+    // TRANSFERS EXTENDED
+    // ============================================
+    override val noTransfers = "Palibe zosamutsa"
+    override val sourceSite = "Malo ochokera"
+    override val destinationSite = "Malo opita"
+    override val quantityToTransfer = "Kuchuluka kosamutsa"
+    override val create = "Pangani"
+
+    // ============================================
+    // STOCK EXTENDED
+    // ============================================
+    override val noStock = "Palibe katundu"
+    override val summary = "Chidule"
+    override val outOfStock = "Yatha"
+    override val stockByProduct = "Katundu pa chinthu"
+    override val noMovements = "Palibe kusuntha"
+    override val availableStock = "Katundu wopezeka"
+    override val preview = "Onetsani kaye"
+
+    // ============================================
+    // PACKAGING EXTENDED
+    // ============================================
+    override val noPackagingTypes = "Palibe mitundu ya packaging"
+    override val addLevel2 = "Onjezani level 2"
+
+    // ============================================
+    // AUDIT
+    // ============================================
+    override val auditHistory = "Mbiri ya audit"
+    override val noHistory = "Palibe mbiri"
+    override val filterBy = "Sefani na"
+    override val all = "Zonse"
+    override val created = "Yapangidwa"
+    override val updated = "Yasinthidwa"
+    override val deleted = "Yachotsedwa"
+    override val details = "Zambiri"
+
+    // ============================================
+    // SUPABASE
+    // ============================================
+    override val supabaseConfiguration = "Zosintha za Supabase"
+    override val projectUrl = "URL ya project"
+    override val anonKey = "Anon key"
+    override val synchronization = "Kusync"
+    override val syncData = "Sync deta"
+    override val currentStatus = "Status yapano"
+    override val configured = "Yakonzedwa"
+    override val connection = "Kulumikizana"
+    override val testConnection = "Yesani kulumikizana"
+    override val clearConfiguration = "Chotsani zosintha"
+    override val configSaved = "Zosintha zasungidwa"
+    override val syncCompleted = "Sync yatha"
+    override val connectionSuccessful = "Kulumikizana kwachita"
+    override val howToGetInfo = "Momwe mungapezere zambiri"
+
+    // ============================================
+    // AUTH EXTENDED
+    // ============================================
+    override val configureSupabase = "Konzani Supabase"
+    override val authentication = "Kutsimikizira"
+    override val enterCredentials = "Lembani zambiri zolowera"
+    override val invalidPassword = "Mawu achinsinsi si olondola"
+    override val accountDisabled = "Account yayimitsidwa"
+    override val connectionError = "Vuto la kulumikizana"
+    override val firstLoginRequiresInternet = "Kulowa koyamba kumafuna intaneti"
+
+    // ============================================
+    // UI LABELS
+    // ============================================
+    override val view = "Onani"
+    override val select = "Sankhani"
+    override val chooseProduct = "Sankhani chinthu"
+    override val orSelect = "kapena sankhani"
+    override val enable = "Yatsani"
+    override val later = "Pambuyo"
+    override val alertsDescription = "Landirani zidziwitso pazinthu zofunika kutsatira"
+    override val justNow = "Tsopano"
+    override val minutesAgo = "mphindi zapitazo"
+    override val hoursAgo = "maola apitawo"
+    override val daysAgo = "masiku apitawo"
+    override val critical = "Zamkulu"
+    override val urgent = "Zachangu"
+    override val info = "Zambiri"
+    override val low = "Zochepera"
+    override val nearestExpiry = "Tsiku lotha pafupi"
+    override val lots = "Zinthu zambiri"
+    override val addNote = "Onjezani cholemba"
+    override val saving = "Ikusunga..."
+    override val continue_ = "Pitirizani"
+    override val unknownSite = "Malo osadziwika"
+    override val unknownProduct = "Chinthu chosadziwika"
+
+    // EMPTY STATE MESSAGES (English fallback for Chichewa)
+    override val noProductsMessage = "Onjezani chinthu choyamba kuti muyambe"
+    override val noCustomersMessage = "Onjezani kasitomala woyamba kuti muyambe"
+    override val noCategoriesMessage = "Onjezani gulu loyamba kuti muyambe"
+    override val noSitesMessage = "Onjezani malo oyamba kuti muyambe"
+    override val noPackagingTypesMessage = "Onjezani mtundu wa packaging woyamba kuti muyambe"
+    override val noInventoriesMessage = "Palibe kuwerengera kumene kwachitika"
+    override val noSalesMessage = "Palibe zogulitsa zimene zalembedwa"
+    override val noPurchasesMessage = "Palibe zogula zimene zalembedwa"
+    override val noTransfersMessage = "Palibe zosamutsa zimene zalembedwa"
+    override val noStockMessage = "Palibe katundu wopezeka"
+    override val noMovementsMessage = "Palibe kusuntha kwa katundu kolembedwa"
+    override val noUsersMessage = "Onjezani wogwiritsa woyamba kuti muyambe"
+    override val historyWillAppearHere = "Mbiri ya audit idzaoneka pano"
+
+    // ADDITIONAL UI STRINGS
+    override val addSiteFirst = "Onjezani malo kaye"
+    override val none = "Palibe"
+    override val stockAlerts = "Zidziwitso za katundu"
+    override val stockAlertDescription = "Ikani malire a katundu wochepa ndi wochuluka kuti mulandire zidziwitso"
+    override val transferIn = "Kusamutsa kolowa"
+    override val transferOut = "Kusamutsa kotuluka"
+    override val batches = "ma loti"
+    override val noUsers = "Palibe ogwiritsa"
+    override val adminHasAllPermissions = "Oyang'anira ali ndi zilolezo zonse"
+    override val create_ = "Pangani"
+    override val selectSourceSiteFirst = "Sankhani malo ochokera kaye"
+    override val entries = "zolemba"
+    override val optional = "osafunikira"
+    override val packagingTypeName = "Dzina la mtundu wa packaging"
+    override val started = "Yayamba"
+    override val saleItem = "Chinthu chogulitsa"
+    override val purchaseBatch = "Loti logula"
+    override val stockMovement = "Kusuntha kwa katundu"
+    override val supabaseStep1 = "1. Pitani ku supabase.com ndikupanga akaunti"
+    override val supabaseStep2 = "2. Pangani projekiti yatsopano"
+    override val supabaseStep3 = "3. Pitani ku Project Settings > API kuti mupeze URL ndi anon key"
+
+    // ============================================
+    // APP UPDATE
+    // ============================================
+    override val updateRequired = "Kusintha kumafunikira"
+    override val updateAvailable = "Kusintha kulipo"
+    override val appVersionIncompatible = "Mtundu wa pulogalamu yanu sugwirizana ndi database. Chonde sinthani pulogalamu kuti mupitirize."
+    override val appVersion = "Mtundu wa pulogalamu"
+    override val minimumRequiredVersion = "Mtundu wochepa wofunikira"
+    override val databaseVersion = "Mtundu wa database"
+    override val toUpdate = "Kuti musinthe"
+    override val contactAdminForUpdate = "Lankhulani ndi woyang'anira wanu kuti mupeze mtundu watsopano wa pulogalamu."
+    override val checkingCompatibility = "Kuwunika kugwirizana..."
+    override val download = "Tsitsani"
+    override val newVersionAvailable = "Mtundu watsopano wa MediStock ulipo."
+    override val currentVersionLabel = "Mtundu wapano"
+    override val newVersionLabel = "Mtundu watsopano"
+    override val whatsNew = "Zatsopano"
+    override val unableToLoadNotifications = "Sitinathe kutsitsa zidziwitso"
+
+    // ============================================
+    // APP SETTINGS
+    // ============================================
+    override val appSettings = "Zokonda za pulogalamu"
+    override val currencySymbolSetting = "Chizindikiro cha ndalama"
+    override val currencySymbolDescription = "Chizindikiro chogwiritsidwa ntchito kuwonetsa mitengo (monga: F, $, EUR)"
+    override val settingsSavedSuccessfully = "Zokonda zasungidwa bwino"
+    override val invalidCurrencySymbol = "Chonde lowetsani chizindikiro cha ndalama chokhoza"
 }

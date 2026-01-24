@@ -145,6 +145,7 @@ interface Strings {
     // ============================================
     val purchases: String
     val purchase: String
+    val newPurchase: String              // "New Purchase" / screen title
     val addPurchase: String
     val purchaseHistory: String
     val supplier: String
@@ -152,11 +153,19 @@ interface Strings {
     val batchNumber: String
     val purchaseDate: String
     val expiryDate: String
+    val expiryDateOptional: String       // "Expiry Date (optional)"
     val quantity: String
     val initialQuantity: String
     val remainingQuantity: String
     val totalAmount: String
     val purchaseRecorded: String
+    val unitPurchasePrice: String        // "Unit Purchase Price"
+    val unitSellingPrice: String         // "Unit Selling Price"
+    val marginCalculatedAuto: String     // "Margin: calculated automatically"
+    val sellingPriceNote: String         // "The selling price is calculated automatically..."
+    val savePurchase: String             // "Save Purchase"
+    val enterSupplierName: String        // Placeholder: "Enter supplier name"
+    val batchNumberExample: String       // Placeholder: "Ex: LOT2024001"
 
     // ============================================
     // SALES
@@ -179,6 +188,14 @@ interface Strings {
     val saleCompleted: String
     val noSaleItems: String
     val insufficientStock: String // Parameter: {product}, {available}, {requested}
+    val remainingQuantityNeeded: String  // "Remaining quantity needed: {quantity} units"
+    val editSale: String                 // "Edit Sale"
+    val editPurchase: String             // "Edit Purchase"
+    val productsToSell: String           // "Products to Sell"
+    val addProductToSale: String         // "+ Add Product"
+    val enterCustomerName: String        // Placeholder: "Enter customer name"
+    val pricePerUnit: String             // Placeholder: "Price per unit"
+    val exampleQuantity: String          // Placeholder: "Ex: 10"
 
     // ============================================
     // INVENTORY
@@ -260,6 +277,8 @@ interface Strings {
     val realtimeDisconnected: String
     val lastError: String
     val offlineMode: String
+    val conflictsDetected: String
+    val changesWillSyncWhenOnline: String
 
     // ============================================
     // SETTINGS
@@ -367,4 +386,233 @@ interface Strings {
     val currencyFormat: String // e.g., "{symbol}{amount}" or "{amount} {symbol}"
     val decimalSeparator: String
     val thousandsSeparator: String
+
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    val notificationSettings: String
+    val notificationExpiryAlerts: String
+    val notificationEnableExpiry: String
+    val notificationWarningDays: String
+    val notificationExpiryDescription: String
+    val notificationLowStockAlerts: String
+    val notificationEnableLowStock: String
+    val notificationLowStockDescription: String
+    val notificationInvalidDays: String
+    val settingsSaved: String
+    val supabaseNotConfigured: String
+    val notifications: String
+    val noNotifications: String
+    val dismissAll: String
+    val allNotificationsDismissed: String
+
+    // ============================================
+    // HOME / OPERATIONS
+    // ============================================
+    val currentSite: String
+    val operations: String
+    val purchaseProducts: String
+    val sellProducts: String
+    val transferProducts: String
+    val viewStock: String
+    val inventoryStock: String
+    val administration: String
+    val management: String
+    val siteManagement: String
+    val manageProducts: String
+    val manageCategories: String
+    val manageCustomers: String
+    val userManagement: String
+    val history: String
+    val configuration: String
+
+    // ============================================
+    // PURCHASES EXTENDED
+    // ============================================
+    val exhausted: String
+    val remainingQty: String
+    val noPurchases: String
+
+    // ============================================
+    // SALES EXTENDED
+    // ============================================
+    val noSales: String
+    val saleDetails: String
+    val items: String
+    val total: String
+    val date: String
+
+    // ============================================
+    // INVENTORY EXTENDED
+    // ============================================
+    val inventories: String
+    val noInventories: String
+    val inProgress: String
+    val completed: String
+    val pending: String
+    val newInventory: String
+    val start: String
+
+    // ============================================
+    // TRANSFERS EXTENDED
+    // ============================================
+    val noTransfers: String
+    val sourceSite: String
+    val destinationSite: String
+    val quantityToTransfer: String
+    val create: String
+
+    // ============================================
+    // STOCK EXTENDED
+    // ============================================
+    val noStock: String
+    val summary: String
+    val outOfStock: String
+    val stockByProduct: String
+    val noMovements: String
+    val availableStock: String
+    val preview: String
+
+    // ============================================
+    // PACKAGING EXTENDED
+    // ============================================
+    val noPackagingTypes: String
+    val addLevel2: String
+
+    // ============================================
+    // AUDIT
+    // ============================================
+    val auditHistory: String
+    val noHistory: String
+    val filterBy: String
+    val all: String
+    val created: String
+    val updated: String
+    val deleted: String
+    val details: String
+
+    // ============================================
+    // SUPABASE
+    // ============================================
+    val supabaseConfiguration: String
+    val projectUrl: String
+    val anonKey: String
+    val synchronization: String
+    val syncData: String
+    val currentStatus: String
+    val configured: String
+    val connection: String
+    val testConnection: String
+    val clearConfiguration: String
+    val configSaved: String
+    val syncCompleted: String
+    val connectionSuccessful: String
+    val howToGetInfo: String
+
+    // ============================================
+    // AUTH EXTENDED
+    // ============================================
+    val configureSupabase: String
+    val authentication: String
+    val enterCredentials: String
+    val invalidPassword: String
+    val accountDisabled: String
+    val connectionError: String
+    val firstLoginRequiresInternet: String
+
+    // ============================================
+    // UI LABELS
+    // ============================================
+    val view: String
+    val select: String
+    val chooseProduct: String
+    val orSelect: String
+    val enable: String
+    val later: String
+    val alertsDescription: String
+    val justNow: String
+    val minutesAgo: String
+    val hoursAgo: String
+    val daysAgo: String
+    val critical: String
+    val urgent: String
+    val info: String
+    val low: String
+    val nearestExpiry: String
+    val lots: String
+    val addNote: String
+    val saving: String
+    val continue_: String
+    val unknownSite: String
+    val unknownProduct: String
+
+    // ============================================
+    // EMPTY STATE MESSAGES
+    // ============================================
+    val noProductsMessage: String
+    val noCustomersMessage: String
+    val noCategoriesMessage: String
+    val noSitesMessage: String
+    val noPackagingTypesMessage: String
+    val noInventoriesMessage: String
+    val noSalesMessage: String
+    val noPurchasesMessage: String
+    val noTransfersMessage: String
+    val noStockMessage: String
+    val noMovementsMessage: String
+    val noUsersMessage: String
+    val historyWillAppearHere: String
+
+    // ============================================
+    // ADDITIONAL UI STRINGS
+    // ============================================
+    val addSiteFirst: String
+    val none: String
+    val stockAlerts: String
+    val stockAlertDescription: String
+    val transferIn: String
+    val transferOut: String
+    val batches: String
+    val noUsers: String
+    val adminHasAllPermissions: String
+    val create_: String
+    val selectSourceSiteFirst: String
+    val entries: String
+    val optional: String
+    val packagingTypeName: String
+    val started: String
+    val saleItem: String
+    val purchaseBatch: String
+    val stockMovement: String
+    val supabaseStep1: String
+    val supabaseStep2: String
+    val supabaseStep3: String
+
+    // ============================================
+    // APP UPDATE
+    // ============================================
+    val updateRequired: String
+    val updateAvailable: String
+    val appVersionIncompatible: String
+    val appVersion: String
+    val minimumRequiredVersion: String
+    val databaseVersion: String
+    val toUpdate: String
+    val contactAdminForUpdate: String
+    val checkingCompatibility: String
+    val download: String
+    val newVersionAvailable: String
+    val currentVersionLabel: String
+    val newVersionLabel: String
+    val whatsNew: String
+    val unableToLoadNotifications: String
+
+    // ============================================
+    // APP SETTINGS
+    // ============================================
+    val appSettings: String                // "App Settings"
+    val currencySymbolSetting: String      // "Currency Symbol"
+    val currencySymbolDescription: String  // "Symbol used to display prices (e.g., F, $, EUR)"
+    val settingsSavedSuccessfully: String  // "Settings saved successfully"
+    val invalidCurrencySymbol: String      // "Please enter a valid currency symbol"
 }

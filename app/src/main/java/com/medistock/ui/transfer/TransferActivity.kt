@@ -19,6 +19,7 @@ import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import com.medistock.util.BatchTransferHelper
+import com.medistock.shared.i18n.L
 import com.medistock.util.InsufficientStockException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,7 +55,7 @@ class TransferActivity : AppCompatActivity() {
 
         // Check if editing existing transfer
         transferId = intent.getStringExtra("TRANSFER_ID")?.takeIf { it.isNotBlank() }
-        supportActionBar?.title = if (transferId != null) "Edit Transfer" else "New Transfer"
+        supportActionBar?.title = if (transferId != null) "${L.strings.edit} ${L.strings.transfer}" else L.strings.newTransfer
 
         spinnerFromSite = findViewById(R.id.spinnerFromSite)
         spinnerToSite = findViewById(R.id.spinnerToSite)
@@ -95,7 +96,7 @@ class TransferActivity : AppCompatActivity() {
 
         btnAddProduct.setOnClickListener {
             if (selectedFromSiteId == selectedToSiteId) {
-                Toast.makeText(this, "Source and destination sites must be different", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "${L.strings.fromSite} ${L.strings.toSite}", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             showAddProductDialog()
@@ -198,7 +199,7 @@ class TransferActivity : AppCompatActivity() {
 
     private fun showAddProductDialog() {
         if (products.isEmpty()) {
-            Toast.makeText(this, "No products available", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.noProducts, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -226,19 +227,19 @@ class TransferActivity : AppCompatActivity() {
         }
 
         AlertDialog.Builder(this)
-            .setTitle("Add Product to Transfer")
+            .setTitle(L.strings.addProduct)
             .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton(L.strings.add) { _, _ ->
                 val product = selectedProduct
                 val quantity = editQuantity.text.toString().toDoubleOrNull()
 
                 if (product == null) {
-                    Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, L.strings.selectProduct, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
                 if (quantity == null || quantity <= 0) {
-                    Toast.makeText(this, "Enter a valid quantity", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, L.strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
@@ -250,7 +251,7 @@ class TransferActivity : AppCompatActivity() {
                 if (totalNeeded > availableQty) {
                     Toast.makeText(
                         this,
-                        "Insufficient stock. Available: $availableQty, Already added: $alreadyInCart",
+                        L.strings.insufficientStock,
                         Toast.LENGTH_LONG
                     ).show()
                     return@setPositiveButton
@@ -266,7 +267,7 @@ class TransferActivity : AppCompatActivity() {
                 transferItemAdapter.addItem(transferItem)
                 updateSaveButtonState()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(L.strings.cancel, null)
             .show()
     }
 
@@ -281,12 +282,12 @@ class TransferActivity : AppCompatActivity() {
 
     private fun saveTransfer() {
         if (selectedFromSiteId == null || selectedToSiteId == null || selectedFromSiteId == selectedToSiteId) {
-            Toast.makeText(this, "Source and destination sites must be different", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.selectSite, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (transferItemAdapter.itemCount == 0) {
-            Toast.makeText(this, "Add at least one product", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.noProducts, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -311,7 +312,7 @@ class TransferActivity : AppCompatActivity() {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(
                                 this@TransferActivity,
-                                "Insufficient stock for ${item.productName}: ${e.message}",
+                                "${L.strings.insufficientStock}: ${item.productName}",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -376,7 +377,7 @@ class TransferActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@TransferActivity,
-                        "Transfer completed successfully with FIFO batch management",
+                        L.strings.transferCompleted,
                         Toast.LENGTH_SHORT
                     ).show()
                     finish()
@@ -385,7 +386,7 @@ class TransferActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@TransferActivity,
-                        "Error saving transfer: ${e.message}",
+                        "${L.strings.error}: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }

@@ -10,6 +10,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/labelRecordPurchase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Record a Purchase"
@@ -18,6 +19,7 @@
             android:paddingBottom="16dp"/>
 
         <TextView
+            android:id="@+id/labelSitePurchase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Site"
@@ -30,6 +32,7 @@
             android:spinnerMode="dropdown"/>
 
         <TextView
+            android:id="@+id/labelProductPurchase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Product"
@@ -42,6 +45,7 @@
             android:spinnerMode="dropdown"/>
 
         <TextView
+            android:id="@+id/labelQuantityPurchase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Quantity"
@@ -55,6 +59,7 @@
             android:inputType="numberDecimal"/>
 
         <TextView
+            android:id="@+id/labelPurchasePrice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Unit Purchase Price"
@@ -78,6 +83,7 @@
             android:textStyle="italic"/>
 
         <TextView
+            android:id="@+id/labelSellingPrice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Unit Selling Price (editable)"
@@ -93,6 +99,7 @@
             android:textStyle="bold"/>
 
         <TextView
+            android:id="@+id/textSellingPriceNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="The selling price is calculated automatically based on the product's margin, but you can modify it."
@@ -103,6 +110,7 @@
             android:textStyle="italic"/>
 
         <TextView
+            android:id="@+id/labelSupplier"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Supplier"
@@ -116,6 +124,7 @@
             android:inputType="text"/>
 
         <TextView
+            android:id="@+id/labelBatchNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Batch Number"
@@ -129,6 +138,7 @@
             android:inputType="text"/>
 
         <TextView
+            android:id="@+id/labelExpiryDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Expiry Date (optional)"

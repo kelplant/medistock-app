@@ -23,9 +23,9 @@ struct SupabaseConfigView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Supabase Configuration")) {
+                Section(header: Text(Localized.supabaseConfiguration)) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Project URL")
+                        Text(Localized.projectUrl)
                             .font(.caption)
                             .foregroundColor(.secondary)
                         TextField("https://xxx.supabase.co", text: $projectUrl)
@@ -35,7 +35,7 @@ struct SupabaseConfigView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Anon Key")
+                        Text(Localized.anonKey)
                             .font(.caption)
                             .foregroundColor(.secondary)
                         if hasExistingKey && anonKey.isEmpty {
@@ -43,7 +43,7 @@ struct SupabaseConfigView: View {
                                 Text(maskedKey)
                                     .foregroundColor(.secondary)
                                 Spacer()
-                                Button("Edit") {
+                                Button(Localized.edit) {
                                     hasExistingKey = false
                                 }
                                 .font(.caption)
@@ -67,7 +67,7 @@ struct SupabaseConfigView: View {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle())
                             } else {
-                                Text("Save")
+                                Text(Localized.save)
                             }
                             Spacer()
                         }
@@ -80,7 +80,7 @@ struct SupabaseConfigView: View {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
-                            Text("Configuration saved successfully")
+                            Text(Localized.configSaved)
                                 .foregroundColor(.green)
                         }
                     }
@@ -93,17 +93,17 @@ struct SupabaseConfigView: View {
                     }
                 }
 
-                Section(header: Text("Synchronization")) {
+                Section(header: Text(Localized.synchronization)) {
                     Button(action: performSync) {
                         HStack {
                             Spacer()
                             if isSyncing {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle())
-                                Text("Syncing...")
+                                Text(Localized.syncing)
                             } else {
                                 Image(systemName: "arrow.triangle.2.circlepath")
-                                Text("Sync data")
+                                Text(Localized.syncData)
                             }
                             Spacer()
                         }
@@ -118,7 +118,7 @@ struct SupabaseConfigView: View {
 
                     if let lastSync = syncStatus.lastSyncInfo.timestamp {
                         LabeledContentCompat {
-                            Text("Last sync")
+                            Text(Localized.lastSync)
                         } content: {
                             Text(lastSync, style: .relative)
                                 .foregroundColor(.secondary)
@@ -126,43 +126,43 @@ struct SupabaseConfigView: View {
                     }
                 }
 
-                Section(header: Text("Information")) {
+                Section(header: Text(Localized.information)) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("How to get this information:")
+                        Text(Localized.howToGetInfo)
                             .font(.subheadline)
                             .fontWeight(.medium)
 
-                        Text("1. Log in to your Supabase project")
-                        Text("2. Go to Settings > API")
-                        Text("3. Copy the project URL and anon key")
+                        Text(Localized.strings.supabaseStep1)
+                        Text(Localized.strings.supabaseStep2)
+                        Text(Localized.strings.supabaseStep3)
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
                 }
 
-                Section(header: Text("Current Status")) {
+                Section(header: Text(Localized.currentStatus)) {
                     LabeledContentCompat {
-                        Text("Configured")
+                        Text(Localized.configured)
                     } content: {
-                        Text(supabase.isConfigured ? "Yes" : "No")
+                        Text(supabase.isConfigured ? Localized.yes : Localized.no)
                             .foregroundColor(supabase.isConfigured ? .green : .red)
                     }
                     LabeledContentCompat {
-                        Text("Connection")
+                        Text(Localized.connection)
                     } content: {
                         HStack {
                             Circle()
                                 .fill(syncStatus.isOnline ? Color.green : Color.orange)
                                 .frame(width: 8, height: 8)
-                            Text(syncStatus.isOnline ? "Online" : "Offline")
+                            Text(syncStatus.isOnline ? Localized.online : Localized.offline)
                                 .foregroundColor(syncStatus.isOnline ? .green : .orange)
                         }
                     }
                     if syncStatus.pendingCount > 0 {
                         LabeledContentCompat {
-                            Text("Pending")
+                            Text(Localized.pending)
                         } content: {
-                            Text("\(syncStatus.pendingCount) change(s)")
+                            Text(Localized.format(Localized.pendingChanges, "count", syncStatus.pendingCount))
                                 .foregroundColor(.orange)
                         }
                     }
@@ -173,7 +173,7 @@ struct SupabaseConfigView: View {
                         HStack {
                             Spacer()
                             Image(systemName: "network")
-                            Text("Test connection")
+                            Text(Localized.testConnection)
                             Spacer()
                         }
                     }
@@ -184,16 +184,16 @@ struct SupabaseConfigView: View {
                     Button(role: .destructive, action: clearConfig) {
                         HStack {
                             Spacer()
-                            Text("Clear configuration")
+                            Text(Localized.clearConfiguration)
                             Spacer()
                         }
                     }
                 }
             }
-            .navigationTitle("Supabase Configuration")
+            .navigationTitle(Localized.supabaseConfiguration)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") { dismiss() }
+                    Button(Localized.close) { dismiss() }
                 }
             }
             .onAppear {
@@ -241,8 +241,28 @@ struct SupabaseConfigView: View {
             return
         }
 
+        // Validate API key format (Supabase anon keys are JWTs starting with "eyJ")
+        if !keyToSave.hasPrefix("eyJ") || !keyToSave.contains(".") || keyToSave.count < 100 {
+            errorMessage = "Invalid API key. The key must be a JWT (starts with 'eyJ...')"
+            isSaving = false
+            return
+        }
+
         // Save configuration
         supabase.configure(url: projectUrl, anonKey: keyToSave)
+
+        // Remove local admin users (with LOCAL_SYSTEM_MARKER) since we now have Supabase
+        // This prevents UUID conflicts with remote users
+        Task {
+            do {
+                let removed = try await sdk.defaultAdminService.forceRemoveLocalAdmin()
+                if removed.boolValue {
+                    debugLog("SupabaseConfig", "Local admin removed after Supabase config")
+                }
+            } catch {
+                debugLog("SupabaseConfig", "Failed to remove local admin: \(error)")
+            }
+        }
 
         // Update state
         hasExistingKey = true
@@ -283,9 +303,9 @@ struct SupabaseConfigView: View {
             await MainActor.run {
                 isSyncing = false
                 if let error = syncStatus.lastSyncInfo.error {
-                    syncMessage = "Error: \(error)"
+                    syncMessage = "\(Localized.error): \(error)"
                 } else {
-                    syncMessage = "Sync completed successfully!"
+                    syncMessage = Localized.syncCompleted
                 }
             }
         }
@@ -300,11 +320,11 @@ struct SupabaseConfigView: View {
                 // Try to fetch a small amount of data to test connection
                 let _: [SiteDTO] = try await supabase.fetchAll(from: "sites")
                 await MainActor.run {
-                    syncMessage = "Connection successful!"
+                    syncMessage = Localized.connectionSuccessful
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Connection error: \(error.localizedDescription)"
+                    errorMessage = "\(Localized.connectionError): \(error.localizedDescription)"
                 }
             }
         }

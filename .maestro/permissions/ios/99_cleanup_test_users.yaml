@@ -1,0 +1,15 @@
+# MediStock iOS - Cleanup Test Users
+# Run this flow AFTER permission tests to remove test users
+# Usage: maestro test -p ios .maestro/permissions/ios/99_cleanup_test_users.yaml
+appId: com.medistock.iosApp
+---
+
+# Remove test users via deep link
+- openLink: "medistock://debug/cleanup-test-users"
+
+# Wait for cleanup to complete
+- runScript:
+    script: |
+      sleep 3
+
+- takeScreenshot: "ios_test_users_cleaned"

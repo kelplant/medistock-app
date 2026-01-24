@@ -17,22 +17,14 @@ struct NotificationSettingsView: View {
     @State private var expiryWarningDays = "7"
     @State private var lowStockAlertEnabled = true
 
-    // Message templates
-    @State private var templateExpiredTitle = "Produit expiré"
-    @State private var templateExpiredMessage = "{{product_name}} a expiré"
-    @State private var templateExpiringTitle = "Expiration proche"
-    @State private var templateExpiringMessage = "{{product_name}} expire dans {{days_until}} jour(s)"
-    @State private var templateLowStockTitle = "Stock faible"
-    @State private var templateLowStockMessage = "{{product_name}}: {{current_stock}}/{{min_stock}}"
-
     var body: some View {
         Form {
             // Expiry Alerts Section
-            Section(header: Text("Expiry Alerts")) {
-                Toggle("Enable expiry alerts", isOn: $expiryAlertEnabled)
+            Section(header: Text(Localized.notificationExpiryAlerts)) {
+                Toggle(Localized.notificationEnableExpiry, isOn: $expiryAlertEnabled)
 
                 HStack {
-                    Text("Warning days before expiry")
+                    Text(Localized.notificationWarningDays)
                     Spacer()
                     TextField("7", text: $expiryWarningDays)
                         .keyboardType(.numberPad)
@@ -40,49 +32,18 @@ struct NotificationSettingsView: View {
                         .frame(width: 60)
                 }
 
-                Text("Products expiring within this many days will trigger a warning notification.")
+                Text(Localized.notificationExpiryDescription)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             // Low Stock Alerts Section
-            Section(header: Text("Low Stock Alerts")) {
-                Toggle("Enable low stock alerts", isOn: $lowStockAlertEnabled)
+            Section(header: Text(Localized.notificationLowStockAlerts)) {
+                Toggle(Localized.notificationEnableLowStock, isOn: $lowStockAlertEnabled)
 
-                Text("Stock thresholds are configured per product in the product settings.")
+                Text(Localized.notificationLowStockDescription)
                     .font(.caption)
                     .foregroundColor(.secondary)
-            }
-
-            // Message Templates Section
-            Section(header: Text("Message Templates")) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Available variables:")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                    Text("{{product_name}}, {{days_until}}, {{current_stock}}, {{min_stock}}")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
-                .padding(.vertical, 4)
-            }
-
-            // Expired Product Template
-            Section(header: Text("Expired Product")) {
-                TextField("Title", text: $templateExpiredTitle)
-                TextField("Message", text: $templateExpiredMessage)
-            }
-
-            // Expiring Soon Template
-            Section(header: Text("Expiring Soon")) {
-                TextField("Title", text: $templateExpiringTitle)
-                TextField("Message", text: $templateExpiringMessage)
-            }
-
-            // Low Stock Template
-            Section(header: Text("Low Stock")) {
-                TextField("Title", text: $templateLowStockTitle)
-                TextField("Message", text: $templateLowStockMessage)
             }
 
             // Error message
@@ -102,7 +63,7 @@ struct NotificationSettingsView: View {
                             ProgressView()
                                 .padding(.trailing, 8)
                         }
-                        Text("Save Settings")
+                        Text(Localized.save)
                             .fontWeight(.semibold)
                         Spacer()
                     }
@@ -110,27 +71,19 @@ struct NotificationSettingsView: View {
                 .disabled(!canSave || isSaving)
             }
         }
-        .navigationTitle("Notification Settings")
+        .navigationTitle(Localized.notificationSettings)
         .task {
             await loadSettings()
         }
-        .alert("Success", isPresented: $showSuccessAlert) {
-            Button("OK", role: .cancel) {}
+        .alert(Localized.success, isPresented: $showSuccessAlert) {
+            Button(Localized.ok, role: .cancel) {}
         } message: {
-            Text("Settings saved successfully.")
+            Text(Localized.settingsSaved)
         }
     }
 
     private var canSave: Bool {
         guard let days = Int(expiryWarningDays), days >= 1, days <= 365 else { return false }
-        // Validate template lengths
-        let maxLength = 500
-        let templates = [
-            templateExpiredTitle, templateExpiredMessage,
-            templateExpiringTitle, templateExpiringMessage,
-            templateLowStockTitle, templateLowStockMessage
-        ]
-        guard templates.allSatisfy({ $0.count <= maxLength }) else { return false }
         return SupabaseService.shared.isConfigured
     }
 
@@ -140,14 +93,14 @@ struct NotificationSettingsView: View {
         errorMessage = nil
 
         guard SupabaseService.shared.isConfigured else {
-            errorMessage = "Supabase not configured. Settings are stored on the server."
+            errorMessage = Localized.supabaseNotConfigured
             isLoading = false
             return
         }
 
         do {
             guard let query = SupabaseService.shared.from("notification_settings") else {
-                errorMessage = "Supabase client not available"
+                errorMessage = Localized.supabaseNotConfigured
                 isLoading = false
                 return
             }
@@ -162,12 +115,6 @@ struct NotificationSettingsView: View {
                 expiryAlertEnabled = settings.expiry_alert_enabled == 1
                 expiryWarningDays = String(settings.expiry_warning_days)
                 lowStockAlertEnabled = settings.low_stock_alert_enabled == 1
-                templateExpiredTitle = settings.template_expired_title.isEmpty ? "Produit expiré" : settings.template_expired_title
-                templateExpiredMessage = settings.template_expired_message.isEmpty ? "{{product_name}} a expiré" : settings.template_expired_message
-                templateExpiringTitle = settings.template_expiring_title
-                templateExpiringMessage = settings.template_expiring_message
-                templateLowStockTitle = settings.template_low_stock_title
-                templateLowStockMessage = settings.template_low_stock_message
             }
         } catch {
             debugLog("NotificationSettingsView", "Error loading settings: \(error)")
@@ -180,19 +127,7 @@ struct NotificationSettingsView: View {
     @MainActor
     private func saveSettings() {
         guard let days = Int(expiryWarningDays), days >= 1, days <= 365 else {
-            errorMessage = "Please enter a valid number of warning days (1-365)"
-            return
-        }
-
-        // Validate template lengths
-        let maxLength = 500
-        let templates = [
-            templateExpiredTitle, templateExpiredMessage,
-            templateExpiringTitle, templateExpiringMessage,
-            templateLowStockTitle, templateLowStockMessage
-        ]
-        if !templates.allSatisfy({ $0.count <= maxLength }) {
-            errorMessage = "Template messages must be less than \(maxLength) characters"
+            errorMessage = Localized.notificationInvalidDays
             return
         }
 
@@ -209,18 +144,12 @@ struct NotificationSettingsView: View {
                     expired_dedup_days: 7,
                     low_stock_alert_enabled: lowStockAlertEnabled ? 1 : 0,
                     low_stock_dedup_days: 7,
-                    template_expired_title: templateExpiredTitle.isEmpty ? "Produit expiré" : templateExpiredTitle,
-                    template_expired_message: templateExpiredMessage.isEmpty ? "{{product_name}} a expiré" : templateExpiredMessage,
-                    template_expiring_title: templateExpiringTitle.isEmpty ? "Expiration proche" : templateExpiringTitle,
-                    template_expiring_message: templateExpiringMessage.isEmpty ? "{{product_name}} expire dans {{days_until}} jour(s)" : templateExpiringMessage,
-                    template_low_stock_title: templateLowStockTitle.isEmpty ? "Stock faible" : templateLowStockTitle,
-                    template_low_stock_message: templateLowStockMessage.isEmpty ? "{{product_name}}: {{current_stock}}/{{min_stock}}" : templateLowStockMessage,
                     updated_at: Int64(Date().timeIntervalSince1970 * 1000),
                     updated_by: session.userId
                 )
 
                 guard let query = SupabaseService.shared.from("notification_settings") else {
-                    errorMessage = "Supabase client not available"
+                    errorMessage = Localized.supabaseNotConfigured
                     isSaving = false
                     return
                 }
@@ -231,7 +160,7 @@ struct NotificationSettingsView: View {
 
                 showSuccessAlert = true
             } catch {
-                errorMessage = "Error saving settings: \(error.localizedDescription)"
+                errorMessage = "\(Localized.error): \(error.localizedDescription)"
             }
 
             isSaving = false
@@ -248,12 +177,6 @@ struct NotificationSettingsDto: Codable {
     let expired_dedup_days: Int
     let low_stock_alert_enabled: Int
     let low_stock_dedup_days: Int
-    let template_expired_title: String
-    let template_expired_message: String
-    let template_expiring_title: String
-    let template_expiring_message: String
-    let template_low_stock_title: String
-    let template_low_stock_message: String
     let updated_at: Int64
     let updated_by: String?
 
@@ -265,12 +188,6 @@ struct NotificationSettingsDto: Codable {
         expired_dedup_days: Int = 7,
         low_stock_alert_enabled: Int = 1,
         low_stock_dedup_days: Int = 7,
-        template_expired_title: String = "Produit expiré",
-        template_expired_message: String = "{{product_name}} a expiré",
-        template_expiring_title: String = "Expiration proche",
-        template_expiring_message: String = "{{product_name}} expire dans {{days_until}} jour(s)",
-        template_low_stock_title: String = "Stock faible",
-        template_low_stock_message: String = "{{product_name}}: {{current_stock}}/{{min_stock}}",
         updated_at: Int64 = 0,
         updated_by: String? = nil
     ) {
@@ -281,12 +198,6 @@ struct NotificationSettingsDto: Codable {
         self.expired_dedup_days = expired_dedup_days
         self.low_stock_alert_enabled = low_stock_alert_enabled
         self.low_stock_dedup_days = low_stock_dedup_days
-        self.template_expired_title = template_expired_title
-        self.template_expired_message = template_expired_message
-        self.template_expiring_title = template_expiring_title
-        self.template_expiring_message = template_expiring_message
-        self.template_low_stock_title = template_low_stock_title
-        self.template_low_stock_message = template_low_stock_message
         self.updated_at = updated_at
         self.updated_by = updated_by
     }

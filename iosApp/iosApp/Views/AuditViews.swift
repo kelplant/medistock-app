@@ -11,14 +11,16 @@ struct AuditHistoryListView: View {
     @State private var errorMessage: String?
     @State private var selectedFilter: String = "all"
 
-    let tableFilters = [
-        ("all", "All"),
-        ("products", "Products"),
-        ("sales", "Sales"),
-        ("purchase_batches", "Purchases"),
-        ("sites", "Sites"),
-        ("app_users", "Users")
-    ]
+    var tableFilters: [(String, String)] {
+        [
+            ("all", Localized.all),
+            ("products", Localized.products),
+            ("sales", Localized.sales),
+            ("purchase_batches", Localized.purchases),
+            ("sites", Localized.sites),
+            ("app_users", Localized.users)
+        ]
+    }
 
     var filteredEntries: [AuditEntry] {
         if selectedFilter == "all" {
@@ -38,7 +40,7 @@ struct AuditHistoryListView: View {
 
             // Filter
             Section {
-                Picker("Filter by", selection: $selectedFilter) {
+                Picker(Localized.filterBy, selection: $selectedFilter) {
                     ForEach(tableFilters, id: \.0) { filter in
                         Text(filter.1).tag(filter.0)
                     }
@@ -58,13 +60,13 @@ struct AuditHistoryListView: View {
                 Section {
                     EmptyStateView(
                         icon: "clock.arrow.circlepath",
-                        title: "No history",
-                        message: "Change history will appear here."
+                        title: Localized.noHistory,
+                        message: Localized.strings.historyWillAppearHere
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(filteredEntries.count) entry(ies)")) {
+                Section(header: Text("\(filteredEntries.count) \(Localized.strings.entries)")) {
                     ForEach(filteredEntries, id: \.id) { entry in
                         AuditEntryRowView(entry: entry)
                     }
@@ -72,7 +74,7 @@ struct AuditHistoryListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Audit History")
+        .navigationTitle(Localized.auditHistory)
         .refreshable {
             await loadData()
         }
@@ -109,27 +111,27 @@ struct AuditEntryRowView: View {
 
     var actionLabel: String {
         switch entry.action.lowercased() {
-        case "insert", "create": return "Created"
-        case "update": return "Updated"
-        case "delete": return "Deleted"
+        case "insert", "create": return Localized.created
+        case "update": return Localized.updated
+        case "delete": return Localized.deleted
         default: return entry.action
         }
     }
 
     var tableLabel: String {
         switch entry.tableName {
-        case "products": return "Product"
-        case "sites": return "Site"
-        case "categories": return "Category"
-        case "sales": return "Sale"
-        case "sale_items": return "Sale item"
-        case "purchase_batches": return "Purchase batch"
-        case "app_users": return "User"
-        case "customers": return "Customer"
-        case "product_transfers": return "Transfer"
-        case "stock_movements": return "Stock movement"
-        case "inventories": return "Inventory"
-        case "packaging_types": return "Packaging type"
+        case "products": return Localized.product
+        case "sites": return Localized.site
+        case "categories": return Localized.category
+        case "sales": return Localized.sale
+        case "sale_items": return Localized.strings.saleItem
+        case "purchase_batches": return Localized.strings.purchaseBatch
+        case "app_users": return Localized.user
+        case "customers": return Localized.customer
+        case "product_transfers": return Localized.transfer
+        case "stock_movements": return Localized.strings.stockMovement
+        case "inventories": return Localized.inventory
+        case "packaging_types": return Localized.packagingType
         default: return entry.tableName
         }
     }
@@ -165,7 +167,7 @@ struct AuditEntryRowView: View {
                 .foregroundColor(.secondary)
 
             if let newValues = entry.newValues, !newValues.isEmpty {
-                DisclosureGroup("Details") {
+                DisclosureGroup(Localized.details) {
                     Text(newValues)
                         .font(.caption2)
                         .foregroundColor(.secondary)

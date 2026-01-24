@@ -1,11 +1,13 @@
-import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts'
+import { compareSync, hashSync, genSaltSync } from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts'
 
 /**
  * Verify a password against a BCrypt hash
+ * Uses synchronous version to avoid Worker issues in Edge Runtime
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(password, hash)
+    // Use sync version - async version requires Workers which aren't available in Edge Runtime
+    return compareSync(password, hash)
   } catch (error) {
     console.error('Error verifying password:', error)
     return false
@@ -14,10 +16,11 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 /**
  * Hash a password using BCrypt
+ * Uses synchronous version to avoid Worker issues in Edge Runtime
  */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10)
-  return await bcrypt.hash(password, salt)
+  const salt = genSaltSync(10)
+  return hashSync(password, salt)
 }
 
 /**

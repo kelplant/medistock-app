@@ -11,6 +11,7 @@ import com.medistock.R
 import com.medistock.shared.domain.model.PackagingType
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 
 class PackagingTypeAddEditActivity : AppCompatActivity() {
 
@@ -36,9 +37,9 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = if (packagingTypeId == null) {
-            "Add Packaging Type"
+            L.strings.addPackagingType
         } else {
-            "Edit Packaging Type"
+            L.strings.editPackagingType
         }
 
         viewModel = ViewModelProvider(this)[PackagingTypeViewModel::class.java]
@@ -110,12 +111,12 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
 
         // Validation
         if (name.isEmpty()) {
-            Toast.makeText(this, "Please enter a name", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (level1Name.isEmpty()) {
-            Toast.makeText(this, "Please enter level 1 name", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -125,19 +126,19 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
         if (hasTwoLevels) {
             level2Name = editLevel2Name.text.toString().trim()
             if (level2Name.isEmpty()) {
-                Toast.makeText(this, "Please enter level 2 name", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
                 return
             }
 
             val conversionText = editConversionFactor.text.toString().trim()
             if (conversionText.isEmpty()) {
-                Toast.makeText(this, "Please enter conversion factor", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
                 return
             }
 
             conversionFactor = conversionText.toDoubleOrNull()
             if (conversionFactor == null || conversionFactor <= 0) {
-                Toast.makeText(this, "Conversion factor must be a positive number", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                 return
             }
         } else {
@@ -181,7 +182,7 @@ class PackagingTypeAddEditActivity : AppCompatActivity() {
             runOnUiThread {
                 Toast.makeText(
                     this@PackagingTypeAddEditActivity,
-                    "Packaging type saved",
+                    L.strings.success,
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()

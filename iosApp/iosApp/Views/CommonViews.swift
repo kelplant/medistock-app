@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import shared
 
 // MARK: - Empty State View
 struct EmptyStateView: View {
@@ -52,7 +53,7 @@ struct ErrorView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.orange)
 
-            Text("Error")
+            Text(Localized.error)
                 .font(.headline)
 
             Text(message)
@@ -60,7 +61,7 @@ struct ErrorView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button("Retry", action: onRetry)
+            Button(Localized.retry, action: onRetry)
                 .buttonStyle(.borderedProminent)
         }
         .padding()

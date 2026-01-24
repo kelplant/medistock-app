@@ -8,6 +8,7 @@ data class User(
     val username: String,
     val password: String,
     val fullName: String,
+    val language: String? = null,
     val isAdmin: Boolean = false,
     val isActive: Boolean = true,
     val createdAt: Long = 0,

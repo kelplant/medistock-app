@@ -32,6 +32,7 @@ class AuthManager(context: Context) {
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_TOKEN_EXPIRES_AT = "token_expires_at"
+        private const val KEY_LANGUAGE = "user_language"
 
         @Volatile
         private var INSTANCE: AuthManager? = null
@@ -62,6 +63,7 @@ class AuthManager(context: Context) {
             putString(KEY_FULL_NAME, user.fullName)
             putBoolean(KEY_IS_ADMIN, user.isAdmin)
             putBoolean(KEY_IS_LOGGED_IN, true)
+            user.language?.let { putString(KEY_LANGUAGE, it) }
             apply()
         }
     }
@@ -76,6 +78,7 @@ class AuthManager(context: Context) {
             putString(KEY_FULL_NAME, user.fullName)
             putBoolean(KEY_IS_ADMIN, user.isAdmin)
             putBoolean(KEY_IS_LOGGED_IN, true)
+            user.language?.let { putString(KEY_LANGUAGE, it) }
             putString(KEY_ACCESS_TOKEN, session.accessToken)
             putString(KEY_REFRESH_TOKEN, session.refreshToken)
             putLong(KEY_TOKEN_EXPIRES_AT, session.expiresAt)
@@ -169,5 +172,26 @@ class AuthManager(context: Context) {
      */
     fun isAdmin(): Boolean {
         return prefs.getBoolean(KEY_IS_ADMIN, false)
+    }
+
+    /**
+     * Get cached user language preference
+     */
+    fun getLanguage(): String? {
+        return prefs.getString(KEY_LANGUAGE, null)
+    }
+
+    /**
+     * Set cached user language preference
+     */
+    fun setLanguage(language: String?) {
+        prefs.edit().apply {
+            if (language != null) {
+                putString(KEY_LANGUAGE, language)
+            } else {
+                remove(KEY_LANGUAGE)
+            }
+            apply()
+        }
     }
 }

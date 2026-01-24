@@ -14,6 +14,7 @@ import com.medistock.R
 import com.medistock.ui.adapters.AuditHistoryAdapter
 import com.medistock.ui.viewmodel.AuditHistoryViewModel
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.launch
 
 class AuditHistoryActivity : AppCompatActivity() {
@@ -31,14 +32,14 @@ class AuditHistoryActivity : AppCompatActivity() {
 
         // Check if user is admin
         if (!authManager.isAdmin()) {
-            Toast.makeText(this, "Access denied: Administrators only", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, L.strings.error, Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
         setContentView(R.layout.activity_audit_history)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Audit History"
+        supportActionBar?.title = L.strings.admin
 
         // Initialize views
         recyclerView = findViewById(R.id.recyclerAuditHistory)

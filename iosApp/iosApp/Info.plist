@@ -15,9 +15,9 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>0.8.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>0.8.0</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UIApplicationSceneManifest</key>
@@ -48,6 +48,17 @@
         <string>UIInterfaceOrientationPortraitUpsideDown</string>
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.medistock.iosApp</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>medistock</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>

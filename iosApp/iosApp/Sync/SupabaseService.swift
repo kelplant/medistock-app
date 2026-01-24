@@ -87,6 +87,47 @@ class SupabaseService {
         configure(url: url, anonKey: anonKey)
     }
 
+    /// Restore the session from stored Keychain tokens if the SDK session is not active
+    /// Call this after the client is configured to ensure RLS works properly
+    func restoreSessionIfNeeded() async {
+        guard let client = client else { return }
+
+        // Check if SDK already has a session
+        do {
+            _ = try await client.auth.session
+            debugLog("SupabaseService", "SDK session already active")
+            return
+        } catch {
+            // No active session in SDK, try to restore from Keychain
+            debugLog("SupabaseService", "No SDK session, attempting to restore from Keychain...")
+        }
+
+        // Try to restore from Keychain
+        guard keychain.hasAuthTokens,
+              let tokens = keychain.getAuthTokens() else {
+            debugLog("SupabaseService", "No stored tokens in Keychain")
+            return
+        }
+
+        let accessToken = tokens.accessToken
+        let refreshToken = tokens.refreshToken
+
+        // Check if tokens are expired
+        if keychain.areAuthTokensExpired {
+            debugLog("SupabaseService", "Stored tokens expired, will refresh on next request")
+            // Still set the session - SDK will refresh automatically
+        }
+
+        do {
+            try await client.auth.setSession(accessToken: accessToken, refreshToken: refreshToken)
+            debugLog("SupabaseService", "Session restored from Keychain")
+        } catch {
+            debugLog("SupabaseService", "Failed to restore session: \(error.localizedDescription)")
+            // Clear invalid tokens
+            keychain.clearAuthTokens()
+        }
+    }
+
     /// Migrate credentials from legacy UserDefaults to secure Keychain
     private func migrateFromUserDefaultsIfNeeded() {
         // Check if we have legacy data in UserDefaults
@@ -409,8 +450,12 @@ class SupabaseService {
     }
 
     // MARK: - Edge Functions
+    // NOTE: These DTOs mirror the shared module types in:
+    // shared/src/commonMain/kotlin/com/medistock/shared/domain/auth/OnlineFirstAuth.kt
+    // Keep them in sync when modifying the shared module.
 
     /// User data from migrate-user-to-auth response
+    /// Mirrors: shared.MigrateUserData
     struct MigrateUserData: Codable {
         let id: String
         let username: String
@@ -419,6 +464,7 @@ class SupabaseService {
     }
 
     /// Session data from migrate-user-to-auth response
+    /// Mirrors: shared.MigrateSessionData
     struct MigrateSessionData: Codable {
         let accessToken: String
         let refreshToken: String
@@ -426,7 +472,7 @@ class SupabaseService {
     }
 
     /// Response structure for migrate-user-to-auth Edge Function
-    /// Matches the nested structure returned by the Edge Function
+    /// Mirrors: shared.MigrateUserResponse
     struct MigrateUserResponse: Codable {
         let success: Bool
         let message: String?
@@ -436,6 +482,7 @@ class SupabaseService {
     }
 
     /// Request structure for migrate-user-to-auth Edge Function
+    /// Mirrors: shared.MigrateUserRequest
     struct MigrateUserRequest: Codable {
         let username: String
         let password: String
@@ -461,16 +508,17 @@ class SupabaseService {
         )
 
         if response.success {
-            // Store the tokens if migration was successful
+            // Set the session on the Supabase client so RLS works
+            // Note: Token storage is handled by the caller (AuthService.authenticateOnlineFirst)
+            // to ensure consistent expiresAt fallback handling
             if let session = response.session,
                let user = response.user {
-                keychain.storeAuthTokens(
+                try await client.auth.setSession(
                     accessToken: session.accessToken,
-                    refreshToken: session.refreshToken,
-                    expiresAt: session.expiresAt ?? 0,
-                    userId: user.id
+                    refreshToken: session.refreshToken
                 )
-                debugLog("SupabaseService", "Migration successful, tokens stored for user: \(user.username)")
+
+                debugLog("SupabaseService", "Migration successful, session set for user: \(user.username)")
             }
         }
 

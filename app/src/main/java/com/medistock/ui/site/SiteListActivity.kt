@@ -11,6 +11,7 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.SiteAdapter
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ class SiteListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_site_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Manage Sites"
+        supportActionBar?.title = L.strings.sites
         sdk = MedistockApplication.sdk
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerSites)

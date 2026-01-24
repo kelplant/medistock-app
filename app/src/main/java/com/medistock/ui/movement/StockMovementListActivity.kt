@@ -10,6 +10,7 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,6 +20,7 @@ class StockMovementListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stock_movement_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = L.strings.stockMovements
 
         val listView = findViewById<ListView>(R.id.listStockMovements)
         val sdk = MedistockApplication.sdk
@@ -32,8 +34,8 @@ class StockMovementListActivity : AppCompatActivity() {
                 Pair(prods, movs)
             }
             val items = movements.map {
-                val productName = products[it.productId]?.name ?: "Unknown"
-                "Product: $productName, Type: ${it.type}, Qty: ${it.quantity}, Date: ${java.util.Date(it.date)}"
+                val productName = products[it.productId]?.name ?: L.strings.noData
+                "${L.strings.product}: $productName, ${L.strings.movementType}: ${it.type}, ${L.strings.quantity}: ${it.quantity}, ${L.strings.movementDate}: ${java.util.Date(it.date)}"
             }
             listView.adapter = ArrayAdapter(this@StockMovementListActivity, android.R.layout.simple_list_item_1, items)
         }

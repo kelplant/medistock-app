@@ -31,6 +31,7 @@ class UserRepository(private val database: MedistockDatabase) {
             username = user.username,
             password = user.password,
             full_name = user.fullName,
+            language = user.language,
             is_admin = if (user.isAdmin) 1L else 0L,
             is_active = if (user.isActive) 1L else 0L,
             created_at = user.createdAt,
@@ -44,11 +45,21 @@ class UserRepository(private val database: MedistockDatabase) {
         queries.updateUser(
             username = user.username,
             full_name = user.fullName,
+            language = user.language,
             is_admin = if (user.isAdmin) 1L else 0L,
             is_active = if (user.isActive) 1L else 0L,
             updated_at = user.updatedAt,
             updated_by = user.updatedBy,
             id = user.id
+        )
+    }
+
+    suspend fun updateLanguage(userId: String, language: String?, updatedAt: Long, updatedBy: String) = withContext(Dispatchers.Default) {
+        queries.updateUserLanguage(
+            language = language,
+            updated_at = updatedAt,
+            updated_by = updatedBy,
+            id = userId
         )
     }
 
@@ -79,6 +90,7 @@ class UserRepository(private val database: MedistockDatabase) {
             username = user.username,
             password = user.password,
             full_name = user.fullName,
+            language = user.language,
             is_admin = if (user.isAdmin) 1L else 0L,
             is_active = if (user.isActive) 1L else 0L,
             created_at = user.createdAt,
@@ -101,6 +113,7 @@ class UserRepository(private val database: MedistockDatabase) {
             username = username,
             password = password,
             fullName = full_name,
+            language = language,
             isAdmin = is_admin != 0L,
             isActive = is_active != 0L,
             createdAt = created_at,

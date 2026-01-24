@@ -34,13 +34,13 @@ struct SitesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "building.2",
-                        title: "No sites",
-                        message: "Add your first site to get started."
+                        title: Localized.noSites,
+                        message: Localized.strings.noSitesMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(sites.count) site(s)")) {
+                Section(header: Text("\(sites.count) \(Localized.sites.lowercased())")) {
                     ForEach(sites, id: \.id) { site in
                         SiteRowView(site: site)
                             .contentShape(Rectangle())
@@ -53,7 +53,7 @@ struct SitesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Sites")
+        .navigationTitle(Localized.sites)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -169,8 +169,8 @@ struct SiteEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Information")) {
-                    TextField("Site name", text: $name)
+                Section(header: Text(Localized.information)) {
+                    TextField(Localized.siteName, text: $name)
                 }
 
                 if let errorMessage {
@@ -180,13 +180,13 @@ struct SiteEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Edit Site" : "New Site")
+            .navigationTitle(isEditing ? Localized.editSite : Localized.addSite)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Save" : "Add") {
+                    Button(isEditing ? Localized.save : Localized.add) {
                         saveSite()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)

@@ -35,8 +35,8 @@ struct TransfersListView: View {
                 Section {
                     EmptyStateView(
                         icon: "arrow.left.arrow.right",
-                        title: "No transfers",
-                        message: "Create a transfer to move products between sites."
+                        title: Localized.noTransfers,
+                        message: Localized.strings.noTransfersMessage
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -44,7 +44,7 @@ struct TransfersListView: View {
                 // Pending transfers
                 let pending = transfers.filter { $0.status == "pending" }
                 if !pending.isEmpty {
-                    Section(header: Text("Pending (\(pending.count))")) {
+                    Section(header: Text("\(Localized.pending) (\(pending.count))")) {
                         ForEach(pending, id: \.id) { transfer in
                             TransferRowView(
                                 transfer: transfer,
@@ -60,7 +60,7 @@ struct TransfersListView: View {
                 // Completed transfers
                 let completed = transfers.filter { $0.status == "completed" }
                 if !completed.isEmpty {
-                    Section(header: Text("Completed (\(completed.count))")) {
+                    Section(header: Text("\(Localized.completed) (\(completed.count))")) {
                         ForEach(completed, id: \.id) { transfer in
                             TransferRowView(
                                 transfer: transfer,
@@ -75,7 +75,7 @@ struct TransfersListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Transfers")
+        .navigationTitle(Localized.transfers)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -115,11 +115,11 @@ struct TransfersListView: View {
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Unknown product"
+        products.first { $0.id == productId }?.name ?? Localized.unknownProduct
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Unknown site"
+        sites.first { $0.id == siteId }?.name ?? Localized.unknownSite
     }
 
     private func completeTransfer(_ transfer: ProductTransfer) {
@@ -200,7 +200,7 @@ struct TransferRowView: View {
             .foregroundColor(.secondary)
 
             HStack {
-                Text(transfer.status == "completed" ? "Completed" : "Pending")
+                Text(transfer.status == "completed" ? Localized.completed : Localized.pending)
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
@@ -223,7 +223,7 @@ struct TransferRowView: View {
 
             if let onComplete = onComplete, transfer.status == "pending" {
                 Button(action: onComplete) {
-                    Text("Complete transfer")
+                    Text(Localized.completeTransfer)
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                 }
@@ -277,29 +277,29 @@ struct TransferEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Sites")) {
-                    Picker("Source site", selection: $fromSiteId) {
-                        Text("Select").tag("")
+                Section(header: Text(Localized.sites)) {
+                    Picker(Localized.sourceSite, selection: $fromSiteId) {
+                        Text(Localized.select).tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
 
-                    Picker("Destination site", selection: $toSiteId) {
-                        Text("Select").tag("")
+                    Picker(Localized.destinationSite, selection: $toSiteId) {
+                        Text(Localized.select).tag("")
                         ForEach(sites.filter { $0.id != fromSiteId }, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Product")) {
+                Section(header: Text(Localized.product)) {
                     if filteredProducts.isEmpty {
-                        Text("Select a source site first")
+                        Text(Localized.strings.selectSourceSiteFirst)
                             .foregroundColor(.secondary)
                     } else {
-                        Picker("Product", selection: $selectedProductId) {
-                            Text("Select").tag("")
+                        Picker(Localized.product, selection: $selectedProductId) {
+                            Text(Localized.select).tag("")
                             ForEach(filteredProducts, id: \.id) { product in
                                 Text(product.name).tag(product.id)
                             }
@@ -307,7 +307,7 @@ struct TransferEditorView: View {
 
                         if !selectedProductId.isEmpty {
                             LabeledContentCompat {
-                                Text("Available stock")
+                                Text(Localized.availableStock)
                             } content: {
                                 Text(String(format: "%.1f", availableStock))
                             }
@@ -315,13 +315,13 @@ struct TransferEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantity")) {
-                    TextField("Quantity to transfer", text: $quantityText)
+                Section(header: Text(Localized.quantity)) {
+                    TextField(Localized.quantityToTransfer, text: $quantityText)
                         .keyboardType(.decimalPad)
                 }
 
-                Section(header: Text("Notes (optional)")) {
-                    TextField("Notes", text: $notes)
+                Section(header: Text(Localized.notes)) {
+                    TextField(Localized.notes, text: $notes)
                 }
 
                 if let errorMessage {
@@ -331,13 +331,13 @@ struct TransferEditorView: View {
                     }
                 }
             }
-            .navigationTitle("New Transfer")
+            .navigationTitle(Localized.newTransfer)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Create") {
+                    Button(Localized.create) {
                         saveTransfer()
                     }
                     .disabled(!canSave || isSaving)

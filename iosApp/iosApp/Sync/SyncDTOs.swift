@@ -331,15 +331,17 @@ struct UserDTO: Codable {
     let username: String
     let password: String
     let fullName: String
+    let language: String?
     let isAdmin: Bool
     let isActive: Bool
     let createdAt: Int64
     let updatedAt: Int64
     let createdBy: String
     let updatedBy: String
+    var clientId: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, username, password
+        case id, username, password, language
         case fullName = "full_name"
         case isAdmin = "is_admin"
         case isActive = "is_active"
@@ -347,6 +349,36 @@ struct UserDTO: Codable {
         case updatedAt = "updated_at"
         case createdBy = "created_by"
         case updatedBy = "updated_by"
+        case clientId = "client_id"
+    }
+
+    /// Memberwise initializer for creating UserDTO directly
+    init(
+        id: String,
+        username: String,
+        password: String,
+        fullName: String,
+        language: String?,
+        isAdmin: Bool,
+        isActive: Bool,
+        createdAt: Int64,
+        updatedAt: Int64,
+        createdBy: String,
+        updatedBy: String,
+        clientId: String? = SyncClientId.current
+    ) {
+        self.id = id
+        self.username = username
+        self.password = password
+        self.fullName = fullName
+        self.language = language
+        self.isAdmin = isAdmin
+        self.isActive = isActive
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.createdBy = createdBy
+        self.updatedBy = updatedBy
+        self.clientId = clientId
     }
 
     init(from user: User) {
@@ -354,12 +386,14 @@ struct UserDTO: Codable {
         self.username = user.username
         self.password = user.password
         self.fullName = user.fullName
+        self.language = user.language
         self.isAdmin = user.isAdmin
         self.isActive = user.isActive
         self.createdAt = user.createdAt
         self.updatedAt = user.updatedAt
         self.createdBy = user.createdBy
         self.updatedBy = user.updatedBy
+        self.clientId = SyncClientId.current
     }
 
     func toEntity() -> User {
@@ -368,6 +402,7 @@ struct UserDTO: Codable {
             username: username,
             password: password,
             fullName: fullName,
+            language: language,
             isAdmin: isAdmin,
             isActive: isActive,
             createdAt: createdAt,

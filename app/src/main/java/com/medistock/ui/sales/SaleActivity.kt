@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,6 +19,7 @@ import com.medistock.shared.domain.model.Site
 import com.medistock.shared.domain.model.SaleBatchAllocation
 import com.medistock.shared.domain.model.StockMovement
 import com.medistock.ui.adapters.SaleItemAdapter
+import com.medistock.ui.LocalizedActivity
 import java.util.UUID
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
@@ -27,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class SaleActivity : AppCompatActivity() {
+class SaleActivity : LocalizedActivity() {
 
     private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
@@ -101,11 +101,26 @@ class SaleActivity : AppCompatActivity() {
 
         // If editing, load the existing sale
         editingSaleId?.let { saleId ->
-            supportActionBar?.title = "Edit Sale"
+            supportActionBar?.title = strings.editSale
             loadExistingSale(saleId)
         } ?: run {
-            supportActionBar?.title = "New Sale"
+            supportActionBar?.title = strings.newSale
         }
+    }
+
+    override fun applyLocalizedStrings() {
+        // Labels
+        findViewById<TextView>(R.id.labelRecordSale)?.text = strings.newSale
+        findViewById<TextView>(R.id.labelSiteSale)?.text = strings.site
+        findViewById<TextView>(R.id.labelProductsToSell)?.text = strings.productsToSell
+        findViewById<TextView>(R.id.labelCustomerName)?.text = strings.customerName
+
+        // Hints/Placeholders
+        editCustomerName.hint = strings.enterCustomerName
+
+        // Buttons
+        btnAddProduct.text = strings.addProductToSale
+        btnSaveSale.text = strings.completeSale
     }
 
     private fun loadSites() {
@@ -171,7 +186,7 @@ class SaleActivity : AppCompatActivity() {
 
     private fun showAddProductDialog() {
         if (products.isEmpty()) {
-            Toast.makeText(this, "No products available", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.noProducts, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -193,7 +208,7 @@ class SaleActivity : AppCompatActivity() {
                 if (position >= 0 && position < products.size) {
                     selectedProduct = products[position]
                     val availableQty = currentStock[selectedProduct!!.id] ?: 0.0
-                    textAvailableStock.text = "Available stock: $availableQty ${selectedProduct!!.unit}"
+                    textAvailableStock.text = "${strings.availableStock}: $availableQty ${selectedProduct!!.unit}"
 
                     // Load suggested price
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -210,25 +225,25 @@ class SaleActivity : AppCompatActivity() {
         }
 
         AlertDialog.Builder(this)
-            .setTitle("Add Product")
+            .setTitle(strings.addProduct)
             .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton(strings.add) { _, _ ->
                 val product = selectedProduct
                 val quantity = editQuantity.text.toString().toDoubleOrNull()
                 val price = editPrice.text.toString().toDoubleOrNull()
 
                 if (product == null) {
-                    Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, strings.selectProduct, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
                 if (quantity == null || quantity <= 0) {
-                    Toast.makeText(this, "Enter a valid quantity", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
                 if (price == null || price <= 0) {
-                    Toast.makeText(this, "Enter a valid price", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
@@ -240,7 +255,7 @@ class SaleActivity : AppCompatActivity() {
                 if (totalNeeded > availableQty) {
                     Toast.makeText(
                         this,
-                        "Insufficient stock. Available: $availableQty, Already in cart: $alreadyInCart",
+                        strings.insufficientStock,
                         Toast.LENGTH_LONG
                     ).show()
                     return@setPositiveButton
@@ -261,7 +276,7 @@ class SaleActivity : AppCompatActivity() {
                 updateTotal()
                 updateSaveButtonState()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(strings.cancel, null)
             .show()
     }
 
@@ -286,9 +301,9 @@ class SaleActivity : AppCompatActivity() {
         recyclerCustomers.adapter = customerAdapter
 
         val dialog = AlertDialog.Builder(this)
-            .setTitle("Select Customer")
+            .setTitle(strings.selectCustomer)
             .setView(dialogView)
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(strings.cancel, null)
             .create()
 
         // Load customers
@@ -353,16 +368,16 @@ class SaleActivity : AppCompatActivity() {
         val editNotes = dialogView.findViewById<EditText>(R.id.editCustomerNotes)
 
         AlertDialog.Builder(this)
-            .setTitle("Add New Customer")
+            .setTitle(strings.addCustomer)
             .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton(strings.save) { _, _ ->
                 val name = editName.text.toString().trim()
                 val phone = editPhone.text.toString().trim()
                 val address = editAddress.text.toString().trim()
                 val notes = editNotes.text.toString().trim()
 
                 if (name.isEmpty()) {
-                    Toast.makeText(this, "Customer name is required", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, strings.required, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
@@ -383,19 +398,19 @@ class SaleActivity : AppCompatActivity() {
                         editCustomerName.setText(name)
                         Toast.makeText(
                             this@SaleActivity,
-                            "Customer added successfully",
+                            strings.success,
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(strings.cancel, null)
             .show()
     }
 
     private fun updateTotal() {
         val total = saleItemAdapter.getTotalAmount()
-        textTotalAmount.text = "Total: ${String.format("%.2f", total)}"
+        textTotalAmount.text = "${strings.saleTotal}: ${String.format("%.2f", total)}"
     }
 
     private fun updateSaveButtonState() {
@@ -450,7 +465,7 @@ class SaleActivity : AppCompatActivity() {
         }
 
         if (remainingQty > 0) {
-            throw Exception("Insufficient stock in batches. Missing: $remainingQty units")
+            throw Exception(strings.remainingQuantityNeeded.replace("{quantity}", remainingQty.toString()))
         }
 
         val avgPurchasePrice = if (quantityNeeded > 0) totalCost / quantityNeeded else 0.0
@@ -482,16 +497,16 @@ class SaleActivity : AppCompatActivity() {
         val customerName = editCustomerName.text.toString().trim()
 
         if (customerName.isEmpty()) {
-            Toast.makeText(this, "Enter customer name", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.required, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (saleItemAdapter.itemCount == 0) {
-            Toast.makeText(this, "Add at least one product", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.noSaleItems, Toast.LENGTH_SHORT).show()
             return
         }
         if (selectedSiteId.isNullOrBlank()) {
-            Toast.makeText(this, "Select a site first", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.selectSite, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -588,7 +603,7 @@ class SaleActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@SaleActivity,
-                            "Sale updated successfully",
+                            strings.success,
                             Toast.LENGTH_SHORT
                         ).show()
                         finish()
@@ -653,7 +668,7 @@ class SaleActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@SaleActivity,
-                            "Sale completed successfully",
+                            strings.saleCompleted,
                             Toast.LENGTH_SHORT
                         ).show()
                         finish()
@@ -663,7 +678,7 @@ class SaleActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@SaleActivity,
-                        "Error saving sale: ${e.message}",
+                        "${strings.error}: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }

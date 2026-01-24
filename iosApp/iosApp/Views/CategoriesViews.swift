@@ -34,13 +34,13 @@ struct CategoriesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "folder",
-                        title: "No categories",
-                        message: "Add your first category to organize your products."
+                        title: Localized.noCategories,
+                        message: Localized.strings.noCategoriesMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(categories.count) category(ies)")) {
+                Section(header: Text("\(categories.count) \(Localized.categories.lowercased())")) {
                     ForEach(categories, id: \.id) { category in
                         CategoryRowView(category: category)
                             .contentShape(Rectangle())
@@ -53,7 +53,7 @@ struct CategoriesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Categories")
+        .navigationTitle(Localized.categories)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -166,8 +166,8 @@ struct CategoryEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Information")) {
-                    TextField("Category name", text: $name)
+                Section(header: Text(Localized.information)) {
+                    TextField(Localized.categoryName, text: $name)
                 }
 
                 if let errorMessage {
@@ -177,13 +177,13 @@ struct CategoryEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Edit Category" : "New Category")
+            .navigationTitle(isEditing ? Localized.editCategory : Localized.addCategory)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Save" : "Add") {
+                    Button(isEditing ? Localized.save : Localized.add) {
                         saveCategory()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)

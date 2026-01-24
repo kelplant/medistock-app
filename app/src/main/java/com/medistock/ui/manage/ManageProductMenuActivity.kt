@@ -13,6 +13,7 @@ import com.medistock.shared.domain.model.Module
 import com.medistock.ui.category.CategoryListActivity
 import com.medistock.ui.product.ProductListActivity
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,6 +28,7 @@ class ManageProductMenuActivity : AppCompatActivity() {
         binding = ActivityManageProductMenuBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = L.strings.products
 
         authManager = AuthManager.getInstance(this)
         sdk = MedistockApplication.sdk

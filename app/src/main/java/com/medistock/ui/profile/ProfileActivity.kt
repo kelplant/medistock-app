@@ -9,7 +9,13 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.medistock.MedistockApplication
 import com.medistock.R
+import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.shared.data.dto.UserDto
+import com.medistock.shared.domain.model.User
+import com.medistock.shared.i18n.L
 import com.medistock.shared.i18n.LocalizationManager
 import com.medistock.shared.i18n.SupportedLocale
 import com.medistock.ui.auth.ChangePasswordActivity
@@ -18,6 +24,10 @@ import com.medistock.ui.customer.CustomerListActivity
 import com.medistock.ui.inventory.InventoryListActivity
 import com.medistock.ui.purchase.PurchaseListActivity
 import com.medistock.util.AuthManager
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -34,22 +44,28 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         /**
-         * Initialize language from saved preference or system language.
-         * Matches iOS behavior: tries saved preference first, then system language, then defaults to English.
+         * Initialize language from user profile, saved preference, or system language.
+         * Priority: 1. User profile, 2. Local cache, 3. System language, 4. Default (English)
+         *
+         * @param context The context
+         * @param user Optional user object with language preference from profile
          */
-        fun initializeLanguage(context: Context) {
-            val savedCode = getSavedLanguageCode(context)
-            if (savedCode != null) {
-                // Use saved preference
-                LocalizationManager.setLocaleByCode(savedCode)
-            } else {
-                // Try system language (first 2 chars of locale)
-                val systemLanguage = java.util.Locale.getDefault().language
-                val found = LocalizationManager.setLocaleByCode(systemLanguage)
-                if (!found) {
-                    // Fall back to English
-                    LocalizationManager.setLocale(SupportedLocale.DEFAULT)
-                }
+        fun initializeLanguage(context: Context, user: User? = null) {
+            // Priority: user profile > local cache > system language > default
+            val languageCode = user?.language
+                ?: getSavedLanguageCode(context)
+                ?: java.util.Locale.getDefault().language
+
+            val found = LocalizationManager.setLocaleByCode(languageCode)
+            if (!found) {
+                LocalizationManager.setLocale(SupportedLocale.DEFAULT)
+            }
+
+            // Cache the language from user profile for offline access
+            if (user?.language != null) {
+                val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit().putString(KEY_LANGUAGE, user.language).apply()
+                AuthManager.getInstance(context).setLanguage(user.language)
             }
         }
     }
@@ -58,10 +74,11 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Profile"
+        supportActionBar?.title = L.strings.profile
 
         authManager = AuthManager.getInstance(this)
 
+        applyLocalizedStrings()
         setupUserInfo()
         setupMenuItems()
         setupLanguage()
@@ -69,19 +86,34 @@ class ProfileActivity : AppCompatActivity() {
         setupAppVersion()
     }
 
+    private fun applyLocalizedStrings() {
+        val strings = L.strings
+
+        // Menu labels
+        findViewById<TextView>(R.id.labelChangePassword)?.text = strings.changePassword
+        findViewById<TextView>(R.id.labelCustomers)?.text = strings.customers
+        findViewById<TextView>(R.id.labelPurchaseHistory)?.text = strings.purchaseHistory
+        findViewById<TextView>(R.id.labelInventoryHistory)?.text = strings.inventory
+        findViewById<TextView>(R.id.labelLanguage)?.text = strings.language
+
+        // Logout button
+        findViewById<Button>(R.id.btnLogout)?.text = strings.logout
+    }
+
     private fun setupUserInfo() {
+        val strings = L.strings
         val textFullName = findViewById<TextView>(R.id.textFullName)
         val textUsername = findViewById<TextView>(R.id.textUsername)
         val textUserRole = findViewById<TextView>(R.id.textUserRole)
 
-        textFullName.text = authManager.getFullName().ifBlank { "User" }
+        textFullName.text = authManager.getFullName().ifBlank { strings.user }
         textUsername.text = "@${authManager.getUsername()}"
 
         if (authManager.isAdmin()) {
-            textUserRole.text = "Administrator"
+            textUserRole.text = strings.admin
             textUserRole.setBackgroundColor(0xFF2196F3.toInt()) // Blue
         } else {
-            textUserRole.text = "User"
+            textUserRole.text = strings.user
             textUserRole.setBackgroundColor(0xFF4CAF50.toInt()) // Green
         }
     }
@@ -118,30 +150,67 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun showLanguageDialog() {
+        val strings = L.strings
         val locales = SupportedLocale.entries.toTypedArray()
         val languageNames = locales.map { it.nativeDisplayName }.toTypedArray()
         val currentIndex = locales.indexOf(LocalizationManager.locale)
 
         AlertDialog.Builder(this)
-            .setTitle(R.string.select_language)
+            .setTitle(strings.selectLanguage)
             .setSingleChoiceItems(languageNames, currentIndex) { dialog, which ->
                 val selectedLocale = locales[which]
                 setLanguage(selectedLocale)
                 dialog.dismiss()
             }
-            .setNegativeButton(android.R.string.cancel, null)
+            .setNegativeButton(strings.cancel, null)
             .show()
     }
 
     private fun setLanguage(locale: SupportedLocale) {
-        // Save to SharedPreferences
+        val sdk = MedistockApplication.sdk
+        val userId = authManager.getUserId()
+
+        // 1. Save to local SharedPreferences cache
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putString(KEY_LANGUAGE, locale.code).apply()
+        authManager.setLanguage(locale.code)
 
-        // Update LocalizationManager
+        // 2. Update local database and sync to Supabase
+        if (userId != null) {
+            lifecycleScope.launch {
+                val now = System.currentTimeMillis()
+                try {
+                    // Update local DB
+                    sdk.userRepository.updateLanguage(userId, locale.code, now, userId)
+
+                    // Sync to Supabase if configured and online
+                    if (SupabaseClientProvider.isConfigured(this@ProfileActivity)) {
+                        withContext(Dispatchers.IO) {
+                            val user = sdk.userRepository.getById(userId)
+                            if (user != null) {
+                                SupabaseClientProvider.client
+                                    .from("app_users")
+                                    .update({
+                                        set("language", locale.code)
+                                        set("updated_at", now)
+                                        set("updated_by", userId)
+                                    }) {
+                                        filter { eq("id", userId) }
+                                    }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Log error but don't block - language change is cached locally
+                    android.util.Log.e("ProfileActivity", "Failed to sync language: ${e.message}")
+                }
+            }
+        }
+
+        // 3. Update LocalizationManager
         LocalizationManager.setLocale(locale)
 
-        // Recreate activity to apply new language (UI will be updated automatically)
+        // 4. Recreate activity to apply new language
         recreate()
     }
 
@@ -153,13 +222,14 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun confirmLogout() {
+        val strings = L.strings
         AlertDialog.Builder(this)
-            .setTitle("Logout")
-            .setMessage("Are you sure you want to logout?")
-            .setPositiveButton("Logout") { _, _ ->
+            .setTitle(strings.logout)
+            .setMessage(strings.logoutConfirm)
+            .setPositiveButton(strings.logout) { _, _ ->
                 performLogout()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(strings.cancel, null)
             .show()
     }
 

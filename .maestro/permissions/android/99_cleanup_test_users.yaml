@@ -1,0 +1,17 @@
+# MediStock Android - Cleanup Test Users
+# Run this flow AFTER permission tests to remove test users
+# Usage: maestro test .maestro/permissions/android/99_cleanup_test_users.yaml
+appId: com.medistock
+---
+
+# Remove test users via debug Activity
+- runScript:
+    script: |
+      adb shell am start -n com.medistock/.debug.TestSeederActivity --es action cleanup
+
+# Wait for cleanup to complete
+- runScript:
+    script: |
+      sleep 3
+
+- takeScreenshot: "android_test_users_cleaned"

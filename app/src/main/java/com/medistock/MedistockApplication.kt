@@ -14,12 +14,12 @@ import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncScheduler
 import com.medistock.shared.DatabaseDriverFactory
 import com.medistock.shared.MedistockSDK
+import com.medistock.shared.i18n.L
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
 import com.medistock.ui.profile.ProfileActivity
 import com.medistock.util.AppUpdateManager
-import com.medistock.util.TestUserSeeder
 import com.medistock.util.UpdateCheckResult
 import io.github.jan.supabase.realtime.realtime
 import org.conscrypt.Conscrypt
@@ -292,15 +292,16 @@ class MedistockApplication : Application() {
     ) {
         val message = buildUpdateMessage(currentVersion, newVersion, releaseNotes)
 
+        val strings = L.strings
         AlertDialog.Builder(activity)
-            .setTitle("Mise à jour disponible")
+            .setTitle(strings.updateAvailable)
             .setMessage(message)
-            .setPositiveButton("Télécharger") { _, _ ->
+            .setPositiveButton(strings.download) { _, _ ->
                 // Rediriger vers l'écran de mise à jour
                 val intent = Intent(activity, AppUpdateRequiredActivity::class.java)
                 activity.startActivity(intent)
             }
-            .setNegativeButton("Plus tard") { dialog, _ ->
+            .setNegativeButton(strings.later) { dialog, _ ->
                 dialog.dismiss()
             }
             .setCancelable(true)
@@ -315,13 +316,14 @@ class MedistockApplication : Application() {
         newVersion: String,
         releaseNotes: String?
     ): String {
+        val strings = L.strings
         val message = StringBuilder()
-        message.append("Une nouvelle version de MediStock est disponible.\n\n")
-        message.append("Version actuelle : $currentVersion\n")
-        message.append("Nouvelle version : $newVersion\n")
+        message.append("${strings.newVersionAvailable}\n\n")
+        message.append("${strings.currentVersionLabel} : $currentVersion\n")
+        message.append("${strings.newVersionLabel} : $newVersion\n")
 
         if (!releaseNotes.isNullOrBlank()) {
-            message.append("\nNouveautés :\n")
+            message.append("\n${strings.whatsNew} :\n")
             // Limiter la longueur des notes de version pour le dialogue
             val shortNotes = if (releaseNotes.length > 200) {
                 releaseNotes.take(200) + "..."
@@ -351,20 +353,9 @@ class MedistockApplication : Application() {
             _sdk = MedistockSDK(driverFactory)
             println("✅ MedistockSDK initialized")
 
-            // Seed test users in debug builds (for Maestro E2E permission tests)
-            val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-            if (isDebug) {
-                appScope.launch {
-                    try {
-                        val seededCount = TestUserSeeder.seedTestUsers(sdk)
-                        if (seededCount > 0) {
-                            println("✅ Seeded $seededCount test users for E2E testing")
-                        }
-                    } catch (e: Exception) {
-                        println("⚠️ Failed to seed test users: ${e.message}")
-                    }
-                }
-            }
+            // Note: Test users for Maestro E2E tests are now seeded via a dedicated
+            // Maestro flow (00_setup_test_users.yaml) and cleaned up at the end
+            // of the test series (99_cleanup_test_users.yaml)
         } catch (e: Exception) {
             println("❌ Failed to initialize MedistockSDK: ${e.message}")
             e.printStackTrace()

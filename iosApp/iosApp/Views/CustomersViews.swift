@@ -43,13 +43,13 @@ struct CustomersListView: View {
                 Section {
                     EmptyStateView(
                         icon: "person.2",
-                        title: "No customers",
-                        message: "Add your customers to facilitate sales."
+                        title: Localized.noCustomers,
+                        message: Localized.strings.noCustomersMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(filteredCustomers.count) customer(s)")) {
+                Section(header: Text("\(filteredCustomers.count) \(Localized.customers.lowercased())")) {
                     ForEach(filteredCustomers, id: \.id) { customer in
                         CustomerRowView(customer: customer)
                             .contentShape(Rectangle())
@@ -62,8 +62,8 @@ struct CustomersListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Customers")
-        .searchable(text: $searchText, prompt: "Search customers")
+        .navigationTitle(Localized.customers)
+        .searchable(text: $searchText, prompt: Localized.search)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -195,20 +195,20 @@ struct CustomerEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Information")) {
-                    TextField("Customer name", text: $name)
-                    TextField("Phone", text: $phone)
+                Section(header: Text(Localized.information)) {
+                    TextField(Localized.customerName, text: $name)
+                    TextField(Localized.phone, text: $phone)
                         .keyboardType(.phonePad)
-                    TextField("Email", text: $email)
+                    TextField(Localized.email, text: $email)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                 }
 
-                Section(header: Text("Address")) {
-                    TextField("Address", text: $address)
+                Section(header: Text(Localized.address)) {
+                    TextField(Localized.address, text: $address)
                 }
 
-                Section(header: Text("Notes")) {
+                Section(header: Text(Localized.notes)) {
                     TextEditor(text: $notes)
                         .frame(minHeight: 80)
                 }
@@ -220,13 +220,13 @@ struct CustomerEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Edit Customer" : "New Customer")
+            .navigationTitle(isEditing ? Localized.editCustomer : Localized.addCustomer)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Save" : "Add") {
+                    Button(isEditing ? Localized.save : Localized.add) {
                         saveCustomer()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)

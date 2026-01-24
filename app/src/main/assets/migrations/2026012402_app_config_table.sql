@@ -25,7 +25,8 @@ INSERT INTO app_config (key, value, description)
 VALUES
     ('recovery_secret_key', NULL, 'Secret key required to create recovery admin. Set via SQL Editor if needed.'),
     ('instance_name', 'MediStock', 'Name of this MediStock instance'),
-    ('setup_completed_at', NULL, 'Timestamp when initial setup was completed')
+    ('setup_completed_at', NULL, 'Timestamp when initial setup was completed'),
+    ('currency_symbol', 'F', 'Currency symbol for prices display (e.g., F, $, EUR)')
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================================
