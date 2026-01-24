@@ -133,7 +133,7 @@ object StringsNy : Strings {
     override val email = "Imelo"
     override val address = "Adilesi"
     override val notes = "Zolemba"
-    override val walkInCustomer = "Kasitomala wolowa mwachibadwa"
+    override val walkInCustomer = "Kasitomala wolowa"
 
     // ============================================
     // PURCHASES
@@ -182,7 +182,7 @@ object StringsNy : Strings {
     override val completeSale = "Malizitsani kugulitsa"
     override val saleCompleted = "Kugulitsa kwamalizidwa"
     override val noSaleItems = "Palibe zinthu pa kugulitsa"
-    override val insufficientStock = "Katundu sayokwanira pa {product}: {available} ilipo, {requested} yafunsidwa"
+    override val insufficientStock = "Katundu sayokwanira: {available} alipo, {requested} afunsidwa"
     override val remainingQuantityNeeded = "Kuchuluka kotsala kofunikira: {quantity} ma unit"
     override val editSale = "Sinthani kugulitsa"
     override val editPurchase = "Sinthani kugula"
@@ -195,12 +195,12 @@ object StringsNy : Strings {
     // ============================================
     // INVENTORY
     // ============================================
-    override val inventory = "Mndandanda wa katundu"
-    override val inventoryCount = "Kuwerengera katundu"
+    override val inventory = "Kuwerengera katundu"
+    override val inventoryCount = "Mndandanda wa katundu"
     override val startInventory = "Yambani kuwerengera"
     override val completeInventory = "Malizitsani kuwerengera"
     override val inventoryInProgress = "Kuwerengera kukuchitika"
-    override val theoreticalQuantity = "Kuchuluka mwa theory"
+    override val theoreticalQuantity = "Kuchuluka koyembekezeka"
     override val countedQuantity = "Kuchuluka kowerengedwa"
     override val discrepancy = "Kusiyana"
     override val reason = "Chifukwa"
@@ -241,7 +241,7 @@ object StringsNy : Strings {
     override val stockReport = "Lipoti la katundu"
     override val profitReport = "Lipoti la phindu"
     override val exportReport = "Lipoti la export"
-    override val dateRange = "Nthawi (Date range)"
+    override val dateRange = "Nthawi ya masiku"
     override val startDate = "Tsiku loyambira"
     override val endDate = "Tsiku lomaliza"
     override val generateReport = "Pangani lipoti"
@@ -284,7 +284,7 @@ object StringsNy : Strings {
     override val theme = "Theme"
     override val darkMode = "Dark mode"
     override val lightMode = "Light mode"
-    override val systemDefault = "System default"
+    override val systemDefault = "Zofuna za foni"
     override val about = "Za app"
     override val version = "Version"
     override val syncSettings = "Zosintha za sync"
@@ -304,7 +304,7 @@ object StringsNy : Strings {
     override val deleteUser = "Chotsani wogwiritsa"
     override val fullName = "Dzina lonse"
     override val role = "Udindo"
-    override val admin = "Administrator"
+    override val admin = "Woyang'anira"
     override val permissions = "Zilolezo"
     override val canView = "Atha kuwona"
     override val canCreate = "Atha kupanga"
@@ -316,8 +316,8 @@ object StringsNy : Strings {
     // ============================================
     override val packagingTypes = "Mitundu ya packaging"
     override val packagingType = "Mtundu wa packaging"
-    override val addPackagingType = "Onjezani mtundu wa packaging"
-    override val editPackagingType = "Sinthani mtundu wa packaging"
+    override val addPackagingType = "Onjezani mtundu"
+    override val editPackagingType = "Sinthani mtundu"
     override val level1Name = "Dzina la level 1"
     override val level2Name = "Dzina la level 2"
     override val level2Quantity = "Kuchuluka kwa level 2"
@@ -329,10 +329,10 @@ object StringsNy : Strings {
     override val fieldRequired = "{field} ndi chofunika"
     override val invalidEmail = "Imelo si yolondola"
     override val invalidPhone = "Nambala ya foni si yolondola"
-    override val valueTooShort = "{field} iyenera kukhala osachepera {min} characters"
-    override val valueTooLong = "{field} siyenera kupitirira {max} characters"
-    override val valueMustBePositive = "Mtengo uyenera kukhala positive"
-    override val passwordTooShort = "Mawu achinsinsi ayenera kukhala osachepera 8 characters"
+    override val valueTooShort = "{field} ndi yayifupi"
+    override val valueTooLong = "{field} ndi yayitali"
+    override val valueMustBePositive = "Mtengo uyenera kukhala woposa zero"
+    override val passwordTooShort = "Mawu achinsinsi ayenera kukhala osachepera 6 characters"
 
     // PASSWORD COMPLEXITY
     override val passwordMinLength = "Osachepera zilembo 8"
