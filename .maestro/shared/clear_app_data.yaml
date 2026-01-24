@@ -1,0 +1,8 @@
+# Clear App Data Flow - Forces first-time login state
+# Usage: runFlow to clear app data and simulate first-time login
+appId: ${APP_ID}
+---
+# Clear app state to force first-time login scenario
+- clearState
+- launchApp
+- waitForAnimationToEnd

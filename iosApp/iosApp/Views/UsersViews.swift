@@ -36,13 +36,13 @@ struct UsersListView: View {
                 Section {
                     EmptyStateView(
                         icon: "person.3",
-                        title: "No users",
-                        message: "Add users to manage access."
+                        title: Localized.strings.noUsers,
+                        message: Localized.strings.noUsersMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(users.count) user(s)")) {
+                Section(header: Text("\(users.count) \(Localized.users.lowercased())")) {
                     ForEach(users, id: \.id) { user in
                         UserRowView(
                             user: user,
@@ -55,7 +55,7 @@ struct UsersListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Users")
+        .navigationTitle(Localized.users)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -130,7 +130,7 @@ struct UserRowView: View {
                         Text(user.fullName)
                             .font(.headline)
                         if user.isAdmin {
-                            Text("Admin")
+                            Text(Localized.admin)
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -139,7 +139,7 @@ struct UserRowView: View {
                                 .cornerRadius(4)
                         }
                         if !user.isActive {
-                            Text("Inactive")
+                            Text(Localized.strings.inactive)
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
@@ -158,7 +158,7 @@ struct UserRowView: View {
             // Action buttons
             HStack(spacing: 12) {
                 Button(action: onEdit) {
-                    Label("Edit", systemImage: "pencil")
+                    Label(Localized.edit, systemImage: "pencil")
                         .font(.caption)
                 }
                 .buttonStyle(.bordered)
@@ -166,7 +166,7 @@ struct UserRowView: View {
 
                 if canManagePermissions && !user.isAdmin {
                     Button(action: onPermissions) {
-                        Label("Permissions", systemImage: "lock.shield")
+                        Label(Localized.permissions, systemImage: "lock.shield")
                             .font(.caption)
                     }
                     .buttonStyle(.bordered)
@@ -447,6 +447,7 @@ struct UserEditorView: View {
                         username: trimmedUsername,
                         password: finalPassword,
                         fullName: trimmedFullName,
+                        language: existingUser.language,
                         isAdmin: isAdmin,
                         isActive: isActive,
                         createdAt: existingUser.createdAt,
@@ -465,6 +466,7 @@ struct UserEditorView: View {
                         password: hashedPassword,
                         fullName: trimmedFullName,
                         isAdmin: isAdmin,
+                        language: nil,
                         userId: session.userId
                     )
                 }
@@ -541,7 +543,7 @@ struct UserPermissionsEditView: View {
                     HStack {
                         Image(systemName: "info.circle")
                             .foregroundColor(.blue)
-                        Text("This user is an administrator and has all permissions.")
+                        Text(Localized.strings.adminHasAllPermissions)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -559,10 +561,10 @@ struct UserPermissionsEditView: View {
             } else {
                 ForEach(Module.allCases, id: \.rawValue) { module in
                     Section(header: Text(module.displayName)) {
-                        Toggle("View", isOn: binding(for: module, action: \.canView))
-                        Toggle("Create", isOn: binding(for: module, action: \.canCreate))
-                        Toggle("Edit", isOn: binding(for: module, action: \.canEdit))
-                        Toggle("Delete", isOn: binding(for: module, action: \.canDelete))
+                        Toggle(Localized.view, isOn: binding(for: module, action: \.canView))
+                        Toggle(Localized.strings.create_, isOn: binding(for: module, action: \.canCreate))
+                        Toggle(Localized.edit, isOn: binding(for: module, action: \.canEdit))
+                        Toggle(Localized.delete_, isOn: binding(for: module, action: \.canDelete))
                     }
                     .disabled(user.isAdmin)
                 }
@@ -582,17 +584,17 @@ struct UserPermissionsEditView: View {
                 }
             }
         }
-        .navigationTitle("\(user.fullName)'s Permissions")
+        .navigationTitle("\(user.fullName) - \(Localized.permissions)")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Close") { dismiss() }
+                Button(Localized.close) { dismiss() }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: savePermissions) {
                     if isSaving {
                         ProgressView()
                     } else {
-                        Text("Save")
+                        Text(Localized.save)
                     }
                 }
                 .disabled(isSaving || user.isAdmin)
@@ -698,7 +700,7 @@ struct UserPermissionsEditView: View {
                 }
                 await MainActor.run {
                     isSaving = false
-                    successMessage = "Permissions saved successfully"
+                    successMessage = Localized.settingsSaved
                 }
             } catch {
                 await MainActor.run {

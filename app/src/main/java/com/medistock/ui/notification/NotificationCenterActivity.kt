@@ -19,6 +19,7 @@ import com.medistock.R
 import com.medistock.shared.domain.notification.NotificationEvent
 import com.medistock.ui.adapters.NotificationAdapter
 import com.medistock.ui.stock.StockListActivity
+import com.medistock.shared.i18n.L
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -44,7 +45,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         setContentView(R.layout.activity_notification_center)
 
         supportActionBar?.apply {
-            title = "Notifications"
+            title = L.strings.notificationSettings
             setDisplayHomeAsUpEnabled(true)
         }
 
@@ -110,7 +111,7 @@ class NotificationCenterActivity : AppCompatActivity() {
                     sdk.notificationRepository.markAsDismissed(event.id)
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@NotificationCenterActivity, "Erreur lors de l'acquittement", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@NotificationCenterActivity, L.strings.error, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -122,7 +123,7 @@ class NotificationCenterActivity : AppCompatActivity() {
                     sdk.notificationRepository.dismissAll()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@NotificationCenterActivity, "Erreur lors de l'acquittement", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@NotificationCenterActivity, L.strings.error, Toast.LENGTH_SHORT).show()
             }
         }
     }

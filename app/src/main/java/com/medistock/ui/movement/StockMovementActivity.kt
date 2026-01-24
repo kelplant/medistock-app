@@ -12,6 +12,7 @@ import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,6 +28,7 @@ class StockMovementActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stock_movement)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = L.strings.stockMovements
 
         sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
@@ -36,7 +38,7 @@ class StockMovementActivity : AppCompatActivity() {
         val quantityInput = findViewById<EditText>(R.id.editQuantity)
         val saveButton = findViewById<Button>(R.id.btnSaveMovement)
 
-        typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("in", "out"))
+        typeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf(L.strings.stockIn, L.strings.stockOut))
 
         lifecycleScope.launch {
             products = withContext(Dispatchers.IO) {
@@ -84,7 +86,7 @@ class StockMovementActivity : AppCompatActivity() {
                     } else {
                         Toast.makeText(
                             this@StockMovementActivity,
-                            "Please select a site first",
+                            L.strings.selectSite,
                             Toast.LENGTH_SHORT
                         ).show()
                     }

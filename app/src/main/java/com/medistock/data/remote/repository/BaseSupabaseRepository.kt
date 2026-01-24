@@ -20,14 +20,23 @@ abstract class BaseSupabaseRepository(
 
     companion object {
         /** Set to true to enable debug logging for Supabase operations */
-        var DEBUG = false
+        var DEBUG = true
     }
 
     /**
      * Récupère tous les enregistrements
      */
     suspend inline fun <reified R> getAll(): List<R> {
-        return supabase.from(tableName).select().decodeList()
+        if (DEBUG) println("📥 Fetching all from $tableName")
+        try {
+            val result: List<R> = supabase.from(tableName).select().decodeList()
+            if (DEBUG) println("📥 Fetched ${result.size} records from $tableName")
+            return result
+        } catch (e: Exception) {
+            println("❌ ERROR fetching from $tableName: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
 
     /**

@@ -250,6 +250,7 @@ CREATE TABLE app_users (
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     full_name TEXT NOT NULL,
+    language TEXT,
     is_admin INTEGER NOT NULL DEFAULT 0,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT 0,
@@ -445,20 +446,26 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 -- ============================================
 
 getAllUsers:
-SELECT * FROM app_users ORDER BY username;
+SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
+FROM app_users ORDER BY username;
 
 getUserById:
-SELECT * FROM app_users WHERE id = ?;
+SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
+FROM app_users WHERE id = ?;
 
 getUserByUsername:
-SELECT * FROM app_users WHERE username = ?;
+SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
+FROM app_users WHERE username = ?;
 
 insertUser:
-INSERT INTO app_users(id, username, password, full_name, is_admin, is_active, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO app_users(id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateUser:
-UPDATE app_users SET username = ?, full_name = ?, is_admin = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE app_users SET username = ?, full_name = ?, language = ?, is_admin = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+updateUserLanguage:
+UPDATE app_users SET language = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 updateUserPassword:
 UPDATE app_users SET password = ?, updated_at = ?, updated_by = ? WHERE id = ?;
@@ -778,10 +785,12 @@ ORDER BY p.name;
 -- ============================================
 
 getActiveUsers:
-SELECT * FROM app_users WHERE is_active = 1 ORDER BY full_name;
+SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
+FROM app_users WHERE is_active = 1 ORDER BY full_name;
 
 getUserForAuth:
-SELECT * FROM app_users WHERE username = ? AND is_active = 1 LIMIT 1;
+SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
+FROM app_users WHERE username = ? AND is_active = 1 LIMIT 1;
 
 deactivateUser:
 UPDATE app_users SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
@@ -1014,8 +1023,8 @@ INSERT OR REPLACE INTO customers(id, name, phone, email, address, notes, site_id
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertUser:
-INSERT OR REPLACE INTO app_users(id, username, password, full_name, is_admin, is_active, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO app_users(id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertPurchaseBatch:
 INSERT OR REPLACE INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
@@ -1330,3 +1339,39 @@ DELETE FROM notification_events_local WHERE created_at < ?;
 -- Delete dismissed notifications
 deleteDismissedNotifications:
 DELETE FROM notification_events_local WHERE is_dismissed = 1;
+
+-- ============================================
+-- APP CONFIGURATION TABLE
+-- ============================================
+
+CREATE TABLE app_config (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT,
+    description TEXT,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT ''
+);
+
+-- ============================================
+-- QUERIES - App Config
+-- ============================================
+
+getAllAppConfig:
+SELECT * FROM app_config ORDER BY key;
+
+getAppConfigByKey:
+SELECT * FROM app_config WHERE key = ?;
+
+insertAppConfig:
+INSERT INTO app_config(key, value, description, updated_at, updated_by)
+VALUES (?, ?, ?, ?, ?);
+
+updateAppConfig:
+UPDATE app_config SET value = ?, description = ?, updated_at = ?, updated_by = ? WHERE key = ?;
+
+upsertAppConfig:
+INSERT OR REPLACE INTO app_config(key, value, description, updated_at, updated_by)
+VALUES (?, ?, ?, ?, ?);
+
+deleteAppConfig:
+DELETE FROM app_config WHERE key = ?;

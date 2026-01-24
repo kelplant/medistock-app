@@ -25,24 +25,34 @@ Deno.serve(async (req) => {
 
     // 1. Find user in local users table
     const { data: user, error: userError } = await adminClient
-      .from('users')
-      .select('id, username, password_hash, name, is_admin, is_active, auth_migrated')
+      .from('app_users')
+      .select('id, username, password, full_name, is_admin, is_active, auth_migrated')
       .eq('username', username)
       .single()
 
     if (userError || !user) {
       // Don't reveal if user exists or not
+      console.log('>>> USER LOOKUP FAILED for username:', username)
+      console.log('>>> Error:', userError?.message ?? 'User not found in app_users table')
       return errorResponse('Invalid credentials', 401)
     }
 
+    console.log('>>> User found:', user.id, user.username)
+    console.log('>>> is_active:', user.is_active, 'auth_migrated:', user.auth_migrated)
+    console.log('>>> password hash (first 20 chars):', user.password?.substring(0, 20))
+
     // 2. Check if user is active
-    if (user.is_active !== 1) {
+    if (!user.is_active) {
+      console.log('>>> USER INACTIVE')
       return errorResponse('Account is deactivated', 403)
     }
 
     // 3. Verify password against BCrypt hash
-    const passwordValid = await verifyPassword(password, user.password_hash)
+    console.log('>>> Verifying password...')
+    const passwordValid = await verifyPassword(password, user.password)
+    console.log('>>> Password valid:', passwordValid)
     if (!passwordValid) {
+      console.log('>>> PASSWORD VERIFICATION FAILED')
       return errorResponse('Invalid credentials', 401)
     }
 
@@ -51,7 +61,7 @@ Deno.serve(async (req) => {
     // 4. Check if already migrated to Supabase Auth
     const authEmail = uuidToAuthEmail(user.id)
 
-    if (user.auth_migrated === 1) {
+    if (user.auth_migrated === 1 || user.auth_migrated === true) {
       // Already migrated, just sign in
       console.log(`User ${username} already migrated, signing in...`)
 
@@ -102,7 +112,7 @@ Deno.serve(async (req) => {
         email_confirm: true,
         user_metadata: {
           username: user.username,
-          name: user.name,
+          name: user.full_name,
         },
       })
 
@@ -114,7 +124,7 @@ Deno.serve(async (req) => {
 
     // 6. Mark as migrated
     await adminClient
-      .from('users')
+      .from('app_users')
       .update({
         auth_migrated: 1,
         updated_at: Date.now(),
@@ -146,7 +156,7 @@ Deno.serve(async (req) => {
  */
 async function syncUserToAuth(
   adminClient: ReturnType<typeof createAdminClient>,
-  user: { id: string; username: string; name: string },
+  user: { id: string; username: string; full_name: string },
   password: string
 ): Promise<void> {
   const authEmail = uuidToAuthEmail(user.id)
@@ -167,7 +177,7 @@ async function syncUserToAuth(
         email_confirm: true,
         user_metadata: {
           username: user.username,
-          name: user.name,
+          name: user.full_name,
         },
       })
     }
@@ -181,7 +191,7 @@ async function syncUserToAuth(
  * Create success response with user and session data
  */
 function createSuccessResponse(
-  user: { id: string; username: string; name: string; is_admin: number },
+  user: { id: string; username: string; full_name: string; is_admin: boolean },
   sessionData: { session: { access_token: string; refresh_token: string; expires_at?: number } | null }
 ): Response {
   return jsonResponse({
@@ -190,8 +200,8 @@ function createSuccessResponse(
     user: {
       id: user.id,
       username: user.username,
-      name: user.name,
-      isAdmin: user.is_admin === 1,
+      name: user.full_name,
+      isAdmin: user.is_admin === true,
     },
     session: sessionData.session ? {
       accessToken: sessionData.session.access_token,

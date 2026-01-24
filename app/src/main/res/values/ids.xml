@@ -3,5 +3,6 @@
     <item name="menu_profile_badge" type="id" />
     <item name="menu_profile_info" type="id" />
     <item name="menu_change_password" type="id" />
+    <item name="menu_language" type="id" />
     <item name="menu_logout" type="id" />
 </resources>

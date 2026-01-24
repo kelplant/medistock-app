@@ -12,7 +12,6 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
@@ -24,7 +23,7 @@ import com.medistock.shared.domain.model.Site
 import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.sales.SaleListActivity
 import com.medistock.ui.stock.StockListActivity
-import com.medistock.ui.purchase.PurchaseActivity
+import com.medistock.ui.purchase.PurchaseListActivity
 import com.medistock.ui.inventory.InventoryActivity
 import com.medistock.ui.admin.AdminActivity
 import com.medistock.ui.transfer.TransferListActivity
@@ -37,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : LocalizedActivity() {
 
     private lateinit var authManager: AuthManager
     private lateinit var sdk: MedistockSDK
@@ -106,12 +105,12 @@ class HomeActivity : AppCompatActivity() {
                 shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
                     // Show explanation and then request
                     AlertDialog.Builder(this)
-                        .setTitle("Notifications")
-                        .setMessage("Les notifications vous alertent des produits expirés et du stock faible.")
-                        .setPositiveButton("Activer") { _, _ ->
+                        .setTitle(strings.notificationSettings)
+                        .setMessage(strings.notificationExpiryDescription)
+                        .setPositiveButton(strings.ok) { _, _ ->
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
-                        .setNegativeButton("Plus tard", null)
+                        .setNegativeButton(strings.cancel, null)
                         .show()
                 }
                 else -> {
@@ -137,7 +136,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         findViewById<android.view.View>(R.id.purchaseButton).setOnClickListener {
-            startActivity(Intent(this, PurchaseActivity::class.java))
+            startActivity(Intent(this, PurchaseListActivity::class.java))
         }
 
         findViewById<android.view.View>(R.id.inventoryButton).setOnClickListener {
@@ -147,6 +146,23 @@ class HomeActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.adminButton).setOnClickListener {
             startActivity(Intent(this, AdminActivity::class.java))
         }
+    }
+
+    /**
+     * Apply localized strings to all UI elements.
+     */
+    override fun applyLocalizedStrings() {
+        // Section headers
+        findViewById<TextView>(R.id.labelCurrentSite)?.text = strings.site
+        findViewById<TextView>(R.id.labelOperations)?.text = strings.quickActions
+
+        // Button labels - use noun form (Purchases, Sales) not action form (Add Purchase, New Sale)
+        findViewById<TextView>(R.id.labelPurchase)?.text = strings.purchases
+        findViewById<TextView>(R.id.labelSell)?.text = strings.sales
+        findViewById<TextView>(R.id.labelTransfer)?.text = strings.transfers
+        findViewById<TextView>(R.id.labelStock)?.text = strings.stock
+        findViewById<TextView>(R.id.labelInventory)?.text = strings.inventory
+        findViewById<TextView>(R.id.labelAdmin)?.text = strings.administration
     }
 
     /**
@@ -234,15 +250,15 @@ class HomeActivity : AppCompatActivity() {
 
     private fun updateCurrentSiteDisplay() {
         findViewById<TextView>(R.id.currentSiteName)?.text =
-            currentSite?.name ?: "Sélectionner un site"
+            currentSite?.name ?: strings.selectSite
     }
 
     private fun showSiteSelectionDialog() {
         if (sites.isEmpty()) {
             AlertDialog.Builder(this)
-                .setTitle("Aucun site")
-                .setMessage("Aucun site disponible. Veuillez d'abord créer un site dans l'administration.")
-                .setPositiveButton("OK", null)
+                .setTitle(strings.noSites)
+                .setMessage(strings.noSites)
+                .setPositiveButton(strings.ok, null)
                 .show()
             return
         }
@@ -251,14 +267,14 @@ class HomeActivity : AppCompatActivity() {
         val currentIndex = sites.indexOfFirst { it.id == currentSite?.id }.takeIf { it >= 0 } ?: 0
 
         AlertDialog.Builder(this)
-            .setTitle("Sélectionner un site")
+            .setTitle(strings.selectSite)
             .setSingleChoiceItems(siteNames, currentIndex) { dialog, which ->
                 currentSite = sites[which]
                 PrefsHelper.saveActiveSiteId(this, currentSite!!.id)
                 updateCurrentSiteDisplay()
                 dialog.dismiss()
             }
-            .setNegativeButton("Annuler", null)
+            .setNegativeButton(strings.cancel, null)
             .show()
     }
 
@@ -314,13 +330,13 @@ class HomeActivity : AppCompatActivity() {
         releaseNotes: String?
     ) {
         AlertDialog.Builder(this)
-            .setTitle("Mise à jour disponible")
+            .setTitle(strings.updateAvailable)
             .setMessage(buildUpdateMessage(currentVersion, newVersion, releaseNotes))
-            .setPositiveButton("Télécharger") { _, _ ->
+            .setPositiveButton(strings.download) { _, _ ->
                 // Rediriger vers l'écran de mise à jour
                 navigateToUpdateScreen()
             }
-            .setNegativeButton("Plus tard") { dialog, _ ->
+            .setNegativeButton(strings.later) { dialog, _ ->
                 dialog.dismiss()
             }
             .setCancelable(true)
@@ -336,12 +352,12 @@ class HomeActivity : AppCompatActivity() {
         releaseNotes: String?
     ): String {
         val message = StringBuilder()
-        message.append("Une nouvelle version de MediStock est disponible.\n\n")
-        message.append("Version actuelle : $currentVersion\n")
-        message.append("Nouvelle version : $newVersion\n")
+        message.append("${strings.newVersionAvailable}\n\n")
+        message.append("${strings.currentVersionLabel} : $currentVersion\n")
+        message.append("${strings.newVersionLabel} : $newVersion\n")
 
         if (!releaseNotes.isNullOrBlank()) {
-            message.append("\nNouveautés :\n")
+            message.append("\n${strings.whatsNew} :\n")
             // Limiter la longueur des notes de version pour le dialogue
             val shortNotes = if (releaseNotes.length > 200) {
                 releaseNotes.take(200) + "..."

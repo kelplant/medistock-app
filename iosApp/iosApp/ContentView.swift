@@ -24,7 +24,7 @@ struct ContentView: View {
                 // Show loading while checking compatibility
                 VStack(spacing: 16) {
                     ProgressView()
-                    Text("Vérification de la compatibilité...")
+                    Text(Localized.strings.checkingCompatibility)
                         .foregroundColor(.secondary)
                 }
             } else {
@@ -112,6 +112,10 @@ struct ContentView: View {
     private func startSyncForRestoredSession() {
         // Run migrations BEFORE starting sync
         Task {
+            // Restore Supabase Auth session from Keychain if needed
+            // This ensures RLS policies work properly after app restart
+            await SupabaseService.shared.restoreSessionIfNeeded()
+
             await runMigrationsIfNeeded()
 
             // Start the sync scheduler after migrations

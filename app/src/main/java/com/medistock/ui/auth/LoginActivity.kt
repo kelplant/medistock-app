@@ -16,17 +16,22 @@ import com.medistock.shared.domain.compatibility.CompatibilityResult
 import com.medistock.data.remote.SupabaseAuthService
 import com.medistock.data.remote.SupabaseAuthResult
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.data.sync.SyncManager
 import com.medistock.ui.AppUpdateRequiredActivity
 import com.medistock.ui.HomeActivity
 import com.medistock.ui.admin.SupabaseConfigActivity
 import com.medistock.shared.domain.auth.AuthResult
 import com.medistock.shared.domain.auth.AuthService
+import com.medistock.shared.domain.auth.OnlineFirstAuthResult
 import com.medistock.shared.domain.auth.PasswordVerifier
 import com.medistock.util.AuthManager
+import com.medistock.util.DebugConfig
+import com.medistock.util.NetworkStatus
 import com.medistock.util.PasswordHasher
 import com.medistock.util.PasswordMigration
 import com.medistock.util.AppUpdateManager
 import com.medistock.util.UpdateCheckResult
+import com.medistock.shared.i18n.L
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +52,10 @@ private object AndroidPasswordVerifier : PasswordVerifier {
 }
 
 class LoginActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "LoginActivity"
+    }
 
     private lateinit var editUsername: TextInputEditText
     private lateinit var editPassword: TextInputEditText
@@ -124,7 +133,7 @@ class LoginActivity : AppCompatActivity() {
         val password = editPassword.text.toString()
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError("Veuillez remplir tous les champs")
+            showError(L.strings.required)
             return
         }
 
@@ -134,93 +143,37 @@ class LoginActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // Step 1: Look up user in local DB to get UUID
-                val localUser = withContext(Dispatchers.IO) {
-                    sharedAuthService.getUserByUsername(username)
+                // Check if this is a first-time login (no local users except system admin)
+                val requiresOnlineAuth = withContext(Dispatchers.IO) {
+                    isFirstTimeLogin()
                 }
 
-                if (localUser == null) {
-                    // User not in local DB, try Supabase Auth migration Edge Function
-                    // This handles the case where user exists in Supabase but not locally
-                    val migrationResult = withContext(Dispatchers.IO) {
-                        supabaseAuthService.migrateUserToAuth(username, password)
+                if (requiresOnlineAuth) {
+                    // First login REQUIRES network for online-first authentication
+                    if (!NetworkStatus.isOnline(this@LoginActivity)) {
+                        showError(L.strings.offlineMode)
+                        return@launch
                     }
-                    handleSupabaseAuthResult(migrationResult)
+
+                    if (!SupabaseClientProvider.isConfigured(this@LoginActivity)) {
+                        showError(L.strings.supabaseNotConfigured)
+                        return@launch
+                    }
+
+                    // Use online-first authentication
+                    val onlineResult = withContext(Dispatchers.IO) {
+                        supabaseAuthService.authenticateOnlineFirst(username, password)
+                    }
+
+                    handleOnlineFirstAuthResult(onlineResult)
                     return@launch
                 }
 
-                // Check if user is active locally
-                if (!localUser.isActive) {
-                    showError("Ce compte est désactivé")
-                    return@launch
-                }
+                // Not first login - use the standard flow
+                loginWithStandardFlow(username, password)
 
-                // Step 2: Try Supabase Auth if configured
-                if (SupabaseClientProvider.isConfigured(this@LoginActivity)) {
-                    val supabaseResult = withContext(Dispatchers.IO) {
-                        supabaseAuthService.authenticateWithSupabaseAuth(
-                            uuid = localUser.id,
-                            password = password,
-                            localUser = localUser
-                        )
-                    }
-
-                    when (supabaseResult) {
-                        is SupabaseAuthResult.Success -> {
-                            // Login with Supabase Auth session
-                            authManager.loginWithSession(supabaseResult.user, supabaseResult.session)
-                            navigateToHome()
-                            return@launch
-                        }
-                        is SupabaseAuthResult.NotConfigured -> {
-                            // Fall back to local authentication
-                            println("Supabase not configured, falling back to local auth")
-                        }
-                        is SupabaseAuthResult.InvalidCredentials -> {
-                            showError("Nom d'utilisateur ou mot de passe incorrect")
-                            return@launch
-                        }
-                        is SupabaseAuthResult.UserNotFound -> {
-                            showError("Utilisateur non trouvé")
-                            return@launch
-                        }
-                        is SupabaseAuthResult.UserInactive -> {
-                            showError("Ce compte est désactivé")
-                            return@launch
-                        }
-                        is SupabaseAuthResult.Error -> {
-                            // Log the error but try local auth as fallback
-                            println("Supabase Auth error: ${supabaseResult.message}, falling back to local auth")
-                        }
-                    }
-                }
-
-                // Step 3: Fall back to local authentication (offline mode)
-                val localResult = withContext(Dispatchers.IO) {
-                    sharedAuthService.authenticate(username, password)
-                }
-
-                when (localResult) {
-                    is AuthResult.Success -> {
-                        // Local auth only (no Supabase session)
-                        authManager.login(localResult.user)
-                        navigateToHome()
-                    }
-                    is AuthResult.InvalidCredentials -> {
-                        showError("Nom d'utilisateur ou mot de passe incorrect")
-                    }
-                    is AuthResult.UserNotFound -> {
-                        showError("Utilisateur non trouvé")
-                    }
-                    is AuthResult.UserInactive -> {
-                        showError("Ce compte est désactivé")
-                    }
-                    is AuthResult.Error -> {
-                        showError("Erreur: ${localResult.message}")
-                    }
-                }
             } catch (e: Exception) {
-                showError("Erreur de connexion: ${e.message}")
+                showError("${L.strings.loginError}: ${e.message}")
             } finally {
                 withContext(Dispatchers.Main) {
                     btnLogin.isEnabled = true
@@ -230,28 +183,201 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Handle the result from Supabase Auth operations
+     * Check if this is a first-time login.
+     * First-time = no real users in local DB (only system admin marker or empty).
      */
-    private suspend fun handleSupabaseAuthResult(result: SupabaseAuthResult) {
-        when (result) {
-            is SupabaseAuthResult.Success -> {
-                authManager.loginWithSession(result.user, result.session)
+    private suspend fun isFirstTimeLogin(): Boolean {
+        val users = sdk.userRepository.getAll()
+
+        // No users at all = first login
+        if (users.isEmpty()) return true
+
+        // Only system admin marker = first login
+        if (users.all { it.createdBy == "LOCAL_SYSTEM_MARKER" }) return true
+
+        // Has stored session = not first login
+        if (authManager.hasValidSession()) return false
+
+        return false
+    }
+
+    /**
+     * Standard login flow for subsequent logins (when we have local users).
+     */
+    private suspend fun loginWithStandardFlow(username: String, password: String) {
+        // Step 1: Look up user in local DB
+        val localUser = withContext(Dispatchers.IO) {
+            sharedAuthService.getUserByUsername(username)
+        }
+
+        if (localUser == null) {
+            // User not in local DB - if online, try Edge Function
+            if (NetworkStatus.isOnline(this@LoginActivity) &&
+                SupabaseClientProvider.isConfigured(this@LoginActivity)) {
+                val onlineResult = withContext(Dispatchers.IO) {
+                    supabaseAuthService.authenticateOnlineFirst(username, password)
+                }
+                handleOnlineFirstAuthResult(onlineResult)
+            } else {
+                showError(L.strings.userNotFound)
+            }
+            return
+        }
+
+        // Check if user is active
+        if (!localUser.isActive) {
+            showError(L.strings.inactive)
+            return
+        }
+
+        // Step 2: Try Supabase Auth if configured and online
+        // Use online-first auth to get the correct UUID from Supabase
+        // This handles cases where local and remote users have different UUIDs
+        if (NetworkStatus.isOnline(this@LoginActivity) &&
+            SupabaseClientProvider.isConfigured(this@LoginActivity)) {
+
+            DebugConfig.d(TAG, "Using online-first auth for user: $username")
+            val onlineResult = withContext(Dispatchers.IO) {
+                supabaseAuthService.authenticateOnlineFirst(username, password)
+            }
+
+            DebugConfig.d(TAG, "Online-first auth result: $onlineResult")
+
+            when (onlineResult) {
+                is OnlineFirstAuthResult.Success -> {
+                    DebugConfig.d(TAG, "Online-first auth SUCCESS")
+
+                    // Store session tokens
+                    val session = AuthManager.SupabaseSession(
+                        accessToken = onlineResult.accessToken,
+                        refreshToken = onlineResult.refreshToken,
+                        expiresAt = onlineResult.expiresAt
+                    )
+                    authManager.loginWithSession(onlineResult.user, session)
+
+                    // Update local user with correct UUID from Supabase
+                    // BUT preserve the local password hash (Edge Function doesn't return it)
+                    withContext(Dispatchers.IO) {
+                        val existingUser = sdk.userRepository.getById(onlineResult.user.id)
+                        val userToSave = if (existingUser != null && existingUser.password.isNotEmpty()) {
+                            onlineResult.user.copy(password = existingUser.password)
+                        } else {
+                            onlineResult.user
+                        }
+                        sdk.userRepository.upsert(userToSave)
+                    }
+
+                    navigateToHome()
+                    return
+                }
+                is OnlineFirstAuthResult.InvalidCredentials -> {
+                    showError(L.strings.loginErrorInvalidCredentials)
+                    return
+                }
+                is OnlineFirstAuthResult.UserNotFound -> {
+                    // User exists locally but not in Supabase - try local auth
+                    DebugConfig.d(TAG, "User not in Supabase, falling back to local auth")
+                }
+                is OnlineFirstAuthResult.UserInactive -> {
+                    showError(L.strings.inactive)
+                    return
+                }
+                is OnlineFirstAuthResult.NotConfigured,
+                is OnlineFirstAuthResult.NetworkRequired,
+                is OnlineFirstAuthResult.Error -> {
+                    DebugConfig.d(TAG, "Online-first auth failed: ${(onlineResult as? OnlineFirstAuthResult.Error)?.message}")
+                    // Fall through to local auth
+                }
+            }
+        }
+
+        // Step 3: Fall back to local authentication (offline mode)
+        val localResult = withContext(Dispatchers.IO) {
+            sharedAuthService.authenticate(username, password)
+        }
+
+        when (localResult) {
+            is AuthResult.Success -> {
+                authManager.login(localResult.user)
                 navigateToHome()
             }
-            is SupabaseAuthResult.InvalidCredentials -> {
-                showError("Nom d'utilisateur ou mot de passe incorrect")
+            is AuthResult.InvalidCredentials -> {
+                showError(L.strings.loginErrorInvalidCredentials)
             }
-            is SupabaseAuthResult.UserNotFound -> {
-                showError("Utilisateur non trouvé")
+            is AuthResult.UserNotFound -> {
+                showError(L.strings.userNotFound)
             }
-            is SupabaseAuthResult.UserInactive -> {
-                showError("Ce compte est désactivé")
+            is AuthResult.UserInactive -> {
+                showError(L.strings.inactive)
             }
-            is SupabaseAuthResult.NotConfigured -> {
-                showError("Supabase n'est pas configuré")
+            is AuthResult.Error -> {
+                showError("${L.strings.error}: ${localResult.message}")
             }
-            is SupabaseAuthResult.Error -> {
-                showError("Erreur: ${result.message}")
+        }
+    }
+
+    /**
+     * Handle the result from online-first authentication.
+     * On success: saves user to local DB, stores session, triggers sync.
+     */
+    private suspend fun handleOnlineFirstAuthResult(result: OnlineFirstAuthResult) {
+        when (result) {
+            is OnlineFirstAuthResult.Success -> {
+                // Save user to local database
+                // BUT preserve the local password hash (Edge Function doesn't return it)
+                withContext(Dispatchers.IO) {
+                    val existingUser = sdk.userRepository.getById(result.user.id)
+                    val userToSave = if (existingUser != null && existingUser.password.isNotEmpty()) {
+                        result.user.copy(password = existingUser.password)
+                    } else {
+                        result.user
+                    }
+                    sdk.userRepository.upsert(userToSave)
+                }
+
+                // Store session tokens
+                val session = AuthManager.SupabaseSession(
+                    accessToken = result.accessToken,
+                    refreshToken = result.refreshToken,
+                    expiresAt = result.expiresAt
+                )
+                authManager.loginWithSession(result.user, session)
+
+                // Trigger full sync to get all data
+                withContext(Dispatchers.IO) {
+                    try {
+                        val syncManager = SyncManager(this@LoginActivity)
+                        syncManager.fullSync(
+                            onProgress = { DebugConfig.d(TAG, "First login sync: $it") },
+                            onError = { entity, error ->
+                                DebugConfig.w(TAG, "First login sync error on $entity: ${error.message}")
+                            }
+                        )
+                    } catch (e: Exception) {
+                        DebugConfig.w(TAG, "First login sync failed: ${e.message}")
+                        // Continue anyway - user is logged in
+                    }
+                }
+
+                navigateToHome()
+            }
+            is OnlineFirstAuthResult.InvalidCredentials -> {
+                showError(L.strings.loginErrorInvalidCredentials)
+            }
+            is OnlineFirstAuthResult.UserNotFound -> {
+                showError(L.strings.userNotFound)
+            }
+            is OnlineFirstAuthResult.UserInactive -> {
+                showError(L.strings.inactive)
+            }
+            is OnlineFirstAuthResult.NetworkRequired -> {
+                showError(L.strings.offlineMode)
+            }
+            is OnlineFirstAuthResult.NotConfigured -> {
+                showError(L.strings.supabaseNotConfigured)
+            }
+            is OnlineFirstAuthResult.Error -> {
+                showError("${L.strings.error}: ${result.message}")
             }
         }
         btnLogin.isEnabled = true
@@ -316,12 +442,12 @@ class LoginActivity : AppCompatActivity() {
         realtimeJob?.cancel()
 
         if (!SupabaseClientProvider.isConfigured(this)) {
-            updateRealtimeBadge("Realtime non configuré", "#F44336", "#FFFFFF")
+            updateRealtimeBadge(L.strings.supabaseNotConfigured, "#F44336", "#FFFFFF")
             return
         }
 
         val client = runCatching { SupabaseClientProvider.client }.getOrElse {
-            updateRealtimeBadge("Client Supabase non initialisé", "#F44336", "#FFFFFF")
+            updateRealtimeBadge(L.strings.supabaseNotConfigured, "#F44336", "#FFFFFF")
             return
         }
 
@@ -334,10 +460,11 @@ class LoginActivity : AppCompatActivity() {
             }
 
             client.realtime.status.collectLatest { status ->
+                val strings = L.strings
                 val (text, bg, fg) = when (status) {
-                    Realtime.Status.CONNECTED -> Triple("Realtime connecté", "#4CAF50", "#FFFFFF")
-                    Realtime.Status.CONNECTING -> Triple("Connexion Realtime...", "#FFC107", "#000000")
-                    else -> Triple("Realtime déconnecté", "#F44336", "#FFFFFF")
+                    Realtime.Status.CONNECTED -> Triple(strings.realtimeConnected, "#4CAF50", "#FFFFFF")
+                    Realtime.Status.CONNECTING -> Triple(strings.syncing, "#FFC107", "#000000")
+                    else -> Triple(strings.realtimeDisconnected, "#F44336", "#FFFFFF")
                 }
                 withContext(Dispatchers.Main) {
                     updateRealtimeBadge(text, bg, fg)
@@ -386,15 +513,15 @@ class LoginActivity : AppCompatActivity() {
                         )
                     }
                     is UpdateCheckResult.NoUpdateAvailable -> {
-                        println("✅ Application à jour")
+                        DebugConfig.d(TAG, "Application à jour")
                     }
                     is UpdateCheckResult.Error -> {
-                        println("⚠️ Impossible de vérifier les mises à jour: ${result.message}")
+                        DebugConfig.w(TAG, "Impossible de vérifier les mises à jour: ${result.message}")
                         // Ne pas afficher d'erreur à l'utilisateur, cela peut être dû à l'absence de connexion
                     }
                 }
             } catch (e: Exception) {
-                println("⚠️ Erreur lors de la vérification des mises à jour: ${e.message}")
+                DebugConfig.w(TAG, "Erreur lors de la vérification des mises à jour: ${e.message}")
                 // Ne pas perturber l'utilisateur avec cette erreur
             }
         }
@@ -408,14 +535,15 @@ class LoginActivity : AppCompatActivity() {
         newVersion: String,
         releaseNotes: String?
     ) {
+        val strings = L.strings
         AlertDialog.Builder(this)
-            .setTitle("Mise à jour disponible")
+            .setTitle(strings.updateAvailable)
             .setMessage(buildUpdateMessage(currentVersion, newVersion, releaseNotes))
-            .setPositiveButton("Télécharger") { _, _ ->
+            .setPositiveButton(strings.download) { _, _ ->
                 // Rediriger vers l'écran de mise à jour
                 navigateToUpdateScreen()
             }
-            .setNegativeButton("Plus tard") { dialog, _ ->
+            .setNegativeButton(strings.later) { dialog, _ ->
                 dialog.dismiss()
             }
             .setCancelable(true)
@@ -430,13 +558,14 @@ class LoginActivity : AppCompatActivity() {
         newVersion: String,
         releaseNotes: String?
     ): String {
+        val strings = L.strings
         val message = StringBuilder()
-        message.append("Une nouvelle version de MediStock est disponible.\n\n")
-        message.append("Version actuelle : $currentVersion\n")
-        message.append("Nouvelle version : $newVersion\n")
+        message.append("${strings.newVersionAvailable}\n\n")
+        message.append("${strings.currentVersionLabel} : $currentVersion\n")
+        message.append("${strings.newVersionLabel} : $newVersion\n")
 
         if (!releaseNotes.isNullOrBlank()) {
-            message.append("\nNouveautés :\n")
+            message.append("\n${strings.whatsNew} :\n")
             // Limiter la longueur des notes de version pour le dialogue
             val shortNotes = if (releaseNotes.length > 200) {
                 releaseNotes.take(200) + "..."

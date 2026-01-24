@@ -37,13 +37,13 @@ struct PurchasesListView: View {
                 Section {
                     EmptyStateView(
                         icon: "shippingbox",
-                        title: "No purchases",
-                        message: "Record your first purchase to stock up your inventory."
+                        title: Localized.noPurchases,
+                        message: Localized.strings.noPurchasesMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(batches.count) batch(es)")) {
+                Section(header: Text("\(batches.count) \(Localized.strings.batches)")) {
                     ForEach(batches, id: \.id) { batch in
                         PurchaseBatchRowView(
                             batch: batch,
@@ -55,7 +55,7 @@ struct PurchasesListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Purchases")
+        .navigationTitle(Localized.purchases)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -116,11 +116,11 @@ struct PurchasesListView: View {
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Unknown product"
+        products.first { $0.id == productId }?.name ?? Localized.unknownProduct
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Unknown site"
+        sites.first { $0.id == siteId }?.name ?? Localized.unknownSite
     }
 }
 
@@ -137,7 +137,7 @@ struct PurchaseBatchRowView: View {
                     .font(.headline)
                 Spacer()
                 if batch.isExhausted {
-                    Text("Exhausted")
+                    Text(Localized.exhausted)
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
@@ -148,14 +148,14 @@ struct PurchaseBatchRowView: View {
             }
 
             HStack {
-                Text("Remaining qty: \(String(format: "%.1f", batch.remainingQuantity))/\(String(format: "%.1f", batch.initialQuantity))")
+                Text("\(Localized.remainingQty): \(String(format: "%.1f", batch.remainingQuantity))/\(String(format: "%.1f", batch.initialQuantity))")
                 Spacer()
-                Text("Price: \(String(format: "%.2f", batch.purchasePrice)) EUR")
+                Text("\(Localized.price): \(String(format: "%.2f", batch.purchasePrice)) EUR")
             }
             .font(.subheadline)
 
             HStack {
-                Text("Site: \(siteName)")
+                Text("\(Localized.site): \(siteName)")
                 if !batch.supplierName.isEmpty {
                     Text("- \(batch.supplierName)")
                 }
@@ -164,9 +164,9 @@ struct PurchaseBatchRowView: View {
             .foregroundColor(.secondary)
 
             HStack {
-                Text("Date: \(formatDate(batch.purchaseDate))")
+                Text("\(Localized.date): \(formatDate(batch.purchaseDate))")
                 if let expiry = batch.expiryDate {
-                    Text("- Exp.: \(formatDate(expiry))")
+                    Text("- \(Localized.expiryDate): \(formatDate(expiry))")
                         .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
                 }
             }
@@ -174,7 +174,7 @@ struct PurchaseBatchRowView: View {
             .foregroundColor(.secondary)
 
             if let batchNumber = batch.batchNumber, !batchNumber.isEmpty {
-                Text("Batch: \(batchNumber)")
+                Text("\(Localized.batchNumber): \(batchNumber)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -228,22 +228,22 @@ struct PurchaseEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Site")) {
-                    Picker("Site", selection: $selectedSiteId) {
-                        Text("Select").tag("")
+                Section(header: Text(Localized.site)) {
+                    Picker(Localized.site, selection: $selectedSiteId) {
+                        Text(Localized.select).tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Product")) {
+                Section(header: Text(Localized.product)) {
                     if filteredProducts.isEmpty {
-                        Text("No products available for this site")
+                        Text(Localized.noProducts)
                             .foregroundColor(.secondary)
                     } else {
-                        Picker("Product", selection: $selectedProductId) {
-                            Text("Select").tag("")
+                        Picker(Localized.product, selection: $selectedProductId) {
+                            Text(Localized.select).tag("")
                             ForEach(filteredProducts, id: \.id) { product in
                                 Text(product.name).tag(product.id)
                             }
@@ -251,22 +251,22 @@ struct PurchaseEditorView: View {
                     }
                 }
 
-                Section(header: Text("Quantity and Price")) {
-                    TextField("Quantity", text: $quantityText)
+                Section(header: Text("\(Localized.quantity) & \(Localized.price)")) {
+                    TextField(Localized.quantity, text: $quantityText)
                         .keyboardType(.decimalPad)
-                    TextField("Unit purchase price", text: $priceText)
+                    TextField(Localized.purchasePrice, text: $priceText)
                         .keyboardType(.decimalPad)
                 }
 
-                Section(header: Text("Supplier")) {
-                    TextField("Supplier name", text: $supplierName)
-                    TextField("Batch number (optional)", text: $batchNumber)
+                Section(header: Text(Localized.supplier)) {
+                    TextField(Localized.supplierName, text: $supplierName)
+                    TextField(Localized.batchNumber, text: $batchNumber)
                 }
 
-                Section(header: Text("Expiry date")) {
-                    Toggle("Expiry date", isOn: $hasExpiryDate)
+                Section(header: Text(Localized.expiryDate)) {
+                    Toggle(Localized.expiryDate, isOn: $hasExpiryDate)
                     if hasExpiryDate {
-                        DatePicker("Date", selection: $expiryDate, displayedComponents: .date)
+                        DatePicker(Localized.date, selection: $expiryDate, displayedComponents: .date)
                     }
                 }
 
@@ -277,13 +277,13 @@ struct PurchaseEditorView: View {
                     }
                 }
             }
-            .navigationTitle("New Purchase")
+            .navigationTitle(Localized.newPurchase)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
+                    Button(Localized.save) {
                         savePurchase()
                     }
                     .disabled(!canSave || isSaving)

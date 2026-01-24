@@ -14,6 +14,7 @@ import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -101,7 +102,7 @@ class InventoryActivity : AppCompatActivity() {
         theoreticalQuantity = stockItem?.quantityOnHand ?: 0.0
 
         val product = products.find { it.id == selectedProductId }
-        textTheoreticalStock.text = "Theoretical Stock: $theoreticalQuantity ${product?.unit ?: ""}"
+        textTheoreticalStock.text = "${L.strings.theoreticalQuantity}: $theoreticalQuantity ${product?.unit ?: ""}"
         calculateDiscrepancy()
     }
 
@@ -116,7 +117,7 @@ class InventoryActivity : AppCompatActivity() {
         }
 
         val sign = if (discrepancy > 0) "+" else ""
-        textDiscrepancy.text = "Discrepancy: $sign$discrepancy"
+        textDiscrepancy.text = "${L.strings.discrepancy}: $sign$discrepancy"
         textDiscrepancy.setTextColor(color)
     }
 
@@ -127,16 +128,16 @@ class InventoryActivity : AppCompatActivity() {
         val notes = editNotes.text.toString().trim()
 
         if (countedQty == null) {
-            Toast.makeText(this, "Enter the counted quantity", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedProductId == null) {
-            Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.selectProduct, Toast.LENGTH_SHORT).show()
             return
         }
         if (currentSiteId.isNullOrBlank()) {
-            Toast.makeText(this, "Select a site", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.selectSite, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -181,12 +182,7 @@ class InventoryActivity : AppCompatActivity() {
             }
 
             withContext(Dispatchers.Main) {
-                val message = if (discrepancy == 0.0) {
-                    "Inventory saved - No discrepancy"
-                } else {
-                    "Inventory saved - Discrepancy: $discrepancy adjusted"
-                }
-                Toast.makeText(this@InventoryActivity, message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@InventoryActivity, L.strings.inventoryCompleted, Toast.LENGTH_SHORT).show()
                 finish()
             }
         }

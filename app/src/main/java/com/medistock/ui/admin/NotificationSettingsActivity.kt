@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.medistock.R
 import com.medistock.shared.data.dto.NotificationSettingsDto
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.shared.i18n.L
 import com.medistock.util.AuthManager
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
@@ -25,12 +26,6 @@ class NotificationSettingsActivity : AppCompatActivity() {
     private lateinit var switchExpiryEnabled: Switch
     private lateinit var editExpiryWarningDays: EditText
     private lateinit var switchLowStockEnabled: Switch
-    private lateinit var editExpiredTitle: EditText
-    private lateinit var editExpiredMessage: EditText
-    private lateinit var editExpiringTitle: EditText
-    private lateinit var editExpiringMessage: EditText
-    private lateinit var editLowStockTitle: EditText
-    private lateinit var editLowStockMessage: EditText
     private lateinit var btnSaveSettings: Button
     private lateinit var progressBar: ProgressBar
 
@@ -40,7 +35,7 @@ class NotificationSettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_notification_settings)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Notification Settings"
+        supportActionBar?.title = L.strings.notificationSettings
 
         authManager = AuthManager.getInstance(this)
 
@@ -48,12 +43,6 @@ class NotificationSettingsActivity : AppCompatActivity() {
         switchExpiryEnabled = findViewById(R.id.switchExpiryEnabled)
         editExpiryWarningDays = findViewById(R.id.editExpiryWarningDays)
         switchLowStockEnabled = findViewById(R.id.switchLowStockEnabled)
-        editExpiredTitle = findViewById(R.id.editExpiredTitle)
-        editExpiredMessage = findViewById(R.id.editExpiredMessage)
-        editExpiringTitle = findViewById(R.id.editExpiringTitle)
-        editExpiringMessage = findViewById(R.id.editExpiringMessage)
-        editLowStockTitle = findViewById(R.id.editLowStockTitle)
-        editLowStockMessage = findViewById(R.id.editLowStockMessage)
         btnSaveSettings = findViewById(R.id.btnSaveSettings)
         progressBar = findViewById(R.id.progressBar)
 
@@ -61,7 +50,7 @@ class NotificationSettingsActivity : AppCompatActivity() {
 
         // Check if Supabase is configured
         if (!SupabaseClientProvider.isConfigured(this)) {
-            Toast.makeText(this, "Supabase not configured. Settings are stored on the server.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, L.strings.supabaseNotConfigured, Toast.LENGTH_LONG).show()
             btnSaveSettings.isEnabled = false
             return
         }
@@ -86,7 +75,7 @@ class NotificationSettingsActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Toast.makeText(
                     this@NotificationSettingsActivity,
-                    "Error loading settings: ${e.message}",
+                    "${L.strings.error}: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
                 // Use defaults
@@ -102,34 +91,12 @@ class NotificationSettingsActivity : AppCompatActivity() {
         switchExpiryEnabled.isChecked = settings.expiryAlertEnabled == 1
         editExpiryWarningDays.setText(settings.expiryWarningDays.toString())
         switchLowStockEnabled.isChecked = settings.lowStockAlertEnabled == 1
-
-        editExpiredTitle.setText(settings.templateExpiredTitle)
-        editExpiredMessage.setText(settings.templateExpiredMessage)
-        editExpiringTitle.setText(settings.templateExpiringTitle)
-        editExpiringMessage.setText(settings.templateExpiringMessage)
-        editLowStockTitle.setText(settings.templateLowStockTitle)
-        editLowStockMessage.setText(settings.templateLowStockMessage)
     }
 
     private fun saveSettings() {
         val expiryWarningDays = editExpiryWarningDays.text.toString().toIntOrNull()
         if (expiryWarningDays == null || expiryWarningDays < 1 || expiryWarningDays > 365) {
-            Toast.makeText(this, "Please enter a valid number of warning days (1-365)", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Validate template lengths (max 500 characters)
-        val maxTemplateLength = 500
-        val templates = listOf(
-            editExpiredTitle.text.toString(),
-            editExpiredMessage.text.toString(),
-            editExpiringTitle.text.toString(),
-            editExpiringMessage.text.toString(),
-            editLowStockTitle.text.toString(),
-            editLowStockMessage.text.toString()
-        )
-        if (templates.any { it.length > maxTemplateLength }) {
-            Toast.makeText(this, "Template messages must be less than $maxTemplateLength characters", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, L.strings.notificationInvalidDays, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -143,12 +110,6 @@ class NotificationSettingsActivity : AppCompatActivity() {
             expiredDedupDays = currentSettings?.expiredDedupDays ?: 7,
             lowStockAlertEnabled = if (switchLowStockEnabled.isChecked) 1 else 0,
             lowStockDedupDays = currentSettings?.lowStockDedupDays ?: 7,
-            templateExpiredTitle = editExpiredTitle.text.toString().trim().ifBlank { "Produit expiré" },
-            templateExpiredMessage = editExpiredMessage.text.toString().trim().ifBlank { "{{product_name}} a expiré" },
-            templateExpiringTitle = editExpiringTitle.text.toString().trim().ifBlank { "Expiration proche" },
-            templateExpiringMessage = editExpiringMessage.text.toString().trim().ifBlank { "{{product_name}} expire dans {{days_until}} jour(s)" },
-            templateLowStockTitle = editLowStockTitle.text.toString().trim().ifBlank { "Stock faible" },
-            templateLowStockMessage = editLowStockMessage.text.toString().trim().ifBlank { "{{product_name}}: {{current_stock}}/{{min_stock}}" },
             updatedAt = System.currentTimeMillis(),
             updatedBy = authManager.getUserId()
         )
@@ -164,13 +125,13 @@ class NotificationSettingsActivity : AppCompatActivity() {
                 currentSettings = updatedSettings
                 Toast.makeText(
                     this@NotificationSettingsActivity,
-                    "Settings saved successfully",
+                    L.strings.settingsSaved,
                     Toast.LENGTH_SHORT
                 ).show()
             } catch (e: Exception) {
                 Toast.makeText(
                     this@NotificationSettingsActivity,
-                    "Error saving settings: ${e.message}",
+                    "${L.strings.error}: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
             } finally {

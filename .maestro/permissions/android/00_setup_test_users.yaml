@@ -1,0 +1,29 @@
+# MediStock Android - Setup Test Users
+# Run this flow BEFORE permission tests to seed test users
+# Usage: maestro test .maestro/permissions/android/00_setup_test_users.yaml
+appId: com.medistock
+---
+
+# Seed test users via debug Activity
+- runScript:
+    script: |
+      adb shell am start -n com.medistock/.debug.TestSeederActivity --es action seed
+
+# Wait for seeding to complete
+- runScript:
+    script: |
+      sleep 3
+
+# Launch app to verify it works
+- launchApp:
+    clearState: false
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify we're on login screen (or home if already logged in)
+- assertVisible:
+    text: ".*Connexion.*|.*Stock.*"
+    optional: true
+
+- takeScreenshot: "android_test_users_seeded"

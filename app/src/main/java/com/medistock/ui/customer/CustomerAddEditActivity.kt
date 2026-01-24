@@ -15,6 +15,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Customer
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,7 +43,7 @@ class CustomerAddEditActivity : AppCompatActivity() {
 
         customerId = intent.getStringExtra("CUSTOMER_ID")?.takeIf { it.isNotBlank() }
         if (customerId != null) {
-            supportActionBar?.title = "Edit Customer"
+            supportActionBar?.title = L.strings.editCustomer
             btnDelete.visibility = View.VISIBLE
             lifecycleScope.launch {
                 val customer = withContext(Dispatchers.IO) {
@@ -57,13 +58,13 @@ class CustomerAddEditActivity : AppCompatActivity() {
                 }
             }
         } else {
-            supportActionBar?.title = "Add Customer"
+            supportActionBar?.title = L.strings.addCustomer
         }
 
         btnSave.setOnClickListener {
             val name = editName.text.toString().trim()
             if (name.isEmpty()) {
-                Toast.makeText(this, "Customer name required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -121,12 +122,12 @@ class CustomerAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Delete Customer")
-            .setMessage("Are you sure you want to delete this customer?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle(L.strings.deleteCustomer)
+            .setMessage("${L.strings.confirm}?")
+            .setPositiveButton(L.strings.delete) { _, _ ->
                 deleteCustomer()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(L.strings.cancel, null)
             .show()
     }
 
@@ -137,7 +138,7 @@ class CustomerAddEditActivity : AppCompatActivity() {
             withContext(Dispatchers.IO) {
                 sdk.customerRepository.delete(customerId!!)
             }
-            Toast.makeText(this@CustomerAddEditActivity, "Customer deleted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@CustomerAddEditActivity, L.strings.customerDeleted, Toast.LENGTH_SHORT).show()
             finish()
         }
     }

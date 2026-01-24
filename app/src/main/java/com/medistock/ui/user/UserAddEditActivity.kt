@@ -30,7 +30,7 @@ import com.medistock.shared.domain.model.UserPermission
 import com.medistock.shared.domain.model.Module
 import com.medistock.shared.domain.validation.PasswordPolicy
 import com.medistock.shared.domain.validation.PasswordPolicy.PasswordError
-import com.medistock.shared.i18n.LocalizationManager
+import com.medistock.shared.i18n.L
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
@@ -96,7 +96,7 @@ class UserAddEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         authManager = AuthManager.getInstance(this)
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         // Check if user is admin
         if (!authManager.isAdmin()) {
@@ -173,7 +173,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun applyLocalizedStrings() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         tvUserInfoTitle.text = strings.information
         editFullName.hint = strings.fullName
@@ -218,7 +218,7 @@ class UserAddEditActivity : AppCompatActivity() {
         passwordStrengthContainer.visibility = View.VISIBLE
 
         val strength = PasswordPolicy.getStrength(password)
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         // Update progress
         progressPasswordStrength.progress = strength.toProgress()
@@ -260,7 +260,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun setupPermissionsUI() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         // Module name translations
         val moduleNames = mapOf(
@@ -328,7 +328,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun updatePermissionsVisibility(isAdmin: Boolean) {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
         tvAdminNote.text = strings.admin // "Administrators have all permissions"
 
         if (isAdmin) {
@@ -345,7 +345,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun loadUser() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
 
         lifecycleScope.launch {
             try {
@@ -385,7 +385,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun updateToggleButtonText() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
         if (currentUserIsActive) {
             btnToggleActive.text = strings.deactivate
             btnToggleActive.setBackgroundColor(getColor(android.R.color.holo_orange_dark))
@@ -396,7 +396,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun saveUser() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
         val fullName = editFullName.text.toString().trim()
         val username = editUsername.text.toString().trim()
         val password = editPassword.text.toString()
@@ -519,7 +519,7 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private fun toggleUserActiveStatus() {
-        val strings = LocalizationManager.strings
+        val strings = L.strings
         val actionText = if (currentUserIsActive) strings.deactivate else strings.reactivate
 
         AlertDialog.Builder(this)

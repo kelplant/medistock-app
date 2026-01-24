@@ -40,20 +40,20 @@ struct StockListView: View {
                 Section {
                     EmptyStateView(
                         icon: "chart.bar",
-                        title: "No stock",
-                        message: "Make purchases to see your stock."
+                        title: Localized.noStock,
+                        message: Localized.strings.noStockMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
                 // Summary
-                Section(header: Text("Summary")) {
+                Section(header: Text(Localized.summary)) {
                     HStack {
                         VStack {
                             Text("\(stockItems.count)")
                                 .font(.title)
                                 .fontWeight(.bold)
-                            Text("Products")
+                            Text(Localized.products)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -63,7 +63,7 @@ struct StockListView: View {
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.red)
-                            Text("Out of stock")
+                            Text(Localized.outOfStock)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -73,7 +73,7 @@ struct StockListView: View {
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.orange)
-                            Text("Low stock")
+                            Text(Localized.lowStock)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -82,7 +82,7 @@ struct StockListView: View {
                 }
 
                 // Stock list
-                Section(header: Text("Stock by product")) {
+                Section(header: Text(Localized.stockByProduct)) {
                     ForEach(filteredItems, id: \.productId) { item in
                         StockItemRowView(item: item)
                     }
@@ -90,8 +90,8 @@ struct StockListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Stock")
-        .searchable(text: $searchText, prompt: "Search products")
+        .navigationTitle(Localized.stock)
+        .searchable(text: $searchText, prompt: Localized.search)
         .refreshable {
             await loadData()
         }
@@ -186,9 +186,9 @@ struct StockItemRowView: View {
             }
 
             HStack {
-                Text("Site: \(item.siteName)")
+                Text("\(Localized.site): \(item.siteName)")
                 Spacer()
-                Text("\(item.batchCount) lot(s)")
+                Text("\(item.batchCount) \(Localized.lots)")
             }
             .font(.caption)
             .foregroundColor(.secondary)
@@ -196,7 +196,7 @@ struct StockItemRowView: View {
             if let expiry = item.nearestExpiryDate {
                 HStack {
                     Image(systemName: "calendar.badge.exclamationmark")
-                    Text("Nearest exp.: \(formatDate(expiry))")
+                    Text("\(Localized.nearestExpiry): \(formatDate(expiry))")
                 }
                 .font(.caption)
                 .foregroundColor(isExpiringSoon(expiry) ? .orange : .secondary)
@@ -257,13 +257,13 @@ struct StockMovementsListView: View {
                 Section {
                     EmptyStateView(
                         icon: "arrow.up.arrow.down",
-                        title: "No movements",
-                        message: "Stock movements will appear here."
+                        title: Localized.noMovements,
+                        message: Localized.strings.noMovementsMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(movements.count) movement(s)")) {
+                Section(header: Text("\(movements.count) \(Localized.stockMovements.lowercased())")) {
                     ForEach(movements, id: \.id) { movement in
                         StockMovementRowView(
                             movement: movement,
@@ -275,7 +275,7 @@ struct StockMovementsListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Stock Movements")
+        .navigationTitle(Localized.stockMovements)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -323,11 +323,11 @@ struct StockMovementsListView: View {
     }
 
     private func productName(for productId: String) -> String {
-        products.first { $0.id == productId }?.name ?? "Unknown product"
+        products.first { $0.id == productId }?.name ?? Localized.unknownProduct
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Unknown site"
+        sites.first { $0.id == siteId }?.name ?? Localized.unknownSite
     }
 }
 
@@ -340,12 +340,12 @@ struct StockMovementRowView: View {
     var movementTypeLabel: String {
         let type = movement.movementType ?? movement.type
         switch type {
-        case "PURCHASE": return "Purchase"
-        case "SALE": return "Sale"
-        case "TRANSFER_IN": return "Transfer in"
-        case "TRANSFER_OUT": return "Transfer out"
-        case "ADJUSTMENT": return "Adjustment"
-        case "INVENTORY": return "Inventory"
+        case "PURCHASE": return Localized.purchase
+        case "SALE": return Localized.sale
+        case "TRANSFER_IN": return Localized.strings.transferIn
+        case "TRANSFER_OUT": return Localized.strings.transferOut
+        case "ADJUSTMENT": return Localized.stockAdjustment
+        case "INVENTORY": return Localized.inventory
         default: return type
         }
     }
@@ -376,7 +376,7 @@ struct StockMovementRowView: View {
             }
             .font(.caption)
 
-            Text("Site: \(siteName)")
+            Text("\(Localized.site): \(siteName)")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
@@ -422,9 +422,16 @@ struct StockMovementCreationView: View {
     @State private var showingWarning = false
     @State private var warningMessage: String = ""
 
-    enum MovementTypeOption: String, CaseIterable {
-        case stockIn = "Stock In"
-        case stockOut = "Stock Out"
+    enum MovementTypeOption: CaseIterable {
+        case stockIn
+        case stockOut
+
+        var displayName: String {
+            switch self {
+            case .stockIn: return Localized.stockIn
+            case .stockOut: return Localized.stockOut
+            }
+        }
 
         var movementTypeValue: String {
             switch self {
@@ -468,9 +475,9 @@ struct StockMovementCreationView: View {
                     }
                 } else {
                     // Product selection
-                    Section(header: Text("Product")) {
-                        Picker("Select a product", selection: $selectedProduct) {
-                            Text("Choose a product").tag(nil as Product?)
+                    Section(header: Text(Localized.product)) {
+                        Picker(Localized.selectProduct, selection: $selectedProduct) {
+                            Text(Localized.chooseProduct).tag(nil as Product?)
                             ForEach(products, id: \.id) { product in
                                 Text("\(product.name) (\(product.unit))")
                                     .tag(product as Product?)
@@ -480,10 +487,10 @@ struct StockMovementCreationView: View {
                     }
 
                     // Movement type
-                    Section(header: Text("Movement type")) {
-                        Picker("Type", selection: $movementType) {
+                    Section(header: Text(Localized.movementType)) {
+                        Picker(Localized.movementType, selection: $movementType) {
                             ForEach(MovementTypeOption.allCases, id: \.self) { type in
-                                Label(type.rawValue, systemImage: type.icon)
+                                Label(type.displayName, systemImage: type.icon)
                                     .tag(type)
                             }
                         }
@@ -491,9 +498,9 @@ struct StockMovementCreationView: View {
                     }
 
                     // Quantity
-                    Section(header: Text("Quantity")) {
+                    Section(header: Text(Localized.quantity)) {
                         HStack {
-                            TextField("Quantity", text: $quantity)
+                            TextField(Localized.quantity, text: $quantity)
                                 .keyboardType(.decimalPad)
 
                             if let product = selectedProduct {
@@ -504,13 +511,13 @@ struct StockMovementCreationView: View {
                     }
 
                     // Notes (optional)
-                    Section(header: Text("Notes (optional)")) {
+                    Section(header: Text(Localized.notes)) {
                         TextEditor(text: $notes)
                             .frame(minHeight: 60)
                             .overlay(
                                 Group {
                                     if notes.isEmpty {
-                                        Text("Add a note...")
+                                        Text(Localized.addNote)
                                             .foregroundColor(.secondary)
                                             .padding(.horizontal, 4)
                                             .padding(.vertical, 8)
@@ -522,7 +529,7 @@ struct StockMovementCreationView: View {
 
                     // Preview
                     if let product = selectedProduct, let qty = Double(quantity.replacingOccurrences(of: ",", with: ".")), qty > 0 {
-                        Section(header: Text("Preview")) {
+                        Section(header: Text(Localized.preview)) {
                             HStack {
                                 Image(systemName: movementType.icon)
                                     .foregroundColor(movementType.color)
@@ -536,16 +543,16 @@ struct StockMovementCreationView: View {
                     }
                 }
             }
-            .navigationTitle("Stock Movement")
+            .navigationTitle(Localized.stockMovements)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(Localized.cancel) {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(Localized.save) {
                         Task {
                             await saveMovement()
                         }
@@ -556,13 +563,13 @@ struct StockMovementCreationView: View {
             .task {
                 await loadProducts()
             }
-            .alert("Warning", isPresented: $showingWarning) {
-                Button("Continue", role: .destructive) {
+            .alert(Localized.warning, isPresented: $showingWarning) {
+                Button(Localized.`continue`, role: .destructive) {
                     Task {
                         await performSave()
                     }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button(Localized.cancel, role: .cancel) {}
             } message: {
                 Text(warningMessage)
             }
@@ -570,7 +577,7 @@ struct StockMovementCreationView: View {
                 if isSaving {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
-                    ProgressView("Saving...")
+                    ProgressView(Localized.saving)
                         .padding()
                         .background(Color(.systemBackground))
                         .cornerRadius(10)

@@ -139,6 +139,7 @@ object StringsDe : Strings {
     // ============================================
     override val purchases = "Einkäufe"
     override val purchase = "Einkauf"
+    override val newPurchase = "Neuer Einkauf"
     override val addPurchase = "Einkauf hinzufügen"
     override val purchaseHistory = "Einkaufshistorie"
     override val supplier = "Lieferant"
@@ -146,11 +147,19 @@ object StringsDe : Strings {
     override val batchNumber = "Chargennummer"
     override val purchaseDate = "Einkaufsdatum"
     override val expiryDate = "Ablaufdatum"
+    override val expiryDateOptional = "Ablaufdatum (optional)"
     override val quantity = "Menge"
     override val initialQuantity = "Anfangsmenge"
     override val remainingQuantity = "Restmenge"
     override val totalAmount = "Gesamtbetrag"
     override val purchaseRecorded = "Einkauf erfasst"
+    override val unitPurchasePrice = "Einkaufspreis pro Einheit"
+    override val unitSellingPrice = "Verkaufspreis pro Einheit"
+    override val marginCalculatedAuto = "Marge: automatisch berechnet"
+    override val sellingPriceNote = "Der Verkaufspreis wird automatisch basierend auf der Produktmarge berechnet, kann aber geändert werden."
+    override val savePurchase = "Einkauf speichern"
+    override val enterSupplierName = "Lieferantenname eingeben"
+    override val batchNumberExample = "Z.B.: LOT2024001"
 
     // ============================================
     // SALES
@@ -173,6 +182,14 @@ object StringsDe : Strings {
     override val saleCompleted = "Verkauf abgeschlossen"
     override val noSaleItems = "Keine Artikel im Verkauf"
     override val insufficientStock = "Unzureichender Bestand für {product}: {available} verfügbar, {requested} angefordert"
+    override val remainingQuantityNeeded = "Benötigte Restmenge: {quantity} Einheiten"
+    override val editSale = "Verkauf bearbeiten"
+    override val editPurchase = "Einkauf bearbeiten"
+    override val productsToSell = "Zu verkaufende Produkte"
+    override val addProductToSale = "+ Produkt hinzufügen"
+    override val enterCustomerName = "Kundenname eingeben"
+    override val pricePerUnit = "Preis pro Einheit"
+    override val exampleQuantity = "Z.B.: 10"
 
     // ============================================
     // INVENTORY
@@ -254,6 +271,8 @@ object StringsDe : Strings {
     override val realtimeDisconnected = "Echtzeit getrennt"
     override val lastError = "Letzter Fehler"
     override val offlineMode = "Offline-Modus"
+    override val conflictsDetected = "Konflikte erkannt"
+    override val changesWillSyncWhenOnline = "Änderungen werden synchronisiert, wenn Sie wieder online sind"
 
     // ============================================
     // SETTINGS
@@ -359,4 +378,229 @@ object StringsDe : Strings {
     override val currencyFormat = "{amount} {symbol}"
     override val decimalSeparator = ","
     override val thousandsSeparator = "."
+
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    override val notificationSettings = "Benachrichtigungseinstellungen"
+    override val notificationExpiryAlerts = "Ablaufwarnungen"
+    override val notificationEnableExpiry = "Ablaufbenachrichtigungen aktivieren"
+    override val notificationWarningDays = "Warntage vor Ablauf"
+    override val notificationExpiryDescription = "Benachrichtigungen erhalten, wenn Produkte bald ablaufen"
+    override val notificationLowStockAlerts = "Niedrige Bestandswarnungen"
+    override val notificationEnableLowStock = "Niedrige Bestandsbenachrichtigungen aktivieren"
+    override val notificationLowStockDescription = "Benachrichtigungen erhalten, wenn der Bestand unter den Mindestschwellenwert fällt"
+    override val notificationInvalidDays = "Bitte geben Sie eine gültige Anzahl von Tagen ein (1-365)"
+    override val settingsSaved = "Einstellungen erfolgreich gespeichert"
+    override val supabaseNotConfigured = "Supabase ist nicht konfiguriert"
+    override val notifications = "Benachrichtigungen"
+    override val noNotifications = "Keine Benachrichtigungen"
+    override val dismissAll = "Alle verwerfen"
+    override val allNotificationsDismissed = "Alle Benachrichtigungen wurden verworfen"
+
+    // ============================================
+    // HOME / OPERATIONS
+    // ============================================
+    override val currentSite = "Aktueller Standort"
+    override val operations = "Operationen"
+    override val purchaseProducts = "Produkte kaufen"
+    override val sellProducts = "Produkte verkaufen"
+    override val transferProducts = "Produkte übertragen"
+    override val viewStock = "Bestand anzeigen"
+    override val inventoryStock = "Bestandsinventur"
+    override val administration = "Verwaltung"
+    override val management = "Management"
+    override val siteManagement = "Standortverwaltung"
+    override val manageProducts = "Produkte verwalten"
+    override val manageCategories = "Kategorien verwalten"
+    override val manageCustomers = "Kunden verwalten"
+    override val userManagement = "Benutzerverwaltung"
+    override val history = "Verlauf"
+    override val configuration = "Konfiguration"
+
+    // ============================================
+    // PURCHASES EXTENDED
+    // ============================================
+    override val exhausted = "Erschöpft"
+    override val remainingQty = "Restmenge"
+    override val noPurchases = "Keine Einkäufe gefunden"
+
+    // ============================================
+    // SALES EXTENDED
+    // ============================================
+    override val noSales = "Keine Verkäufe gefunden"
+    override val saleDetails = "Verkaufsdetails"
+    override val items = "Artikel"
+    override val total = "Gesamt"
+    override val date = "Datum"
+
+    // ============================================
+    // INVENTORY EXTENDED
+    // ============================================
+    override val inventories = "Inventuren"
+    override val noInventories = "Keine Inventuren gefunden"
+    override val inProgress = "In Bearbeitung"
+    override val completed = "Abgeschlossen"
+    override val pending = "Ausstehend"
+    override val newInventory = "Neue Inventur"
+    override val start = "Starten"
+
+    // ============================================
+    // TRANSFERS EXTENDED
+    // ============================================
+    override val noTransfers = "Keine Übertragungen gefunden"
+    override val sourceSite = "Quellstandort"
+    override val destinationSite = "Zielstandort"
+    override val quantityToTransfer = "Zu übertragende Menge"
+    override val create = "Erstellen"
+
+    // ============================================
+    // STOCK EXTENDED
+    // ============================================
+    override val noStock = "Keine Bestandsdaten"
+    override val summary = "Zusammenfassung"
+    override val outOfStock = "Nicht vorrätig"
+    override val stockByProduct = "Bestand nach Produkt"
+    override val noMovements = "Keine Bewegungen gefunden"
+    override val availableStock = "Verfügbarer Bestand"
+    override val preview = "Vorschau"
+
+    // ============================================
+    // PACKAGING EXTENDED
+    // ============================================
+    override val noPackagingTypes = "Keine Verpackungsarten gefunden"
+    override val addLevel2 = "Ebene 2 hinzufügen"
+
+    // ============================================
+    // AUDIT
+    // ============================================
+    override val auditHistory = "Audit-Verlauf"
+    override val noHistory = "Kein Verlauf gefunden"
+    override val filterBy = "Filtern nach"
+    override val all = "Alle"
+    override val created = "Erstellt"
+    override val updated = "Aktualisiert"
+    override val deleted = "Gelöscht"
+    override val details = "Details"
+
+    // ============================================
+    // SUPABASE
+    // ============================================
+    override val supabaseConfiguration = "Supabase-Konfiguration"
+    override val projectUrl = "Projekt-URL"
+    override val anonKey = "Anonymer Schlüssel"
+    override val synchronization = "Synchronisierung"
+    override val syncData = "Daten synchronisieren"
+    override val currentStatus = "Aktueller Status"
+    override val configured = "Konfiguriert"
+    override val connection = "Verbindung"
+    override val testConnection = "Verbindung testen"
+    override val clearConfiguration = "Konfiguration löschen"
+    override val configSaved = "Konfiguration gespeichert"
+    override val syncCompleted = "Synchronisierung erfolgreich"
+    override val connectionSuccessful = "Verbindung erfolgreich"
+    override val howToGetInfo = "So erhalten Sie diese Informationen:"
+
+    // ============================================
+    // AUTH EXTENDED
+    // ============================================
+    override val configureSupabase = "Supabase konfigurieren"
+    override val authentication = "Authentifizierung"
+    override val enterCredentials = "Bitte geben Sie Ihre Anmeldedaten ein"
+    override val invalidPassword = "Ungültiges Passwort"
+    override val accountDisabled = "Dieses Konto ist deaktiviert"
+    override val connectionError = "Verbindungsfehler"
+    override val firstLoginRequiresInternet = "Die erste Anmeldung erfordert Internet"
+
+    // ============================================
+    // UI LABELS
+    // ============================================
+    override val view = "Ansehen"
+    override val select = "Auswählen"
+    override val chooseProduct = "Produkt auswählen"
+    override val orSelect = "Oder auswählen"
+    override val enable = "Aktivieren"
+    override val later = "Später"
+    override val alertsDescription = "Benachrichtigungen warnen Sie vor abgelaufenen Produkten und niedrigem Bestand."
+    override val justNow = "Gerade eben"
+    override val minutesAgo = "Vor {count} Min"
+    override val hoursAgo = "Vor {count} Std"
+    override val daysAgo = "Vor {count} Tag(en)"
+    override val critical = "Kritisch"
+    override val urgent = "Dringend"
+    override val info = "Info"
+    override val low = "Niedrig"
+    override val nearestExpiry = "Nächstes Ablaufdatum"
+    override val lots = "Charge(n)"
+    override val addNote = "Notiz hinzufügen..."
+    override val saving = "Speichern..."
+    override val continue_ = "Fortfahren"
+    override val unknownSite = "Unbekannter Standort"
+    override val unknownProduct = "Unbekanntes Produkt"
+
+    // EMPTY STATE MESSAGES
+    override val noProductsMessage = "Fügen Sie Ihr erstes Produkt hinzu, um zu beginnen"
+    override val noCustomersMessage = "Fügen Sie Ihren ersten Kunden hinzu, um zu beginnen"
+    override val noCategoriesMessage = "Fügen Sie Ihre erste Kategorie hinzu, um zu beginnen"
+    override val noSitesMessage = "Fügen Sie Ihren ersten Standort hinzu, um zu beginnen"
+    override val noPackagingTypesMessage = "Fügen Sie Ihren ersten Verpackungstyp hinzu, um zu beginnen"
+    override val noInventoriesMessage = "Es wurden noch keine Inventuren durchgeführt"
+    override val noSalesMessage = "Es wurden noch keine Verkäufe erfasst"
+    override val noPurchasesMessage = "Es wurden noch keine Einkäufe erfasst"
+    override val noTransfersMessage = "Es wurden noch keine Transfers erfasst"
+    override val noStockMessage = "Kein Bestand verfügbar"
+    override val noMovementsMessage = "Keine Lagerbewegungen erfasst"
+    override val noUsersMessage = "Fügen Sie Ihren ersten Benutzer hinzu, um zu beginnen"
+    override val historyWillAppearHere = "Der Audit-Verlauf wird hier angezeigt"
+
+    // ADDITIONAL UI STRINGS
+    override val addSiteFirst = "Fügen Sie zuerst einen Standort hinzu"
+    override val none = "Keiner"
+    override val stockAlerts = "Bestandswarnungen"
+    override val stockAlertDescription = "Legen Sie Mindest- und Höchstbestände fest, um Warnungen zu erhalten"
+    override val transferIn = "Transfer eingehend"
+    override val transferOut = "Transfer ausgehend"
+    override val batches = "Chargen"
+    override val noUsers = "Keine Benutzer"
+    override val adminHasAllPermissions = "Administratoren haben alle Berechtigungen"
+    override val create_ = "Erstellen"
+    override val selectSourceSiteFirst = "Wählen Sie zuerst den Quellstandort"
+    override val entries = "Einträge"
+    override val optional = "optional"
+    override val packagingTypeName = "Name des Verpackungstyps"
+    override val started = "Gestartet"
+    override val saleItem = "Verkaufsartikel"
+    override val purchaseBatch = "Einkaufscharge"
+    override val stockMovement = "Lagerbewegung"
+    override val supabaseStep1 = "1. Gehen Sie zu supabase.com und erstellen Sie ein Konto"
+    override val supabaseStep2 = "2. Erstellen Sie ein neues Projekt"
+    override val supabaseStep3 = "3. Gehen Sie zu Projekteinstellungen > API, um Ihre URL und den Anon-Schlüssel zu finden"
+
+    // ============================================
+    // APP UPDATE
+    // ============================================
+    override val updateRequired = "Update erforderlich"
+    override val updateAvailable = "Update verfügbar"
+    override val appVersionIncompatible = "Ihre App-Version ist nicht mit der Datenbank kompatibel. Bitte aktualisieren Sie die App, um fortzufahren."
+    override val appVersion = "App-Version"
+    override val minimumRequiredVersion = "Erforderliche Mindestversion"
+    override val databaseVersion = "Datenbankversion"
+    override val toUpdate = "Zum Aktualisieren"
+    override val contactAdminForUpdate = "Kontaktieren Sie Ihren Administrator, um die neueste Version der App zu erhalten."
+    override val checkingCompatibility = "Kompatibilität wird geprüft..."
+    override val download = "Herunterladen"
+    override val newVersionAvailable = "Eine neue Version von MediStock ist verfügbar."
+    override val currentVersionLabel = "Aktuelle Version"
+    override val newVersionLabel = "Neue Version"
+    override val whatsNew = "Neuigkeiten"
+    override val unableToLoadNotifications = "Benachrichtigungen können nicht geladen werden"
+
+    // ============================================
+    // APP SETTINGS
+    // ============================================
+    override val appSettings = "App-Einstellungen"
+    override val currencySymbolSetting = "Währungssymbol"
+    override val currencySymbolDescription = "Symbol zur Anzeige von Preisen (z.B. F, $, EUR)"
+    override val settingsSavedSuccessfully = "Einstellungen erfolgreich gespeichert"
+    override val invalidCurrencySymbol = "Bitte geben Sie ein gültiges Währungssymbol ein"
 }

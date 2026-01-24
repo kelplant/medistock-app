@@ -58,7 +58,7 @@ struct LoginView: View {
             .buttonStyle(.borderedProminent)
             .disabled(isLoading || username.isEmpty || password.isEmpty)
 
-            Button("Configure Supabase") {
+            Button(Localized.configureSupabase) {
                 isShowingSupabase = true
             }
             .buttonStyle(.bordered)
@@ -69,7 +69,7 @@ struct LoginView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Authentication")
+        .navigationTitle(Localized.authentication)
     }
 
     private func performLogin() {
@@ -77,7 +77,7 @@ struct LoginView: View {
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmedUser.isEmpty, !trimmedPassword.isEmpty else {
-            errorMessage = "Please enter your credentials."
+            errorMessage = Localized.enterCredentials
             return
         }
 
@@ -99,19 +99,22 @@ struct LoginView: View {
                     onLogin(user)
 
                 case .invalidCredentials:
-                    errorMessage = "Invalid password."
+                    errorMessage = Localized.invalidPassword
 
                 case .userNotFound:
-                    errorMessage = "User not found."
+                    errorMessage = Localized.userNotFound
 
                 case .userInactive:
-                    errorMessage = "This account is disabled. Contact an administrator."
+                    errorMessage = Localized.accountDisabled
 
                 case .networkError(let message):
-                    errorMessage = "Connection error: \(message)"
+                    errorMessage = "\(Localized.connectionError): \(message)"
 
                 case .notConfigured:
-                    errorMessage = "Supabase is not configured and no local user found."
+                    errorMessage = Localized.supabaseNotConfigured
+
+                case .networkRequired:
+                    errorMessage = Localized.firstLoginRequiresInternet
                 }
             }
         }
@@ -141,6 +144,9 @@ class SessionManager: ObservableObject {
     @Published var currentSiteId: String? {
         didSet { UserDefaults.standard.set(currentSiteId, forKey: "medistock_current_site") }
     }
+    @Published var language: String? {
+        didSet { UserDefaults.standard.set(language, forKey: "medistock_user_language") }
+    }
 
     /// Whether the user has a valid Supabase Auth session
     @Published var hasAuthSession: Bool = false
@@ -154,6 +160,7 @@ class SessionManager: ObservableObject {
         self.fullName = UserDefaults.standard.string(forKey: "medistock_fullname") ?? ""
         self.isAdmin = UserDefaults.standard.bool(forKey: "medistock_is_admin")
         self.currentSiteId = UserDefaults.standard.string(forKey: "medistock_current_site")
+        self.language = UserDefaults.standard.string(forKey: "medistock_user_language")
 
         // Check for stored auth tokens
         self.hasAuthSession = keychain.hasAuthTokens && !keychain.areAuthTokensExpired
@@ -182,6 +189,7 @@ class SessionManager: ObservableObject {
         self.fullName = ""
         self.isAdmin = false
         self.currentSiteId = nil
+        self.language = nil
         self.hasAuthSession = false
         PermissionManager.shared.clearPermissions()
 

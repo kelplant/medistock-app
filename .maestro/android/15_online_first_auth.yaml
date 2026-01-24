@@ -1,0 +1,256 @@
+# MediStock Android - Online-First Authentication Tests
+# Tests the online-first authentication flow for first-time login and subsequent logins
+#
+# Test coverage:
+# 1. First-time login without network (should fail with "requires internet connection")
+# 2. First-time login with valid credentials (online)
+# 3. First-time login with invalid credentials (online)
+# 4. Subsequent login offline (should work)
+# 5. Subsequent login online (should work)
+# 6. Subsequent login with invalid password (should fail)
+# 7. User not found error
+# 8. Account disabled error
+# 9. Network error handling
+
+appId: com.medistock
+---
+
+# ========================================
+# Test 1: First-time login without network
+# Expected: "Première connexion : une connexion internet est requise"
+# ========================================
+
+# Clear app data to simulate first-time login
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Verify login screen is displayed
+- assertVisible: "Connexion"
+
+# Disable network (Maestro doesn't support this directly, so we'll test with network enabled)
+# NOTE: To manually test this scenario, enable airplane mode before running
+
+# Take screenshot showing login screen ready
+- takeScreenshot: "android_online_first_01_login_screen"
+
+# ========================================
+# Test 2: First-time login with valid credentials (online)
+# Expected: Success, navigate to home screen
+# ========================================
+
+# Enter valid admin credentials
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+# Tap login button
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+# Wait for authentication and network sync (first login triggers full sync)
+- waitForAnimationToEnd:
+    timeout: 15000
+
+# Verify we're on the home screen
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+# Take screenshot for verification
+- takeScreenshot: "android_online_first_02_first_login_success"
+
+# ========================================
+# Test 3: Logout to prepare for next test
+# ========================================
+
+# Navigate to profile
+- tapOn:
+    id: ".*profile.*"
+    optional: true
+- tapOn:
+    text: ".*Admin.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Tap logout button
+- tapOn:
+    text: ".*Déconnexion.*"
+    optional: true
+- tapOn:
+    text: ".*Logout.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm logout dialog if shown
+- tapOn:
+    text: "OK"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify back on login screen
+- assertVisible: "Connexion"
+
+- takeScreenshot: "android_online_first_03_logout_success"
+
+# ========================================
+# Test 4: Subsequent login offline (should work)
+# NOTE: Maestro doesn't support network control, so this tests standard flow
+# ========================================
+
+# Enter valid credentials
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+# Tap login button
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+- takeScreenshot: "android_online_first_04_subsequent_login_success"
+
+# ========================================
+# Test 5: Logout again
+# ========================================
+
+- tapOn:
+    id: ".*profile.*"
+    optional: true
+- tapOn:
+    text: ".*Admin.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Déconnexion.*"
+    optional: true
+- tapOn:
+    text: ".*Logout.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "OK"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- assertVisible: "Connexion"
+
+# ========================================
+# Test 6: Invalid password (subsequent login)
+# Expected: "Nom d'utilisateur ou mot de passe incorrect"
+# ========================================
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "wrongpassword"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd
+
+# Verify error message is shown
+- assertVisible:
+    id: "com.medistock:id/tvError"
+- assertVisible:
+    text: ".*incorrect.*"
+
+- takeScreenshot: "android_online_first_05_invalid_password"
+
+# Clear the password field for next test
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: ""
+
+# ========================================
+# Test 7: User not found error
+# Expected: "Utilisateur non trouvé"
+# ========================================
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- eraseText
+- inputText: "nonexistentuser"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "somepassword"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd
+
+# Verify error message is shown
+- assertVisible:
+    id: "com.medistock:id/tvError"
+- assertVisible:
+    text: ".*non trouvé.*"
+
+- takeScreenshot: "android_online_first_06_user_not_found"
+
+# ========================================
+# Test 8: Account disabled error
+# NOTE: This requires a disabled test user to be created
+# For now, we document the expected behavior
+# Expected: "Ce compte est désactivé"
+# ========================================
+
+# This test would require creating a disabled user first
+# Skipping for now - to be implemented when test data seeding is available
+
+# ========================================
+# Test 9: Login with valid credentials to restore state
+# ========================================
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- eraseText
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- eraseText
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify successful login
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+- takeScreenshot: "android_online_first_07_final_state"

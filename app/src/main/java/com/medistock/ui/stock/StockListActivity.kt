@@ -18,6 +18,7 @@ import com.medistock.shared.domain.model.CurrentStock
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.Site
 import com.medistock.ui.adapters.StockAdapter
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -62,7 +63,7 @@ class StockListActivity : AppCompatActivity() {
             sites = sdk.siteRepository.getAll()
             withContext(Dispatchers.Main) {
                 // Add "All Sites" option
-                val siteNames = mutableListOf("All sites")
+                val siteNames = mutableListOf(L.strings.allSites)
                 siteNames.addAll(sites.map { it.name })
 
                 val spinnerAdapter = ArrayAdapter(
@@ -92,7 +93,7 @@ class StockListActivity : AppCompatActivity() {
             products = sdk.productRepository.getAll()
             withContext(Dispatchers.Main) {
                 // Add "All Products" option
-                val productNames = mutableListOf("All products")
+                val productNames = mutableListOf(L.strings.products)
                 productNames.addAll(products.map { it.name })
 
                 val spinnerAdapter = ArrayAdapter(
@@ -154,7 +155,7 @@ class StockListActivity : AppCompatActivity() {
         val itemsInStock = currentStockItems.count { it.quantityOnHand > 0 }
         val outOfStock = currentStockItems.count { it.quantityOnHand <= 0 }
 
-        summaryText.text = "Products: $totalProducts | In stock: $itemsInStock | Out of stock: $outOfStock"
+        summaryText.text = "${L.strings.products}: $totalProducts | ${L.strings.stock}: $itemsInStock | ${L.strings.lowStock}: $outOfStock"
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

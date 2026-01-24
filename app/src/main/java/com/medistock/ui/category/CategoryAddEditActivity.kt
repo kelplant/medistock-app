@@ -13,6 +13,7 @@ import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Category
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +37,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
 
         categoryId = intent.getStringExtra("CATEGORY_ID")?.takeIf { it.isNotBlank() }
         if (categoryId != null) {
-            supportActionBar?.title = "Edit Category"
+            supportActionBar?.title = L.strings.editCategory
             btnDelete.visibility = View.VISIBLE
             CoroutineScope(Dispatchers.IO).launch {
                 val cat = sdk.categoryRepository.getById(categoryId!!)
@@ -48,13 +49,13 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 }
             }
         } else {
-            supportActionBar?.title = "Add Category"
+            supportActionBar?.title = L.strings.addCategory
         }
 
         btnSave.setOnClickListener {
             val name = editName.text.toString().trim()
             if (name.isEmpty()) {
-                Toast.makeText(this, "Category name required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             CoroutineScope(Dispatchers.IO).launch {
@@ -84,12 +85,12 @@ class CategoryAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Delete Category")
-            .setMessage("Are you sure you want to delete this category?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle(L.strings.deleteCategory)
+            .setMessage("${L.strings.confirm}?")
+            .setPositiveButton(L.strings.delete) { _, _ ->
                 deleteCategory()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(L.strings.cancel, null)
             .show()
     }
 
@@ -99,7 +100,7 @@ class CategoryAddEditActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             sdk.categoryRepository.delete(categoryId!!)
             runOnUiThread {
-                Toast.makeText(this@CategoryAddEditActivity, "Category deleted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CategoryAddEditActivity, L.strings.categoryDeleted, Toast.LENGTH_SHORT).show()
                 finish()
             }
         }

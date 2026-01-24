@@ -14,6 +14,7 @@ import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Site
 import com.medistock.util.AuthManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,7 +39,7 @@ class SiteAddEditActivity : AppCompatActivity() {
 
         siteId = intent.getStringExtra("SITE_ID")?.takeIf { it.isNotBlank() }
         if (siteId != null) {
-            supportActionBar?.title = "Edit Site"
+            supportActionBar?.title = L.strings.editSite
             btnDelete.visibility = View.VISIBLE
             lifecycleScope.launch {
                 val site = withContext(Dispatchers.IO) {
@@ -50,13 +51,13 @@ class SiteAddEditActivity : AppCompatActivity() {
                 }
             }
         } else {
-            supportActionBar?.title = "Add Site"
+            supportActionBar?.title = L.strings.addSite
         }
 
         btnSave.setOnClickListener {
             val name = editName.text.toString().trim()
             if (name.isEmpty()) {
-                Toast.makeText(this, "Site name required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -97,12 +98,12 @@ class SiteAddEditActivity : AppCompatActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Delete Site")
-            .setMessage("Are you sure you want to delete this site?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle(L.strings.deleteSite)
+            .setMessage("${L.strings.confirm}?")
+            .setPositiveButton(L.strings.delete) { _, _ ->
                 deleteSite()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(L.strings.cancel, null)
             .show()
     }
 
@@ -113,7 +114,7 @@ class SiteAddEditActivity : AppCompatActivity() {
             withContext(Dispatchers.IO) {
                 sdk.siteRepository.delete(siteId!!)
             }
-            Toast.makeText(this@SiteAddEditActivity, "Site deleted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@SiteAddEditActivity, L.strings.siteDeleted, Toast.LENGTH_SHORT).show()
             finish()
         }
     }

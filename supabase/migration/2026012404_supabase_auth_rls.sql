@@ -13,8 +13,8 @@ BEGIN
     RETURN EXISTS (
         SELECT 1 FROM app_users
         WHERE id = auth.uid()
-        AND is_admin = 1
-        AND is_active = 1
+        AND is_admin = TRUE
+        AND is_active = TRUE
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;

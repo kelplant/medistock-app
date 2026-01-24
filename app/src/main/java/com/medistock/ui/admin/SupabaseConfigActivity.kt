@@ -14,9 +14,11 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.medistock.MedistockApplication
 import com.medistock.R
+import com.medistock.data.remote.SupabaseAuthService
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.sync.SyncManager
 import com.medistock.data.sync.SyncScheduler
+import com.medistock.util.AuthManager
 import com.medistock.util.SecureSupabasePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,7 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.realtime
 import com.google.android.material.snackbar.Snackbar
+import com.medistock.shared.i18n.L
 
 class SupabaseConfigActivity : AppCompatActivity() {
     companion object {
@@ -55,7 +58,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
         setContentView(R.layout.activity_supabase_config)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Configuration Supabase"
+        supportActionBar?.title = L.strings.syncing
 
         preferences = SecureSupabasePreferences(this)
         syncManager = SyncManager(this)
@@ -138,11 +141,33 @@ class SupabaseConfigActivity : AppCompatActivity() {
             return
         }
 
+        // Validate API key format (Supabase anon keys are JWTs starting with "eyJ")
+        if (!key.startsWith("eyJ") || !key.contains(".") || key.length < 100) {
+            showStatus("Clé API invalide. La clé doit être un JWT (commence par 'eyJ...')", false)
+            return
+        }
+
         preferences.saveSupabaseConfig(url, key)
 
         // Reinitialize Supabase client with new configuration
         try {
             SupabaseClientProvider.reinitialize(this)
+
+            // Remove local admin user since we now have Supabase configured
+            // This prevents UUID conflicts with remote users
+            // Note: If this fails, removeLocalAdminIfRemoteUsersExist will handle it during sync
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val sdk = MedistockApplication.sdk
+                    val removed = sdk.defaultAdminService.forceRemoveLocalAdmin()
+                    if (removed) {
+                        DebugConfig.d(TAG, "Local admin removed after Supabase config")
+                    }
+                } catch (e: Exception) {
+                    DebugConfig.w(TAG, "Failed to remove local admin: ${e.message}")
+                    // Not critical - will be handled by removeLocalAdminIfRemoteUsersExist during sync
+                }
+            }
 
             // Run pending migrations after Supabase is configured
             lifecycleScope.launch {
@@ -394,6 +419,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
         showSyncStatus("Envoi des données vers Supabase...", null)
 
         CoroutineScope(Dispatchers.IO).launch {
+            // Restore Supabase Auth session before syncing
+            val authManager = AuthManager.getInstance(this@SupabaseConfigActivity)
+            SupabaseAuthService().restoreSessionIfNeeded(authManager)
+
             syncManager.syncLocalToRemote(
                 onProgress = { progress ->
                     CoroutineScope(Dispatchers.Main).launch {
@@ -423,6 +452,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
         showSyncStatus("Récupération des données depuis Supabase...", null)
 
         CoroutineScope(Dispatchers.IO).launch {
+            // Restore Supabase Auth session before syncing
+            val authManager = AuthManager.getInstance(this@SupabaseConfigActivity)
+            SupabaseAuthService().restoreSessionIfNeeded(authManager)
+
             syncManager.syncRemoteToLocal(
                 onProgress = { progress ->
                     CoroutineScope(Dispatchers.Main).launch {
@@ -452,6 +485,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
         showSyncStatus("Synchronisation complète en cours...", null)
 
         CoroutineScope(Dispatchers.IO).launch {
+            // Restore Supabase Auth session before syncing
+            val authManager = AuthManager.getInstance(this@SupabaseConfigActivity)
+            SupabaseAuthService().restoreSessionIfNeeded(authManager)
+
             syncManager.fullSync(
                 onProgress = { progress ->
                     CoroutineScope(Dispatchers.Main).launch {

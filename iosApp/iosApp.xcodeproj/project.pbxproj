@@ -56,9 +56,11 @@
 A1SVC011BBBB000100000011 /* DebugConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC011BBBB000000000011 /* DebugConfig.swift */; };
 		A1SVC012BBBB000100000012 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC012BBBB000000000012 /* Localization.swift */; };
 		A1SVC013BBBB000100000013 /* NotificationObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC013BBBB000000000013 /* NotificationObserver.swift */; };
+		A1SVC014BBBB000100000014 /* TestUserSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SVC014BBBB000000000014 /* TestUserSeeder.swift */; };
 		A1000014AAAA000100000014 /* AppUpdateRequiredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */; };
 		A1000015AAAA000100000015 /* NotificationViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000015AAAA000000000015 /* NotificationViews.swift */; };
 		A1000016AAAA000100000016 /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016AAAA000000000016 /* NotificationSettingsView.swift */; };
+		A1000017AAAA000100000017 /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017AAAA000000000017 /* AppSettingsView.swift */; };
 		A1SYNC01CCCC000100000001 /* SyncQueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC01CCCC000000000001 /* SyncQueueItem.swift */; };
 		A1SYNC02CCCC000100000002 /* SyncQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC02CCCC000000000002 /* SyncQueueStore.swift */; };
 		A1SYNC03CCCC000100000003 /* SyncQueueHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1SYNC03CCCC000000000003 /* SyncQueueHelper.swift */; };
@@ -131,9 +133,11 @@ A1SVC011BBBB000100000011 /* DebugConfig.swift in Sources */ = {isa = PBXBuildFil
 A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugConfig.swift; sourceTree = "<group>"; };
 		A1SVC012BBBB000000000012 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		A1SVC013BBBB000000000013 /* NotificationObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationObserver.swift; sourceTree = "<group>"; };
+		A1SVC014BBBB000000000014 /* TestUserSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestUserSeeder.swift; sourceTree = "<group>"; };
 		A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateRequiredView.swift; sourceTree = "<group>"; };
 		A1000015AAAA000000000015 /* NotificationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViews.swift; sourceTree = "<group>"; };
 		A1000016AAAA000000000016 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
+		A1000017AAAA000000000017 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
 		82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012201_inventory_and_schema_updates.sql; sourceTree = "<group>"; };
 		82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012202_align_room_schema.sql; sourceTree = "<group>"; };
 		82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012203_enhance_sync_queue.sql; sourceTree = "<group>"; };
@@ -245,6 +249,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 				A1SVC011BBBB000000000011 /* DebugConfig.swift */,
 				A1SVC012BBBB000000000012 /* Localization.swift */,
 				A1SVC013BBBB000000000013 /* NotificationObserver.swift */,
+				A1SVC014BBBB000000000014 /* TestUserSeeder.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -290,6 +295,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 				A1000014AAAA000000000014 /* AppUpdateRequiredView.swift */,
 				A1000015AAAA000000000015 /* NotificationViews.swift */,
 				A1000016AAAA000000000016 /* NotificationSettingsView.swift */,
+				A1000017AAAA000000000017 /* AppSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -455,9 +461,11 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 				A1SVC011BBBB000100000011 /* DebugConfig.swift in Sources */,
 				A1SVC012BBBB000100000012 /* Localization.swift in Sources */,
 				A1SVC013BBBB000100000013 /* NotificationObserver.swift in Sources */,
+				A1SVC014BBBB000100000014 /* TestUserSeeder.swift in Sources */,
 				A1000014AAAA000100000014 /* AppUpdateRequiredView.swift in Sources */,
 				A1000015AAAA000100000015 /* NotificationViews.swift in Sources */,
 				A1000016AAAA000100000016 /* NotificationSettingsView.swift in Sources */,
+				A1000017AAAA000100000017 /* AppSettingsView.swift in Sources */,
 				A1SYNC01CCCC000100000001 /* SyncQueueItem.swift in Sources */,
 				A1SYNC02CCCC000100000002 /* SyncQueueStore.swift in Sources */,
 				A1SYNC03CCCC000100000003 /* SyncQueueHelper.swift in Sources */,

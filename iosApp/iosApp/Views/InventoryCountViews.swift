@@ -35,8 +35,8 @@ struct InventoryListView: View {
                 Section {
                     EmptyStateView(
                         icon: "list.clipboard",
-                        title: "No inventories",
-                        message: "Start an inventory to count your physical stock."
+                        title: Localized.noInventories,
+                        message: Localized.strings.noInventoriesMessage
                     )
                 }
                 .listRowSeparator(.hidden)
@@ -44,7 +44,7 @@ struct InventoryListView: View {
                 // In progress
                 let inProgress = inventories.filter { $0.status == "in_progress" }
                 if !inProgress.isEmpty {
-                    Section(header: Text("In progress (\(inProgress.count))")) {
+                    Section(header: Text("\(Localized.inProgress) (\(inProgress.count))")) {
                         ForEach(inProgress, id: \.id) { inventory in
                             InventoryRowView(
                                 inventory: inventory,
@@ -58,7 +58,7 @@ struct InventoryListView: View {
                 // Completed
                 let completed = inventories.filter { $0.status == "completed" }
                 if !completed.isEmpty {
-                    Section(header: Text("Completed (\(completed.count))")) {
+                    Section(header: Text("\(Localized.completed) (\(completed.count))")) {
                         ForEach(completed, id: \.id) { inventory in
                             InventoryRowView(
                                 inventory: inventory,
@@ -71,7 +71,7 @@ struct InventoryListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Inventories")
+        .navigationTitle(Localized.inventories)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -113,7 +113,7 @@ struct InventoryListView: View {
     }
 
     private func siteName(for siteId: String) -> String {
-        sites.first { $0.id == siteId }?.name ?? "Unknown site"
+        sites.first { $0.id == siteId }?.name ?? Localized.unknownSite
     }
 
     private func completeInventory(_ inventory: Inventory) {
@@ -148,10 +148,10 @@ struct InventoryRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Inventory - \(siteName)")
+                Text("\(Localized.inventory) - \(siteName)")
                     .font(.headline)
                 Spacer()
-                Text(inventory.status == "completed" ? "Completed" : "In progress")
+                Text(inventory.status == "completed" ? Localized.completed : Localized.inProgress)
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
@@ -161,9 +161,9 @@ struct InventoryRowView: View {
             }
 
             HStack {
-                Text("Started: \(formatDate(inventory.startedAt))")
+                Text("\(Localized.strings.started): \(formatDate(inventory.startedAt))")
                 if let completed = inventory.completedAt {
-                    Text("- Completed: \(formatDate(completed))")
+                    Text("- \(Localized.completed): \(formatDate(completed))")
                 }
             }
             .font(.caption)
@@ -177,7 +177,7 @@ struct InventoryRowView: View {
 
             if let onComplete = onComplete, inventory.status == "in_progress" {
                 Button(action: onComplete) {
-                    Text("Complete inventory")
+                    Text(Localized.completeInventory)
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                 }
@@ -214,26 +214,26 @@ struct InventoryEditorView: View {
     @ViewBuilder
     private var notesField: some View {
         if #available(iOS 16.0, *) {
-            TextField("Notes", text: $notes, axis: .vertical)
+            TextField(Localized.notes, text: $notes, axis: .vertical)
                 .lineLimit(3...6)
         } else {
-            TextField("Notes", text: $notes)
+            TextField(Localized.notes, text: $notes)
         }
     }
 
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Site")) {
-                    Picker("Site", selection: $selectedSiteId) {
-                        Text("Select").tag("")
+                Section(header: Text(Localized.site)) {
+                    Picker(Localized.site, selection: $selectedSiteId) {
+                        Text(Localized.select).tag("")
                         ForEach(sites, id: \.id) { site in
                             Text(site.name).tag(site.id)
                         }
                     }
                 }
 
-                Section(header: Text("Notes (optional)")) {
+                Section(header: Text(Localized.notes)) {
                     notesField
                 }
 
@@ -244,13 +244,13 @@ struct InventoryEditorView: View {
                     }
                 }
             }
-            .navigationTitle("New Inventory")
+            .navigationTitle(Localized.newInventory)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Start") {
+                    Button(Localized.start) {
                         saveInventory()
                     }
                     .disabled(selectedSiteId.isEmpty || isSaving)

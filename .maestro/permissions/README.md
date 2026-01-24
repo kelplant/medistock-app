@@ -7,6 +7,8 @@ This directory contains comprehensive E2E tests for validating the granular perm
 ```
 permissions/
 ├── android/
+│   ├── 00_setup_test_users.yaml   # REQUIRED: Run before permission tests
+│   ├── 99_cleanup_test_users.yaml # REQUIRED: Run after permission tests
 │   ├── visibility/          # 13 tests - UI visibility validation
 │   │   ├── 01_no_permission.yaml
 │   │   ├── 02_sites_only.yaml
@@ -29,6 +31,8 @@ permissions/
 │   │   └── 05_products_full_crud.yaml
 │   └── combination/         # Future: combination permission tests
 └── ios/
+    ├── 00_setup_test_users.yaml   # REQUIRED: Run before permission tests
+    ├── 99_cleanup_test_users.yaml # REQUIRED: Run after permission tests
     ├── visibility/          # 13 tests - UI visibility validation
     │   ├── 01_no_permission.yaml
     │   ├── 02_sites_only.yaml
@@ -150,9 +154,29 @@ Each test follows this pattern:
 
 ## Running the Tests
 
+### Setup and Cleanup (REQUIRED)
+
+Permission tests require test users to be seeded before running and cleaned up after.
+
+```bash
+# Android: Seed test users BEFORE running permission tests
+maestro test .maestro/permissions/android/00_setup_test_users.yaml
+
+# ... run your permission tests ...
+
+# Android: Cleanup test users AFTER running permission tests
+maestro test .maestro/permissions/android/99_cleanup_test_users.yaml
+```
+
 ### Android Permission Tests
 
 ```bash
+# Complete test run with setup and cleanup
+maestro test .maestro/permissions/android/00_setup_test_users.yaml && \
+maestro test .maestro/permissions/android/visibility/ && \
+maestro test .maestro/permissions/android/crud/ && \
+maestro test .maestro/permissions/android/99_cleanup_test_users.yaml
+
 # All Android visibility tests (13 tests)
 maestro test .maestro/permissions/android/visibility/
 
@@ -174,22 +198,28 @@ maestro test .maestro/permissions/android/crud/05_products_full_crud.yaml
 ### iOS Permission Tests
 
 ```bash
+# Complete test run with setup and cleanup
+maestro test -p ios .maestro/permissions/ios/00_setup_test_users.yaml && \
+maestro test -p ios .maestro/permissions/ios/visibility/ && \
+maestro test -p ios .maestro/permissions/ios/crud/ && \
+maestro test -p ios .maestro/permissions/ios/99_cleanup_test_users.yaml
+
 # All iOS visibility tests (13 tests)
-maestro -p ios test .maestro/permissions/ios/visibility/
+maestro test -p ios .maestro/permissions/ios/visibility/
 
 # All iOS CRUD permission tests (5 tests)
-maestro -p ios test .maestro/permissions/ios/crud/
+maestro test -p ios .maestro/permissions/ios/crud/
 
 # All iOS permission tests (18 tests)
-maestro -p ios test .maestro/permissions/ios/
+maestro test -p ios .maestro/permissions/ios/
 
 # Individual visibility test
-maestro -p ios test .maestro/permissions/ios/visibility/01_no_permission.yaml
-maestro -p ios test .maestro/permissions/ios/visibility/07_stock_only.yaml
+maestro test -p ios .maestro/permissions/ios/visibility/01_no_permission.yaml
+maestro test -p ios .maestro/permissions/ios/visibility/07_stock_only.yaml
 
 # Individual CRUD permission test
-maestro -p ios test .maestro/permissions/ios/crud/01_products_view_only.yaml
-maestro -p ios test .maestro/permissions/ios/crud/05_products_full_crud.yaml
+maestro test -p ios .maestro/permissions/ios/crud/01_products_view_only.yaml
+maestro test -p ios .maestro/permissions/ios/crud/05_products_full_crud.yaml
 ```
 
 ### Both Platforms

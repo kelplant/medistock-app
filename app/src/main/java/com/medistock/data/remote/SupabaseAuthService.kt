@@ -1,52 +1,19 @@
 package com.medistock.data.remote
 
+import com.medistock.shared.domain.auth.MigrateUserRequest
+import com.medistock.shared.domain.auth.MigrateUserResponse
+import com.medistock.shared.domain.auth.OnlineFirstAuthResult
+import com.medistock.shared.domain.auth.parseAuthError
+import com.medistock.shared.domain.auth.toUser
 import com.medistock.shared.domain.model.User
 import com.medistock.util.AuthManager
+import com.medistock.util.DebugConfig
 import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.gotrue.user.UserSession
 import io.ktor.client.call.body
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-
-/**
- * Response from migrate-user-to-auth Edge Function
- */
-@Serializable
-data class MigrateUserResponse(
-    val success: Boolean,
-    val message: String? = null,
-    val error: String? = null,
-    val user: MigrateUserData? = null,
-    val session: MigrateSessionData? = null
-)
-
-@Serializable
-data class MigrateUserData(
-    val id: String,
-    val username: String,
-    val name: String,
-    val isAdmin: Boolean
-)
-
-@Serializable
-data class MigrateSessionData(
-    val accessToken: String,
-    val refreshToken: String,
-    val expiresAt: Long? = null
-)
-
-/**
- * Request body for migrate-user-to-auth Edge Function
- */
-@Serializable
-data class MigrateUserRequest(
-    val username: String,
-    val password: String
-)
 
 /**
  * Sealed class for Supabase Auth results
@@ -95,6 +62,7 @@ class SupabaseAuthService {
     private val json = Json { ignoreUnknownKeys = true }
 
     companion object {
+        private const val TAG = "SupabaseAuthService"
         private const val EMAIL_DOMAIN = "medistock.local"
 
         /**
@@ -156,7 +124,7 @@ class SupabaseAuthService {
 
         } catch (e: Exception) {
             val errorMessage = e.message ?: "Unknown error"
-            println("Supabase Auth failed: $errorMessage")
+            DebugConfig.d(TAG, "Supabase Auth failed: $errorMessage")
 
             // Check if this is an invalid credentials error
             if (errorMessage.contains("Invalid login credentials", ignoreCase = true) ||
@@ -191,38 +159,46 @@ class SupabaseAuthService {
         return try {
             val client = SupabaseClientProvider.client
 
-            val requestBody = json.encodeToString(
-                MigrateUserRequest.serializer(),
-                MigrateUserRequest(username, password)
-            )
-
             val response = client.functions.invoke(
                 function = "migrate-user-to-auth",
-                body = requestBody,
-                headers = Headers.build {
-                    append(HttpHeaders.ContentType, "application/json")
-                }
+                body = MigrateUserRequest(username, password)
             )
 
             val responseBody = response.body<String>()
             val result = json.decodeFromString<MigrateUserResponse>(responseBody)
 
-            if (result.success && result.user != null && result.session != null) {
+            val userData = result.user
+            val sessionData = result.session
+            if (result.success && userData != null && sessionData != null) {
                 val user = User(
-                    id = result.user.id,
-                    username = result.user.username,
+                    id = userData.id,
+                    username = userData.username,
                     password = "", // We don't store password in User model
-                    fullName = result.user.name,
-                    isAdmin = result.user.isAdmin,
+                    fullName = userData.name,
+                    isAdmin = userData.isAdmin,
                     isActive = true, // If login succeeded, user is active
                     createdAt = System.currentTimeMillis(),
                     updatedAt = System.currentTimeMillis()
                 )
 
                 val session = AuthManager.SupabaseSession(
-                    accessToken = result.session.accessToken,
-                    refreshToken = result.session.refreshToken,
-                    expiresAt = result.session.expiresAt ?: 0
+                    accessToken = sessionData.accessToken,
+                    refreshToken = sessionData.refreshToken,
+                    expiresAt = sessionData.expiresAt ?: 0
+                )
+
+                // Set the session on the Supabase client so RLS works
+                val expiresIn = sessionData.expiresAt?.let {
+                    (it - System.currentTimeMillis() / 1000).coerceAtLeast(0)
+                } ?: 3600L
+                client.auth.importSession(
+                    UserSession(
+                        accessToken = sessionData.accessToken,
+                        refreshToken = sessionData.refreshToken,
+                        expiresIn = expiresIn,
+                        tokenType = "Bearer",
+                        user = null
+                    )
                 )
 
                 SupabaseAuthResult.Success(user, session)
@@ -245,8 +221,78 @@ class SupabaseAuthService {
 
         } catch (e: Exception) {
             val errorMessage = e.message ?: "Unknown error"
-            println("migrate-user-to-auth failed: $errorMessage")
+            DebugConfig.d(TAG, "migrate-user-to-auth failed: $errorMessage")
             SupabaseAuthResult.Error("Migration failed: $errorMessage")
+        }
+    }
+
+    /**
+     * Online-first authentication for first-time login.
+     * This method authenticates directly with Supabase without requiring a local user.
+     *
+     * Flow:
+     * 1. Call migrate-user-to-auth Edge Function with username/password
+     * 2. Edge Function verifies credentials against Supabase DB
+     * 3. Returns user data + session tokens
+     * 4. Sets session on Supabase client for RLS
+     *
+     * @param username The username
+     * @param password The plain text password
+     * @return OnlineFirstAuthResult with user data and session tokens
+     */
+    suspend fun authenticateOnlineFirst(
+        username: String,
+        password: String
+    ): OnlineFirstAuthResult {
+        if (!SupabaseClientProvider.isConfigured() || !SupabaseClientProvider.isInitialized()) {
+            return OnlineFirstAuthResult.NotConfigured
+        }
+
+        return try {
+            val client = SupabaseClientProvider.client
+
+            val response = client.functions.invoke(
+                function = "migrate-user-to-auth",
+                body = MigrateUserRequest(username, password)
+            )
+
+            val responseBody = response.body<String>()
+            val result = json.decodeFromString<MigrateUserResponse>(responseBody)
+
+            val sessionData = result.session
+            if (result.success && result.user != null && sessionData != null) {
+                val user = result.toUser()
+                    ?: return OnlineFirstAuthResult.Error("Failed to parse user data")
+
+                // Set the session on the Supabase client so RLS works
+                val expiresIn = sessionData.expiresAt?.let {
+                    (it - System.currentTimeMillis() / 1000).coerceAtLeast(0)
+                } ?: 3600L
+
+                client.auth.importSession(
+                    UserSession(
+                        accessToken = sessionData.accessToken,
+                        refreshToken = sessionData.refreshToken,
+                        expiresIn = expiresIn,
+                        tokenType = "Bearer",
+                        user = null
+                    )
+                )
+
+                OnlineFirstAuthResult.Success(
+                    user = user,
+                    accessToken = sessionData.accessToken,
+                    refreshToken = sessionData.refreshToken,
+                    expiresAt = sessionData.expiresAt ?: (System.currentTimeMillis() / 1000 + 3600)
+                )
+            } else {
+                parseAuthError(result.error ?: result.message)
+            }
+
+        } catch (e: Exception) {
+            val errorMessage = e.message ?: "Unknown error"
+            DebugConfig.d(TAG, "Online-first auth failed: $errorMessage")
+            OnlineFirstAuthResult.Error("Authentication failed: $errorMessage")
         }
     }
 
@@ -258,7 +304,7 @@ class SupabaseAuthService {
             val client = SupabaseClientProvider.client
             client.auth.signOut()
         } catch (e: Exception) {
-            println("Supabase sign out error: ${e.message}")
+            DebugConfig.w(TAG, "Supabase sign out error: ${e.message}")
         }
     }
 
@@ -283,8 +329,63 @@ class SupabaseAuthService {
                 null
             }
         } catch (e: Exception) {
-            println("Session refresh failed: ${e.message}")
+            DebugConfig.d(TAG, "Session refresh failed: ${e.message}")
             null
+        }
+    }
+
+    /**
+     * Restore the Supabase SDK session from stored tokens in AuthManager.
+     * This should be called on app startup to ensure RLS policies work.
+     *
+     * @param authManager The AuthManager containing stored tokens
+     * @return true if session was restored, false otherwise
+     */
+    suspend fun restoreSessionIfNeeded(authManager: AuthManager): Boolean {
+        if (!SupabaseClientProvider.isConfigured() || !SupabaseClientProvider.isInitialized()) {
+            return false
+        }
+
+        val client = SupabaseClientProvider.client
+
+        // Check if SDK already has a session
+        try {
+            val existingSession = client.auth.currentSessionOrNull()
+            if (existingSession != null) {
+                DebugConfig.d(TAG, "SDK session already active")
+                return true
+            }
+        } catch (e: Exception) {
+            DebugConfig.d(TAG, "No SDK session, attempting to restore...")
+        }
+
+        // Try to restore from AuthManager
+        val storedSession = authManager.getSession() ?: run {
+            DebugConfig.d(TAG, "No stored tokens in AuthManager")
+            return false
+        }
+
+        return try {
+            val expiresIn = if (storedSession.expiresAt > 0) {
+                (storedSession.expiresAt - System.currentTimeMillis() / 1000).coerceAtLeast(0)
+            } else {
+                3600L
+            }
+
+            client.auth.importSession(
+                UserSession(
+                    accessToken = storedSession.accessToken,
+                    refreshToken = storedSession.refreshToken,
+                    expiresIn = expiresIn,
+                    tokenType = "Bearer",
+                    user = null
+                )
+            )
+            DebugConfig.i(TAG, "Session restored from AuthManager")
+            true
+        } catch (e: Exception) {
+            DebugConfig.w(TAG, "Failed to restore session: ${e.message}")
+            false
         }
     }
 }

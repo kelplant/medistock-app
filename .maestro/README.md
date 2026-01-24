@@ -19,8 +19,10 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 .maestro/
 ├── config.yaml              # Configuration globale
 ├── shared/                  # Flows réutilisables
-│   └── login.yaml           # Flow de connexion
-├── android/                 # Tests Android (14 tests)
+│   ├── login.yaml           # Flow de connexion
+│   ├── logout.yaml          # Flow de déconnexion
+│   └── clear_app_data.yaml  # Clear app data (first-time login state)
+├── android/                 # Tests Android (15 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
 │   ├── 03_products_crud.yaml
@@ -34,8 +36,9 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── 11_inventory.yaml
 │   ├── 12_language_switching.yaml
 │   ├── 13_password_complexity.yaml
-│   └── 14_notification_center.yaml
-├── ios/                     # Tests iOS (14 tests)
+│   ├── 14_notification_center.yaml
+│   └── 15_online_first_auth.yaml
+├── ios/                     # Tests iOS (15 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
 │   ├── 03_products_crud.yaml
@@ -49,7 +52,8 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── 11_inventory.yaml
 │   ├── 12_language_switching.yaml
 │   ├── 13_password_complexity.yaml
-│   └── 14_notification_center.yaml
+│   ├── 14_notification_center.yaml
+│   └── 15_online_first_auth.yaml
 └── permissions/             # Tests de permissions (26 tests)
     ├── README.md            # Documentation des tests de permissions
     ├── android/
@@ -156,7 +160,7 @@ maestro test .maestro/ --format junit --output report.xml
 
 ## Tests Inclus
 
-### Tests Fonctionnels (26 tests - 13 Android + 13 iOS)
+### Tests Fonctionnels (30 tests - 15 Android + 15 iOS)
 
 #### 1. Authentication (01_authentication.yaml)
 - Connexion avec identifiants valides
@@ -222,6 +226,28 @@ maestro test .maestro/ --format junit --output report.xml
 - Validation des règles de complexité des mots de passe
 - Tentatives avec mots de passe faibles
 - Validation avec mots de passe conformes
+
+#### 14. Notification Center (14_notification_center.yaml)
+- Navigation vers le centre de notifications
+- Vérification de l'accès aux notifications
+
+#### 15. Online-First Authentication (15_online_first_auth.yaml)
+- **First-time login (online required)**:
+  - First login without network (should show "requires internet connection" error)
+  - First login with valid credentials (online) - triggers full sync
+  - First login with invalid credentials (online)
+- **Subsequent login (offline capable)**:
+  - Returning user can login offline (uses local BCrypt authentication)
+  - Returning user can login online (uses Supabase Auth with fallback)
+  - Invalid password shows error
+- **Error scenarios**:
+  - User not found error message
+  - Account disabled error message
+  - Network error handling
+- **Authentication flow**:
+  - Tests the online-first authentication requiring internet for first login
+  - Tests offline authentication capability for subsequent logins
+  - Validates proper error messages for all failure scenarios
 
 ### Tests de Permissions (26 tests - 13 Android + 13 iOS)
 

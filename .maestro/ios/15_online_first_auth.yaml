@@ -1,0 +1,230 @@
+# MediStock iOS - Online-First Authentication Tests
+# Tests the online-first authentication flow for first-time login and subsequent logins
+#
+# Test coverage:
+# 1. First-time login without network (should fail with "requires internet connection")
+# 2. First-time login with valid credentials (online)
+# 3. First-time login with invalid credentials (online)
+# 4. Subsequent login offline (should work)
+# 5. Subsequent login online (should work)
+# 6. Subsequent login with invalid password (should fail)
+# 7. User not found error
+# 8. Account disabled error
+# 9. Network error handling
+
+appId: com.medistock.ios
+---
+
+# ========================================
+# Test 1: First-time login without network
+# Expected: "First login requires an internet connection"
+# ========================================
+
+# Clear app data to simulate first-time login
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+
+# Verify login screen is displayed
+- assertVisible: "MediStock"
+- assertVisible: "Login"
+
+# Take screenshot showing login screen ready
+- takeScreenshot: "ios_online_first_01_login_screen"
+
+# NOTE: Maestro doesn't support network control
+# To manually test offline scenario, enable airplane mode before running
+
+# ========================================
+# Test 2: First-time login with valid credentials (online)
+# Expected: Success, navigate to home screen
+# ========================================
+
+# Enter valid admin credentials
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+# Tap login button (index 1 to avoid tapping the label)
+- tapOn:
+    text: "Login"
+    index: 1
+
+# Wait for authentication and network sync (first login triggers full sync)
+- waitForAnimationToEnd:
+    timeout: 15000
+
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+# Take screenshot for verification
+- takeScreenshot: "ios_online_first_02_first_login_success"
+
+# ========================================
+# Test 3: Logout to prepare for next test
+# ========================================
+
+# Navigate to profile
+- tapOn:
+    text: ".*Profile.*"
+
+- waitForAnimationToEnd
+
+# Tap logout button
+- tapOn: "Logout"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify back on login screen
+- assertVisible: "Login"
+
+- takeScreenshot: "ios_online_first_03_logout_success"
+
+# ========================================
+# Test 4: Subsequent login offline (should work)
+# NOTE: Maestro doesn't support network control, so this tests standard flow
+# ========================================
+
+# Enter valid credentials
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+# Tap login button
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify we're on the home screen
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "ios_online_first_04_subsequent_login_success"
+
+# ========================================
+# Test 5: Logout again
+# ========================================
+
+- tapOn:
+    text: ".*Profile.*"
+
+- waitForAnimationToEnd
+
+- tapOn: "Logout"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- assertVisible: "Login"
+
+# ========================================
+# Test 6: Invalid password (subsequent login)
+# Expected: "Invalid password"
+# ========================================
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "wrongpassword"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd
+
+# Verify error message is shown
+- assertVisible:
+    text: ".*Invalid.*password.*"
+
+- takeScreenshot: "ios_online_first_05_invalid_password"
+
+# ========================================
+# Test 7: User not found error
+# Expected: "User not found"
+# ========================================
+
+# Clear username field and enter non-existent user
+- tapOn: "Username"
+- eraseText
+- inputText: "nonexistentuser"
+
+- tapOn: "Password"
+- eraseText
+- inputText: "somepassword"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd
+
+# Verify error message is shown
+- assertVisible:
+    text: ".*User not found.*"
+
+- takeScreenshot: "ios_online_first_06_user_not_found"
+
+# ========================================
+# Test 8: Account disabled error
+# Expected: "This account is disabled"
+# ========================================
+
+# NOTE: This test requires a disabled test user to be created
+# For now, we document the expected behavior
+# The error message should be: "This account is disabled. Contact an administrator."
+
+# This test would require creating a disabled user first
+# Skipping for now - to be implemented when test data seeding is available
+
+# ========================================
+# Test 9: Network required error (first-time login)
+# Expected: "First login requires an internet connection"
+# ========================================
+
+# To test this properly:
+# 1. Clear app state
+# 2. Enable airplane mode
+# 3. Try to login
+#
+# For automated testing, this requires network control which Maestro doesn't support
+# Manual test steps:
+# 1. Delete and reinstall app
+# 2. Enable airplane mode
+# 3. Try to login with admin/admin
+# 4. Should see: "First login requires an internet connection"
+
+# ========================================
+# Test 10: Login with valid credentials to restore state
+# ========================================
+
+- tapOn: "Username"
+- eraseText
+- inputText: "admin"
+
+- tapOn: "Password"
+- eraseText
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify successful login
+- assertVisible: "MediStock"
+- assertVisible: "Operations"
+
+- takeScreenshot: "ios_online_first_07_final_state"

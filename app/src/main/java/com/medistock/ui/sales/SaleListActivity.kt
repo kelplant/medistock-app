@@ -17,6 +17,7 @@ import com.medistock.shared.domain.model.SaleWithItems
 import com.medistock.ui.adapters.SaleAdapter
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,7 +34,7 @@ class SaleListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sale_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Sales"
+        supportActionBar?.title = L.strings.sales
 
         sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
@@ -83,12 +84,12 @@ class SaleListActivity : AppCompatActivity() {
 
     private fun confirmDeleteSale(saleWithItems: SaleWithItems) {
         AlertDialog.Builder(this)
-            .setTitle("Delete Sale")
-            .setMessage("Are you sure you want to delete this sale for ${saleWithItems.sale.customerName}? This action cannot be undone.")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle("${L.strings.delete} ${L.strings.sale}")
+            .setMessage("${L.strings.confirm}?")
+            .setPositiveButton(L.strings.delete) { _, _ ->
                 deleteSale(saleWithItems)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(L.strings.cancel, null)
             .show()
     }
 
@@ -116,7 +117,7 @@ class SaleListActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@SaleListActivity,
-                        "Sale deleted successfully",
+                        L.strings.success,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -124,7 +125,7 @@ class SaleListActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@SaleListActivity,
-                        "Error deleting sale: ${e.message}",
+                        "${L.strings.error}: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }

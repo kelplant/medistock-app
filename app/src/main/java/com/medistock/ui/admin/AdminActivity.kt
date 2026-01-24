@@ -4,12 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Module
+import com.medistock.shared.i18n.L
 import com.medistock.ui.customer.CustomerListActivity
 import com.medistock.ui.manage.ManageProductMenuActivity
 import com.medistock.ui.site.SiteListActivity
@@ -30,16 +32,36 @@ class AdminActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Administration"
+        supportActionBar?.title = L.strings.settings
 
         authManager = AuthManager.getInstance(this)
         sdk = MedistockApplication.sdk
+
+        // Apply localized strings
+        applyLocalizedStrings()
 
         // Setup click handlers
         setupButtonClickHandlers()
 
         // Apply permission-based visibility
         applyPermissionVisibility()
+    }
+
+    private fun applyLocalizedStrings() {
+        val strings = L.strings
+
+        findViewById<TextView>(R.id.labelManageSites)?.text = strings.sites
+        findViewById<TextView>(R.id.labelManageProducts)?.text = strings.products
+        findViewById<TextView>(R.id.labelStockMovement)?.text = strings.stockMovements
+        findViewById<TextView>(R.id.labelPackagingTypes)?.text = strings.packagingTypes
+        findViewById<TextView>(R.id.labelManageCustomers)?.text = strings.customers
+        findViewById<TextView>(R.id.labelManageUsers)?.text = strings.users
+        // "Audit History" - use reports for now as there's no direct audit string
+        findViewById<TextView>(R.id.labelAuditHistory)?.text = strings.reports
+        findViewById<TextView>(R.id.labelAppSettings)?.text = strings.appSettings
+        findViewById<TextView>(R.id.labelNotificationSettings)?.text = strings.notificationSettings
+        // Supabase Config - keep as "Supabase" since it's a brand name
+        findViewById<TextView>(R.id.labelSupabaseConfig)?.text = strings.syncSettings
     }
 
     private fun setupButtonClickHandlers() {
@@ -69,6 +91,10 @@ class AdminActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnAuditHistory).setOnClickListener {
             startActivity(Intent(this, AuditHistoryActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnAppSettings).setOnClickListener {
+            startActivity(Intent(this, AppSettingsActivity::class.java))
         }
 
         findViewById<View>(R.id.btnNotificationSettings).setOnClickListener {
@@ -125,6 +151,10 @@ class AdminActivity : AppCompatActivity() {
                 findViewById<View>(R.id.btnAuditHistory).visibility =
                     if (permissions[Module.AUDIT]?.canView == true) View.VISIBLE else View.GONE
 
+                // App settings - visible for admins only
+                findViewById<View>(R.id.btnAppSettings).visibility =
+                    if (isAdmin || permissions[Module.ADMIN]?.canView == true) View.VISIBLE else View.GONE
+
                 // Notification settings - visible for admins only
                 findViewById<View>(R.id.btnNotificationSettings).visibility =
                     if (isAdmin || permissions[Module.ADMIN]?.canView == true) View.VISIBLE else View.GONE
@@ -135,14 +165,16 @@ class AdminActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                // On error, fallback to legacy behavior (only admins see Users/Audit/NotificationSettings)
+                // On error, fallback to legacy behavior (only admins see admin features)
                 if (isAdmin) {
                     findViewById<View>(R.id.btnManageUsers).visibility = View.VISIBLE
                     findViewById<View>(R.id.btnAuditHistory).visibility = View.VISIBLE
+                    findViewById<View>(R.id.btnAppSettings).visibility = View.VISIBLE
                     findViewById<View>(R.id.btnNotificationSettings).visibility = View.VISIBLE
                 } else {
                     findViewById<View>(R.id.btnManageUsers).visibility = View.GONE
                     findViewById<View>(R.id.btnAuditHistory).visibility = View.GONE
+                    findViewById<View>(R.id.btnAppSettings).visibility = View.GONE
                     findViewById<View>(R.id.btnNotificationSettings).visibility = View.GONE
                 }
             }

@@ -11,6 +11,7 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.CategoryAdapter
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ class CategoryListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_category_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = L.strings.categories
         sdk = MedistockApplication.sdk
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerCategories)

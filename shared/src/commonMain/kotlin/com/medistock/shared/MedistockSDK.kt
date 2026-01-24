@@ -45,6 +45,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val productPriceRepository: ProductPriceRepository by lazy { ProductPriceRepository(database) }
     val syncQueueRepository: SyncQueueRepository by lazy { SyncQueueRepository(database) }
     val notificationRepository: NotificationRepository by lazy { NotificationRepository(database) }
+    val appConfigRepository: AppConfigRepository by lazy { AppConfigRepository(database) }
 
     // Services - Shared business services
     val permissionService: PermissionService by lazy { PermissionService(userPermissionRepository) }
@@ -177,6 +178,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         password: String,
         fullName: String,
         isAdmin: Boolean = false,
+        language: String? = null,
         userId: String = "ios"
     ): User {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -185,6 +187,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             username = username,
             password = password,
             fullName = fullName,
+            language = language,
             isAdmin = isAdmin,
             isActive = true,
             createdAt = now,

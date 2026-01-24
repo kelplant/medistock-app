@@ -1,0 +1,27 @@
+# MediStock iOS - Setup Test Users
+# Run this flow BEFORE permission tests to seed test users
+# Usage: maestro test -p ios .maestro/permissions/ios/00_setup_test_users.yaml
+appId: com.medistock.iosApp
+---
+
+# Seed test users via deep link
+- openLink: "medistock://debug/seed-test-users"
+
+# Wait for seeding to complete
+- runScript:
+    script: |
+      sleep 3
+
+# Launch app to verify it works
+- launchApp:
+    clearState: false
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify we're on login screen (or home if already logged in)
+- assertVisible:
+    text: ".*Login.*|.*Stock.*"
+    optional: true
+
+- takeScreenshot: "ios_test_users_seeded"

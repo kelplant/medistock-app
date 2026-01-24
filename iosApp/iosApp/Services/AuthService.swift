@@ -2,6 +2,7 @@ import Foundation
 import shared
 
 /// Local authentication result (for backward compatibility and extended cases)
+/// Mirrors shared.OnlineFirstAuthResult for consistency across platforms
 enum LocalAuthResult {
     case success(user: UserDTO)
     case invalidCredentials
@@ -9,6 +10,38 @@ enum LocalAuthResult {
     case userNotFound
     case networkError(String)
     case notConfigured
+    case networkRequired
+
+    /// Parse error message to determine failure type
+    /// Mirrors shared parseAuthError() for consistency with Android
+    static func parseAuthError(_ errorMessage: String?) -> LocalAuthResult {
+        guard let errorMessage = errorMessage else {
+            return .networkError("Unknown error")
+        }
+
+        let lowercased = errorMessage.lowercased()
+
+        // Invalid credentials checks (matches shared module)
+        if lowercased.contains("invalid credentials") ||
+           lowercased.contains("invalid password") ||
+           lowercased.contains("invalid_grant") {
+            return .invalidCredentials
+        }
+
+        // User inactive checks
+        if lowercased.contains("deactivated") ||
+           lowercased.contains("inactive") {
+            return .userInactive
+        }
+
+        // User not found checks
+        if lowercased.contains("not found") ||
+           lowercased.contains("user not found") {
+            return .userNotFound
+        }
+
+        return .networkError(errorMessage)
+    }
 
     /// Convert from shared AuthResult
     static func from(_ sharedResult: shared.AuthResult, toDTO: ((shared.User) -> UserDTO)? = nil) -> LocalAuthResult {
@@ -36,16 +69,6 @@ enum LocalAuthResult {
 /// Backward compatibility alias
 typealias AuthResult = LocalAuthResult
 
-/// iOS implementation of PasswordVerifier for shared AuthService
-class SwiftPasswordVerifier: shared.PasswordVerifier {
-    static let instance = SwiftPasswordVerifier()
-    private init() {}
-
-    func verify(plainPassword: String, hashedPassword: String) -> Bool {
-        return PasswordHasher.shared.verifyPassword(plainPassword, storedPassword: hashedPassword)
-    }
-}
-
 /// Authentication service that properly validates credentials
 /// Uses Supabase Auth with UUID-based emails for online authentication
 /// Falls back to local BCrypt authentication when offline
@@ -56,54 +79,175 @@ class AuthService {
     private let statusManager = SyncStatusManager.shared
     private let keychain = KeychainService.shared
 
-    /// Shared auth service for local authentication (lazy initialized)
-    private var sharedAuthService: shared.AuthService?
-
     private init() {}
-
-    /// Get or create the shared AuthService
-    private func getSharedAuthService(sdk: MedistockSDK) -> shared.AuthService {
-        if sharedAuthService == nil {
-            sharedAuthService = sdk.createAuthService(passwordVerifier: SwiftPasswordVerifier.instance)
-        }
-        return sharedAuthService!
-    }
 
     /// Authenticate user with username and password
     /// Flow:
-    /// 1. Look up username in local DB to get UUID
-    /// 2. If online & configured, try Supabase Auth with {uuid}@medistock.local
-    /// 3. If auth fails, call migrate-user-to-auth Edge Function for BCrypt migration
-    /// 4. Store session tokens securely
-    /// 5. Fall back to local auth if offline
+    /// 1. Check if first-time login (no local users) → require network
+    /// 2. For first login: authenticate online-first via Edge Function
+    /// 3. For subsequent logins: try Supabase Auth, fallback to local
     func authenticate(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // First, look up the user locally to get their UUID
-        let localUser = await lookupLocalUser(username: trimmedUsername, sdk: sdk)
-
-        // If online and Supabase is configured, use Supabase Auth
+        // If Supabase is configured and online, use online-first authentication
+        // This avoids calling Kotlin suspend functions which can cause crashes
         if statusManager.isOnline && supabase.isConfigured {
-            let result = await authenticateWithSupabaseAuth(
+            return await authenticateOnlineFirst(
                 username: trimmedUsername,
                 password: trimmedPassword,
-                localUser: localUser,
                 sdk: sdk
             )
-            // If we got a definitive answer (not network error), return it
-            switch result {
-            case .success, .invalidCredentials, .userInactive, .userNotFound:
-                return result
-            case .networkError, .notConfigured:
-                // Fall through to local authentication
-                debugLog("AuthService", "Supabase Auth failed, falling back to local auth")
-                break
+        }
+
+        // Offline or not configured - require network for first login
+        if !supabase.isConfigured {
+            return .notConfigured
+        }
+
+        return .networkRequired
+    }
+
+    /// Check if this is a first-time login
+    /// First-time = no real users in local DB (only system admin marker or empty)
+    private func isFirstTimeLogin(sdk: MedistockSDK) async -> Bool {
+        do {
+            let users = try await sdk.userRepository.getAll()
+
+            // No users = first login
+            if users.isEmpty { return true }
+
+            // Only system admin marker = first login
+            let hasRealUsers = users.contains { user in
+                user.createdBy != "LOCAL_SYSTEM_MARKER"
+            }
+            if !hasRealUsers { return true }
+
+            // Has valid session = not first login
+            if keychain.hasAuthTokens && !keychain.areAuthTokensExpired {
+                return false
+            }
+
+            return false
+        } catch {
+            debugLog("AuthService", "Failed to check users: \(error)")
+            return true // Assume first login on error
+        }
+    }
+
+    /// Online-first authentication for first-time login
+    /// Authenticates directly with Supabase Edge Function, then syncs all data
+    private func authenticateOnlineFirst(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
+        debugLog("AuthService", "First-time login: using online-first authentication")
+
+        do {
+            let response = try await supabase.migrateUserToAuth(username: username, password: password)
+
+            if response.success, let userData = response.user, let sessionData = response.session {
+                // Create user DTO from response
+                let user = UserDTO(
+                    id: userData.id,
+                    username: userData.username,
+                    password: "", // Not stored
+                    fullName: userData.name,
+                    language: nil,
+                    isAdmin: userData.isAdmin,
+                    isActive: true,
+                    createdAt: Int64(Date().timeIntervalSince1970 * 1000),
+                    updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
+                    createdBy: userData.id,
+                    updatedBy: userData.id
+                )
+
+                // Sync user to local database
+                await syncUserToLocal(user, sdk: sdk)
+
+                // Store session tokens
+                keychain.storeAuthTokens(
+                    accessToken: sessionData.accessToken,
+                    refreshToken: sessionData.refreshToken,
+                    expiresAt: sessionData.expiresAt ?? Int64(Date().timeIntervalSince1970 + 3600),
+                    userId: userData.id
+                )
+
+                // Trigger full sync to get all data
+                debugLog("AuthService", "First login successful, triggering full sync")
+                Task {
+                    await BidirectionalSyncManager.shared.fullSync(sdk: sdk)
+                }
+
+                return .success(user: user)
+            } else {
+                // Parse error using shared logic
+                let errorMsg = response.error ?? response.message
+                return LocalAuthResult.parseAuthError(errorMsg)
+            }
+        } catch {
+            debugLog("AuthService", "Online-first auth failed: \(error)")
+            return .networkError(error.localizedDescription)
+        }
+    }
+
+    /// Standard authentication flow for subsequent logins
+    /// Uses online-first auth to get correct UUID from Supabase, avoiding local/remote UUID mismatches
+    private func authenticateStandardFlow(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
+        // If online and Supabase is configured, use online-first auth
+        // This ensures we get the correct UUID from Supabase
+        if statusManager.isOnline && supabase.isConfigured {
+            debugLog("AuthService", "Using online-first auth for user: \(username)")
+
+            do {
+                let response = try await supabase.migrateUserToAuth(username: username, password: password)
+
+                if response.success, let userData = response.user, let sessionData = response.session {
+                    debugLog("AuthService", "Online-first auth SUCCESS")
+
+                    // Create user DTO with correct UUID from Supabase
+                    let user = UserDTO(
+                        id: userData.id,
+                        username: userData.username,
+                        password: "",
+                        fullName: userData.name,
+                        language: nil,
+                        isAdmin: userData.isAdmin,
+                        isActive: true,
+                        createdAt: Int64(Date().timeIntervalSince1970 * 1000),
+                        updatedAt: Int64(Date().timeIntervalSince1970 * 1000),
+                        createdBy: userData.id,
+                        updatedBy: userData.id
+                    )
+
+                    // Update local user with correct UUID from Supabase
+                    await syncUserToLocal(user, sdk: sdk)
+
+                    // Store session tokens
+                    keychain.storeAuthTokens(
+                        accessToken: sessionData.accessToken,
+                        refreshToken: sessionData.refreshToken,
+                        expiresAt: sessionData.expiresAt ?? Int64(Date().timeIntervalSince1970 + 3600),
+                        userId: userData.id
+                    )
+
+                    return .success(user: user)
+                } else {
+                    // Parse error using shared logic
+                    let errorMsg = response.error ?? response.message
+                    let result = LocalAuthResult.parseAuthError(errorMsg)
+
+                    // If user not found in Supabase, fall back to local auth
+                    if case .userNotFound = result {
+                        debugLog("AuthService", "User not in Supabase, falling back to local auth")
+                    } else {
+                        return result
+                    }
+                }
+            } catch {
+                debugLog("AuthService", "Online-first auth failed: \(error), falling back to local auth")
             }
         }
 
-        // Fall back to local SDK authentication
-        return await authenticateLocally(username: trimmedUsername, password: trimmedPassword, sdk: sdk)
+        // Fall back to local SDK authentication (offline mode or user not in Supabase)
+        return await authenticateLocally(username: username, password: password, sdk: sdk)
     }
 
     /// Look up user in local database by username
@@ -192,28 +336,61 @@ class AuthService {
         }
     }
 
-    /// Authenticate using local SDK database via shared AuthService
+    /// Authenticate using local SDK database
+    /// Uses direct Swift password verification to avoid Kotlin/Native callback issues
     private func authenticateLocally(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
-        let authService = getSharedAuthService(sdk: sdk)
-
         do {
-            // Use shared AuthService for authentication
-            let result = try await authService.authenticate(username: username, password: password)
+            // Use the SDK to get user by username
+            let user = try await sdk.userRepository.getByUsername(username: username)
 
-            // Convert shared AuthResult to local AuthResult
-            return LocalAuthResult.from(result) { sharedUser in
-                UserDTO(from: sharedUser)
+            guard let user = user else {
+                return .userNotFound
             }
+
+            // Check if user is active
+            guard user.isActive else {
+                return .userInactive
+            }
+
+            // Validate password using Swift's PasswordHasher (avoids Kotlin->Swift callback)
+            guard PasswordHasher.shared.verifyPassword(password, storedPassword: user.password) else {
+                return .invalidCredentials
+            }
+
+            // Convert to UserDTO format
+            let userDTO = UserDTO(from: user)
+            return .success(user: userDTO)
         } catch {
             return .networkError(error.localizedDescription)
         }
     }
 
     /// Sync user to local database
+    /// Preserves existing password hash (Edge Function doesn't return it)
     private func syncUserToLocal(_ userDTO: UserDTO, sdk: MedistockSDK) async {
         do {
-            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
-            try await sdk.userRepository.upsert(user: userDTO.toEntity())
+            // Check if user already exists locally with a password
+            if let existingUser = try? await sdk.userRepository.getById(id: userDTO.id),
+               !existingUser.password.isEmpty {
+                // Preserve the existing password hash
+                let userWithPassword = UserDTO(
+                    id: userDTO.id,
+                    username: userDTO.username,
+                    password: existingUser.password,
+                    fullName: userDTO.fullName,
+                    language: userDTO.language,
+                    isAdmin: userDTO.isAdmin,
+                    isActive: userDTO.isActive,
+                    createdAt: userDTO.createdAt,
+                    updatedAt: userDTO.updatedAt,
+                    createdBy: userDTO.createdBy,
+                    updatedBy: userDTO.updatedBy
+                )
+                try await sdk.userRepository.upsert(user: userWithPassword.toEntity())
+            } else {
+                // New user or no existing password
+                try await sdk.userRepository.upsert(user: userDTO.toEntity())
+            }
             debugLog("AuthService", "User synced to local: \(userDTO.username)")
         } catch {
             debugLog("AuthService", "Failed to sync user to local: \(error)")
@@ -246,10 +423,14 @@ extension SessionManager {
         self.username = user.username
         self.fullName = user.fullName
         self.isAdmin = user.isAdmin
+        self.language = user.language
         self.isLoggedIn = true
 
         // Update auth session status (tokens may have been stored during auth)
         refreshAuthStatus()
+
+        // Load language from user profile (with fallback to cache/system)
+        Localized.loadLanguageFromProfile(user: user.toEntity())
 
         // Load permissions for this user
         Task {

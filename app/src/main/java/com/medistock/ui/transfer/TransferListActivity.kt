@@ -18,6 +18,7 @@ import com.medistock.shared.domain.model.ProductTransfer
 import com.medistock.shared.domain.model.Module
 import com.medistock.util.AuthManager
 import com.medistock.util.PermissionManager
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +36,7 @@ class TransferListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_transfer_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Transfer Products"
+        supportActionBar?.title = L.strings.transfers
 
         sdk = MedistockApplication.sdk
         authManager = AuthManager.getInstance(this)
@@ -62,7 +63,7 @@ class TransferListActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this@TransferListActivity,
-                        "You don't have permission to create transfers",
+                        L.strings.error,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -101,7 +102,7 @@ class TransferListActivity : AppCompatActivity() {
             if (permissionManager.canEdit(Module.TRANSFERS)) {
                 Toast.makeText(
                     this@TransferListActivity,
-                    "Edit transfer functionality is not available. Please create a new transfer instead.",
+                    L.strings.warning,
                     Toast.LENGTH_SHORT
                 ).show()
                 // Note: Editing transfers is complex because it requires reverting stock movements
@@ -109,7 +110,7 @@ class TransferListActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(
                     this@TransferListActivity,
-                    "You don't have permission to edit transfers",
+                    L.strings.error,
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -121,7 +122,7 @@ class TransferListActivity : AppCompatActivity() {
             if (!permissionManager.canDelete(Module.TRANSFERS)) {
                 Toast.makeText(
                     this@TransferListActivity,
-                    "You don't have permission to delete transfers",
+                    L.strings.error,
                     Toast.LENGTH_SHORT
                 ).show()
                 return@launch
@@ -136,12 +137,12 @@ class TransferListActivity : AppCompatActivity() {
             }
 
             AlertDialog.Builder(this@TransferListActivity)
-                .setTitle("Delete Transfer")
-                .setMessage("Delete transfer of ${product?.name} from ${fromSite?.name} to ${toSite?.name}?\n\nNote: This will NOT revert stock movements.")
-                .setPositiveButton("Delete") { _, _ ->
+                .setTitle("${L.strings.delete} ${L.strings.transfer}")
+                .setMessage("${L.strings.confirm}?")
+                .setPositiveButton(L.strings.delete) { _, _ ->
                     deleteTransfer(transfer)
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(L.strings.cancel, null)
                 .show()
         }
     }
@@ -156,7 +157,7 @@ class TransferListActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@TransferListActivity,
-                        "Transfer deleted successfully",
+                        L.strings.success,
                         Toast.LENGTH_SHORT
                     ).show()
                     loadTransfers()
@@ -165,7 +166,7 @@ class TransferListActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@TransferListActivity,
-                        "Error deleting transfer: ${e.message}",
+                        "${L.strings.error}: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }

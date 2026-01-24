@@ -30,6 +30,7 @@
                 android:contentDescription="@string/site_management_icon_desc" />
 
             <TextView
+                android:id="@+id/labelManageSites"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/site_management"
@@ -65,6 +66,7 @@
                 android:contentDescription="@string/manage_products_icon_desc" />
 
             <TextView
+                android:id="@+id/labelManageProducts"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/manage_products"
@@ -100,6 +102,7 @@
                 android:contentDescription="@string/stock_movement_icon_desc" />
 
             <TextView
+                android:id="@+id/labelStockMovement"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stock_movement"
@@ -135,6 +138,7 @@
                 android:contentDescription="@string/packaging_types_icon_desc" />
 
             <TextView
+                android:id="@+id/labelPackagingTypes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/packaging_types"
@@ -170,6 +174,7 @@
                 android:contentDescription="@string/manage_customers_icon_desc" />
 
             <TextView
+                android:id="@+id/labelManageCustomers"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/manage_customers"
@@ -205,6 +210,7 @@
                 android:contentDescription="@string/user_management_icon_desc" />
 
             <TextView
+                android:id="@+id/labelManageUsers"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/user_management"
@@ -240,9 +246,46 @@
                 android:contentDescription="@string/audit_history_icon_desc" />
 
             <TextView
+                android:id="@+id/labelAuditHistory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/audit_history"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp" />
+
+        <LinearLayout
+            android:id="@+id/btnAppSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="⚙️"
+                android:gravity="center"
+                android:textSize="32sp"
+                android:contentDescription="App settings icon" />
+
+            <TextView
+                android:id="@+id/labelAppSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="App Settings"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="16dp" />
@@ -275,6 +318,7 @@
                 android:contentDescription="Notification settings icon" />
 
             <TextView
+                android:id="@+id/labelNotificationSettings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Notification Settings"
@@ -310,6 +354,7 @@
                 android:contentDescription="@string/supabase_config_icon_desc" />
 
             <TextView
+                android:id="@+id/labelSupabaseConfig"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/supabase_configuration"

@@ -2,10 +2,11 @@ package com.medistock.ui.purchase
 
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
+import com.medistock.ui.LocalizedActivity
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Product
@@ -21,7 +22,7 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
-class PurchaseActivity : AppCompatActivity() {
+class PurchaseActivity : LocalizedActivity() {
 
     private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
@@ -115,6 +116,31 @@ class PurchaseActivity : AppCompatActivity() {
         btnSave.setOnClickListener { savePurchase() }
     }
 
+    override fun applyLocalizedStrings() {
+        supportActionBar?.title = strings.newPurchase
+
+        // Labels
+        findViewById<TextView>(R.id.labelRecordPurchase)?.text = strings.newPurchase
+        findViewById<TextView>(R.id.labelSitePurchase)?.text = strings.site
+        findViewById<TextView>(R.id.labelProductPurchase)?.text = strings.product
+        findViewById<TextView>(R.id.labelQuantityPurchase)?.text = strings.quantity
+        findViewById<TextView>(R.id.labelPurchasePrice)?.text = strings.unitPurchasePrice
+        textMarginInfo.text = strings.marginCalculatedAuto
+        findViewById<TextView>(R.id.labelSellingPrice)?.text = strings.unitSellingPrice
+        findViewById<TextView>(R.id.textSellingPriceNote)?.text = strings.sellingPriceNote
+        findViewById<TextView>(R.id.labelSupplier)?.text = strings.supplier
+        findViewById<TextView>(R.id.labelBatchNumber)?.text = strings.batchNumber
+        findViewById<TextView>(R.id.labelExpiryDate)?.text = strings.expiryDateOptional
+
+        // Hints/Placeholders
+        editSupplier.hint = strings.enterSupplierName
+        editBatchNumber.hint = strings.batchNumberExample
+        editExpiryDate.hint = strings.dateFormat
+
+        // Button
+        btnSave.text = strings.savePurchase
+    }
+
     private fun loadSites() {
         lifecycleScope.launch(Dispatchers.IO) {
             sites = sdk.siteRepository.getAll()
@@ -156,9 +182,9 @@ class PurchaseActivity : AppCompatActivity() {
     private fun updateMarginInfo() {
         val product = selectedProduct ?: return
         val marginInfo = when (product.marginType) {
-            "fixed" -> "Margin: +${product.marginValue ?: 0.0} (fixed)"
-            "percentage" -> "Margin: +${product.marginValue ?: 0.0}%"
-            else -> "No margin configured"
+            "fixed" -> "${strings.margin}: +${product.marginValue ?: 0.0} (${strings.margin})"
+            "percentage" -> "${strings.margin}: +${product.marginValue ?: 0.0}%"
+            else -> strings.marginCalculatedAuto
         }
         textMarginInfo.text = marginInfo
     }
@@ -188,26 +214,26 @@ class PurchaseActivity : AppCompatActivity() {
         val expiryDateStr = editExpiryDate.text.toString().trim()
 
         if (quantity == null || quantity <= 0) {
-            Toast.makeText(this, "Enter a valid quantity", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (purchasePrice == null || purchasePrice <= 0) {
-            Toast.makeText(this, "Enter a valid purchase price", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (sellingPrice == null || sellingPrice <= 0) {
-            Toast.makeText(this, "Enter a valid selling price", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.valueMustBePositive, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedProductId == null) {
-            Toast.makeText(this, "Select a product", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.selectProduct, Toast.LENGTH_SHORT).show()
             return
         }
         if (selectedSiteId.isNullOrBlank()) {
-            Toast.makeText(this, "Select a site", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, strings.selectSite, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -216,7 +242,7 @@ class PurchaseActivity : AppCompatActivity() {
             try {
                 dateFormat.parse(expiryDateStr)?.time
             } catch (e: Exception) {
-                Toast.makeText(this, "Invalid date format (dd/MM/yyyy)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "${strings.error}: ${strings.dateFormat}", Toast.LENGTH_SHORT).show()
                 return
             }
         } else null
@@ -279,7 +305,7 @@ class PurchaseActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 Toast.makeText(
                     this@PurchaseActivity,
-                    "Purchase recorded: $quantity ${product.unit}",
+                    strings.purchaseRecorded,
                     Toast.LENGTH_SHORT
                 ).show()
                 finish()

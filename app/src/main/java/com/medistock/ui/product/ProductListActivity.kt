@@ -12,6 +12,7 @@ import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.ui.adapters.ProductAdapter
 import com.medistock.util.PrefsHelper
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ class ProductListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product_list)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Product Management"
+        supportActionBar?.title = L.strings.products
         sdk = MedistockApplication.sdk
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerProducts)

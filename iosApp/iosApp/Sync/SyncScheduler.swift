@@ -129,7 +129,18 @@ class SyncScheduler: ObservableObject {
             return
         }
 
+        // Restore session if needed before syncing
+        let keychain = KeychainService.shared
+        guard keychain.hasAuthTokens && !keychain.areAuthTokensExpired else {
+            debugLog("SyncScheduler", "No valid session for background sync, skipping")
+            task.setTaskCompleted(success: false)
+            scheduleBackgroundSync()
+            return
+        }
+
         Task {
+            // Restore session on Supabase client
+            await SupabaseService.shared.restoreSessionIfNeeded()
             await syncManager.fullSync(sdk: sdk)
             task.setTaskCompleted(success: true)
             scheduleBackgroundSync()

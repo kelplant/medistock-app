@@ -18,12 +18,12 @@ struct AppUpdateRequiredView: View {
                 .foregroundColor(.orange)
 
             // Title
-            Text("Update Required")
+            Text(Localized.strings.updateRequired)
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
             // Message
-            Text("Your app version is not compatible with the database. Please update the app to continue.")
+            Text(Localized.strings.appVersionIncompatible)
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -32,7 +32,7 @@ struct AppUpdateRequiredView: View {
             // Version info box
             VStack(spacing: 12) {
                 HStack {
-                    Text("App version:")
+                    Text("\(Localized.strings.appVersion):")
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("\(appVersion)")
@@ -43,7 +43,7 @@ struct AppUpdateRequiredView: View {
                 Divider()
 
                 HStack {
-                    Text("Minimum required version:")
+                    Text("\(Localized.strings.minimumRequiredVersion):")
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("\(minRequired)")
@@ -54,7 +54,7 @@ struct AppUpdateRequiredView: View {
                 Divider()
 
                 HStack {
-                    Text("Database version:")
+                    Text("\(Localized.strings.databaseVersion):")
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("\(dbVersion)")
@@ -70,10 +70,10 @@ struct AppUpdateRequiredView: View {
 
             // Instructions
             VStack(spacing: 8) {
-                Text("To update:")
+                Text("\(Localized.strings.toUpdate):")
                     .font(.headline)
 
-                Text("Contact your administrator to get the latest version of the app.")
+                Text(Localized.strings.contactAdminForUpdate)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -102,7 +102,7 @@ struct CompatibilityGuardView<Content: View>: View {
                 // Show loading while checking
                 VStack(spacing: 16) {
                     ProgressView()
-                    Text("Checking compatibility...")
+                    Text(Localized.strings.checkingCompatibility)
                         .foregroundColor(.secondary)
                 }
             } else if let result = compatibilityManager.compatibilityResult,

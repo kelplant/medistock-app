@@ -74,4 +74,18 @@
     <string name="sync_status_pending">%d en attente</string>
     <string name="sync_status_conflicts">%d conflit(s)</string>
     <string name="sync_status_error">Erreur de sync</string>
+
+    <!-- Common -->
+    <string name="save">Save</string>
+
+    <!-- Notification Settings -->
+    <string name="notification_settings">Notification Settings</string>
+    <string name="notification_expiry_alerts">Expiry Alerts</string>
+    <string name="notification_enable_expiry">Enable expiry notifications</string>
+    <string name="notification_warning_days">Warning days before expiry</string>
+    <string name="notification_expiry_description">Receive alerts when products are about to expire</string>
+    <string name="notification_low_stock_alerts">Low Stock Alerts</string>
+    <string name="notification_enable_low_stock">Enable low stock notifications</string>
+    <string name="notification_low_stock_description">Receive alerts when stock falls below minimum threshold</string>
+    <string name="notification_invalid_days">Please enter a valid number of days (1-365)</string>
 </resources>

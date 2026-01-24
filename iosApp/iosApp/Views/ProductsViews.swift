@@ -44,13 +44,13 @@ struct ProductsListView: View {
                 Section {
                     EmptyStateView(
                         icon: "cube.box",
-                        title: "No products",
-                        message: "Add your first product to get started."
+                        title: Localized.noProducts,
+                        message: Localized.strings.noProductsMessage
                     )
                 }
                 .listRowSeparator(.hidden)
             } else {
-                Section(header: Text("\(filteredProducts.count) product(s)")) {
+                Section(header: Text("\(filteredProducts.count) \(Localized.products.lowercased())")) {
                     ForEach(filteredProducts, id: \.id) { product in
                         ProductRowView(product: product, siteName: siteName(for: product.siteId), categoryName: categoryName(for: product.categoryId))
                             .contentShape(Rectangle())
@@ -63,8 +63,8 @@ struct ProductsListView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Products")
-        .searchable(text: $searchText, prompt: "Search products")
+        .navigationTitle(Localized.products)
+        .searchable(text: $searchText, prompt: Localized.search)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showAddSheet = true }) {
@@ -180,14 +180,14 @@ struct ProductRowView: View {
             Text(product.name)
                 .font(.headline)
             HStack {
-                Text("Site: \(siteName)")
+                Text("\(Localized.site): \(siteName)")
                 if let categoryName = categoryName {
                     Text("• \(categoryName)")
                 }
             }
             .font(.subheadline)
             .foregroundColor(.secondary)
-            Text("Unit: \(product.unit) • Volume: \(String(format: "%.2f", product.unitVolume))")
+            Text("\(Localized.unit): \(product.unit) • \(String(format: "%.2f", product.unitVolume))")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -221,20 +221,20 @@ struct ProductEditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Information")) {
-                    TextField("Product name", text: $name)
-                    TextField("Unit (e.g., tablet, ml, box)", text: $unit)
-                    TextField("Unit volume", text: $volumeText)
+                Section(header: Text(Localized.information)) {
+                    TextField(Localized.productName, text: $name)
+                    TextField(Localized.unit, text: $unit)
+                    TextField(Localized.strings.unitVolume, text: $volumeText)
                         .keyboardType(.decimalPad)
-                    TextField("Description (optional)", text: $description)
+                    TextField(Localized.description_, text: $description)
                 }
 
-                Section(header: Text("Site")) {
+                Section(header: Text(Localized.site)) {
                     if sites.isEmpty {
-                        Text("Add a site first.")
+                        Text(Localized.strings.addSiteFirst)
                             .foregroundColor(.secondary)
                     } else {
-                        Picker("Site", selection: $selectedSiteId) {
+                        Picker(Localized.site, selection: $selectedSiteId) {
                             ForEach(sites, id: \.id) { site in
                                 Text(site.name).tag(site.id)
                             }
@@ -242,19 +242,19 @@ struct ProductEditorView: View {
                     }
                 }
 
-                Section(header: Text("Category")) {
-                    Picker("Category", selection: $selectedCategoryId) {
-                        Text("None").tag("")
+                Section(header: Text(Localized.category)) {
+                    Picker(Localized.category, selection: $selectedCategoryId) {
+                        Text(Localized.strings.none).tag("")
                         ForEach(categories, id: \.id) { category in
                             Text(category.name).tag(category.id)
                         }
                     }
                 }
 
-                Section(header: Text("Stock Alerts")) {
-                    TextField("Alert threshold (0 = disabled)", text: $minStockText)
+                Section(header: Text(Localized.strings.stockAlerts)) {
+                    TextField(Localized.minStock, text: $minStockText)
                         .keyboardType(.decimalPad)
-                    Text("A notification will be sent when stock falls below this threshold. Leave at 0 to disable alerts.")
+                    Text(Localized.strings.stockAlertDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -266,13 +266,13 @@ struct ProductEditorView: View {
                     }
                 }
             }
-            .navigationTitle(isEditing ? "Edit Product" : "New Product")
+            .navigationTitle(isEditing ? Localized.editProduct : Localized.addProduct)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(Localized.cancel) { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isEditing ? "Save" : "Add") {
+                    Button(isEditing ? Localized.save : Localized.add) {
                         saveProduct()
                     }
                     .disabled(!canSave || isSaving)

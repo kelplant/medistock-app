@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.medistock.R
 import com.medistock.ui.viewmodel.PackagingTypeViewModel
+import com.medistock.shared.i18n.L
 import kotlinx.coroutines.launch
 
 class PackagingTypeListActivity : AppCompatActivity() {
@@ -26,7 +27,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_packaging_type_list)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Packaging Types"
+        supportActionBar?.title = L.strings.packagingTypes
 
         viewModel = ViewModelProvider(this)[PackagingTypeViewModel::class.java]
 
@@ -73,22 +74,22 @@ class PackagingTypeListActivity : AppCompatActivity() {
             runOnUiThread {
                 if (isUsed) {
                     AlertDialog.Builder(this@PackagingTypeListActivity)
-                        .setTitle("Cannot Delete")
-                        .setMessage("Packaging type '$name' is used by products. Deactivate it instead.")
-                        .setPositiveButton("OK", null)
+                        .setTitle(L.strings.cannotDelete)
+                        .setMessage("${L.strings.entityInUse}. ${L.strings.deactivateInstead}")
+                        .setPositiveButton(L.strings.ok, null)
                         .show()
                 } else {
                     AlertDialog.Builder(this@PackagingTypeListActivity)
-                        .setTitle("Confirm Deletion")
-                        .setMessage("Are you sure you want to delete packaging type '$name'?")
-                        .setPositiveButton("Delete") { _, _ ->
+                        .setTitle(L.strings.confirm)
+                        .setMessage("${L.strings.confirm}?")
+                        .setPositiveButton(L.strings.delete) { _, _ ->
                             viewModel.getById(id) { packagingType ->
                                 packagingType?.let {
                                     viewModel.delete(it) {
                                         runOnUiThread {
                                             Toast.makeText(
                                                 this@PackagingTypeListActivity,
-                                                "Packaging type deleted",
+                                                L.strings.success,
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
@@ -96,7 +97,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
                                 }
                             }
                         }
-                        .setNegativeButton("Cancel", null)
+                        .setNegativeButton(L.strings.cancel, null)
                         .show()
                 }
             }
@@ -106,7 +107,7 @@ class PackagingTypeListActivity : AppCompatActivity() {
     private fun toggleActive(id: String, currentlyActive: Boolean) {
         val callback = {
             runOnUiThread {
-                val message = if (currentlyActive) "Deactivated" else "Activated"
+                val message = if (currentlyActive) L.strings.inactive else L.strings.active
                 Toast.makeText(this@PackagingTypeListActivity, message, Toast.LENGTH_SHORT).show()
             }
         }

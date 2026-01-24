@@ -16,7 +16,7 @@ struct NotificationCenterView: View {
     var body: some View {
         Group {
             if isLoading {
-                ProgressView("Chargement des notifications...")
+                ProgressView(Localized.loading)
             } else if notifications.isEmpty {
                 EmptyNotificationView()
             } else {
@@ -27,11 +27,11 @@ struct NotificationCenterView: View {
                 )
             }
         }
-        .navigationTitle("Notifications")
+        .navigationTitle(Localized.notifications)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 if !notifications.isEmpty {
-                    Button("Tout acquitter") {
+                    Button(Localized.dismissAll) {
                         Task {
                             await dismissAllNotifications()
                         }
@@ -45,8 +45,8 @@ struct NotificationCenterView: View {
         .refreshable {
             await loadNotifications()
         }
-        .alert("Erreur", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {}
+        .alert(Localized.error, isPresented: $showErrorAlert) {
+            Button(Localized.ok, role: .cancel) {}
         } message: {
             Text(errorMessage)
         }
@@ -59,7 +59,7 @@ struct NotificationCenterView: View {
             notifications = try await sdk.notificationRepository.getUndismissed()
         } catch {
             debugLog("NotificationCenterView", "Error loading notifications: \(error)")
-            errorMessage = "Impossible de charger les notifications"
+            errorMessage = Localized.strings.unableToLoadNotifications
             showErrorAlert = true
             // Keep existing notifications on error
         }
@@ -110,11 +110,11 @@ struct EmptyNotificationView: View {
                 .font(.system(size: 64))
                 .foregroundColor(.secondary.opacity(0.5))
 
-            Text("Aucune notification")
+            Text(Localized.noNotifications)
                 .font(.title2)
                 .foregroundColor(.secondary)
 
-            Text("Toutes les notifications ont été acquittées")
+            Text(Localized.strings.allNotificationsDismissed)
                 .font(.subheadline)
                 .foregroundColor(.secondary.opacity(0.7))
         }
@@ -131,7 +131,7 @@ struct NotificationListView: View {
 
     var body: some View {
         List {
-            Section(header: Text("\(notifications.count) notification(s)")) {
+            Section(header: Text("\(notifications.count) \(Localized.notifications.lowercased())")) {
                 ForEach(notifications, id: \.id) { notification in
                     NotificationRowView(
                         notification: notification,
@@ -213,11 +213,11 @@ struct NotificationRowView: View {
 
     private var priorityLabel: String {
         switch notification.priority {
-        case .critical: return "CRITIQUE"
-        case .high: return "URGENT"
-        case .medium: return "INFO"
-        case .low: return "FAIBLE"
-        default: return "INFO"
+        case .critical: return Localized.critical.uppercased()
+        case .high: return Localized.urgent.uppercased()
+        case .medium: return Localized.info.uppercased()
+        case .low: return Localized.low.uppercased()
+        default: return Localized.info.uppercased()
         }
     }
 
@@ -230,19 +230,16 @@ struct NotificationRowView: View {
         let day: Int64 = 24 * hour
 
         if diff < minute {
-            return "À l'instant"
+            return Localized.justNow
         } else if diff < hour {
             let minutes = diff / minute
-            return "Il y a \(minutes) min"
+            return Localized.format(Localized.minutesAgo, "count", Int(minutes))
         } else if diff < day {
             let hours = diff / hour
-            return "Il y a \(hours) h"
-        } else if diff < 7 * day {
-            let days = diff / day
-            return "Il y a \(days) jour(s)"
+            return Localized.format(Localized.hoursAgo, "count", Int(hours))
         } else {
             let days = diff / day
-            return "Il y a \(days) jours"
+            return Localized.format(Localized.daysAgo, "count", Int(days))
         }
     }
 }

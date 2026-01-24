@@ -13,6 +13,7 @@
 
         <!-- Site Selector -->
         <TextView
+            android:id="@+id/labelCurrentSite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Site actuel"
@@ -69,6 +70,7 @@
 
         <!-- Section Header: Operations -->
         <TextView
+            android:id="@+id/labelOperations"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Opérations"
@@ -100,6 +102,7 @@
                 android:textSize="32sp"/>
 
             <TextView
+                android:id="@+id/labelPurchase"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Purchase Products"
@@ -135,6 +138,7 @@
                 android:textSize="32sp"/>
 
             <TextView
+                android:id="@+id/labelSell"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Sell Products"
@@ -170,6 +174,7 @@
                 android:textSize="32sp"/>
 
             <TextView
+                android:id="@+id/labelTransfer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Transfer Products"
@@ -205,6 +210,7 @@
                 android:textSize="32sp"/>
 
             <TextView
+                android:id="@+id/labelStock"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="View Stock"
@@ -240,6 +246,7 @@
                 android:textSize="32sp"/>
 
             <TextView
+                android:id="@+id/labelInventory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Inventory Stock"
@@ -275,6 +282,7 @@
                 android:textSize="32sp"/>
 
             <TextView
+                android:id="@+id/labelAdmin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Administration"
