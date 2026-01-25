@@ -2,12 +2,9 @@ name: CI - Build & Test
 
 on:
   workflow_dispatch:  # Manual trigger
-  push:
-    tags:
-      - 'v*'  # Run on version tags (v1.0.0, v2.1.0, etc.)
-  # Uncomment below to run on PRs:
-  # pull_request:
-  #   branches: [ main, dev ]
+  # CI runs on PRs only - release.yml handles tags
+  pull_request:
+    branches: [ main ]
 
 jobs:
   # ===========================================
