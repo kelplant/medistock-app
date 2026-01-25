@@ -241,6 +241,10 @@ CREATE TABLE stock_movements (
     purchase_price_at_movement DOUBLE PRECISION NOT NULL,
     selling_price_at_movement DOUBLE PRECISION NOT NULL,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    -- Additional tracking fields
+    movement_type TEXT, -- Legacy/detailed type (SALE, PURCHASE, ADJUSTMENT, etc.)
+    reference_id TEXT,  -- Reference to sale_id, purchase_id, etc.
+    notes TEXT,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
     client_id TEXT
@@ -458,8 +462,8 @@ CREATE TABLE sale_items (
     product_name TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
     quantity DOUBLE PRECISION NOT NULL,
-    price_per_unit DOUBLE PRECISION NOT NULL,
-    subtotal DOUBLE PRECISION NOT NULL,
+    unit_price DOUBLE PRECISION NOT NULL,
+    total_price DOUBLE PRECISION NOT NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
     client_id TEXT
@@ -936,8 +940,8 @@ SELECT
     si.quantity AS quantity_out,
     -si.quantity AS quantity_delta,
     si.unit AS unit,
-    si.price_per_unit AS unit_price,
-    si.subtotal AS total_amount,
+    si.unit_price AS unit_price,
+    si.total_price AS total_amount,
     NULL::TEXT AS notes,
     'sale_items'::TEXT AS source_table
 FROM sale_items si
@@ -1073,8 +1077,8 @@ SELECT
     c.name AS category_name,
     si.unit,
     si.quantity,
-    si.price_per_unit AS unit_price,
-    si.subtotal AS total_price,
+    si.unit_price AS unit_price,
+    si.total_price AS total_price,
     get_currency_symbol() AS currency
 FROM sales s
 JOIN sites st ON s.site_id = st.id
@@ -1095,7 +1099,7 @@ SELECT
     COUNT(DISTINCT s.id) AS nb_sales,
     COUNT(si.id) AS nb_items,
     SUM(si.quantity) AS total_quantity,
-    SUM(si.subtotal) AS total_revenue,
+    SUM(si.total_price) AS total_revenue,
     AVG(s.total_amount) AS avg_sale_amount,
     get_currency_symbol() AS currency
 FROM sales s
@@ -1121,8 +1125,8 @@ SELECT
     st.name AS site_name,
     COUNT(DISTINCT s.id) AS nb_transactions,
     SUM(si.quantity) AS total_quantity_sold,
-    SUM(si.subtotal) AS total_revenue,
-    AVG(si.price_per_unit) AS avg_unit_price,
+    SUM(si.total_price) AS total_revenue,
+    AVG(si.unit_price) AS avg_unit_price,
     MIN(TO_TIMESTAMP(s.date / 1000))::DATE AS first_sale_date,
     MAX(TO_TIMESTAMP(s.date / 1000))::DATE AS last_sale_date,
     get_currency_symbol() AS currency
@@ -1149,7 +1153,7 @@ SELECT
     COUNT(DISTINCT s.id) AS nb_transactions,
     COUNT(DISTINCT si.product_id) AS nb_products_sold,
     SUM(si.quantity) AS total_quantity_sold,
-    SUM(si.subtotal) AS total_revenue,
+    SUM(si.total_price) AS total_revenue,
     get_currency_symbol() AS currency
 FROM sale_items si
 JOIN sales s ON si.sale_id = s.id
@@ -1436,12 +1440,12 @@ SELECT
     c.name AS category_name,
     s.site_id,
     st.name AS site_name,
-    SUM(si.subtotal) AS total_revenue,
+    SUM(si.total_price) AS total_revenue,
     SUM(sba.quantity_allocated * sba.purchase_price_at_allocation) AS total_cogs,
-    SUM(si.subtotal) - COALESCE(SUM(sba.quantity_allocated * sba.purchase_price_at_allocation), 0) AS total_profit,
+    SUM(si.total_price) - COALESCE(SUM(sba.quantity_allocated * sba.purchase_price_at_allocation), 0) AS total_profit,
     CASE
-        WHEN SUM(si.subtotal) > 0
-        THEN ROUND((((SUM(si.subtotal) - COALESCE(SUM(sba.quantity_allocated * sba.purchase_price_at_allocation), 0)) / SUM(si.subtotal)) * 100)::NUMERIC, 2)
+        WHEN SUM(si.total_price) > 0
+        THEN ROUND((((SUM(si.total_price) - COALESCE(SUM(sba.quantity_allocated * sba.purchase_price_at_allocation), 0)) / SUM(si.total_price)) * 100)::NUMERIC, 2)
         ELSE 0
     END AS margin_percent,
     SUM(si.quantity) AS total_quantity_sold,

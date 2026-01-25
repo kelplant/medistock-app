@@ -73,6 +73,7 @@ class SaleUseCase(
     private val saleRepository: SaleRepository,
     private val purchaseBatchRepository: PurchaseBatchRepository,
     private val stockMovementRepository: StockMovementRepository,
+    private val stockRepository: StockRepository,
     private val productRepository: ProductRepository,
     private val packagingTypeRepository: PackagingTypeRepository,
     private val siteRepository: SiteRepository,
@@ -231,8 +232,6 @@ class SaleUseCase(
                             batchId = allocation.batchId,
                             quantityAllocated = allocation.quantity,
                             purchasePriceAtAllocation = allocation.unitCost,
-                            quantity = allocation.quantity,
-                            unitCost = allocation.unitCost,
                             createdAt = now,
                             createdBy = input.userId
                         )
@@ -241,6 +240,14 @@ class SaleUseCase(
 
                 // Insert stock movement
                 stockMovementRepository.insert(processed.stockMovement)
+
+                // Update current_stock_table (delta is negative for sales)
+                stockRepository.updateStockDelta(
+                    productId = processed.stockMovement.productId,
+                    siteId = processed.stockMovement.siteId,
+                    delta = processed.stockMovement.quantity, // Already negative for OUT
+                    lastMovementId = processed.stockMovement.id
+                )
             }
 
             // 8. Create audit entry

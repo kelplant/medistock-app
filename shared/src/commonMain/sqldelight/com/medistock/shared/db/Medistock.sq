@@ -247,9 +247,6 @@ CREATE TABLE sale_batch_allocations (
     batch_id TEXT NOT NULL,
     quantity_allocated REAL NOT NULL,
     purchase_price_at_allocation REAL NOT NULL,
-    -- Legacy fields for backward compatibility
-    quantity REAL,
-    unit_cost REAL,
     created_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (sale_item_id) REFERENCES sale_items(id),
@@ -829,8 +826,8 @@ getSaleBatchAllocationsBySaleItem:
 SELECT * FROM sale_batch_allocations WHERE sale_item_id = ?;
 
 insertSaleBatchAllocation:
-INSERT INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, quantity, unit_cost, created_at, created_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- ============================================
 -- QUERIES - Product Prices
@@ -1142,8 +1139,8 @@ INSERT OR REPLACE INTO sale_items(id, sale_id, product_id, product_name, unit, q
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertSaleBatchAllocation:
-INSERT OR REPLACE INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, quantity, unit_cost, created_at, created_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 upsertStockMovement:
 INSERT OR REPLACE INTO stock_movements(id, product_id, site_id, quantity, type, date, purchase_price_at_movement, selling_price_at_movement, movement_type, reference_id, notes, created_at, created_by)

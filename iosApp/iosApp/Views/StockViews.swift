@@ -69,7 +69,7 @@ struct StockListView: View {
                         }
                         Spacer()
                         VStack {
-                            Text("\(stockItems.filter { $0.totalStock > 0 && $0.totalStock < 10 }.count)")
+                            Text("\(stockItems.filter { $0.totalStock > 0 && $0.totalStock <= $0.minStock }.count)")
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.orange)
@@ -146,6 +146,7 @@ struct StockListView: View {
                     siteId: product.siteId,
                     siteName: siteName,
                     totalStock: stock?.totalStock ?? 0,
+                    minStock: product.minStock?.doubleValue ?? 0,
                     unit: unit,
                     nearestExpiryDate: nearestExpiry,
                     batchCount: productBatches.count
@@ -157,8 +158,11 @@ struct StockListView: View {
             stockItems = items
                 .filter { $0.totalStock > 0 }
                 .sorted { a, b in
-                    if a.totalStock < 10 && b.totalStock >= 10 { return true }
-                    if a.totalStock >= 10 && b.totalStock < 10 { return false }
+                    // Sort by low stock first (items at or below min_stock threshold)
+                    let aIsLow = a.totalStock <= a.minStock
+                    let bIsLow = b.totalStock <= b.minStock
+                    if aIsLow && !bIsLow { return true }
+                    if !aIsLow && bIsLow { return false }
                     return a.productName < b.productName
                 }
         } catch {
@@ -175,6 +179,7 @@ struct StockItem {
     let siteId: String
     let siteName: String
     let totalStock: Double
+    let minStock: Double
     let unit: String
     let nearestExpiryDate: Int64?
     let batchCount: Int
@@ -186,7 +191,7 @@ struct StockItemRowView: View {
 
     var stockColor: Color {
         if item.totalStock <= 0 { return .red }
-        if item.totalStock < 10 { return .orange }
+        if item.totalStock <= item.minStock { return .orange }
         return .green
     }
 

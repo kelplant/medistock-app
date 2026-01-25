@@ -92,6 +92,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             saleRepository = saleRepository,
             purchaseBatchRepository = purchaseBatchRepository,
             stockMovementRepository = stockMovementRepository,
+            stockRepository = stockRepository,
             productRepository = productRepository,
             packagingTypeRepository = packagingTypeRepository,
             siteRepository = siteRepository,
