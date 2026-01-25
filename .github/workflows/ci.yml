@@ -1,10 +1,7 @@
 name: CI - Build & Test
 
 on:
-  workflow_dispatch:  # Manual trigger
-  # CI runs on PRs only - release.yml handles tags
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   # ===========================================
