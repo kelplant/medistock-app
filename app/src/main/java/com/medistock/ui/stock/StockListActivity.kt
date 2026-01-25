@@ -120,7 +120,7 @@ class StockListActivity : AppCompatActivity() {
 
     private fun loadStockWithFilters() {
         lifecycleScope.launch(Dispatchers.IO) {
-            currentStockItems = when {
+            val rawStockItems = when {
                 // All sites, all products
                 selectedSitePosition == 0 && selectedProductPosition == 0 -> {
                     sdk.stockRepository.getAllCurrentStock()
@@ -143,6 +143,8 @@ class StockListActivity : AppCompatActivity() {
                     if (stock != null) listOf(stock) else emptyList()
                 }
             }
+            // Filter out items with zero stock - only show products actually present
+            currentStockItems = rawStockItems.filter { it.quantityOnHand > 0 }
             withContext(Dispatchers.Main) {
                 adapter.updateData(currentStockItems)
                 updateSummary()
@@ -151,11 +153,11 @@ class StockListActivity : AppCompatActivity() {
     }
 
     private fun updateSummary() {
-        val totalProducts = currentStockItems.distinctBy { it.productId }.size
-        val itemsInStock = currentStockItems.count { it.quantityOnHand > 0 }
-        val outOfStock = currentStockItems.count { it.quantityOnHand <= 0 }
+        val totalItems = currentStockItems.size
+        val lowStockCount = currentStockItems.count { it.quantityOnHand <= it.minStock && it.minStock > 0 }
+        val totalQuantity = currentStockItems.sumOf { it.quantityOnHand }
 
-        summaryText.text = "${L.strings.products}: $totalProducts | ${L.strings.stock}: $itemsInStock | ${L.strings.lowStock}: $outOfStock"
+        summaryText.text = "${L.strings.products}: $totalItems | ${L.strings.lowStock}: $lowStockCount | Total: ${totalQuantity.toInt()}"
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

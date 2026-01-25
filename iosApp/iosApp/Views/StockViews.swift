@@ -152,14 +152,15 @@ struct StockListView: View {
                 ))
             }
 
-            // Sort: out of stock first, then low stock, then by name
-            stockItems = items.sorted { a, b in
-                if a.totalStock <= 0 && b.totalStock > 0 { return true }
-                if a.totalStock > 0 && b.totalStock <= 0 { return false }
-                if a.totalStock < 10 && b.totalStock >= 10 { return true }
-                if a.totalStock >= 10 && b.totalStock < 10 { return false }
-                return a.productName < b.productName
-            }
+            // Filter out items with zero stock - only show products actually present
+            // Then sort by low stock first, then by name
+            stockItems = items
+                .filter { $0.totalStock > 0 }
+                .sorted { a, b in
+                    if a.totalStock < 10 && b.totalStock >= 10 { return true }
+                    if a.totalStock >= 10 && b.totalStock < 10 { return false }
+                    return a.productName < b.productName
+                }
         } catch {
             errorMessage = "Error: \(error.localizedDescription)"
         }
