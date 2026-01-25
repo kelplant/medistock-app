@@ -329,8 +329,8 @@ object StringsBm : Strings {
     override val fieldRequired = "{field} fyafunika"
     override val invalidEmail = "Email tayalondoka"
     override val invalidPhone = "Nombala ya foni tayalondoka"
-    override val valueTooShort = "{field} fyalefwaya nibumbi"
-    override val valueTooLong = "{field} nayipa sana"
+    override val valueTooShort = "{field} fyalefwaya nibumbi {min}"
+    override val valueTooLong = "{field} nayipa sana {max}"
     override val valueMustBePositive = "Ubulamba bufwile ukuba bwabwino"
     override val passwordTooShort = "Akapasiwedi kafwile ukufika 6 characters"
 
