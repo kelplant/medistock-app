@@ -125,6 +125,22 @@ CREATE TABLE stock_movements (
     FOREIGN KEY (site_id) REFERENCES sites(id)
 );
 
+-- Materialized current stock per product per site (updated by app on movements)
+CREATE TABLE current_stock_table (
+    id TEXT NOT NULL PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    quantity REAL NOT NULL DEFAULT 0,
+    last_movement_id TEXT,
+    last_updated_at INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (site_id) REFERENCES sites(id),
+    FOREIGN KEY (last_movement_id) REFERENCES stock_movements(id)
+);
+
+CREATE UNIQUE INDEX idx_current_stock_product_site ON current_stock_table(product_id, site_id);
+CREATE INDEX idx_current_stock_quantity ON current_stock_table(quantity);
+
 CREATE TABLE product_transfers (
     id TEXT NOT NULL PRIMARY KEY,
     product_id TEXT NOT NULL,
@@ -503,7 +519,82 @@ deletePermissionsForUser:
 DELETE FROM user_permissions WHERE user_id = ?;
 
 -- ============================================
--- QUERIES - Current Stock (computed)
+-- QUERIES - Current Stock Table (materialized)
+-- ============================================
+
+-- Get stock from materialized table (O(1) lookup)
+getStockQuantity:
+SELECT COALESCE(quantity, 0.0) AS quantity
+FROM current_stock_table
+WHERE product_id = ? AND site_id = ?;
+
+-- Get all stock for a site
+getStockForSite:
+SELECT cst.*, p.name AS product_name,
+    COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
+    COALESCE(c.name, '') AS category_name
+FROM current_stock_table cst
+JOIN products p ON cst.product_id = p.id
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
+WHERE cst.site_id = ?
+ORDER BY p.name;
+
+-- Get all stock across all sites
+getAllStock:
+SELECT cst.*, p.name AS product_name, s.name AS site_name,
+    COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
+    COALESCE(c.name, '') AS category_name
+FROM current_stock_table cst
+JOIN products p ON cst.product_id = p.id
+JOIN sites s ON cst.site_id = s.id
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
+ORDER BY s.name, p.name;
+
+-- Upsert stock (insert or replace)
+upsertStock:
+INSERT OR REPLACE INTO current_stock_table(id, product_id, site_id, quantity, last_movement_id, last_updated_at)
+VALUES (
+    COALESCE((SELECT id FROM current_stock_table WHERE product_id = ? AND site_id = ?), ?),
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+);
+
+-- Update stock quantity (add delta)
+updateStockDelta:
+UPDATE current_stock_table
+SET quantity = quantity + ?,
+    last_movement_id = ?,
+    last_updated_at = ?
+WHERE product_id = ? AND site_id = ?;
+
+-- Set absolute stock quantity (for inventory adjustments)
+setStockQuantity:
+UPDATE current_stock_table
+SET quantity = ?,
+    last_movement_id = ?,
+    last_updated_at = ?
+WHERE product_id = ? AND site_id = ?;
+
+-- Insert initial stock entry
+insertStock:
+INSERT INTO current_stock_table(id, product_id, site_id, quantity, last_movement_id, last_updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- Delete stock entry
+deleteStock:
+DELETE FROM current_stock_table WHERE product_id = ? AND site_id = ?;
+
+-- Get stock entry by product and site
+getStockEntry:
+SELECT * FROM current_stock_table WHERE product_id = ? AND site_id = ?;
+
+-- ============================================
+-- QUERIES - Current Stock (computed - LEGACY, use current_stock_table instead)
 -- ============================================
 
 getCurrentStockByProductAndSite:

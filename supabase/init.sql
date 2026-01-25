@@ -252,37 +252,147 @@ CREATE INDEX idx_stock_movements_type ON stock_movements(type);
 CREATE INDEX idx_stock_movements_date ON stock_movements(date);
 CREATE INDEX idx_stock_movements_client_id ON stock_movements(client_id);
 
--- Inventaires physiques (inventory sessions)
+-- ============================================================================
+-- CURRENT STOCK TABLE (materialized for O(1) lookups)
+-- ============================================================================
+
+CREATE TABLE current_stock_table (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+    quantity DOUBLE PRECISION NOT NULL DEFAULT 0,
+    last_movement_id UUID REFERENCES stock_movements(id) ON DELETE SET NULL,
+    last_updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    client_id TEXT,
+    UNIQUE(product_id, site_id)
+);
+
+CREATE INDEX idx_current_stock_product ON current_stock_table(product_id);
+CREATE INDEX idx_current_stock_site ON current_stock_table(site_id);
+CREATE INDEX idx_current_stock_quantity ON current_stock_table(quantity);
+CREATE INDEX idx_current_stock_client_id ON current_stock_table(client_id);
+
+COMMENT ON TABLE current_stock_table IS 'Materialized current stock per product per site. Updated by triggers on stock_movements.';
+
+-- Function to update current stock on movement changes
+CREATE OR REPLACE FUNCTION update_current_stock()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_quantity_delta DOUBLE PRECISION;
+    v_now BIGINT;
+BEGIN
+    v_now := EXTRACT(EPOCH FROM NOW())::BIGINT * 1000;
+
+    IF TG_OP = 'INSERT' THEN
+        -- Calculate delta based on movement type
+        IF NEW.type = 'IN' THEN
+            v_quantity_delta := NEW.quantity;
+        ELSE
+            v_quantity_delta := -NEW.quantity;
+        END IF;
+
+        -- Upsert into current_stock_table
+        INSERT INTO current_stock_table (product_id, site_id, quantity, last_movement_id, last_updated_at, client_id)
+        VALUES (NEW.product_id, NEW.site_id, v_quantity_delta, NEW.id, v_now, NEW.client_id)
+        ON CONFLICT (product_id, site_id) DO UPDATE SET
+            quantity = current_stock_table.quantity + v_quantity_delta,
+            last_movement_id = NEW.id,
+            last_updated_at = v_now,
+            client_id = COALESCE(NEW.client_id, current_stock_table.client_id);
+
+        RETURN NEW;
+
+    ELSIF TG_OP = 'DELETE' THEN
+        -- Reverse the movement
+        IF OLD.type = 'IN' THEN
+            v_quantity_delta := -OLD.quantity;
+        ELSE
+            v_quantity_delta := OLD.quantity;
+        END IF;
+
+        UPDATE current_stock_table
+        SET quantity = quantity + v_quantity_delta,
+            last_updated_at = v_now
+        WHERE product_id = OLD.product_id AND site_id = OLD.site_id;
+
+        RETURN OLD;
+
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Reverse old movement
+        IF OLD.type = 'IN' THEN
+            v_quantity_delta := -OLD.quantity;
+        ELSE
+            v_quantity_delta := OLD.quantity;
+        END IF;
+
+        -- Apply new movement
+        IF NEW.type = 'IN' THEN
+            v_quantity_delta := v_quantity_delta + NEW.quantity;
+        ELSE
+            v_quantity_delta := v_quantity_delta - NEW.quantity;
+        END IF;
+
+        UPDATE current_stock_table
+        SET quantity = quantity + v_quantity_delta,
+            last_movement_id = NEW.id,
+            last_updated_at = v_now
+        WHERE product_id = NEW.product_id AND site_id = NEW.site_id;
+
+        RETURN NEW;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to auto-update current_stock on movements
+CREATE TRIGGER trigger_update_current_stock
+    AFTER INSERT OR UPDATE OR DELETE ON stock_movements
+    FOR EACH ROW
+    EXECUTE FUNCTION update_current_stock();
+
+-- Helper function for quick stock lookup
+CREATE OR REPLACE FUNCTION get_current_stock(p_product_id UUID, p_site_id UUID)
+RETURNS DOUBLE PRECISION AS $$
+BEGIN
+    RETURN COALESCE(
+        (SELECT quantity FROM current_stock_table
+         WHERE product_id = p_product_id AND site_id = p_site_id),
+        0
+    );
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- ============================================================================
+-- INVENTORIES (session header) - matches SQLDelight structure
+-- ============================================================================
+
 CREATE TABLE inventories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
-    count_date BIGINT NOT NULL,
-    counted_quantity DOUBLE PRECISION NOT NULL,
-    theoretical_quantity DOUBLE PRECISION NOT NULL,
-    discrepancy DOUBLE PRECISION NOT NULL,
-    reason TEXT NOT NULL DEFAULT '',
-    counted_by TEXT NOT NULL DEFAULT '',
-    notes TEXT NOT NULL DEFAULT '',
-    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
+    status TEXT NOT NULL DEFAULT 'in_progress',
+    started_at BIGINT NOT NULL,
+    completed_at BIGINT,
+    notes TEXT,
     created_by TEXT NOT NULL DEFAULT 'system',
     client_id TEXT
 );
 
-CREATE INDEX idx_inventories_product ON inventories(product_id);
 CREATE INDEX idx_inventories_site ON inventories(site_id);
-CREATE INDEX idx_inventories_date ON inventories(count_date);
+CREATE INDEX idx_inventories_status ON inventories(status);
+CREATE INDEX idx_inventories_started_at ON inventories(started_at);
+CREATE INDEX idx_inventories_client_id ON inventories(client_id);
 
--- Inventory items (individual product counts during inventory sessions)
+-- Inventory items (detail lines for each product counted)
 CREATE TABLE inventory_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     inventory_id UUID REFERENCES inventories(id) ON DELETE SET NULL,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     count_date BIGINT NOT NULL,
-    counted_quantity REAL NOT NULL,
-    theoretical_quantity REAL NOT NULL,
-    discrepancy REAL NOT NULL DEFAULT 0.0,
+    counted_quantity DOUBLE PRECISION NOT NULL,
+    theoretical_quantity DOUBLE PRECISION NOT NULL,
+    discrepancy DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     reason TEXT NOT NULL DEFAULT '',
     counted_by TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
@@ -748,26 +858,26 @@ IMPORTANT: Change the password immediately after login!';
 -- VUES UTILES
 -- ============================================================================
 
--- Vue pour obtenir le stock actuel par produit et site
+-- Vue pour obtenir le stock actuel par produit et site (uses materialized current_stock_table)
 CREATE OR REPLACE VIEW current_stock AS
 SELECT
     p.id as product_id,
     p.name as product_name,
     p.description,
-    p.site_id,
+    cst.site_id,
     s.name as site_name,
-    COALESCE(SUM(pb.remaining_quantity), 0) as current_stock,
+    COALESCE(cst.quantity, 0) as current_stock,
     p.min_stock,
     p.max_stock,
     CASE
-        WHEN COALESCE(SUM(pb.remaining_quantity), 0) <= p.min_stock THEN 'LOW'
-        WHEN COALESCE(SUM(pb.remaining_quantity), 0) >= p.max_stock THEN 'HIGH'
+        WHEN COALESCE(cst.quantity, 0) <= p.min_stock THEN 'LOW'
+        WHEN p.max_stock > 0 AND COALESCE(cst.quantity, 0) >= p.max_stock THEN 'HIGH'
         ELSE 'NORMAL'
     END as stock_status
 FROM products p
-LEFT JOIN purchase_batches pb ON p.id = pb.product_id AND pb.is_exhausted = FALSE
-LEFT JOIN sites s ON p.site_id = s.id
-GROUP BY p.id, p.name, p.description, p.site_id, s.name, p.min_stock, p.max_stock;
+LEFT JOIN current_stock_table cst ON p.id = cst.product_id
+LEFT JOIN sites s ON cst.site_id = s.id
+WHERE p.is_active = true;
 
 -- Vue plate pour le reporting Looker Studio (achats, ventes, transferts, corrections)
 CREATE OR REPLACE VIEW transaction_flat_view AS
@@ -909,14 +1019,14 @@ LEFT JOIN sites ts ON pt.to_site_id = ts.id
 UNION ALL
 SELECT
     'INVENTORY_ADJUST'::TEXT AS transaction_type,
-    i.id AS transaction_id,
-    i.id AS reference_id,
-    i.count_date AS transaction_date,
+    ii.id AS transaction_id,
+    COALESCE(ii.inventory_id, ii.id) AS reference_id,
+    ii.count_date AS transaction_date,
     p.id AS product_id,
     p.name AS product_name,
     c.name AS category_name,
     ptg.name AS packaging_type_name,
-    i.site_id AS site_id,
+    ii.site_id AS site_id,
     s.name AS site_name,
     NULL::UUID AS from_site_id,
     NULL::TEXT AS from_site_name,
@@ -925,17 +1035,17 @@ SELECT
     NULL::UUID AS customer_id,
     NULL::TEXT AS customer_name,
     NULL::TEXT AS supplier_name,
-    GREATEST(i.discrepancy, 0) AS quantity_in,
-    GREATEST(-i.discrepancy, 0) AS quantity_out,
-    i.discrepancy AS quantity_delta,
+    GREATEST(ii.discrepancy, 0) AS quantity_in,
+    GREATEST(-ii.discrepancy, 0) AS quantity_out,
+    ii.discrepancy AS quantity_delta,
     COALESCE(CASE WHEN p.selected_level = 2 THEN ptg.level2_name ELSE ptg.level1_name END, 'unit') AS unit,
     NULL::DOUBLE PRECISION AS unit_price,
     NULL::DOUBLE PRECISION AS total_amount,
-    NULLIF(COALESCE(NULLIF(i.reason, ''), NULLIF(i.notes, '')), '') AS notes,
-    'inventories'::TEXT AS source_table
-FROM inventories i
-JOIN products p ON i.product_id = p.id
-LEFT JOIN sites s ON i.site_id = s.id
+    NULLIF(COALESCE(NULLIF(ii.reason, ''), NULLIF(ii.notes, '')), '') AS notes,
+    'inventory_items'::TEXT AS source_table
+FROM inventory_items ii
+JOIN products p ON ii.product_id = p.id
+LEFT JOIN sites s ON ii.site_id = s.id
 LEFT JOIN categories c ON p.category_id = c.id
 LEFT JOIN packaging_types ptg ON p.packaging_type_id = ptg.id;
 
@@ -1375,49 +1485,50 @@ GROUP BY
     site_name,
     currency;
 
--- v_inventory_discrepancies: Inventory count discrepancies
+-- v_inventory_discrepancies: Inventory count discrepancies (uses inventory_items)
 CREATE OR REPLACE VIEW v_inventory_discrepancies AS
 SELECT
-    inv.id AS item_id,
-    DATE(TO_TIMESTAMP(inv.count_date / 1000)) AS count_date,
-    inv.site_id,
+    ii.id AS item_id,
+    ii.inventory_id,
+    DATE(TO_TIMESTAMP(ii.count_date / 1000)) AS count_date,
+    ii.site_id,
     st.name AS site_name,
-    inv.product_id,
+    ii.product_id,
     p.name AS product_name,
     COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
-    inv.theoretical_quantity,
-    inv.counted_quantity,
-    inv.discrepancy,
+    ii.theoretical_quantity,
+    ii.counted_quantity,
+    ii.discrepancy,
     CASE
-        WHEN inv.theoretical_quantity > 0
-        THEN ROUND(((inv.discrepancy / inv.theoretical_quantity) * 100)::NUMERIC, 2)
+        WHEN ii.theoretical_quantity > 0
+        THEN ROUND(((ii.discrepancy / ii.theoretical_quantity) * 100)::NUMERIC, 2)
         ELSE 0
     END AS discrepancy_percent,
-    inv.reason,
-    inv.counted_by,
-    inv.notes
-FROM inventories inv
-JOIN sites st ON inv.site_id = st.id
-LEFT JOIN products p ON inv.product_id = p.id
+    ii.reason,
+    ii.counted_by,
+    ii.notes
+FROM inventory_items ii
+JOIN sites st ON ii.site_id = st.id
+LEFT JOIN products p ON ii.product_id = p.id
 LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
-WHERE inv.discrepancy != 0;
+WHERE ii.discrepancy != 0;
 
--- v_inventory_summary: Summary per site and date
+-- v_inventory_summary: Summary per site and date (uses inventory_items)
 CREATE OR REPLACE VIEW v_inventory_summary AS
 SELECT
-    inv.site_id,
+    ii.site_id,
     st.name AS site_name,
-    DATE(TO_TIMESTAMP(inv.count_date / 1000)) AS count_date,
-    COUNT(inv.id) AS nb_items_counted,
-    COUNT(CASE WHEN inv.discrepancy != 0 THEN 1 END) AS nb_discrepancies,
-    SUM(CASE WHEN inv.discrepancy > 0 THEN inv.discrepancy ELSE 0 END) AS total_surplus,
-    SUM(CASE WHEN inv.discrepancy < 0 THEN ABS(inv.discrepancy) ELSE 0 END) AS total_shortage
-FROM inventories inv
-JOIN sites st ON inv.site_id = st.id
+    DATE(TO_TIMESTAMP(ii.count_date / 1000)) AS count_date,
+    COUNT(ii.id) AS nb_items_counted,
+    COUNT(CASE WHEN ii.discrepancy != 0 THEN 1 END) AS nb_discrepancies,
+    SUM(CASE WHEN ii.discrepancy > 0 THEN ii.discrepancy ELSE 0 END) AS total_surplus,
+    SUM(CASE WHEN ii.discrepancy < 0 THEN ABS(ii.discrepancy) ELSE 0 END) AS total_shortage
+FROM inventory_items ii
+JOIN sites st ON ii.site_id = st.id
 GROUP BY
-    inv.site_id,
+    ii.site_id,
     st.name,
-    DATE(TO_TIMESTAMP(inv.count_date / 1000));
+    DATE(TO_TIMESTAMP(ii.count_date / 1000));
 
 -- v_transfers_summary: Transfer analytics
 CREATE OR REPLACE VIEW v_transfers_summary AS
@@ -1849,6 +1960,7 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_prices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_batches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE current_stock_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_transfers ENABLE ROW LEVEL SECURITY;
@@ -1926,6 +2038,12 @@ CREATE POLICY "stock_movements_select" ON stock_movements FOR SELECT TO authenti
 CREATE POLICY "stock_movements_insert" ON stock_movements FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "stock_movements_update" ON stock_movements FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "stock_movements_delete" ON stock_movements FOR DELETE TO authenticated USING (true);
+
+-- CURRENT_STOCK_TABLE
+CREATE POLICY "current_stock_table_select" ON current_stock_table FOR SELECT TO authenticated USING (true);
+CREATE POLICY "current_stock_table_insert" ON current_stock_table FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "current_stock_table_update" ON current_stock_table FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "current_stock_table_delete" ON current_stock_table FOR DELETE TO authenticated USING (true);
 
 -- INVENTORIES
 CREATE POLICY "inventories_select" ON inventories FOR SELECT TO authenticated USING (true);
@@ -2066,15 +2184,17 @@ VALUES
     ('2026012408_fix_is_active_boolean_type', NULL, 'init', TRUE, NULL),
     ('2026012501_add_user_language', NULL, 'init', TRUE, NULL),
     ('2026012502_remove_product_unit', NULL, 'init', TRUE, NULL),
+    ('2026012503_current_stock_table', NULL, 'init', TRUE, NULL),
+    ('2026012504_fix_inventories_schema', NULL, 'init', TRUE, NULL),
     ('20260124001000_reporting_views', NULL, 'init', TRUE, NULL),
     ('20260125000100_record_reporting_views', NULL, 'init', TRUE, NULL),
     ('20260125001000_reporting_readonly_user', NULL, 'init', TRUE, NULL),
     ('20260125002000_seed_demo_data', NULL, 'init', TRUE, NULL)
 ON CONFLICT (name) DO NOTHING;
 
--- Initialiser la version du schema (version 7 = all migrations applied)
+-- Initialiser la version du schema (version 8 = all migrations applied including current_stock_table)
 INSERT INTO schema_version (schema_version, min_app_version, updated_by)
-VALUES (7, 2, 'init')
+VALUES (8, 2, 'init')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -2085,12 +2205,13 @@ ON CONFLICT (id) DO NOTHING;
 DO $$
 BEGIN
     RAISE NOTICE 'Medistock database schema created successfully!';
-    RAISE NOTICE 'Total tables: 22 (including schema_migrations, schema_version, sync_queue, notification_events_local, inventory_items, app_config)';
+    RAISE NOTICE 'Total tables: 23 (including current_stock_table, schema_migrations, schema_version, sync_queue, notification_events_local, inventory_items, app_config)';
     RAISE NOTICE 'Total views: 24 (current_stock, transaction_flat_view, plus 22 reporting views)';
     RAISE NOTICE 'Default admin user: admin / admin123';
-    RAISE NOTICE 'Migration system initialized with 31 migrations marked as applied';
-    RAISE NOTICE 'Schema version: 7, Min app version: 2';
+    RAISE NOTICE 'Migration system initialized with 33 migrations marked as applied';
+    RAISE NOTICE 'Schema version: 8, Min app version: 2';
     RAISE NOTICE 'All tables include client_id column for Realtime support';
     RAISE NOTICE 'RLS enabled on all tables with permissive policies for authenticated users';
     RAISE NOTICE 'app_config table has RLS with NO policies (service_role only)';
+    RAISE NOTICE 'current_stock_table is auto-updated via trigger on stock_movements';
 END $$;
