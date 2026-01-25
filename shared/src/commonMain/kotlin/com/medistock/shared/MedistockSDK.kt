@@ -93,6 +93,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             purchaseBatchRepository = purchaseBatchRepository,
             stockMovementRepository = stockMovementRepository,
             productRepository = productRepository,
+            packagingTypeRepository = packagingTypeRepository,
             siteRepository = siteRepository,
             auditRepository = auditRepository,
             saleBatchAllocationRepository = saleBatchAllocationRepository
@@ -141,8 +142,10 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     fun createProduct(
         name: String,
         siteId: String,
-        unit: String = "unité",
+        packagingTypeId: String,
         unitVolume: Double = 1.0,
+        selectedLevel: Int = 1,
+        conversionFactor: Double? = null,
         categoryId: String? = null,
         userId: String = "ios"
     ): Product {
@@ -150,8 +153,10 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         return Product(
             id = generateId(prefix = "product"),
             name = name,
-            unit = unit,
             unitVolume = unitVolume,
+            packagingTypeId = packagingTypeId,
+            selectedLevel = selectedLevel,
+            conversionFactor = conversionFactor,
             siteId = siteId,
             categoryId = categoryId,
             createdAt = now,

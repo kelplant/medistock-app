@@ -12,6 +12,7 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Customer
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.Sale
 import com.medistock.shared.domain.model.SaleItem
@@ -41,11 +42,18 @@ class SaleActivity : LocalizedActivity() {
     private lateinit var saleItemAdapter: SaleItemAdapter
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
+    private var packagingTypes: Map<String, PackagingType> = emptyMap()
     private var currentStock: Map<String, Double> = emptyMap()
     private var selectedSiteId: String? = null
     private var editingSaleId: String? = null
     private var existingSale: Sale? = null
     private var selectedCustomer: Customer? = null
+
+    private fun getUnit(product: Product?): String {
+        if (product == null) return ""
+        val packagingType = packagingTypes[product.packagingTypeId]
+        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,6 +157,7 @@ class SaleActivity : LocalizedActivity() {
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = sdk.productRepository.getAll()
+            packagingTypes = sdk.packagingTypeRepository.getAll().associateBy { it.id }
         }
     }
 
@@ -196,7 +205,7 @@ class SaleActivity : LocalizedActivity() {
         val editQuantity = dialogView.findViewById<EditText>(R.id.editQuantityDialog)
         val editPrice = dialogView.findViewById<EditText>(R.id.editPriceDialog)
 
-        val productNames = products.map { "${it.name} (${it.unit})" }
+        val productNames = products.map { "${it.name} (${getUnit(it)})" }
         val productAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, productNames)
         productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerProduct.adapter = productAdapter
@@ -208,7 +217,7 @@ class SaleActivity : LocalizedActivity() {
                 if (position >= 0 && position < products.size) {
                     selectedProduct = products[position]
                     val availableQty = currentStock[selectedProduct!!.id] ?: 0.0
-                    textAvailableStock.text = "${strings.availableStock}: $availableQty ${selectedProduct!!.unit}"
+                    textAvailableStock.text = "${strings.availableStock}: $availableQty ${getUnit(selectedProduct)}"
 
                     // Load suggested price
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -267,7 +276,7 @@ class SaleActivity : LocalizedActivity() {
                     saleId = editingSaleId ?: "",
                     productId = product.id,
                     productName = product.name,
-                    unit = product.unit,
+                    unit = getUnit(product),
                     quantity = quantity,
                     unitPrice = price,
                     totalPrice = quantity * price
@@ -630,12 +639,15 @@ class SaleActivity : LocalizedActivity() {
                             currentUser
                         )
 
+                        // Get the product to derive the unit
+                        val product = products.find { it.id == item.productId }
+
                         // Insert sale item
                         val newItem = sdk.createSaleItem(
                             saleId = saleId,
                             productId = item.productId,
                             productName = item.productName,
-                            unit = item.unit,
+                            unit = getUnit(product),
                             quantity = item.quantity,
                             unitPrice = item.unitPrice,
                             userId = currentUser

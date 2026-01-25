@@ -180,14 +180,13 @@ struct ProductDTO: Codable {
     let id: String
     let name: String
     let description: String?
-    let unit: String
     let unitVolume: Double
-    let packagingTypeId: String?
+    let packagingTypeId: String
+    let selectedLevel: Int32
     let conversionFactor: Double
     let categoryId: String?
     let marginType: String
     let marginValue: Double
-    let selectedLevel: Int32?
     let siteId: String?
     let minStock: Double?
     let maxStock: Double?
@@ -199,14 +198,14 @@ struct ProductDTO: Codable {
     var clientId: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, name, description, unit
+        case id, name, description
         case unitVolume = "unit_volume"
         case packagingTypeId = "packaging_type_id"
+        case selectedLevel = "selected_level"
         case conversionFactor = "conversion_factor"
         case categoryId = "category_id"
         case marginType = "margin_type"
         case marginValue = "margin_value"
-        case selectedLevel = "selected_level"
         case siteId = "site_id"
         case minStock = "min_stock"
         case maxStock = "max_stock"
@@ -222,14 +221,13 @@ struct ProductDTO: Codable {
         self.id = product.id
         self.name = product.name
         self.description = product.description_
-        self.unit = product.unit
         self.unitVolume = product.unitVolume
-        self.packagingTypeId = product.packagingTypeId
+        self.packagingTypeId = product.packagingTypeId ?? ""
+        self.selectedLevel = product.selectedLevel?.int32Value ?? 1
         self.conversionFactor = product.conversionFactor?.doubleValue ?? 1.0
         self.categoryId = product.categoryId
         self.marginType = product.marginType ?? "PERCENTAGE"
         self.marginValue = product.marginValue?.doubleValue ?? 0.0
-        self.selectedLevel = product.selectedLevel?.int32Value
         self.siteId = product.siteId
         self.minStock = product.minStock?.doubleValue
         self.maxStock = product.maxStock?.doubleValue
@@ -245,10 +243,9 @@ struct ProductDTO: Codable {
         Product(
             id: id,
             name: name,
-            unit: unit,
             unitVolume: unitVolume,
             packagingTypeId: packagingTypeId,
-            selectedLevel: selectedLevel.map { KotlinInt(int: $0) },
+            selectedLevel: KotlinInt(int: selectedLevel),
             conversionFactor: KotlinDouble(double: conversionFactor),
             categoryId: categoryId,
             marginType: marginType,

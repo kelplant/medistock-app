@@ -45,10 +45,9 @@ class ProductRepository(private val database: MedistockDatabase) {
         queries.insertProduct(
             id = product.id,
             name = product.name,
-            unit = product.unit,
             unit_volume = product.unitVolume,
             packaging_type_id = product.packagingTypeId,
-            selected_level = product.selectedLevel?.toLong(),
+            selected_level = product.selectedLevel.toLong(),
             conversion_factor = product.conversionFactor,
             category_id = product.categoryId,
             margin_type = product.marginType,
@@ -68,10 +67,9 @@ class ProductRepository(private val database: MedistockDatabase) {
     suspend fun update(product: Product) = withContext(Dispatchers.Default) {
         queries.updateProduct(
             name = product.name,
-            unit = product.unit,
             unit_volume = product.unitVolume,
             packaging_type_id = product.packagingTypeId,
-            selected_level = product.selectedLevel?.toLong(),
+            selected_level = product.selectedLevel.toLong(),
             conversion_factor = product.conversionFactor,
             category_id = product.categoryId,
             margin_type = product.marginType,
@@ -114,10 +112,9 @@ class ProductRepository(private val database: MedistockDatabase) {
         queries.upsertProduct(
             id = product.id,
             name = product.name,
-            unit = product.unit,
             unit_volume = product.unitVolume,
             packaging_type_id = product.packagingTypeId,
-            selected_level = product.selectedLevel?.toLong(),
+            selected_level = product.selectedLevel.toLong(),
             conversion_factor = product.conversionFactor,
             category_id = product.categoryId,
             margin_type = product.marginType,
@@ -194,7 +191,7 @@ class ProductRepository(private val database: MedistockDatabase) {
         return ProductWithCategory(
             id = id,
             name = name,
-            unit = unit,
+            unit = unit ?: "unité",
             categoryId = category_id,
             categoryName = category_name,
             marginType = margin_type,
@@ -211,7 +208,7 @@ class ProductRepository(private val database: MedistockDatabase) {
         return ProductWithCategory(
             id = id,
             name = name,
-            unit = unit,
+            unit = unit ?: "unité",
             categoryId = category_id,
             categoryName = category_name,
             marginType = margin_type,
@@ -229,10 +226,9 @@ class ProductRepository(private val database: MedistockDatabase) {
         return Product(
             id = id,
             name = name,
-            unit = unit,
             unitVolume = unit_volume,
             packagingTypeId = packaging_type_id,
-            selectedLevel = selected_level?.toInt(),
+            selectedLevel = selected_level?.toInt() ?: 1,
             conversionFactor = conversion_factor,
             categoryId = category_id,
             marginType = margin_type,

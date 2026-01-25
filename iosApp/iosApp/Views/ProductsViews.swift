@@ -10,6 +10,7 @@ struct ProductsListView: View {
     @State private var products: [Product] = []
     @State private var sites: [Site] = []
     @State private var categories: [shared.Category] = []
+    @State private var packagingTypes: [PackagingType] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showAddSheet = false
@@ -52,7 +53,7 @@ struct ProductsListView: View {
             } else {
                 Section(header: Text("\(filteredProducts.count) \(Localized.products.lowercased())")) {
                     ForEach(filteredProducts, id: \.id) { product in
-                        ProductRowView(product: product, siteName: siteName(for: product.siteId), categoryName: categoryName(for: product.categoryId))
+                        ProductRowView(product: product, siteName: siteName(for: product.siteId), categoryName: categoryName(for: product.categoryId), packagingType: packagingType(for: product.packagingTypeId))
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 productToEdit = product
@@ -73,12 +74,12 @@ struct ProductsListView: View {
             }
         }
         .sheet(isPresented: $showAddSheet) {
-            ProductEditorView(sdk: sdk, session: session, product: nil, sites: sites, categories: categories) {
+            ProductEditorView(sdk: sdk, session: session, product: nil, sites: sites, categories: categories, packagingTypes: packagingTypes) {
                 Task { await loadData() }
             }
         }
         .sheet(item: $productToEdit) { product in
-            ProductEditorView(sdk: sdk, session: session, product: product, sites: sites, categories: categories) {
+            ProductEditorView(sdk: sdk, session: session, product: product, sites: sites, categories: categories, packagingTypes: packagingTypes) {
                 Task { await loadData() }
             }
         }
@@ -111,6 +112,12 @@ struct ProductsListView: View {
                     try? await sdk.categoryRepository.upsert(category: dto.toEntity())
                 }
 
+                // Sync packaging types
+                let remotePackagingTypes: [PackagingTypeDTO] = try await SupabaseService.shared.fetchAll(from: "packaging_types")
+                for dto in remotePackagingTypes {
+                    try? await sdk.packagingTypeRepository.upsert(packagingType: dto.toEntity())
+                }
+
                 // Sync products
                 let remoteProducts: [ProductDTO] = try await SupabaseService.shared.fetchAll(from: "products")
                 for dto in remoteProducts {
@@ -125,10 +132,12 @@ struct ProductsListView: View {
         do {
             async let sitesResult = sdk.siteRepository.getAll()
             async let categoriesResult = sdk.categoryRepository.getAll()
+            async let packagingTypesResult = sdk.packagingTypeRepository.getAll()
             async let productsResult = sdk.productRepository.getAll()
 
             sites = try await sitesResult
             categories = try await categoriesResult
+            packagingTypes = try await packagingTypesResult
             products = try await productsResult
         } catch {
             errorMessage = "Error: \(error.localizedDescription)"
@@ -143,6 +152,11 @@ struct ProductsListView: View {
     private func categoryName(for categoryId: String?) -> String? {
         guard let categoryId = categoryId else { return nil }
         return categories.first { $0.id == categoryId }?.name
+    }
+
+    private func packagingType(for packagingTypeId: String?) -> PackagingType? {
+        guard let packagingTypeId = packagingTypeId else { return nil }
+        return packagingTypes.first { $0.id == packagingTypeId }
     }
 
     private func deleteProducts(at offsets: IndexSet) {
@@ -174,6 +188,17 @@ struct ProductRowView: View {
     let product: Product
     let siteName: String
     let categoryName: String?
+    let packagingType: PackagingType?
+
+    /// Derives the unit name from the packaging type based on selectedLevel
+    var derivedUnit: String {
+        guard let packagingType = packagingType else { return "unit" }
+        let selectedLevel = product.selectedLevel?.intValue ?? 1
+        if selectedLevel == 2, let level2Name = packagingType.level2Name {
+            return level2Name
+        }
+        return packagingType.level1Name
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -187,7 +212,7 @@ struct ProductRowView: View {
             }
             .font(.subheadline)
             .foregroundColor(.secondary)
-            Text("\(Localized.unit): \(product.unit) • \(String(format: "%.2f", product.unitVolume))")
+            Text("\(Localized.unit): \(derivedUnit) • \(String(format: "%.2f", product.unitVolume))")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -202,15 +227,17 @@ struct ProductEditorView: View {
     let product: Product?
     let sites: [Site]
     let categories: [shared.Category]
+    let packagingTypes: [PackagingType]
     let onSave: () -> Void
 
     @ObservedObject private var syncStatus = SyncStatusManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
-    @State private var unit: String = "unit"
     @State private var volumeText: String = "1"
     @State private var selectedSiteId: String = ""
     @State private var selectedCategoryId: String = ""
+    @State private var selectedPackagingTypeId: String = ""
+    @State private var selectedLevel: Int = 1
     @State private var description: String = ""
     @State private var minStockText: String = ""
     @State private var isSaving = false
@@ -218,15 +245,68 @@ struct ProductEditorView: View {
 
     var isEditing: Bool { product != nil }
 
+    /// Returns the currently selected packaging type
+    var selectedPackagingType: PackagingType? {
+        packagingTypes.first { $0.id == selectedPackagingTypeId }
+    }
+
+    /// Derives the unit name from the selected packaging type and level
+    var derivedUnit: String {
+        guard let packagingType = selectedPackagingType else { return "unit" }
+        if selectedLevel == 2, let level2Name = packagingType.level2Name {
+            return level2Name
+        }
+        return packagingType.level1Name
+    }
+
+    /// Check if level 2 is available for the selected packaging type
+    var hasLevel2: Bool {
+        selectedPackagingType?.level2Name != nil
+    }
+
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text(Localized.information)) {
                     TextField(Localized.productName, text: $name)
-                    TextField(Localized.unit, text: $unit)
                     TextField(Localized.strings.unitVolume, text: $volumeText)
                         .keyboardType(.decimalPad)
                     TextField(Localized.description_, text: $description)
+                }
+
+                Section(header: Text(Localized.strings.packagingType)) {
+                    Picker(Localized.strings.packagingType, selection: $selectedPackagingTypeId) {
+                        Text(Localized.strings.none).tag("")
+                        ForEach(packagingTypes, id: \.id) { packagingType in
+                            Text(packagingType.name).tag(packagingType.id)
+                        }
+                    }
+                    .onChange(of: selectedPackagingTypeId) { _ in
+                        // Reset to level 1 when packaging type changes
+                        selectedLevel = 1
+                    }
+
+                    if selectedPackagingType != nil {
+                        if hasLevel2 {
+                            Picker(Localized.unit, selection: $selectedLevel) {
+                                if let pt = selectedPackagingType {
+                                    Text(pt.level1Name).tag(1)
+                                    if let level2Name = pt.level2Name {
+                                        Text(level2Name).tag(2)
+                                    }
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+
+                        HStack {
+                            Text(Localized.unit)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(derivedUnit)
+                                .fontWeight(.medium)
+                        }
+                    }
                 }
 
                 Section(header: Text(Localized.site)) {
@@ -281,15 +361,17 @@ struct ProductEditorView: View {
             .onAppear {
                 if let product = product {
                     name = product.name
-                    unit = product.unit
                     volumeText = String(format: "%.2f", product.unitVolume)
                     selectedSiteId = product.siteId
                     selectedCategoryId = product.categoryId ?? ""
+                    selectedPackagingTypeId = product.packagingTypeId ?? ""
+                    selectedLevel = product.selectedLevel?.intValue ?? 1
                     description = product.description_ ?? ""
                     let minStock = product.minStock?.doubleValue ?? 0.0
                     minStockText = minStock > 0 ? String(format: "%.0f", minStock) : ""
                 } else {
                     selectedSiteId = sites.first?.id ?? ""
+                    selectedPackagingTypeId = packagingTypes.first?.id ?? ""
                 }
             }
         }
@@ -301,7 +383,6 @@ struct ProductEditorView: View {
 
     private func saveProduct() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedUnit = unit.trimmingCharacters(in: .whitespacesAndNewlines)
         let volume = Double(volumeText.replacingOccurrences(of: ",", with: ".")) ?? 1.0
         let minStock = Double(minStockText.replacingOccurrences(of: ",", with: ".")) ?? 0.0
 
@@ -317,10 +398,9 @@ struct ProductEditorView: View {
                     savedProduct = Product(
                         id: existingProduct.id,
                         name: trimmedName,
-                        unit: trimmedUnit.isEmpty ? "unit" : trimmedUnit,
                         unitVolume: volume,
-                        packagingTypeId: existingProduct.packagingTypeId,
-                        selectedLevel: existingProduct.selectedLevel,
+                        packagingTypeId: selectedPackagingTypeId.isEmpty ? nil : selectedPackagingTypeId,
+                        selectedLevel: KotlinInt(int: Int32(selectedLevel)),
                         conversionFactor: existingProduct.conversionFactor,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
                         marginType: existingProduct.marginType,
@@ -339,19 +419,17 @@ struct ProductEditorView: View {
                     let newProduct = sdk.createProduct(
                         name: trimmedName,
                         siteId: selectedSiteId,
-                        unit: trimmedUnit.isEmpty ? "unit" : trimmedUnit,
                         unitVolume: volume,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
                         userId: session.userId
                     )
-                    // Set minStock on the new product
+                    // Set minStock, packagingTypeId and selectedLevel on the new product
                     savedProduct = Product(
                         id: newProduct.id,
                         name: newProduct.name,
-                        unit: newProduct.unit,
                         unitVolume: newProduct.unitVolume,
-                        packagingTypeId: newProduct.packagingTypeId,
-                        selectedLevel: newProduct.selectedLevel,
+                        packagingTypeId: selectedPackagingTypeId.isEmpty ? nil : selectedPackagingTypeId,
+                        selectedLevel: KotlinInt(int: Int32(selectedLevel)),
                         conversionFactor: newProduct.conversionFactor,
                         categoryId: newProduct.categoryId,
                         marginType: newProduct.marginType,

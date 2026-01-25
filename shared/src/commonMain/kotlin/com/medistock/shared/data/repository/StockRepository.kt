@@ -18,7 +18,7 @@ class StockRepository(private val database: MedistockDatabase) {
             CurrentStock(
                 productId = it.product_id,
                 productName = it.product_name,
-                unit = it.unit,
+                unit = it.unit ?: "",
                 categoryName = it.category_name ?: "",
                 siteId = it.site_id,
                 siteName = it.site_name,
@@ -34,7 +34,7 @@ class StockRepository(private val database: MedistockDatabase) {
             CurrentStock(
                 productId = it.product_id,
                 productName = it.product_name,
-                unit = it.unit,
+                unit = it.unit ?: "",
                 categoryName = it.category_name ?: "",
                 siteId = it.site_id,
                 siteName = it.site_name,
@@ -50,7 +50,7 @@ class StockRepository(private val database: MedistockDatabase) {
             CurrentStock(
                 productId = it.product_id,
                 productName = it.product_name,
-                unit = it.unit,
+                unit = it.unit ?: "",
                 categoryName = it.category_name ?: "",
                 siteId = it.site_id,
                 siteName = it.site_name,
@@ -70,7 +70,7 @@ class StockRepository(private val database: MedistockDatabase) {
                     CurrentStock(
                         productId = it.product_id,
                         productName = it.product_name,
-                        unit = it.unit,
+                        unit = it.unit ?: "",
                         categoryName = it.category_name ?: "",
                         siteId = it.site_id,
                         siteName = it.site_name,
@@ -91,7 +91,7 @@ class StockRepository(private val database: MedistockDatabase) {
                     CurrentStock(
                         productId = it.product_id,
                         productName = it.product_name,
-                        unit = it.unit,
+                        unit = it.unit ?: "",
                         categoryName = it.category_name ?: "",
                         siteId = it.site_id,
                         siteName = it.site_name,

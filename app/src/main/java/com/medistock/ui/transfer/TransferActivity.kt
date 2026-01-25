@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.ProductTransfer
 import com.medistock.shared.domain.model.Site
@@ -39,10 +40,17 @@ class TransferActivity : AppCompatActivity() {
     private lateinit var transferItemAdapter: TransferItemAdapter
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
+    private var packagingTypes: Map<String, PackagingType> = emptyMap()
     private var currentStock: Map<String, Double> = emptyMap() // productId -> quantity available
     private var selectedFromSiteId: String? = null
     private var selectedToSiteId: String? = null
     private var transferId: String? = null // null for new transfer, value for editing
+
+    private fun getUnit(product: Product?): String {
+        if (product == null) return ""
+        val packagingType = packagingTypes[product.packagingTypeId]
+        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -154,6 +162,7 @@ class TransferActivity : AppCompatActivity() {
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = sdk.productRepository.getAll()
+            packagingTypes = sdk.packagingTypeRepository.getAll().associateBy { it.id }
         }
     }
 
@@ -186,7 +195,7 @@ class TransferActivity : AppCompatActivity() {
                         val item = TransferItem(
                             productId = product.id,
                             productName = product.name,
-                            unit = product.unit,
+                            unit = getUnit(product),
                             quantity = transfer.quantity
                         )
                         transferItemAdapter.addItem(item)
@@ -208,7 +217,7 @@ class TransferActivity : AppCompatActivity() {
         val textAvailableStock = dialogView.findViewById<TextView>(R.id.textAvailableStock)
         val editQuantity = dialogView.findViewById<EditText>(R.id.editQuantityDialog)
 
-        val productNames = products.map { "${it.name} (${it.unit})" }
+        val productNames = products.map { "${it.name} (${getUnit(it)})" }
         val productAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, productNames)
         productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerProduct.adapter = productAdapter
@@ -220,7 +229,7 @@ class TransferActivity : AppCompatActivity() {
                 if (position >= 0 && position < products.size) {
                     selectedProduct = products[position]
                     val availableQty = currentStock[selectedProduct!!.id] ?: 0.0
-                    textAvailableStock.text = "Available stock at source: $availableQty ${selectedProduct!!.unit}"
+                    textAvailableStock.text = "Available stock at source: $availableQty ${getUnit(selectedProduct)}"
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -261,7 +270,7 @@ class TransferActivity : AppCompatActivity() {
                 val transferItem = TransferItem(
                     productId = product.id,
                     productName = product.name,
-                    unit = product.unit,
+                    unit = getUnit(product),
                     quantity = quantity
                 )
                 transferItemAdapter.addItem(transferItem)

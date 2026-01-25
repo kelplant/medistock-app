@@ -74,6 +74,7 @@ class SaleUseCase(
     private val purchaseBatchRepository: PurchaseBatchRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val productRepository: ProductRepository,
+    private val packagingTypeRepository: PackagingTypeRepository,
     private val siteRepository: SiteRepository,
     private val auditRepository: AuditRepository,
     private val saleBatchAllocationRepository: SaleBatchAllocationRepository
@@ -101,12 +102,19 @@ class SaleUseCase(
 
         // 3. Verify all products exist and collect product info
         val products = mutableMapOf<String, Product>()
+        val packagingTypes = mutableMapOf<String, PackagingType>()
         for (item in input.items) {
             val product = productRepository.getById(item.productId)
                 ?: return UseCaseResult.Error(
                     BusinessError.NotFound("Product", item.productId)
                 )
             products[item.productId] = product
+
+            // Load packaging type for unit derivation
+            val packagingType = packagingTypeRepository.getById(product.packagingTypeId)
+            if (packagingType != null) {
+                packagingTypes[product.packagingTypeId] = packagingType
+            }
         }
 
         val now = Clock.System.now().toEpochMilliseconds()
@@ -133,12 +141,16 @@ class SaleUseCase(
 
         for (itemInput in input.items) {
             val product = products[itemInput.productId]!!
+            val packagingType = packagingTypes[product.packagingTypeId]
+            val unit = packagingType?.getLevelName(product.selectedLevel) ?: "unit"
 
-            // Create SaleItem
+            // Create SaleItem with productName and unit for historical accuracy
             val saleItem = SaleItem(
                 id = generateId("saleitem"),
                 saleId = sale.id,
                 productId = itemInput.productId,
+                productName = product.name,
+                unit = unit,
                 quantity = itemInput.quantity,
                 unitPrice = itemInput.unitPrice,
                 totalPrice = itemInput.quantity * itemInput.unitPrice

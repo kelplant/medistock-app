@@ -82,12 +82,14 @@ class TransferListActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val transfers = sdk.productTransferRepository.getAll()
             val products = sdk.productRepository.getAll().associateBy { it.id }
+            val packagingTypes = sdk.packagingTypeRepository.getAll().associateBy { it.id }
             val sites = sdk.siteRepository.getAll().associateBy { it.id }
 
             withContext(Dispatchers.Main) {
                 adapter = TransferAdapter(
                     transfers = transfers,
                     products = products,
+                    packagingTypes = packagingTypes,
                     sites = sites,
                     onEditClick = { transfer -> editTransfer(transfer) },
                     onDeleteClick = { transfer -> confirmDeleteTransfer(transfer) }

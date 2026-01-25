@@ -107,6 +107,7 @@ struct StockListView: View {
         do {
             let products = try await sdk.productRepository.getAll()
             let sites = try await sdk.siteRepository.getAll()
+            let packagingTypes = try await sdk.packagingTypeRepository.getAll()
             let allStock = try await sdk.stockRepository.getAllCurrentStock()
             let batches = try await sdk.purchaseBatchRepository.getAll()
 
@@ -121,6 +122,20 @@ struct StockListView: View {
                 let stock = allStock.first { $0.productId == product.id && $0.siteId == product.siteId }
                 let siteName = sites.first { $0.id == product.siteId }?.name ?? "Unknown"
 
+                // Derive unit from packaging type
+                let packagingType = packagingTypes.first { $0.id == product.packagingTypeId }
+                let selectedLevel = product.selectedLevel?.intValue ?? 1
+                let unit: String
+                if let pt = packagingType {
+                    if selectedLevel == 2, let level2Name = pt.level2Name {
+                        unit = level2Name
+                    } else {
+                        unit = pt.level1Name
+                    }
+                } else {
+                    unit = "unit"
+                }
+
                 // Get batches for expiry info
                 let productBatches = batches.filter { $0.productId == product.id && !$0.isExhausted }
                 let nearestExpiry = productBatches.compactMap { $0.expiryDate?.timestampValue }.min()
@@ -131,7 +146,7 @@ struct StockListView: View {
                     siteId: product.siteId,
                     siteName: siteName,
                     totalStock: stock?.totalStock ?? 0,
-                    unit: product.unit,
+                    unit: unit,
                     nearestExpiryDate: nearestExpiry,
                     batchCount: productBatches.count
                 ))
@@ -412,6 +427,7 @@ struct StockMovementCreationView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var products: [Product] = []
+    @State private var packagingTypes: [PackagingType] = []
     @State private var selectedProduct: Product?
     @State private var movementType: MovementTypeOption = .stockIn
     @State private var quantity: String = ""
@@ -421,6 +437,18 @@ struct StockMovementCreationView: View {
     @State private var errorMessage: String?
     @State private var showingWarning = false
     @State private var warningMessage: String = ""
+
+    /// Derives the unit name from the product's packaging type and selected level
+    func derivedUnit(for product: Product) -> String {
+        guard let packagingType = packagingTypes.first(where: { $0.id == product.packagingTypeId }) else {
+            return "unit"
+        }
+        let selectedLevel = product.selectedLevel?.intValue ?? 1
+        if selectedLevel == 2, let level2Name = packagingType.level2Name {
+            return level2Name
+        }
+        return packagingType.level1Name
+    }
 
     enum MovementTypeOption: CaseIterable {
         case stockIn
@@ -479,7 +507,7 @@ struct StockMovementCreationView: View {
                         Picker(Localized.selectProduct, selection: $selectedProduct) {
                             Text(Localized.chooseProduct).tag(nil as Product?)
                             ForEach(products, id: \.id) { product in
-                                Text("\(product.name) (\(product.unit))")
+                                Text("\(product.name) (\(derivedUnit(for: product)))")
                                     .tag(product as Product?)
                             }
                         }
@@ -504,7 +532,7 @@ struct StockMovementCreationView: View {
                                 .keyboardType(.decimalPad)
 
                             if let product = selectedProduct {
-                                Text(product.unit)
+                                Text(derivedUnit(for: product))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -535,7 +563,7 @@ struct StockMovementCreationView: View {
                                     .foregroundColor(movementType.color)
                                 Text(product.name)
                                 Spacer()
-                                Text("\(movementType == .stockIn ? "+" : "-")\(String(format: "%.1f", qty)) \(product.unit)")
+                                Text("\(movementType == .stockIn ? "+" : "-")\(String(format: "%.1f", qty)) \(derivedUnit(for: product))")
                                     .foregroundColor(movementType.color)
                                     .fontWeight(.semibold)
                             }
@@ -600,7 +628,12 @@ struct StockMovementCreationView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let allProducts = try await sdk.productRepository.getAll()
+            async let allProductsResult = sdk.productRepository.getAll()
+            async let packagingTypesResult = sdk.packagingTypeRepository.getAll()
+
+            let allProducts = try await allProductsResult
+            packagingTypes = try await packagingTypesResult
+
             // Filter by site if needed
             if let siteId = siteId {
                 products = allProducts.filter { $0.siteId == siteId }
@@ -629,7 +662,8 @@ struct StockMovementCreationView: View {
                 let stockLevel = currentStock?.totalStock ?? 0
 
                 if stockLevel < qty {
-                    warningMessage = "Current stock (\(String(format: "%.1f", stockLevel)) \(product.unit)) is less than the requested quantity (\(String(format: "%.1f", qty)) \(product.unit)).\n\nStock will become negative. Do you want to continue?"
+                    let unit = derivedUnit(for: product)
+                    warningMessage = "Current stock (\(String(format: "%.1f", stockLevel)) \(unit)) is less than the requested quantity (\(String(format: "%.1f", qty)) \(unit)).\n\nStock will become negative. Do you want to continue?"
                     showingWarning = true
                     return
                 }

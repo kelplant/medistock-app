@@ -43,10 +43,9 @@ CREATE TABLE packaging_types (
 CREATE TABLE products (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
-    unit TEXT NOT NULL,
     unit_volume REAL NOT NULL,
-    packaging_type_id TEXT,
-    selected_level INTEGER,
+    packaging_type_id TEXT NOT NULL,
+    selected_level INTEGER NOT NULL DEFAULT 1,
     conversion_factor REAL,
     category_id TEXT,
     margin_type TEXT,
@@ -380,11 +379,11 @@ getProductById:
 SELECT * FROM products WHERE id = ?;
 
 insertProduct:
-INSERT INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO products(id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateProduct:
-UPDATE products SET name = ?, unit = ?, unit_volume = ?, packaging_type_id = ?, selected_level = ?, conversion_factor = ?, category_id = ?, margin_type = ?, margin_value = ?, description = ?, min_stock = ?, max_stock = ?, is_active = ?, updated_at = ?, updated_by = ?
+UPDATE products SET name = ?, unit_volume = ?, packaging_type_id = ?, selected_level = ?, conversion_factor = ?, category_id = ?, margin_type = ?, margin_value = ?, description = ?, min_stock = ?, max_stock = ?, is_active = ?, updated_at = ?, updated_by = ?
 WHERE id = ?;
 
 deleteProduct:
@@ -764,19 +763,29 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 -- ============================================
 
 getProductsWithCategory:
-SELECT p.id, p.name, p.unit, p.category_id, c.name AS category_name,
+SELECT p.id, p.name,
+       COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
+       p.category_id, c.name AS category_name,
        p.margin_type, p.margin_value, p.unit_volume, p.site_id,
-       p.min_stock, p.max_stock, p.description
+       p.min_stock, p.max_stock, p.description,
+       p.packaging_type_id, p.selected_level, p.conversion_factor,
+       pt.level1_name, pt.level2_name
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 ORDER BY p.name;
 
 getProductsWithCategoryForSite:
-SELECT p.id, p.name, p.unit, p.category_id, c.name AS category_name,
+SELECT p.id, p.name,
+       COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
+       p.category_id, c.name AS category_name,
        p.margin_type, p.margin_value, p.unit_volume, p.site_id,
-       p.min_stock, p.max_stock, p.description
+       p.min_stock, p.max_stock, p.description,
+       p.packaging_type_id, p.selected_level, p.conversion_factor,
+       pt.level1_name, pt.level2_name
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 WHERE p.site_id = ?
 ORDER BY p.name;
 
@@ -872,7 +881,7 @@ getCurrentStockForSite:
 SELECT
     p.id AS product_id,
     p.name AS product_name,
-    p.unit AS unit,
+    COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
     COALESCE(c.name, '') AS category_name,
     s.id AS site_id,
     s.name AS site_name,
@@ -885,17 +894,18 @@ SELECT
     COALESCE(p.max_stock, 0.0) AS max_stock
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 CROSS JOIN sites s
 LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.site_id = s.id
 WHERE s.id = ?
-GROUP BY p.id, s.id
+GROUP BY p.id, s.id, pt.level1_name, pt.level2_name, p.selected_level
 ORDER BY p.name;
 
 getCurrentStockAllSites:
 SELECT
     p.id AS product_id,
     p.name AS product_name,
-    p.unit AS unit,
+    COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
     COALESCE(c.name, '') AS category_name,
     s.id AS site_id,
     s.name AS site_name,
@@ -908,16 +918,17 @@ SELECT
     COALESCE(p.max_stock, 0.0) AS max_stock
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 CROSS JOIN sites s
 LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.site_id = s.id
-GROUP BY p.id, s.id
+GROUP BY p.id, s.id, pt.level1_name, pt.level2_name, p.selected_level
 ORDER BY s.name, p.name;
 
 getCurrentStockForProductAndSite:
 SELECT
     p.id AS product_id,
     p.name AS product_name,
-    p.unit AS unit,
+    COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
     COALESCE(c.name, '') AS category_name,
     s.id AS site_id,
     s.name AS site_name,
@@ -930,10 +941,11 @@ SELECT
     COALESCE(p.max_stock, 0.0) AS max_stock
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 CROSS JOIN sites s
 LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.site_id = s.id
 WHERE p.id = ? AND s.id = ?
-GROUP BY p.id, s.id;
+GROUP BY p.id, s.id, pt.level1_name, pt.level2_name, p.selected_level;
 
 -- ============================================
 -- ADDITIONAL QUERIES - Inventories (detailed)
@@ -1011,8 +1023,8 @@ INSERT OR REPLACE INTO categories(id, name, is_active, created_at, updated_at, c
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
 upsertProduct:
-INSERT OR REPLACE INTO products(id, name, unit, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO products(id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertPackagingType:
 INSERT OR REPLACE INTO packaging_types(id, name, level1_name, level2_name, level2_quantity, default_conversion_factor, is_active, display_order, created_at, updated_at, created_by, updated_by)

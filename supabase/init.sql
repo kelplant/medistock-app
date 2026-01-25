@@ -125,15 +125,17 @@ CREATE INDEX idx_customers_name ON customers(name);
 -- ============================================================================
 
 -- Produits (médicaments)
+-- Note: unit is derived from packaging_types based on selected_level
+-- If selected_level = 1: use packaging_type.level1_name
+-- If selected_level = 2: use packaging_type.level2_name
 CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    unit TEXT NOT NULL,
     unit_volume DOUBLE PRECISION NOT NULL,
 
-    -- Système de conditionnement
-    packaging_type_id UUID REFERENCES packaging_types(id) ON DELETE SET NULL,
-    selected_level INTEGER,
+    -- Système de conditionnement (unit derived from packaging_type)
+    packaging_type_id UUID NOT NULL REFERENCES packaging_types(id) ON DELETE RESTRICT,
+    selected_level INTEGER NOT NULL DEFAULT 1,
     conversion_factor DOUBLE PRECISION,
 
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
@@ -533,7 +535,7 @@ SELECT
     pb.initial_quantity AS quantity_in,
     0::DOUBLE PRECISION AS quantity_out,
     pb.initial_quantity AS quantity_delta,
-    p.unit AS unit,
+    CASE WHEN p.selected_level = 2 THEN ptg.level2_name ELSE ptg.level1_name END AS unit,
     pb.purchase_price AS unit_price,
     pb.initial_quantity * pb.purchase_price AS total_amount,
     COALESCE(NULLIF(pb.batch_number, ''), NULL) AS notes,
@@ -601,7 +603,7 @@ SELECT
     0::DOUBLE PRECISION AS quantity_in,
     pt.quantity AS quantity_out,
     -pt.quantity AS quantity_delta,
-    p.unit AS unit,
+    CASE WHEN p.selected_level = 2 THEN ptg.level2_name ELSE ptg.level1_name END AS unit,
     NULL::DOUBLE PRECISION AS unit_price,
     NULL::DOUBLE PRECISION AS total_amount,
     NULLIF(pt.notes, '') AS notes,
@@ -635,7 +637,7 @@ SELECT
     pt.quantity AS quantity_in,
     0::DOUBLE PRECISION AS quantity_out,
     pt.quantity AS quantity_delta,
-    p.unit AS unit,
+    CASE WHEN p.selected_level = 2 THEN ptg.level2_name ELSE ptg.level1_name END AS unit,
     NULL::DOUBLE PRECISION AS unit_price,
     NULL::DOUBLE PRECISION AS total_amount,
     NULLIF(pt.notes, '') AS notes,
@@ -669,7 +671,7 @@ SELECT
     GREATEST(i.discrepancy, 0) AS quantity_in,
     GREATEST(-i.discrepancy, 0) AS quantity_out,
     i.discrepancy AS quantity_delta,
-    p.unit AS unit,
+    CASE WHEN p.selected_level = 2 THEN ptg.level2_name ELSE ptg.level1_name END AS unit,
     NULL::DOUBLE PRECISION AS unit_price,
     NULL::DOUBLE PRECISION AS total_amount,
     NULLIF(COALESCE(NULLIF(i.reason, ''), NULLIF(i.notes, '')), '') AS notes,

@@ -11,6 +11,7 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Category
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
@@ -26,7 +27,7 @@ class ProductAddActivity : AppCompatActivity() {
     private lateinit var authManager: AuthManager
     private lateinit var editName: EditText
     private lateinit var spinnerCategory: Spinner
-    private lateinit var spinnerUnit: Spinner
+    private lateinit var spinnerPackagingType: Spinner
     private lateinit var spinnerMarginType: Spinner
     private lateinit var editMarginValue: EditText
     private lateinit var editDescription: EditText
@@ -36,8 +37,9 @@ class ProductAddActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
 
     private var categories: List<Category> = emptyList()
+    private var packagingTypes: List<PackagingType> = emptyList()
     private var selectedCategoryId: String? = null
-    private var selectedUnit: String = "Bottle"
+    private var selectedPackagingTypeId: String? = null
     private var selectedMarginType: String = "percentage"
     private var enteredMarginValue: Double = 0.0
     private var enteredUnitVolume: Double = 0.0
@@ -53,7 +55,7 @@ class ProductAddActivity : AppCompatActivity() {
 
         editName = findViewById(R.id.editProductName)
         spinnerCategory = findViewById(R.id.spinnerCategory)
-        spinnerUnit = findViewById(R.id.spinnerUnit)
+        spinnerPackagingType = findViewById(R.id.spinnerUnit)
         spinnerMarginType = findViewById(R.id.spinnerMarginType)
         editMarginValue = findViewById(R.id.editMarginValue)
         editDescription = findViewById(R.id.editProductDescription)
@@ -62,11 +64,15 @@ class ProductAddActivity : AppCompatActivity() {
         textMarginInfo = findViewById(R.id.textMarginInfo)
         btnSave = findViewById(R.id.btnSaveProduct)
 
-        // Load categories from DB
+        // Load categories and packaging types from DB
         lifecycleScope.launch {
             categories = withContext(Dispatchers.IO) {
                 sdk.categoryRepository.getAll()
             }
+            packagingTypes = withContext(Dispatchers.IO) {
+                sdk.packagingTypeRepository.getAll()
+            }
+
             if (categories.isEmpty()) {
                 Toast.makeText(
                     this@ProductAddActivity,
@@ -80,13 +86,21 @@ class ProductAddActivity : AppCompatActivity() {
                 categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinnerCategory.adapter = categoryAdapter
             }
-        }
 
-        // Package types: Bottle (ml), Box, Tablet, ml, Units
-        val units = listOf("Bottle", "Box", "Tablet", "ml", "Units")
-        val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
-        unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerUnit.adapter = unitAdapter
+            if (packagingTypes.isEmpty()) {
+                Toast.makeText(
+                    this@ProductAddActivity,
+                    L.strings.packagingType,
+                    Toast.LENGTH_LONG
+                ).show()
+                btnSave.isEnabled = false
+            } else {
+                val packagingNames = packagingTypes.map { it.name }
+                val packagingAdapter = ArrayAdapter(this@ProductAddActivity, android.R.layout.simple_spinner_item, packagingNames)
+                packagingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerPackagingType.adapter = packagingAdapter
+            }
+        }
 
         // Fixed or percentage margin types
         val marginTypes = listOf("percentage", "fixed")
@@ -120,32 +134,14 @@ class ProductAddActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        spinnerUnit.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        spinnerPackagingType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
-                selectedUnit = units.getOrNull(position) ?: ""
-                // Adapt label based on package type
-                when (selectedUnit) {
-                    "Bottle" -> {
-                        textUnitVolumeLabel.text = "Volume per bottle (ml)"
-                        editUnitVolume.hint = "Ex: 100"
-                    }
-                    "Box" -> {
-                        textUnitVolumeLabel.text = "Number of tablets per box"
-                        editUnitVolume.hint = "Ex: 30"
-                    }
-                    "Tablet" -> {
-                        textUnitVolumeLabel.text = "Quantity per unit"
-                        editUnitVolume.hint = "Ex: 1"
-                    }
-                    "ml" -> {
-                        textUnitVolumeLabel.text = "Volume per unit (ml)"
-                        editUnitVolume.hint = "Ex: 1"
-                    }
-                    "Units" -> {
-                        textUnitVolumeLabel.text = "Quantity per unit"
-                        editUnitVolume.hint = "Ex: 1"
-                    }
-                }
+                val packagingType = packagingTypes.getOrNull(position)
+                selectedPackagingTypeId = packagingType?.id
+                // Adapt label based on packaging type
+                val unitName = packagingType?.level1Name ?: "unit"
+                textUnitVolumeLabel.text = "${L.strings.quantity} / $unitName"
+                editUnitVolume.hint = packagingType?.defaultConversionFactor?.toString() ?: "1"
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
@@ -157,7 +153,7 @@ class ProductAddActivity : AppCompatActivity() {
             val unitVolumeText = editUnitVolume.text.toString()
 
             enteredMarginValue = marginText.toDoubleOrNull() ?: 0.0
-            enteredUnitVolume = unitVolumeText.toDoubleOrNull() ?: 0.0
+            enteredUnitVolume = unitVolumeText.toDoubleOrNull() ?: 1.0
 
             if (productName.isEmpty()) {
                 Toast.makeText(this, L.strings.required, Toast.LENGTH_SHORT).show()
@@ -168,7 +164,7 @@ class ProductAddActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (selectedUnit.isEmpty()) {
+            if (selectedPackagingTypeId == null) {
                 Toast.makeText(this, L.strings.packagingType, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -195,7 +191,8 @@ class ProductAddActivity : AppCompatActivity() {
                 id = UUID.randomUUID().toString(),
                 name = productName,
                 categoryId = selectedCategoryId,
-                unit = selectedUnit,
+                packagingTypeId = selectedPackagingTypeId!!,
+                selectedLevel = 1,
                 unitVolume = enteredUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,

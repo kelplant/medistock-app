@@ -6,15 +6,15 @@ import kotlinx.serialization.Serializable
 
 /**
  * DTO for the products table in Supabase.
+ * Note: unit is no longer stored - it's derived from packaging_type based on selected_level.
  */
 @Serializable
 data class ProductDto(
     val id: String,
     val name: String,
-    val unit: String,
     @SerialName("unit_volume") val unitVolume: Double,
-    @SerialName("packaging_type_id") val packagingTypeId: String? = null,
-    @SerialName("selected_level") val selectedLevel: Int? = null,
+    @SerialName("packaging_type_id") val packagingTypeId: String,
+    @SerialName("selected_level") val selectedLevel: Int = 1,
     @SerialName("conversion_factor") val conversionFactor: Double? = null,
     @SerialName("category_id") val categoryId: String? = null,
     @SerialName("margin_type") val marginType: String? = null,
@@ -33,7 +33,6 @@ data class ProductDto(
     fun toModel(): Product = Product(
         id = id,
         name = name,
-        unit = unit,
         unitVolume = unitVolume,
         packagingTypeId = packagingTypeId,
         selectedLevel = selectedLevel,
@@ -56,7 +55,6 @@ data class ProductDto(
         fun fromModel(product: Product, clientId: String? = null): ProductDto = ProductDto(
             id = product.id,
             name = product.name,
-            unit = product.unit,
             unitVolume = product.unitVolume,
             packagingTypeId = product.packagingTypeId,
             selectedLevel = product.selectedLevel,

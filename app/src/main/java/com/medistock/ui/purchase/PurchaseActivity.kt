@@ -9,6 +9,7 @@ import com.medistock.MedistockApplication
 import com.medistock.ui.LocalizedActivity
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.ProductPrice
 import com.medistock.shared.domain.model.PurchaseBatch
@@ -39,12 +40,19 @@ class PurchaseActivity : LocalizedActivity() {
 
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
+    private var packagingTypes: Map<String, PackagingType> = emptyMap()
     private var selectedProductId: String? = null
     private var selectedProduct: Product? = null
     private var selectedSiteId: String? = null
     private var isManualSellingPrice = false // Track if user manually modified selling price
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    private fun getUnit(product: Product?): String {
+        if (product == null) return ""
+        val packagingType = packagingTypes[product.packagingTypeId]
+        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -166,8 +174,9 @@ class PurchaseActivity : LocalizedActivity() {
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = sdk.productRepository.getAll()
+            packagingTypes = sdk.packagingTypeRepository.getAll().associateBy { it.id }
             withContext(Dispatchers.Main) {
-                val productNames = products.map { "${it.name} (${it.unit})" }
+                val productNames = products.map { "${it.name} (${getUnit(it)})" }
                 val adapter = ArrayAdapter(
                     this@PurchaseActivity,
                     android.R.layout.simple_spinner_item,

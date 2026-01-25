@@ -45,12 +45,13 @@ class ProductModelTest {
         val product = com.medistock.shared.domain.model.Product(
             id = "prod-1",
             name = "Paracetamol 500mg",
-            unit = "box",
+            packagingTypeId = "packaging-1",
             unitVolume = 1.0,
             siteId = "site-1"
         )
         assertEquals("Paracetamol 500mg", product.name)
-        assertEquals("box", product.unit)
+        assertEquals("packaging-1", product.packagingTypeId)
+        assertEquals(1, product.selectedLevel)
     }
 
     @Test
@@ -58,7 +59,8 @@ class ProductModelTest {
         val product = com.medistock.shared.domain.model.Product(
             id = "prod-2",
             name = "Ibuprofen 400mg",
-            unit = "tablet",
+            packagingTypeId = "packaging-2",
+            selectedLevel = 2,
             unitVolume = 1.0,
             categoryId = "cat-1",
             siteId = "site-1",
@@ -68,6 +70,7 @@ class ProductModelTest {
         assertEquals("cat-1", product.categoryId)
         assertEquals(10.0, product.minStock)
         assertEquals(100.0, product.maxStock)
+        assertEquals(2, product.selectedLevel)
     }
 }
 
