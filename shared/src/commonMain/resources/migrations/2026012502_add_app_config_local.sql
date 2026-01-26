@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS app_config (
 );
 
 -- Insert default currency symbol
-INSERT OR IGNORE INTO app_config (key, value, description, updated_at, updated_by)
-VALUES ('currency_symbol', 'F', 'Currency symbol for prices display', 0, 'system');
+INSERT INTO app_config (key, value, description, updated_at, updated_by)
+VALUES ('currency_symbol', 'F', 'Currency symbol for prices display', 0, 'system')
+ON CONFLICT (key) DO NOTHING;

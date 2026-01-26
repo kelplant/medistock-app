@@ -35,7 +35,7 @@ AND NOT EXISTS (
 DROP TABLE IF EXISTS inventories CASCADE;
 
 CREATE TABLE inventories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
     status TEXT NOT NULL DEFAULT 'in_progress',
     started_at BIGINT NOT NULL,

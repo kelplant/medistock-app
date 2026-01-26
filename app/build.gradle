@@ -4,6 +4,19 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
+// Copy shared migrations to Android assets before build
+tasks.register('copySharedMigrations', Copy) {
+    from "${rootProject.projectDir}/shared/src/commonMain/resources/migrations"
+    into "${projectDir}/src/main/assets/migrations"
+    include '*.sql'
+}
+
+tasks.configureEach { task ->
+    if (task.name == 'preBuild') {
+        task.dependsOn 'copySharedMigrations'
+    }
+}
+
 android {
     namespace 'com.medistock'
     compileSdk 34

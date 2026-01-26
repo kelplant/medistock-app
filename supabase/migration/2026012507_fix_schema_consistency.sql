@@ -157,5 +157,12 @@ GROUP BY
     st.name;
 
 -- ============================================================================
+-- Record migration
+-- ============================================================================
+INSERT INTO schema_migrations (name, checksum, applied_by, success, execution_time_ms)
+VALUES ('2026012507_fix_schema_consistency', NULL, 'supabase_cli', TRUE, NULL)
+ON CONFLICT (name) DO NOTHING;
+
+-- ============================================================================
 -- END OF MIGRATION
 -- ============================================================================

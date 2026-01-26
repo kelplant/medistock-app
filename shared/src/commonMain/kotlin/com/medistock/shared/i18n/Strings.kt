@@ -141,6 +141,21 @@ interface Strings {
     val walkInCustomer: String
 
     // ============================================
+    // SUPPLIERS
+    // ============================================
+    val suppliers: String
+    val addSupplier: String
+    val editSupplier: String
+    val deleteSupplier: String
+    val deleteSupplierConfirm: String
+    val supplierDeleted: String
+    val supplierDeactivated: String
+    val noSuppliers: String
+    val selectSupplier: String
+    val manageSuppliers: String
+    val noSuppliersMessage: String
+
+    // ============================================
     // PURCHASES
     // ============================================
     val purchases: String

@@ -13,6 +13,7 @@ import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Module
 import com.medistock.shared.i18n.L
 import com.medistock.ui.customer.CustomerListActivity
+import com.medistock.ui.supplier.SupplierListActivity
 import com.medistock.ui.manage.ManageProductMenuActivity
 import com.medistock.ui.site.SiteListActivity
 import com.medistock.ui.movement.StockMovementListActivity
@@ -55,6 +56,7 @@ class AdminActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.labelStockMovement)?.text = strings.stockMovements
         findViewById<TextView>(R.id.labelPackagingTypes)?.text = strings.packagingTypes
         findViewById<TextView>(R.id.labelManageCustomers)?.text = strings.customers
+        findViewById<TextView>(R.id.labelManageSuppliers)?.text = strings.suppliers
         findViewById<TextView>(R.id.labelManageUsers)?.text = strings.users
         // "Audit History" - use reports for now as there's no direct audit string
         findViewById<TextView>(R.id.labelAuditHistory)?.text = strings.reports
@@ -83,6 +85,10 @@ class AdminActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnManageCustomers).setOnClickListener {
             startActivity(Intent(this, CustomerListActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnManageSuppliers).setOnClickListener {
+            startActivity(Intent(this, SupplierListActivity::class.java))
         }
 
         findViewById<View>(R.id.btnManageUsers).setOnClickListener {
@@ -142,6 +148,10 @@ class AdminActivity : AppCompatActivity() {
                 // Customers management
                 findViewById<View>(R.id.btnManageCustomers).visibility =
                     if (permissions[Module.CUSTOMERS]?.canView == true) View.VISIBLE else View.GONE
+
+                // Suppliers management
+                findViewById<View>(R.id.btnManageSuppliers).visibility =
+                    if (permissions[Module.SUPPLIERS]?.canView == true) View.VISIBLE else View.GONE
 
                 // User management
                 findViewById<View>(R.id.btnManageUsers).visibility =

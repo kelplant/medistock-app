@@ -1,0 +1,217 @@
+# MediStock Android - Purchase with Supplier Test
+# Prerequisites: User must be admin, at least one site, one product, and one supplier must exist
+# Tests: Create a purchase and select a supplier from the dropdown
+appId: com.medistock
+---
+
+# Setup: Login as admin
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Pre-requisite: Create a test supplier first
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/btnManageSuppliers"
+
+- waitForAnimationToEnd
+
+# Create test supplier
+- tapOn:
+    id: "com.medistock:id/fabAddSupplier"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editSupplierName"
+- inputText: "Purchase Test Supplier"
+
+- tapOn:
+    id: "com.medistock:id/editSupplierPhone"
+- inputText: "+1122334455"
+
+- tapOn:
+    id: "com.medistock:id/btnSaveSupplier"
+
+- waitForAnimationToEnd
+
+# Verify supplier created
+- assertVisible:
+    text: "Purchase Test Supplier"
+
+- takeScreenshot: "android_purchase_supplier_created"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# Test: Navigate to Purchase Products
+- tapOn:
+    text: "Purchase Products"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_screen_with_supplier"
+
+# Test 1: Verify supplier spinner is visible
+- assertVisible:
+    id: "com.medistock:id/spinnerSupplier"
+
+# Test 2: Select a supplier from the dropdown
+- tapOn:
+    id: "com.medistock:id/spinnerSupplier"
+
+- waitForAnimationToEnd
+
+# Select our test supplier (not the "-- Select --" option)
+- tapOn:
+    text: "Purchase Test Supplier"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_supplier_selected"
+
+# Test 3: Verify supplier is selected (try to see the spinner shows the supplier)
+- assertVisible:
+    id: "com.medistock:id/spinnerSupplier"
+
+# Test 4: Try selecting a site (required for purchase)
+- tapOn:
+    id: "com.medistock:id/spinnerSitePurchase"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select first available site (skip "-- Select --")
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_site_selected"
+
+# Test 5: Try selecting a product (required for purchase)
+- tapOn:
+    id: "com.medistock:id/spinnerProductPurchase"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select first available product (skip "-- Select --")
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_product_selected"
+
+# Test 6: Enter quantity
+- tapOn:
+    id: "com.medistock:id/editPurchaseQuantity"
+    optional: true
+- inputText: "10"
+
+# Test 7: Enter purchase price
+- tapOn:
+    id: "com.medistock:id/editPurchasePrice"
+    optional: true
+- inputText: "99.99"
+
+- takeScreenshot: "android_purchase_form_complete"
+
+# Test 8: Verify we can see the supplier selection still
+- scrollUntilVisible:
+    element:
+      id: "com.medistock:id/spinnerSupplier"
+    direction: UP
+    timeout: 3000
+
+- assertVisible:
+    id: "com.medistock:id/spinnerSupplier"
+
+- takeScreenshot: "android_purchase_with_supplier_verified"
+
+# Navigate back without completing purchase (cleanup)
+- back
+
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true
+
+# Cleanup: Delete the test supplier
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/btnManageSuppliers"
+
+- waitForAnimationToEnd
+
+# Find and delete the test supplier
+- tapOn:
+    text: "Purchase Test Supplier"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/btnDeleteSupplier"
+
+- waitForAnimationToEnd
+
+# Confirm deletion
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_supplier_test_completed"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: ".*MediStock.*"
+    optional: true

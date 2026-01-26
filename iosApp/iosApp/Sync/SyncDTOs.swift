@@ -223,7 +223,7 @@ struct ProductDTO: Codable {
         self.description = product.description_
         self.unitVolume = product.unitVolume
         self.packagingTypeId = product.packagingTypeId ?? ""
-        self.selectedLevel = product.selectedLevel?.int32Value ?? 1
+        self.selectedLevel = product.selectedLevel
         self.conversionFactor = product.conversionFactor?.doubleValue ?? 1.0
         self.categoryId = product.categoryId
         self.marginType = product.marginType ?? "PERCENTAGE"
@@ -245,7 +245,7 @@ struct ProductDTO: Codable {
             name: name,
             unitVolume: unitVolume,
             packagingTypeId: packagingTypeId,
-            selectedLevel: KotlinInt(int: selectedLevel),
+            selectedLevel: selectedLevel,
             conversionFactor: KotlinDouble(double: conversionFactor),
             categoryId: categoryId,
             marginType: marginType,
@@ -314,6 +314,62 @@ struct CustomerDTO: Codable {
             address: address,
             notes: notes,
             siteId: siteId,
+            isActive: isActive,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            createdBy: createdBy,
+            updatedBy: updatedBy
+        )
+    }
+}
+
+struct SupplierDTO: Codable {
+    let id: String
+    let name: String
+    let phone: String?
+    let email: String?
+    let address: String?
+    let notes: String?
+    let isActive: Bool
+    let createdAt: Int64
+    let updatedAt: Int64
+    let createdBy: String
+    let updatedBy: String
+    var clientId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, phone, email, address, notes
+        case isActive = "is_active"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case createdBy = "created_by"
+        case updatedBy = "updated_by"
+        case clientId = "client_id"
+    }
+
+    init(from supplier: Supplier) {
+        self.id = supplier.id
+        self.name = supplier.name
+        self.phone = supplier.phone
+        self.email = supplier.email
+        self.address = supplier.address
+        self.notes = supplier.notes
+        self.isActive = supplier.isActive
+        self.createdAt = supplier.createdAt
+        self.updatedAt = supplier.updatedAt
+        self.createdBy = supplier.createdBy
+        self.updatedBy = supplier.updatedBy
+        self.clientId = SyncClientId.current
+    }
+
+    func toEntity() -> Supplier {
+        Supplier(
+            id: id,
+            name: name,
+            phone: phone,
+            email: email,
+            address: address,
+            notes: notes,
             isActive: isActive,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -419,6 +475,7 @@ struct PurchaseBatchDTO: Codable {
     let purchasePrice: Double
     let sellingPrice: Double?
     let supplierName: String
+    let supplierId: String?
     let batchNumber: String?
     let purchaseDate: Int64
     let expiryDate: Int64?
@@ -438,6 +495,7 @@ struct PurchaseBatchDTO: Codable {
         case purchasePrice = "purchase_price"
         case sellingPrice = "selling_price"
         case supplierName = "supplier_name"
+        case supplierId = "supplier_id"
         case batchNumber = "batch_number"
         case purchaseDate = "purchase_date"
         case expiryDate = "expiry_date"
@@ -458,6 +516,7 @@ struct PurchaseBatchDTO: Codable {
         self.purchasePrice = batch.purchasePrice
         self.sellingPrice = nil
         self.supplierName = batch.supplierName
+        self.supplierId = batch.supplierId
         self.batchNumber = batch.batchNumber
         self.purchaseDate = batch.purchaseDate
         self.expiryDate = batch.expiryDate?.int64Value
@@ -480,6 +539,7 @@ struct PurchaseBatchDTO: Codable {
             remainingQuantity: remainingQuantity,
             purchasePrice: purchasePrice,
             supplierName: supplierName,
+            supplierId: supplierId,
             expiryDate: expiryDate.map { KotlinLong(longLong: $0) },
             isExhausted: isExhausted,
             createdAt: createdAt,

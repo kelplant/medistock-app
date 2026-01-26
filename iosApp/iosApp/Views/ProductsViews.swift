@@ -193,7 +193,7 @@ struct ProductRowView: View {
     /// Derives the unit name from the packaging type based on selectedLevel
     var derivedUnit: String {
         guard let packagingType = packagingType else { return "unit" }
-        let selectedLevel = product.selectedLevel?.intValue ?? 1
+        let selectedLevel = Int(product.selectedLevel)
         if selectedLevel == 2, let level2Name = packagingType.level2Name {
             return level2Name
         }
@@ -365,7 +365,7 @@ struct ProductEditorView: View {
                     selectedSiteId = product.siteId
                     selectedCategoryId = product.categoryId ?? ""
                     selectedPackagingTypeId = product.packagingTypeId ?? ""
-                    selectedLevel = product.selectedLevel?.intValue ?? 1
+                    selectedLevel = Int(product.selectedLevel)
                     description = product.description_ ?? ""
                     let minStock = product.minStock?.doubleValue ?? 0.0
                     minStockText = minStock > 0 ? String(format: "%.0f", minStock) : ""
@@ -399,8 +399,8 @@ struct ProductEditorView: View {
                         id: existingProduct.id,
                         name: trimmedName,
                         unitVolume: volume,
-                        packagingTypeId: selectedPackagingTypeId.isEmpty ? nil : selectedPackagingTypeId,
-                        selectedLevel: KotlinInt(int: Int32(selectedLevel)),
+                        packagingTypeId: selectedPackagingTypeId,
+                        selectedLevel: Int32(selectedLevel),
                         conversionFactor: existingProduct.conversionFactor,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
                         marginType: existingProduct.marginType,
@@ -419,7 +419,10 @@ struct ProductEditorView: View {
                     let newProduct = sdk.createProduct(
                         name: trimmedName,
                         siteId: selectedSiteId,
+                        packagingTypeId: selectedPackagingTypeId,
                         unitVolume: volume,
+                        selectedLevel: Int32(selectedLevel),
+                        conversionFactor: nil,
                         categoryId: selectedCategoryId.isEmpty ? nil : selectedCategoryId,
                         userId: session.userId
                     )
@@ -428,8 +431,8 @@ struct ProductEditorView: View {
                         id: newProduct.id,
                         name: newProduct.name,
                         unitVolume: newProduct.unitVolume,
-                        packagingTypeId: selectedPackagingTypeId.isEmpty ? nil : selectedPackagingTypeId,
-                        selectedLevel: KotlinInt(int: Int32(selectedLevel)),
+                        packagingTypeId: selectedPackagingTypeId,
+                        selectedLevel: Int32(selectedLevel),
                         conversionFactor: newProduct.conversionFactor,
                         categoryId: newProduct.categoryId,
                         marginType: newProduct.marginType,

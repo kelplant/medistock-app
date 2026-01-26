@@ -17,6 +17,7 @@ data class PurchaseInput(
     val quantity: Double,
     val purchasePrice: Double,
     val supplierName: String = "",
+    val supplierId: String? = null,
     val batchNumber: String? = null,
     val expiryDate: Long? = null,
     val userId: String
@@ -90,6 +91,7 @@ class PurchaseUseCase(
             remainingQuantity = input.quantity,
             purchasePrice = input.purchasePrice,
             supplierName = input.supplierName,
+            supplierId = input.supplierId,
             expiryDate = input.expiryDate,
             isExhausted = false,
             createdAt = now,

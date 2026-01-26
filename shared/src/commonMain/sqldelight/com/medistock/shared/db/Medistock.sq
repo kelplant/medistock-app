@@ -96,6 +96,7 @@ CREATE TABLE purchase_batches (
     remaining_quantity REAL NOT NULL,
     purchase_price REAL NOT NULL,
     supplier_name TEXT NOT NULL DEFAULT '',
+    supplier_id TEXT,
     expiry_date INTEGER,
     is_exhausted INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT 0,
@@ -103,7 +104,8 @@ CREATE TABLE purchase_batches (
     created_by TEXT NOT NULL DEFAULT '',
     updated_by TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (product_id) REFERENCES products(id),
-    FOREIGN KEY (site_id) REFERENCES sites(id)
+    FOREIGN KEY (site_id) REFERENCES sites(id),
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
 );
 
 CREATE TABLE stock_movements (
@@ -211,6 +213,20 @@ CREATE TABLE customers (
     created_by TEXT NOT NULL DEFAULT '',
     updated_by TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (site_id) REFERENCES sites(id)
+);
+
+CREATE TABLE suppliers (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    notes TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE sales (
@@ -419,8 +435,8 @@ getBatchById:
 SELECT * FROM purchase_batches WHERE id = ?;
 
 insertBatch:
-INSERT INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, supplier_id, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateBatchQuantity:
 UPDATE purchase_batches SET remaining_quantity = ?, is_exhausted = ?, updated_at = ?, updated_by = ? WHERE id = ?;
@@ -760,6 +776,45 @@ UPDATE customers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, sit
 
 deleteCustomer:
 DELETE FROM customers WHERE id = ?;
+
+-- ============================================
+-- QUERIES - Suppliers
+-- ============================================
+
+getAllSuppliers:
+SELECT * FROM suppliers ORDER BY name;
+
+getSupplierById:
+SELECT * FROM suppliers WHERE id = ?;
+
+insertSupplier:
+INSERT INTO suppliers(id, name, phone, email, address, notes, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateSupplier:
+UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, notes = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+
+deleteSupplier:
+DELETE FROM suppliers WHERE id = ?;
+
+searchSuppliers:
+SELECT * FROM suppliers WHERE name LIKE '%' || ? || '%' OR phone LIKE '%' || ? || '%' ORDER BY name;
+
+getActiveSuppliers:
+SELECT * FROM suppliers WHERE is_active = 1 ORDER BY name;
+
+upsertSupplier:
+INSERT OR REPLACE INTO suppliers(id, name, phone, email, address, notes, is_active, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deactivateSupplier:
+UPDATE suppliers SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
+
+activateSupplier:
+UPDATE suppliers SET is_active = 1, updated_at = ?, updated_by = ? WHERE id = ?;
+
+isSupplierUsedInPurchaseBatches:
+SELECT COUNT(*) FROM purchase_batches WHERE supplier_id = ?;
 
 -- ============================================
 -- QUERIES - Stock Movements
@@ -1127,8 +1182,8 @@ INSERT OR REPLACE INTO app_users(id, username, password, full_name, language, is
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertPurchaseBatch:
-INSERT OR REPLACE INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, supplier_id, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertSale:
 INSERT OR REPLACE INTO sales(id, customer_name, customer_id, date, total_amount, site_id, created_at, created_by)

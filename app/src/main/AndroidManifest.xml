@@ -68,6 +68,8 @@
         <activity android:name=".ui.transfer.TransferActivity" android:exported="false" />
         <activity android:name=".ui.customer.CustomerListActivity" android:exported="false" />
         <activity android:name=".ui.customer.CustomerAddEditActivity" android:exported="false" />
+        <activity android:name=".ui.supplier.SupplierListActivity" android:exported="false" />
+        <activity android:name=".ui.supplier.SupplierAddEditActivity" android:exported="false" />
         <activity android:name=".ui.profile.ProfileActivity" android:exported="false" />
 
         <!-- Notifications -->

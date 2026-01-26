@@ -136,6 +136,21 @@ object StringsNy : Strings {
     override val walkInCustomer = "Kasitomala wolowa"
 
     // ============================================
+    // SUPPLIERS
+    // ============================================
+    override val suppliers = "Opereka katundu"
+    override val addSupplier = "Onjezani wopereka katundu"
+    override val editSupplier = "Sinthani wopereka katundu"
+    override val deleteSupplier = "Chotsani wopereka katundu"
+    override val deleteSupplierConfirm = "Mukutsimikiza kuti mukufuna kuchotsa wopereka katundu uyu?"
+    override val supplierDeleted = "Wopereka katundu wachotsedwa"
+    override val supplierDeactivated = "Wopereka katundu wayimitsidwa"
+    override val noSuppliers = "Palibe opereka katundu apezeka"
+    override val selectSupplier = "Sankhani wopereka katundu"
+    override val manageSuppliers = "Samalani opereka katundu"
+    override val noSuppliersMessage = "Onjezani wopereka katundu woyamba kuti muyambe"
+
+    // ============================================
     // PURCHASES
     // ============================================
     override val purchases = "Zogula"

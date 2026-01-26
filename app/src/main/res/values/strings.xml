@@ -48,9 +48,23 @@
     <string name="manage_categories">Manage Categories</string>
     <string name="packaging_types">Packaging Types</string>
     <string name="manage_customers">Manage Customers</string>
+    <string name="manage_suppliers">Manage Suppliers</string>
     <string name="user_management">User Management</string>
     <string name="audit_history">Audit History</string>
     <string name="supabase_configuration">Supabase Configuration</string>
+
+    <!-- Supplier -->
+    <string name="supplier_name_hint">Supplier Name *</string>
+    <string name="manage_suppliers_icon_desc">Manage suppliers icon</string>
+
+    <!-- Common fields -->
+    <string name="search">Search</string>
+    <string name="add">Add</string>
+    <string name="delete">Delete</string>
+    <string name="phone">Phone</string>
+    <string name="email">Email</string>
+    <string name="address">Address</string>
+    <string name="notes">Notes</string>
 
     <!-- Language -->
     <string name="language">Language</string>

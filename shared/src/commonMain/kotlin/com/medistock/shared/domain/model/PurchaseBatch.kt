@@ -13,6 +13,7 @@ data class PurchaseBatch(
     val remainingQuantity: Double,
     val purchasePrice: Double,
     val supplierName: String = "",
+    val supplierId: String? = null,
     val expiryDate: Long? = null,
     val isExhausted: Boolean = false,
     val createdAt: Long = 0,

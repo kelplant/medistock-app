@@ -22,7 +22,7 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── login.yaml           # Flow de connexion
 │   ├── logout.yaml          # Flow de déconnexion
 │   └── clear_app_data.yaml  # Clear app data (first-time login state)
-├── android/                 # Tests Android (15 tests)
+├── android/                 # Tests Android (17 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
 │   ├── 03_products_crud.yaml
@@ -37,8 +37,10 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── 12_language_switching.yaml
 │   ├── 13_password_complexity.yaml
 │   ├── 14_notification_center.yaml
-│   └── 15_online_first_auth.yaml
-├── ios/                     # Tests iOS (15 tests)
+│   ├── 15_online_first_auth.yaml
+│   ├── 16_suppliers_crud.yaml
+│   └── 17_purchase_with_supplier.yaml
+├── ios/                     # Tests iOS (17 tests)
 │   ├── 01_authentication.yaml
 │   ├── 02_sites_crud.yaml
 │   ├── 03_products_crud.yaml
@@ -53,7 +55,9 @@ Voir la [documentation officielle](https://maestro.mobile.dev/getting-started/in
 │   ├── 12_language_switching.yaml
 │   ├── 13_password_complexity.yaml
 │   ├── 14_notification_center.yaml
-│   └── 15_online_first_auth.yaml
+│   ├── 15_online_first_auth.yaml
+│   ├── 16_suppliers_crud.yaml
+│   └── 17_purchase_with_supplier.yaml
 └── permissions/             # Tests de permissions (26 tests)
     ├── README.md            # Documentation des tests de permissions
     ├── android/
@@ -160,7 +164,7 @@ maestro test .maestro/ --format junit --output report.xml
 
 ## Tests Inclus
 
-### Tests Fonctionnels (30 tests - 15 Android + 15 iOS)
+### Tests Fonctionnels (34 tests - 17 Android + 17 iOS)
 
 #### 1. Authentication (01_authentication.yaml)
 - Connexion avec identifiants valides
@@ -248,6 +252,32 @@ maestro test .maestro/ --format junit --output report.xml
   - Tests the online-first authentication requiring internet for first login
   - Tests offline authentication capability for subsequent logins
   - Validates proper error messages for all failure scenarios
+
+#### 16. Suppliers CRUD (16_suppliers_crud.yaml)
+- Navigation vers Manage Suppliers depuis Administration
+- Vérification de l'état initial (liste vide ou avec données)
+- Création d'un nouveau fournisseur avec tous les champs:
+  - Nom (requis)
+  - Téléphone
+  - Email
+  - Adresse
+  - Notes
+- Recherche de fournisseurs par nom
+- Modification d'un fournisseur existant
+- Vérification des données mises à jour
+- Suppression d'un fournisseur
+- Navigation de retour
+
+#### 17. Purchase with Supplier (17_purchase_with_supplier.yaml)
+- Création d'un fournisseur de test
+- Navigation vers Purchase Products
+- Vérification de la présence du sélecteur de fournisseur (spinner/picker)
+- Sélection d'un fournisseur depuis le dropdown
+- Sélection d'un site
+- Sélection d'un produit
+- Saisie de la quantité et du prix
+- Vérification que le fournisseur reste sélectionné
+- Nettoyage: suppression du fournisseur de test
 
 ### Tests de Permissions (26 tests - 13 Android + 13 iOS)
 

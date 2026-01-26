@@ -124,7 +124,7 @@ struct StockListView: View {
 
                 // Derive unit from packaging type
                 let packagingType = packagingTypes.first { $0.id == product.packagingTypeId }
-                let selectedLevel = product.selectedLevel?.intValue ?? 1
+                let selectedLevel = Int(product.selectedLevel)
                 let unit: String
                 if let pt = packagingType {
                     if selectedLevel == 2, let level2Name = pt.level2Name {
@@ -449,7 +449,7 @@ struct StockMovementCreationView: View {
         guard let packagingType = packagingTypes.first(where: { $0.id == product.packagingTypeId }) else {
             return "unit"
         }
-        let selectedLevel = product.selectedLevel?.intValue ?? 1
+        let selectedLevel = Int(product.selectedLevel)
         if selectedLevel == 2, let level2Name = packagingType.level2Name {
             return level2Name
         }

@@ -16,6 +16,7 @@ enum Module: String, CaseIterable {
     case categories = "CATEGORIES"
     case users = "USERS"
     case customers = "CUSTOMERS"
+    case suppliers = "SUPPLIERS"
     case audit = "AUDIT"
     case packagingTypes = "PACKAGING_TYPES"
 
@@ -32,6 +33,7 @@ enum Module: String, CaseIterable {
         case .categories: return "Catégories"
         case .users: return "Utilisateurs"
         case .customers: return "Clients"
+        case .suppliers: return "Fournisseurs"
         case .audit: return "Audit"
         case .packagingTypes: return "Types d'emballage"
         }
@@ -51,6 +53,7 @@ enum Module: String, CaseIterable {
         case .categories: return shared.Module.categories
         case .users: return shared.Module.users
         case .customers: return shared.Module.customers
+        case .suppliers: return shared.Module.suppliers
         case .audit: return shared.Module.audit
         case .packagingTypes: return shared.Module.packagingTypes
         }
@@ -70,6 +73,7 @@ enum Module: String, CaseIterable {
         case .categories: return .categories
         case .users: return .users
         case .customers: return .customers
+        case .suppliers: return .suppliers
         case .audit: return .audit
         case .packagingTypes: return .packagingTypes
         default: return .stock // Fallback for future modules

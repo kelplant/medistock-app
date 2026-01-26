@@ -136,6 +136,21 @@ object StringsBm : Strings {
     override val walkInCustomer = "Uwanshita wa ku njira"
 
     // ============================================
+    // SUPPLIERS
+    // ============================================
+    override val suppliers = "Abapereka ifintu"
+    override val addSupplier = "Onjelela uupereka ifintu"
+    override val editSupplier = "Lunganya uupereka ifintu"
+    override val deleteSupplier = "Fumyapo uupereka ifintu"
+    override val deleteSupplierConfirm = "Bushe ulefwaya ukufumyapo uyu upereka ifintu?"
+    override val supplierDeleted = "Uupereka ifintu afuminwapo"
+    override val supplierDeactivated = "Uupereka ifintu alekeshilwe"
+    override val noSuppliers = "Tapali abapereka ifintu"
+    override val selectSupplier = "Sankapo uupereka ifintu"
+    override val manageSuppliers = "Konsha abapereka ifintu"
+    override val noSuppliersMessage = "Onjeleleni upereka ifintu wa kubalilapo ukutendeka"
+
+    // ============================================
     // PURCHASES
     // ============================================
     override val purchases = "Ifyo wagula"

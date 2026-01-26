@@ -33,6 +33,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
     val purchaseBatchRepository: PurchaseBatchRepository by lazy { PurchaseBatchRepository(database) }
     val saleRepository: SaleRepository by lazy { SaleRepository(database) }
     val customerRepository: CustomerRepository by lazy { CustomerRepository(database) }
+    val supplierRepository: SupplierRepository by lazy { SupplierRepository(database) }
     val stockMovementRepository: StockMovementRepository by lazy { StockMovementRepository(database) }
     val productTransferRepository: ProductTransferRepository by lazy { ProductTransferRepository(database) }
     val packagingTypeRepository: PackagingTypeRepository by lazy { PackagingTypeRepository(database) }
@@ -228,12 +229,36 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         )
     }
 
+    fun createSupplier(
+        name: String,
+        phone: String? = null,
+        email: String? = null,
+        address: String? = null,
+        notes: String? = null,
+        userId: String = "ios"
+    ): Supplier {
+        val now = Clock.System.now().toEpochMilliseconds()
+        return Supplier(
+            id = generateId(prefix = "supplier"),
+            name = name,
+            phone = phone,
+            email = email,
+            address = address,
+            notes = notes,
+            createdAt = now,
+            updatedAt = now,
+            createdBy = userId,
+            updatedBy = userId
+        )
+    }
+
     fun createPurchaseBatch(
         productId: String,
         siteId: String,
         quantity: Double,
         purchasePrice: Double,
         supplierName: String = "",
+        supplierId: String? = null,
         batchNumber: String? = null,
         expiryDate: Long? = null,
         userId: String = "ios"
@@ -249,6 +274,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             remainingQuantity = quantity,
             purchasePrice = purchasePrice,
             supplierName = supplierName,
+            supplierId = supplierId,
             expiryDate = expiryDate,
             isExhausted = false,
             createdAt = now,

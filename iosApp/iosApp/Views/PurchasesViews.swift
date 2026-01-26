@@ -211,6 +211,8 @@ struct PurchaseEditorView: View {
     @State private var selectedSiteId: String = ""
     @State private var quantityText: String = ""
     @State private var priceText: String = ""
+    @State private var suppliers: [Supplier] = []
+    @State private var selectedSupplierId: String = ""
     @State private var supplierName: String = ""
     @State private var batchNumber: String = ""
     @State private var expiryDate: Date = Calendar.current.date(byAdding: .year, value: 1, to: Date()) ?? Date()
@@ -259,6 +261,15 @@ struct PurchaseEditorView: View {
                 }
 
                 Section(header: Text(Localized.supplier)) {
+                    Picker(Localized.selectSupplier, selection: $selectedSupplierId) {
+                        Text(Localized.select).tag("")
+                        ForEach(suppliers, id: \.id) { supplier in
+                            Text(supplier.name).tag(supplier.id)
+                        }
+                    }
+                    Text(Localized.orSelect)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     TextField(Localized.supplierName, text: $supplierName)
                     TextField(Localized.batchNumber, text: $batchNumber)
                 }
@@ -289,6 +300,9 @@ struct PurchaseEditorView: View {
                     .disabled(!canSave || isSaving)
                 }
             }
+            .task {
+                await loadSuppliers()
+            }
             .onAppear {
                 selectedSiteId = defaultSiteId ?? sites.first?.id ?? ""
             }
@@ -297,7 +311,25 @@ struct PurchaseEditorView: View {
                 if !filteredProducts.contains(where: { $0.id == selectedProductId }) {
                     selectedProductId = ""
                 }
+                // Reload suppliers for new site
+                Task { await loadSuppliers() }
             }
+            .onChange(of: selectedSupplierId) { newValue in
+                // Auto-fill supplier name when selecting from picker
+                if let supplier = suppliers.first(where: { $0.id == newValue }) {
+                    supplierName = supplier.name
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func loadSuppliers() async {
+        do {
+            suppliers = try await sdk.supplierRepository.getActive()
+        } catch {
+            debugLog("PurchaseEditorView", "Failed to load suppliers: \(error)")
+            suppliers = []
         }
     }
 
@@ -323,6 +355,7 @@ struct PurchaseEditorView: View {
                 quantity: quantity,
                 purchasePrice: price,
                 supplierName: supplierName,
+                supplierId: selectedSupplierId.isEmpty ? nil : selectedSupplierId,
                 batchNumber: batchNumber.isEmpty ? nil : batchNumber,
                 expiryDate: hasExpiryDate ? KotlinLong(value: Int64(expiryDate.timeIntervalSince1970 * 1000)) : nil,
                 userId: session.userId

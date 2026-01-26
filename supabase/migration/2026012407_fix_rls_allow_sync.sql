@@ -86,6 +86,7 @@ DROP POLICY IF EXISTS "sync_queue_select" ON sync_queue;
 DROP POLICY IF EXISTS "sync_queue_insert" ON sync_queue;
 DROP POLICY IF EXISTS "sync_queue_update" ON sync_queue;
 DROP POLICY IF EXISTS "sync_queue_delete" ON sync_queue;
+DROP POLICY IF EXISTS "sync_queue_all" ON sync_queue;
 CREATE POLICY "sync_queue_all" ON sync_queue FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ============================================================================

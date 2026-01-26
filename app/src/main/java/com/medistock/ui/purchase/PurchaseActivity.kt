@@ -15,6 +15,7 @@ import com.medistock.shared.domain.model.ProductPrice
 import com.medistock.shared.domain.model.PurchaseBatch
 import com.medistock.shared.domain.model.Site
 import com.medistock.shared.domain.model.StockMovement
+import com.medistock.shared.domain.model.Supplier
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ class PurchaseActivity : LocalizedActivity() {
     private lateinit var authManager: AuthManager
     private lateinit var spinnerSite: Spinner
     private lateinit var spinnerProduct: Spinner
+    private lateinit var spinnerSupplier: Spinner
     private lateinit var editQuantity: EditText
     private lateinit var editPurchasePrice: EditText
     private lateinit var editSellingPrice: EditText
@@ -37,13 +39,16 @@ class PurchaseActivity : LocalizedActivity() {
     private lateinit var editExpiryDate: EditText
     private lateinit var btnSave: Button
     private lateinit var textMarginInfo: TextView
+    private lateinit var labelSupplierOrEnter: TextView
 
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
+    private var suppliers: List<Supplier> = emptyList()
     private var packagingTypes: Map<String, PackagingType> = emptyMap()
     private var selectedProductId: String? = null
     private var selectedProduct: Product? = null
     private var selectedSiteId: String? = null
+    private var selectedSupplierId: String? = null
     private var isManualSellingPrice = false // Track if user manually modified selling price
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -65,6 +70,7 @@ class PurchaseActivity : LocalizedActivity() {
 
         spinnerSite = findViewById(R.id.spinnerSitePurchase)
         spinnerProduct = findViewById(R.id.spinnerProductPurchase)
+        spinnerSupplier = findViewById(R.id.spinnerSupplier)
         editQuantity = findViewById(R.id.editPurchaseQuantity)
         editPurchasePrice = findViewById(R.id.editPurchasePrice)
         editSellingPrice = findViewById(R.id.editSellingPrice)
@@ -73,9 +79,11 @@ class PurchaseActivity : LocalizedActivity() {
         editExpiryDate = findViewById(R.id.editExpiryDate)
         btnSave = findViewById(R.id.btnSavePurchase)
         textMarginInfo = findViewById(R.id.textMarginInfo)
+        labelSupplierOrEnter = findViewById(R.id.labelSupplierOrEnter)
 
         loadSites()
         loadProducts()
+        loadSuppliers()
 
         spinnerSite.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
@@ -96,6 +104,22 @@ class PurchaseActivity : LocalizedActivity() {
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
+        spinnerSupplier.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                // First item is "-- Select --" (no supplier selected)
+                if (position > 0 && position <= suppliers.size) {
+                    val supplier = suppliers[position - 1]
+                    selectedSupplierId = supplier.id
+                    editSupplier.setText(supplier.name)
+                } else {
+                    selectedSupplierId = null
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                selectedSupplierId = null
+            }
         }
 
         // Auto-calculate selling price when purchase price changes (if not manually modified)
@@ -144,6 +168,7 @@ class PurchaseActivity : LocalizedActivity() {
         editSupplier.hint = strings.enterSupplierName
         editBatchNumber.hint = strings.batchNumberExample
         editExpiryDate.hint = strings.dateFormat
+        labelSupplierOrEnter.text = strings.orSelect
 
         // Button
         btnSave.text = strings.savePurchase
@@ -184,6 +209,23 @@ class PurchaseActivity : LocalizedActivity() {
                 )
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 spinnerProduct.adapter = adapter
+            }
+        }
+    }
+
+    private fun loadSuppliers() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            suppliers = sdk.supplierRepository.getActive()
+            withContext(Dispatchers.Main) {
+                // Add "-- Select --" as first option
+                val supplierNames = listOf("-- ${strings.selectSupplier} --") + suppliers.map { it.name }
+                val adapter = ArrayAdapter(
+                    this@PurchaseActivity,
+                    android.R.layout.simple_spinner_item,
+                    supplierNames
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerSupplier.adapter = adapter
             }
         }
     }
@@ -272,6 +314,7 @@ class PurchaseActivity : LocalizedActivity() {
                 remainingQuantity = quantity,
                 purchasePrice = purchasePrice,
                 supplierName = supplier,
+                supplierId = selectedSupplierId,
                 expiryDate = expiryDate,
                 isExhausted = false,
                 createdAt = now,
