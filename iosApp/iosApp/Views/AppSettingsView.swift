@@ -10,6 +10,7 @@ struct AppSettingsView: View {
     @State private var isSaving = false
     @State private var showSuccessToast = false
     @State private var errorMessage: String?
+    @State private var isDebugMode: Bool = DebugConfig.shared.isDebugEnabled
 
     var body: some View {
         Form {
@@ -23,6 +24,22 @@ struct AppSettingsView: View {
                         .textFieldStyle(.roundedBorder)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                }
+            }
+
+            Section(header: Text(Localized.strings.debugMode)) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle(Localized.strings.debugMode, isOn: $isDebugMode)
+                        .onChange(of: isDebugMode) { newValue in
+                            if newValue {
+                                DebugConfig.shared.enableDebug()
+                            } else {
+                                DebugConfig.shared.disableDebug()
+                            }
+                        }
+                    Text(Localized.strings.debugModeDescription)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
 

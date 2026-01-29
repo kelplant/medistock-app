@@ -619,4 +619,6 @@ object StringsNy : Strings {
     override val currencySymbolDescription = "Chizindikiro chogwiritsidwa ntchito kuwonetsa mitengo (monga: F, $, EUR)"
     override val settingsSavedSuccessfully = "Zokonda zasungidwa bwino"
     override val invalidCurrencySymbol = "Chonde lowetsani chizindikiro cha ndalama chokhoza"
+    override val debugMode = "Njira yoyesera"
+    override val debugModeDescription = "Yatsani zolemba zonse pothandiza kufufuza"
 }

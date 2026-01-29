@@ -9,18 +9,14 @@ import android.util.Log
 object DebugConfig {
     /**
      * Enable or disable debug logging throughout the application.
-     * Set to true for debug builds, false for release.
-     * Note: Uses reflection to check BuildConfig.DEBUG to avoid import issues.
+     * Defaults to BuildConfig.DEBUG, can be overridden at runtime via admin settings.
      */
-    val isDebugEnabled: Boolean by lazy {
-        try {
-            val buildConfigClass = Class.forName("com.medistock.BuildConfig")
-            val debugField = buildConfigClass.getField("DEBUG")
-            debugField.getBoolean(null)
-        } catch (e: Exception) {
-            // Default to false if we can't determine
-            false
-        }
+    var isDebugEnabled: Boolean = try {
+        val buildConfigClass = Class.forName("com.medistock.BuildConfig")
+        val debugField = buildConfigClass.getField("DEBUG")
+        debugField.getBoolean(null)
+    } catch (e: Exception) {
+        false
     }
 
     /**

@@ -575,4 +575,6 @@ object StringsRu : Strings {
     override val currencySymbolDescription = "Символ для отображения цен (напр: F, $, EUR)"
     override val settingsSavedSuccessfully = "Настройки успешно сохранены"
     override val invalidCurrencySymbol = "Пожалуйста, введите корректный символ валюты"
+    override val debugMode = "Режим отладки"
+    override val debugModeDescription = "Включить подробное логирование для диагностики"
 }

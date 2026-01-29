@@ -575,4 +575,6 @@ object StringsIt : Strings {
     override val currencySymbolDescription = "Simbolo usato per visualizzare i prezzi (es: F, $, EUR)"
     override val settingsSavedSuccessfully = "Impostazioni salvate con successo"
     override val invalidCurrencySymbol = "Inserisci un simbolo valuta valido"
+    override val debugMode = "Modalità debug"
+    override val debugModeDescription = "Attiva la registrazione dettagliata per la risoluzione dei problemi"
 }

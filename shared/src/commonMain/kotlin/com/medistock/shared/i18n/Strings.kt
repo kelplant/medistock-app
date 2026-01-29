@@ -630,4 +630,6 @@ interface Strings {
     val currencySymbolDescription: String  // "Symbol used to display prices (e.g., F, $, EUR)"
     val settingsSavedSuccessfully: String  // "Settings saved successfully"
     val invalidCurrencySymbol: String      // "Please enter a valid currency symbol"
+    val debugMode: String                  // "Debug Mode"
+    val debugModeDescription: String       // "Enable verbose logging for troubleshooting"
 }

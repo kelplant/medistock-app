@@ -5,24 +5,32 @@ import Foundation
 final class DebugConfig {
     static let shared = DebugConfig()
 
+    private static let debugModeKey = "debug_mode"
+
     /// Enable or disable debug logging throughout the application.
-    /// Set to false for production builds.
+    /// Persisted in UserDefaults, can be toggled from admin settings.
     private(set) var isDebugEnabled: Bool = false
 
     private init() {
-        #if DEBUG
-        isDebugEnabled = true
-        #endif
+        if UserDefaults.standard.object(forKey: Self.debugModeKey) != nil {
+            isDebugEnabled = UserDefaults.standard.bool(forKey: Self.debugModeKey)
+        } else {
+            #if DEBUG
+            isDebugEnabled = true
+            #endif
+        }
     }
 
-    /// Enable debug mode manually.
+    /// Enable debug mode manually and persist the setting.
     func enableDebug() {
         isDebugEnabled = true
+        UserDefaults.standard.set(true, forKey: Self.debugModeKey)
     }
 
-    /// Disable debug mode manually.
+    /// Disable debug mode manually and persist the setting.
     func disableDebug() {
         isDebugEnabled = false
+        UserDefaults.standard.set(false, forKey: Self.debugModeKey)
     }
 
     /// Log a debug message if debug mode is enabled.

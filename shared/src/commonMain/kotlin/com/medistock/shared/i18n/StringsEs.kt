@@ -618,4 +618,6 @@ object StringsEs : Strings {
     override val currencySymbolDescription = "Símbolo usado para mostrar precios (ej: F, $, EUR)"
     override val settingsSavedSuccessfully = "Configuración guardada correctamente"
     override val invalidCurrencySymbol = "Por favor, ingrese un símbolo de moneda válido"
+    override val debugMode = "Modo depuración"
+    override val debugModeDescription = "Activar registro detallado para diagnóstico"
 }

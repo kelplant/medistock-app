@@ -619,4 +619,6 @@ object StringsBm : Strings {
     override val currencySymbolDescription = "Icizindikiro ca kulangilapo imiteengo (naba: ZK, $)"
     override val settingsSavedSuccessfully = "Ifyopangwa fyasungwa bwino"
     override val invalidCurrencySymbol = "Lembeni icizindikiro calondoka"
+    override val debugMode = "Ukulinga"
+    override val debugModeDescription = "Pandulileni amalembelo yonse ukwafwilisha ukupanga"
 }

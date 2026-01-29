@@ -20,7 +20,9 @@ import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
 import com.medistock.ui.profile.ProfileActivity
 import com.medistock.util.AppUpdateManager
+import com.medistock.util.PrefsHelper
 import com.medistock.util.UpdateCheckResult
+import com.medistock.data.remote.repository.BaseSupabaseRepository
 import io.github.jan.supabase.realtime.realtime
 import org.conscrypt.Conscrypt
 import java.security.Security
@@ -360,6 +362,11 @@ class MedistockApplication : Application() {
             println("❌ Failed to initialize MedistockSDK: ${e.message}")
             e.printStackTrace()
         }
+
+        // Apply debug mode from saved preference
+        val debugEnabled = PrefsHelper.isDebugModeEnabled(this)
+        com.medistock.util.DebugConfig.isDebugEnabled = debugEnabled
+        BaseSupabaseRepository.DEBUG = debugEnabled
 
         // Initialize language from saved preference
         ProfileActivity.initializeLanguage(this)
