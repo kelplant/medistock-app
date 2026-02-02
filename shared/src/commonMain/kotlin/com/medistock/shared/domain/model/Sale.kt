@@ -22,8 +22,10 @@ data class SaleItem(
     val productName: String = "",
     val unit: String = "",
     val quantity: Double,
+    val baseQuantity: Double? = null,
     val unitPrice: Double,
     val totalPrice: Double,
+    val batchId: String? = null,
     val createdAt: Long = 0,
     val createdBy: String = ""
 ) {

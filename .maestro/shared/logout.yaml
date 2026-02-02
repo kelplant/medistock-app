@@ -14,7 +14,7 @@ appId: ${APP_ID}
 
 # Tap logout button
 - tapOn:
-    text: ".*Logout.*"
+    text: ".*Log.?out.*"
     optional: true
 - tapOn:
     text: ".*Déconnexion.*"

@@ -28,9 +28,9 @@ appId: com.medistock.ios
 
 - takeScreenshot: "ios_purchases_home"
 
-# Navigate to Purchase Products
+# Navigate to Purchases
 - tapOn:
-    text: "Purchase Products"
+    text: "Purchases"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:

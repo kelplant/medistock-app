@@ -20,10 +20,16 @@ import kotlin.test.assertTrue
 class SyncEnqueueServiceIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     @Test
@@ -264,7 +270,7 @@ class SyncEnqueueServiceIntegrationTests {
         val site = sdk.createSite("Test Site", "user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "user")
         sdk.productRepository.insert(product)
 
         sdk.syncEnqueueService.enqueueProductInsert(product, "user")

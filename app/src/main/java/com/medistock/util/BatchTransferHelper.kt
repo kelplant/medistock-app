@@ -7,23 +7,37 @@ import java.util.UUID
 /**
  * Helper class to manage FIFO batch transfers between sites.
  * When transferring products, batches are consumed in FIFO order (oldest first).
+ * If a preferredBatchId is provided, that batch is consumed first before FIFO.
  */
 class BatchTransferHelper(private val batchRepository: PurchaseBatchRepository) {
 
     /**
      * Transfer quantity from source site to destination site using FIFO.
-     * Returns list of batch transfers (source batch info for creating destination batches).
+     * If preferredBatchId is provided, allocate from that batch first, then FIFO for remainder.
+     * Returns a BatchTransferResult indicating success/insufficient stock (non-blocking).
      */
     suspend fun transferBatchesFIFO(
         productId: String,
         fromSiteId: String,
         toSiteId: String,
         totalQuantity: Double,
-        currentUser: String
-    ): List<BatchTransferInfo> {
-        val batches = batchRepository.getByProductAndSite(productId, fromSiteId)
+        currentUser: String,
+        preferredBatchId: String? = null
+    ): BatchTransferResult {
+        val allBatches = batchRepository.getByProductAndSite(productId, fromSiteId)
             .filter { !it.isExhausted && it.remainingQuantity > 0 }
             .sortedBy { it.purchaseDate }
+
+        // If a preferred batch is specified, put it first, then the rest in FIFO order
+        val batches = if (preferredBatchId != null) {
+            val preferred = allBatches.filter { it.id == preferredBatchId }
+            val rest = allBatches.filter { it.id != preferredBatchId }
+            preferred + rest
+        } else {
+            allBatches
+        }
+
+        val totalAvailable = batches.sumOf { it.remainingQuantity }
         var remainingToTransfer = totalQuantity
         val transferInfoList = mutableListOf<BatchTransferInfo>()
         val now = System.currentTimeMillis()
@@ -71,13 +85,11 @@ class BatchTransferHelper(private val batchRepository: PurchaseBatchRepository) 
             remainingToTransfer -= quantityFromThisBatch
         }
 
-        if (remainingToTransfer > 0) {
-            throw InsufficientStockException(
-                "Not enough stock to transfer. Missing: $remainingToTransfer"
-            )
-        }
-
-        return transferInfoList
+        return BatchTransferResult(
+            transfers = transferInfoList,
+            totalAvailable = totalAvailable,
+            insufficientStock = remainingToTransfer > 0
+        )
     }
 
     /**
@@ -92,6 +104,16 @@ class BatchTransferHelper(private val batchRepository: PurchaseBatchRepository) 
 }
 
 /**
+ * Result of a batch transfer operation.
+ * Uses non-blocking approach: insufficientStock is a flag, not an exception.
+ */
+data class BatchTransferResult(
+    val transfers: List<BatchTransferInfo>,
+    val totalAvailable: Double,
+    val insufficientStock: Boolean
+)
+
+/**
  * Information about a batch transfer for audit and tracking.
  */
 data class BatchTransferInfo(
@@ -100,8 +122,3 @@ data class BatchTransferInfo(
     val purchasePrice: Double,
     val expiryDate: Long?
 )
-
-/**
- * Exception thrown when there is insufficient stock for a transfer.
- */
-class InsufficientStockException(message: String) : Exception(message)

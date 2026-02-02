@@ -53,7 +53,7 @@ appId: com.medistock
     text: ".*Déconnexion.*"
     optional: true
 - tapOn:
-    text: ".*Logout.*"
+    text: ".*Log.?out.*"
     optional: true
 
 - waitForAnimationToEnd

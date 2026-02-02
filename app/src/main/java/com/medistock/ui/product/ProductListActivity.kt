@@ -53,7 +53,7 @@ class ProductListActivity : AppCompatActivity() {
         val siteId = PrefsHelper.getActiveSiteId(this)
         if (siteId.isNullOrBlank()) return
         CoroutineScope(Dispatchers.IO).launch {
-            val products = sdk.productRepository.getBySite(siteId)
+            val products = sdk.productRepository.getWithCategoryForSite(siteId)
             runOnUiThread { adapter.submitList(products) }
         }
     }

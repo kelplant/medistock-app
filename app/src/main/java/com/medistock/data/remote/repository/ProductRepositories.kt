@@ -2,7 +2,6 @@ package com.medistock.data.remote.repository
 
 import com.medistock.shared.data.dto.ProductDto
 import com.medistock.shared.data.dto.ProductPriceDto
-import com.medistock.shared.data.dto.CurrentStockDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 
@@ -72,40 +71,3 @@ class ProductPriceSupabaseRepository : BaseSupabaseRepository("product_prices") 
     }
 }
 
-class CurrentStockRepository : BaseSupabaseRepository("current_stock") {
-    suspend fun getAllStock(): List<CurrentStockDto> = getAll()
-
-    suspend fun getStockByProduct(productId: String): CurrentStockDto? {
-        return supabase.from(tableName).select {
-            filter { eq("product_id", productId) }
-        }.decodeList<CurrentStockDto>().firstOrNull()
-    }
-
-    suspend fun getStockBySite(siteId: String): List<CurrentStockDto> {
-        return supabase.from(tableName).select {
-            filter { eq("site_id", siteId) }
-        }.decodeList()
-    }
-
-    suspend fun getLowStockProducts(siteId: String? = null): List<CurrentStockDto> {
-        return supabase.from(tableName).select {
-            filter {
-                eq("stock_status", "LOW")
-                if (siteId != null) {
-                    eq("site_id", siteId)
-                }
-            }
-        }.decodeList()
-    }
-
-    suspend fun getHighStockProducts(siteId: String? = null): List<CurrentStockDto> {
-        return supabase.from(tableName).select {
-            filter {
-                eq("stock_status", "HIGH")
-                if (siteId != null) {
-                    eq("site_id", siteId)
-                }
-            }
-        }.decodeList()
-    }
-}

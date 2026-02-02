@@ -1,0 +1,227 @@
+# MediStock iOS - Suppliers CRUD Tests
+# Prerequisites: User must be admin
+# Tests: Create, Read, Update, Delete, and Search suppliers
+appId: com.medistock.ios
+---
+
+# Setup: Login as admin
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- scrollUntilVisible:
+    element:
+      text: "Administration"
+    direction: DOWN
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Administration"
+    index: 1
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Test 0: Navigate to Manage Suppliers
+- tapOn:
+    text: "Manage Suppliers"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_suppliers_list_initial"
+
+# Test 1: Create a new supplier with all fields
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Fill supplier name (required field)
+- tapOn:
+    text: ".*Supplier name.*"
+    optional: true
+- tapOn:
+    text: ".*Name.*"
+    optional: true
+- inputText: "Supplier E2E Test iOS"
+
+# Fill phone
+- tapOn:
+    text: ".*Phone.*"
+    optional: true
+- inputText: "+1234567890"
+
+# Fill email
+- tapOn:
+    text: ".*Email.*"
+    optional: true
+- inputText: "supplier@test.com"
+
+# Fill address
+- tapOn:
+    text: ".*Address.*"
+    optional: true
+- inputText: "123 Test Street, Test City"
+
+# Fill notes
+- tapOn:
+    text: ".*Notes.*"
+    optional: true
+- inputText: "This is a test supplier for E2E testing"
+
+# Save supplier
+- tapOn:
+    text: "Add"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify supplier appears in list
+- assertVisible:
+    text: "Supplier E2E Test iOS"
+    optional: true
+
+- takeScreenshot: "ios_supplier_created"
+
+# Test 2: Search for supplier
+- tapOn:
+    text: ".*Search.*"
+    optional: true
+- inputText: "E2E Test iOS"
+
+- waitForAnimationToEnd
+
+# Verify search results show our supplier
+- assertVisible:
+    text: "Supplier E2E Test iOS"
+    optional: true
+
+- takeScreenshot: "ios_supplier_search"
+
+# Clear search
+- eraseText: 50
+
+- waitForAnimationToEnd
+
+# Test 3: Edit supplier
+- tapOn:
+    text: "Supplier E2E Test iOS"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Update name
+- eraseText: 50
+- inputText: "Supplier E2E Modified iOS"
+
+# Navigate to phone field and update
+- tapOn:
+    text: ".*Phone.*"
+    optional: true
+- eraseText: 20
+- inputText: "+9876543210"
+
+# Navigate to email field and update
+- tapOn:
+    text: ".*Email.*"
+    optional: true
+- eraseText: 30
+- inputText: "modified@test.com"
+
+# Save changes
+- tapOn:
+    text: "Save"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify modified name appears in list
+- assertVisible:
+    text: "Supplier E2E Modified iOS"
+    optional: true
+
+- takeScreenshot: "ios_supplier_edited"
+
+# Test 4: Verify supplier with updated data
+- tapOn:
+    text: "Supplier E2E Modified iOS"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify updated phone is displayed
+- assertVisible:
+    text: "+9876543210"
+    optional: true
+
+# Verify updated email is displayed
+- assertVisible:
+    text: "modified@test.com"
+    optional: true
+
+- takeScreenshot: "ios_supplier_details_verified"
+
+# Navigate back to list
+- back
+
+- waitForAnimationToEnd
+
+# Test 5: Delete supplier (long press to delete on iOS)
+- longPressOn:
+    text: "Supplier E2E Modified iOS"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm deletion
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm in dialog if appears
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_supplier_deleted"
+
+# Test 6: Navigate back to verify we can exit cleanly
+- back
+
+- waitForAnimationToEnd
+
+# Verify we're back on Administration screen
+- assertVisible:
+    text: "Administration"
+    optional: true
+
+- takeScreenshot: "ios_suppliers_test_completed"

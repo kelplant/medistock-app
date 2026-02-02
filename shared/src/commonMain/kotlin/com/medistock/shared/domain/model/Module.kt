@@ -16,6 +16,7 @@ enum class Module(val displayName: String) {
     CATEGORIES("Catégories"),
     USERS("Utilisateurs"),
     CUSTOMERS("Clients"),
+    SUPPLIERS("Fournisseurs"),
     AUDIT("Audit"),
     PACKAGING_TYPES("Types d'emballage");
 

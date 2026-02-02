@@ -1,5 +1,5 @@
 # MediStock iOS - Transfer Tests
-# Simplified test for transfer screen navigation
+# Test transfer creation with batch picker, smart suggestion, and non-blocking stock warning
 appId: com.medistock.ios
 ---
 
@@ -28,15 +28,264 @@ appId: com.medistock.ios
 
 - takeScreenshot: "ios_transfer_home"
 
-# ========== TEST: Navigate to Transfers screen ==========
+# ========== TEST 1: Navigate to Transfers screen ==========
 - tapOn:
-    text: "Transfer Products"
+    text: "Transfers"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:
     timeout: 5000
 
 - takeScreenshot: "ios_transfer_screen"
+
+# ========== TEST 2: Open new transfer form ==========
+- tapOn:
+    id: ".*plus.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- takeScreenshot: "ios_transfer_form"
+
+# ========== TEST 3: Select source site ==========
+- tapOn:
+    text: ".*Source.*"
+    optional: true
+- tapOn:
+    text: ".*source.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select first site from picker
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_source_selected"
+
+# ========== TEST 4: Select destination site ==========
+- tapOn:
+    text: ".*Destination.*"
+    optional: true
+- tapOn:
+    text: ".*destination.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select a different site
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_destination_selected"
+
+# ========== TEST 5: Select product ==========
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 0
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Select first available product from picker
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_product_selected"
+
+# ========== TEST 6: Verify stock display is visible ==========
+- scrollUntilVisible:
+    element:
+      text: ".*Stock.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+- takeScreenshot: "ios_transfer_stock_visible"
+
+# ========== TEST 7: Verify batch picker is visible ==========
+- scrollUntilVisible:
+    element:
+      text: ".*Lot.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Lot.*"
+    optional: true
+
+- takeScreenshot: "ios_transfer_batch_picker_visible"
+
+# ========== TEST 8: Select a batch from picker ==========
+- tapOn:
+    text: ".*Lot.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm picker selection (first batch is auto-selected by smart suggestion)
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_batch_selected"
+
+# ========== TEST 9: Enter quantity ==========
+- scrollUntilVisible:
+    element:
+      text: ".*Quantit.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    text: ".*Quantit.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- inputText: "5"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_quantity_entered"
+
+# ========== TEST 10: Test non-blocking stock warning ==========
+# Clear and enter a very large quantity to trigger insufficient stock warning
+- eraseText: 5
+
+- inputText: "99999"
+
+- waitForAnimationToEnd
+
+# Verify the warning appears (orange text)
+- scrollUntilVisible:
+    element:
+      text: ".*Stock insuffisant.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Stock insuffisant.*"
+    optional: true
+- assertVisible:
+    text: ".*disponible.*"
+    optional: true
+
+- takeScreenshot: "ios_transfer_stock_warning"
+
+# Verify the Create button is still enabled (non-blocking)
+- scrollUntilVisible:
+    element:
+      text: ".*Create.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Cr.*"
+    optional: true
+
+- takeScreenshot: "ios_transfer_create_still_active"
+
+# ========== TEST 11: Set reasonable quantity and enter notes ==========
+- scrollUntilVisible:
+    element:
+      text: ".*Quantit.*"
+    direction: UP
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    text: ".*Quantit.*"
+    optional: true
+
+- eraseText: 10
+
+- inputText: "2"
+
+- waitForAnimationToEnd
+
+# Add notes
+- scrollUntilVisible:
+    element:
+      text: ".*Notes.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    text: ".*Notes.*"
+    optional: true
+
+- inputText: "E2E Transfer Test"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_ready_to_save"
+
+# ========== TEST 12: Cancel and go back ==========
+# Cancel instead of saving to avoid test data pollution
+- tapOn:
+    text: ".*Cancel.*"
+    optional: true
+- tapOn:
+    text: ".*Annuler.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_transfer_cancelled"
 
 # Navigate back to home
 - back

@@ -25,8 +25,10 @@
 
     <!-- App Update Required -->
     <string name="update_required_title">Mise à jour requise</string>
-    <string name="update_required_message">Une version plus récente de l\'application est nécessaire pour utiliser cette base de données.\n\nVeuillez mettre à jour l\'application pour continuer.</string>
-    <string name="update_version_info">Version app: %1$d\nVersion requise: %2$d\nVersion DB: %3$d</string>
+    <string name="update_required_message">Une nouvelle version de l\'application est disponible.\n\nVeuillez mettre à jour pour continuer.</string>
+    <string name="update_version_info">Version actuelle : %1$s\nNouvelle version : %2$s</string>
+    <string name="db_incompatible_title">Base de données incompatible</string>
+    <string name="db_incompatible_message">La version de la base de données ne correspond pas à la version attendue par l\'application.\n\nLes migrations n\'ont pas pu mettre la base à jour.\n\nContactez votre administrateur.</string>
     <string name="update_app_button">Play Store</string>
     <string name="close_app_button">Fermer l\'application</string>
 
@@ -48,9 +50,23 @@
     <string name="manage_categories">Manage Categories</string>
     <string name="packaging_types">Packaging Types</string>
     <string name="manage_customers">Manage Customers</string>
+    <string name="manage_suppliers">Manage Suppliers</string>
     <string name="user_management">User Management</string>
     <string name="audit_history">Audit History</string>
     <string name="supabase_configuration">Supabase Configuration</string>
+
+    <!-- Supplier -->
+    <string name="supplier_name_hint">Supplier Name *</string>
+    <string name="manage_suppliers_icon_desc">Manage suppliers icon</string>
+
+    <!-- Common fields -->
+    <string name="search">Search</string>
+    <string name="add">Add</string>
+    <string name="delete">Delete</string>
+    <string name="phone">Phone</string>
+    <string name="email">Email</string>
+    <string name="address">Address</string>
+    <string name="notes">Notes</string>
 
     <!-- Language -->
     <string name="language">Language</string>

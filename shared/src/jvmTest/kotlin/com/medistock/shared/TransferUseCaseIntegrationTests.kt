@@ -25,10 +25,16 @@ import kotlin.test.*
 class TransferUseCaseIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     @Test
@@ -40,7 +46,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -85,7 +91,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -127,7 +133,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val sourceBatch = sdk.createPurchaseBatch(
@@ -169,7 +175,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val sourceBatch = sdk.createPurchaseBatch(
@@ -210,7 +216,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -251,7 +257,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -289,7 +295,7 @@ class TransferUseCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = TransferInput(
@@ -318,7 +324,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -361,7 +367,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Oldest batch
@@ -416,7 +422,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch1 = sdk.createPurchaseBatch(
@@ -466,7 +472,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = TransferInput(
@@ -495,7 +501,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -538,7 +544,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", destSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", destSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = TransferInput(
@@ -564,7 +570,7 @@ class TransferUseCaseIntegrationTests {
         val sourceSite = sdk.createSite("Source Site", "test-user")
         sdk.siteRepository.insert(sourceSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = TransferInput(
@@ -593,7 +599,7 @@ class TransferUseCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(

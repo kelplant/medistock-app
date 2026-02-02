@@ -17,6 +17,7 @@ data class PurchaseInput(
     val quantity: Double,
     val purchasePrice: Double,
     val supplierName: String = "",
+    val supplierId: String? = null,
     val batchNumber: String? = null,
     val expiryDate: Long? = null,
     val userId: String
@@ -45,7 +46,8 @@ class PurchaseUseCase(
     private val stockMovementRepository: StockMovementRepository,
     private val productRepository: ProductRepository,
     private val siteRepository: SiteRepository,
-    private val auditRepository: AuditRepository
+    private val auditRepository: AuditRepository,
+    private val stockRepository: StockRepository
 ) {
     private val json = Json { prettyPrint = false; encodeDefaults = true }
 
@@ -90,6 +92,7 @@ class PurchaseUseCase(
             remainingQuantity = input.quantity,
             purchasePrice = input.purchasePrice,
             supplierName = input.supplierName,
+            supplierId = input.supplierId,
             expiryDate = input.expiryDate,
             isExhausted = false,
             createdAt = now,
@@ -119,6 +122,14 @@ class PurchaseUseCase(
             // 7. Persist to database
             purchaseBatchRepository.insert(purchaseBatch)
             stockMovementRepository.insert(stockMovement)
+
+            // Update current_stock (positive delta for purchase)
+            stockRepository.updateStockDelta(
+                productId = stockMovement.productId,
+                siteId = stockMovement.siteId,
+                delta = stockMovement.quantity,
+                lastMovementId = stockMovement.id
+            )
 
             // 8. Create audit entry
             val auditEntry = AuditEntry(

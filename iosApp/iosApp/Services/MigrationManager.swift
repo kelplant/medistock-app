@@ -72,7 +72,7 @@ import Supabase
 class MigrationManager {
 
     /// Version du schéma supportée par cette version de l'app
-    static let APP_SCHEMA_VERSION = 2
+    static let APP_SCHEMA_VERSION = 3
 
     private let supabase: SupabaseClient
 

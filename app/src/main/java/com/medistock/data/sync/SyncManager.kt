@@ -2,6 +2,7 @@ package com.medistock.data.sync
 
 import android.content.Context
 import com.medistock.MedistockApplication
+import android.util.Log
 import com.medistock.data.remote.SupabaseClientProvider
 import com.medistock.data.remote.repository.*
 import com.medistock.shared.MedistockSDK
@@ -24,6 +25,10 @@ class SyncManager(
     private val scope = CoroutineScope(Dispatchers.IO)
     private val orchestrator = SyncOrchestrator()
 
+    companion object {
+        private const val TAG = "SyncManager"
+    }
+
     // Repositories Supabase
     private val productRepo by lazy { ProductSupabaseRepository() }
     private val categoryRepo by lazy { CategorySupabaseRepository() }
@@ -32,6 +37,7 @@ class SyncManager(
     private val packagingTypeRepo by lazy { PackagingTypeSupabaseRepository() }
     private val userRepo by lazy { UserSupabaseRepository() }
     private val userPermissionRepo by lazy { UserPermissionSupabaseRepository() }
+    private val supplierRepo by lazy { SupplierSupabaseRepository() }
     private val saleRepo by lazy { SaleSupabaseRepository() }
     private val saleItemRepo by lazy { SaleItemSupabaseRepository() }
     private val purchaseBatchRepo by lazy { PurchaseBatchSupabaseRepository() }
@@ -84,15 +90,19 @@ class SyncManager(
             onProgress?.invoke("Synchronisation des permissions...")
             syncUserPermissionsToRemote(onError)
 
-            // 8. Purchase Batches
+            // 8. Suppliers (before purchase batches due to FK)
+            onProgress?.invoke("Synchronisation des fournisseurs...")
+            syncSuppliersToRemote(onError)
+
+            // 9. Purchase Batches
             onProgress?.invoke("Synchronisation des achats...")
             syncPurchaseBatchesToRemote(onError)
 
-            // 9. Sales and Sale Items
+            // 10. Sales and Sale Items
             onProgress?.invoke("Synchronisation des ventes...")
             syncSalesToRemote(onError)
 
-            // 10. Stock Movements
+            // 11. Stock Movements
             onProgress?.invoke("Synchronisation des mouvements de stock...")
             syncStockMovementsToRemote(onError)
 
@@ -149,15 +159,19 @@ class SyncManager(
             onProgress?.invoke("Récupération des permissions...")
             syncUserPermissionsFromRemote(onError)
 
-            // 8. Purchase Batches
+            // 8. Suppliers (before purchase batches due to FK)
+            onProgress?.invoke("Récupération des fournisseurs...")
+            syncSuppliersFromRemote(onError)
+
+            // 9. Purchase Batches
             onProgress?.invoke("Récupération des achats...")
             syncPurchaseBatchesFromRemote(onError)
 
-            // 9. Sales and Sale Items
+            // 10. Sales and Sale Items
             onProgress?.invoke("Récupération des ventes...")
             syncSalesFromRemote(onError)
 
-            // 10. Stock Movements
+            // 11. Stock Movements
             onProgress?.invoke("Récupération des mouvements de stock...")
             syncStockMovementsFromRemote(onError)
 
@@ -340,10 +354,21 @@ class SyncManager(
     // ==================== Synchronisation Users ====================
 
     private suspend fun syncUsersToRemote(onError: ((String, Exception) -> Unit)?) {
-        // Users are managed centrally via Edge Functions (create-user, etc.)
-        // Do NOT sync local users to remote - this would overwrite password hashes
-        // Only sync FROM remote TO local
-        DebugConfig.d("SyncManager", "Skipping users sync to remote - managed via Edge Functions")
+        try {
+            val localUsers = sdk.userRepository.getAll()
+            localUsers.forEach { user ->
+                try {
+                    val dto = UserDto.fromModel(user)
+                    userRepo.upsert(dto)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync user ${user.username}: ${e.message}")
+                    onError?.invoke("User: ${user.username}", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync users: ${e.message}")
+            onError?.invoke("Users", e)
+        }
     }
 
     private suspend fun syncUsersFromRemote(onError: ((String, Exception) -> Unit)?) {
@@ -401,6 +426,43 @@ class SyncManager(
             }
         } catch (e: Exception) {
             onError?.invoke("Permissions", e)
+        }
+    }
+
+    // ==================== Synchronisation Suppliers ====================
+
+    private suspend fun syncSuppliersToRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val localSuppliers = sdk.supplierRepository.getAll()
+            localSuppliers.forEach { supplier ->
+                try {
+                    val dto = SupplierDto.fromModel(supplier)
+                    supplierRepo.upsertSupplier(dto)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync supplier ${supplier.name}: ${e.message}")
+                    onError?.invoke("Supplier: ${supplier.name}", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync suppliers: ${e.message}")
+            onError?.invoke("Suppliers", e)
+        }
+    }
+
+    private suspend fun syncSuppliersFromRemote(onError: ((String, Exception) -> Unit)?) {
+        try {
+            val remoteSuppliers = supplierRepo.getAllSuppliers()
+            remoteSuppliers.forEach { dto ->
+                try {
+                    sdk.supplierRepository.upsert(dto.toModel())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to sync supplier ${dto.name} from remote: ${e.message}")
+                    onError?.invoke("Supplier: ${dto.name}", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync suppliers from remote: ${e.message}")
+            onError?.invoke("Suppliers", e)
         }
     }
 

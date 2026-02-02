@@ -23,6 +23,10 @@ struct SchemaVersionResponse: Codable {
 class CompatibilityManager: ObservableObject {
     static let shared = CompatibilityManager()
 
+    /// Minimum Supabase schema_version required by this app version.
+    /// Must match CompatibilityChecker.MIN_SCHEMA_VERSION in shared Kotlin.
+    static let MIN_SCHEMA_VERSION = 29
+
     @Published var compatibilityResult: SharedCompatibilityResult?
     @Published var isChecking = false
 
@@ -93,7 +97,7 @@ class CompatibilityManager: ObservableObject {
     /// Returns true if the app requires an update
     var requiresUpdate: Bool {
         guard let result = compatibilityResult else { return false }
-        return result is SharedCompatibilityResult.AppTooOld
+        return result is SharedCompatibilityResult.AppTooOld || result is SharedCompatibilityResult.DbTooOld
     }
 
     /// Returns the compatibility info for display
@@ -105,6 +109,18 @@ class CompatibilityManager: ObservableObject {
             appVersion: Int(result.appVersion),
             minRequired: Int(result.minRequired),
             dbVersion: Int(result.dbVersion)
+        )
+    }
+
+    /// Returns the DB too old info for display
+    var dbTooOldInfo: (dbSchemaVersion: Int, minRequired: Int, appVersion: Int)? {
+        guard let result = compatibilityResult as? SharedCompatibilityResult.DbTooOld else {
+            return nil
+        }
+        return (
+            dbSchemaVersion: Int(result.dbSchemaVersion),
+            minRequired: Int(result.minRequired),
+            appVersion: Int(result.appVersion)
         )
     }
 

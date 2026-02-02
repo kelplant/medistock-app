@@ -4,11 +4,13 @@ import com.medistock.shared.data.repository.SiteRepository
 import com.medistock.shared.data.repository.CategoryRepository
 import com.medistock.shared.data.repository.ProductRepository
 import com.medistock.shared.data.repository.CustomerRepository
+import com.medistock.shared.data.repository.PackagingTypeRepository
 import com.medistock.shared.db.MedistockDatabase
 import com.medistock.shared.domain.model.Site
 import com.medistock.shared.domain.model.Category
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.Customer
+import com.medistock.shared.domain.model.PackagingType
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.flow.first
@@ -28,6 +30,8 @@ class RepositoryReferentialIntegrityTest {
     private lateinit var categoryRepository: CategoryRepository
     private lateinit var productRepository: ProductRepository
     private lateinit var customerRepository: CustomerRepository
+    private lateinit var packagingTypeRepository: PackagingTypeRepository
+    private lateinit var pkgTypeId: String
 
     @BeforeTest
     fun setUp() {
@@ -41,6 +45,23 @@ class RepositoryReferentialIntegrityTest {
         categoryRepository = CategoryRepository(database)
         productRepository = ProductRepository(database)
         customerRepository = CustomerRepository(database)
+        packagingTypeRepository = PackagingTypeRepository(database)
+
+        // Insert a packaging type for product tests
+        val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+        val packagingType = PackagingType(
+            id = "pkg-type-1",
+            name = "Box",
+            level1Name = "Unit",
+            createdAt = now,
+            updatedAt = now,
+            createdBy = "admin",
+            updatedBy = "admin"
+        )
+        kotlinx.coroutines.runBlocking {
+            packagingTypeRepository.insert(packagingType)
+        }
+        pkgTypeId = packagingType.id
     }
 
     @AfterTest
@@ -251,8 +272,8 @@ class RepositoryReferentialIntegrityTest {
     fun `should_returnAllProducts_when_getAllCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val prod1 = Product("prod-1", "Active Product", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod2 = Product("prod-2", "Inactive Product", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod1 = Product("prod-1", "Active Product", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod2 = Product("prod-2", "Inactive Product", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(prod1)
         productRepository.insert(prod2)
 
@@ -267,8 +288,8 @@ class RepositoryReferentialIntegrityTest {
     fun `should_returnOnlyActiveProducts_when_getActiveCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val prod1 = Product("prod-1", "Active Product", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod2 = Product("prod-2", "Inactive Product", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod1 = Product("prod-1", "Active Product", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod2 = Product("prod-2", "Inactive Product", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(prod1)
         productRepository.insert(prod2)
 
@@ -285,9 +306,9 @@ class RepositoryReferentialIntegrityTest {
     fun `should_returnOnlyActiveProductsForSite_when_getActiveBySiteCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val prod1 = Product("prod-1", "Active Product Site 1", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod2 = Product("prod-2", "Inactive Product Site 1", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod3 = Product("prod-3", "Active Product Site 2", "unit", 1.0, siteId = "site-2", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod1 = Product("prod-1", "Active Product Site 1", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod2 = Product("prod-2", "Inactive Product Site 1", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod3 = Product("prod-3", "Active Product Site 2", 1.0, pkgTypeId, siteId = "site-2", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(prod1)
         productRepository.insert(prod2)
         productRepository.insert(prod3)
@@ -306,7 +327,7 @@ class RepositoryReferentialIntegrityTest {
     fun `should_deactivateProduct_when_deactivateCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val product = Product("prod-1", "Test Product", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val product = Product("prod-1", "Test Product", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(product)
 
         // Act
@@ -323,7 +344,7 @@ class RepositoryReferentialIntegrityTest {
     fun `should_activateProduct_when_activateCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val product = Product("prod-1", "Test Product", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val product = Product("prod-1", "Test Product", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(product)
 
         // Act
@@ -339,8 +360,8 @@ class RepositoryReferentialIntegrityTest {
     fun `should_observeOnlyActiveProducts_when_observeActiveCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val prod1 = Product("prod-1", "Active Product", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod2 = Product("prod-2", "Inactive Product", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod1 = Product("prod-1", "Active Product", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod2 = Product("prod-2", "Inactive Product", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(prod1)
         productRepository.insert(prod2)
 
@@ -356,9 +377,9 @@ class RepositoryReferentialIntegrityTest {
     fun `should_observeOnlyActiveProductsForSite_when_observeActiveBySiteCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val prod1 = Product("prod-1", "Active Site 1", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod2 = Product("prod-2", "Inactive Site 1", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod3 = Product("prod-3", "Active Site 2", "unit", 1.0, siteId = "site-2", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod1 = Product("prod-1", "Active Site 1", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod2 = Product("prod-2", "Inactive Site 1", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod3 = Product("prod-3", "Active Site 2", 1.0, pkgTypeId, siteId = "site-2", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(prod1)
         productRepository.insert(prod2)
         productRepository.insert(prod3)
@@ -376,8 +397,8 @@ class RepositoryReferentialIntegrityTest {
     fun `should_getBySiteIncludingInactive_when_getBySiteCalled`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val prod1 = Product("prod-1", "Active Product", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
-        val prod2 = Product("prod-2", "Inactive Product", "unit", 1.0, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod1 = Product("prod-1", "Active Product", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val prod2 = Product("prod-2", "Inactive Product", 1.0, pkgTypeId, siteId = "site-1", isActive = false, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(prod1)
         productRepository.insert(prod2)
 
@@ -613,8 +634,8 @@ class RepositoryReferentialIntegrityTest {
         val product = Product(
             id = "prod-1",
             name = "New Product",
-            unit = "unit",
             unitVolume = 1.0,
+            packagingTypeId = pkgTypeId,
             siteId = "site-1",
             createdAt = now,
             updatedAt = now,
@@ -664,7 +685,7 @@ class RepositoryReferentialIntegrityTest {
     fun `should_reappearInActiveQueries_when_entityReactivated`() = runTest {
         // Arrange
         val now = Clock.System.now().toEpochMilliseconds()
-        val product = Product("prod-1", "Test Product", "unit", 1.0, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
+        val product = Product("prod-1", "Test Product", 1.0, pkgTypeId, siteId = "site-1", isActive = true, createdAt = now, updatedAt = now, createdBy = "admin", updatedBy = "admin")
         productRepository.insert(product)
 
         // Act - deactivate then reactivate

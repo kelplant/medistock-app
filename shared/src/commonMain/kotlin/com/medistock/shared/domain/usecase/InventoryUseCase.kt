@@ -245,6 +245,14 @@ class InventoryUseCase(
             // Insert stock movements for adjustments
             for (adjustment in adjustments) {
                 stockMovementRepository.insert(adjustment)
+
+                // Update current_stock with adjustment delta
+                stockRepository.updateStockDelta(
+                    productId = adjustment.productId,
+                    siteId = adjustment.siteId,
+                    delta = adjustment.quantity, // Positive for surplus, negative for shortage
+                    lastMovementId = adjustment.id
+                )
             }
 
             // 7. Create audit entry

@@ -3,6 +3,7 @@ package com.medistock.ui.sales
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
@@ -12,14 +13,19 @@ import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.Customer
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.Sale
 import com.medistock.shared.domain.model.SaleItem
 import com.medistock.shared.domain.model.Site
+import com.medistock.shared.domain.model.PurchaseBatch
 import com.medistock.shared.domain.model.SaleBatchAllocation
 import com.medistock.shared.domain.model.StockMovement
 import com.medistock.ui.adapters.SaleItemAdapter
 import com.medistock.ui.LocalizedActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 import com.medistock.util.AuthManager
 import com.medistock.util.PrefsHelper
@@ -41,11 +47,18 @@ class SaleActivity : LocalizedActivity() {
     private lateinit var saleItemAdapter: SaleItemAdapter
     private var sites: List<Site> = emptyList()
     private var products: List<Product> = emptyList()
+    private var packagingTypes: Map<String, PackagingType> = emptyMap()
     private var currentStock: Map<String, Double> = emptyMap()
     private var selectedSiteId: String? = null
     private var editingSaleId: String? = null
     private var existingSale: Sale? = null
     private var selectedCustomer: Customer? = null
+
+    private fun getUnit(product: Product?): String {
+        if (product == null) return ""
+        val packagingType = packagingTypes[product.packagingTypeId]
+        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,6 +162,7 @@ class SaleActivity : LocalizedActivity() {
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = sdk.productRepository.getAll()
+            packagingTypes = sdk.packagingTypeRepository.getAll().associateBy { it.id }
         }
     }
 
@@ -193,36 +207,266 @@ class SaleActivity : LocalizedActivity() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_sale_item, null)
         val spinnerProduct = dialogView.findViewById<Spinner>(R.id.spinnerProductDialog)
         val textAvailableStock = dialogView.findViewById<TextView>(R.id.textAvailableStock)
+        val radioGroupLevel = dialogView.findViewById<RadioGroup>(R.id.radioGroupLevel)
+        val radioLevel1 = dialogView.findViewById<RadioButton>(R.id.radioLevel1)
+        val radioLevel2 = dialogView.findViewById<RadioButton>(R.id.radioLevel2)
+        val labelBatchSelection = dialogView.findViewById<TextView>(R.id.labelBatchSelection)
+        val spinnerBatchDialog = dialogView.findViewById<Spinner>(R.id.spinnerBatchDialog)
+        val textBatchExpiryWarning = dialogView.findViewById<TextView>(R.id.textBatchExpiryWarning)
         val editQuantity = dialogView.findViewById<EditText>(R.id.editQuantityDialog)
+        val textPurchasePrice = dialogView.findViewById<TextView>(R.id.textPurchasePrice)
         val editPrice = dialogView.findViewById<EditText>(R.id.editPriceDialog)
+        val textMarginInfo = dialogView.findViewById<TextView>(R.id.textMarginInfo)
 
-        val productNames = products.map { "${it.name} (${it.unit})" }
+        val productNames = products.map { "${it.name} (${getUnit(it)})" }
         val productAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, productNames)
         productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerProduct.adapter = productAdapter
 
         var selectedProduct: Product? = null
+        var selectedLevel: Int = 1
+        var latestPurchasePrice: Double? = null
+        var sortedBatches: List<PurchaseBatch> = emptyList()
+        var selectedBatchId: String? = null
 
-        spinnerProduct.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
-                if (position >= 0 && position < products.size) {
-                    selectedProduct = products[position]
-                    val availableQty = currentStock[selectedProduct!!.id] ?: 0.0
-                    textAvailableStock.text = "${strings.availableStock}: $availableQty ${selectedProduct!!.unit}"
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val thirtyDaysMs = 30L * 24 * 60 * 60 * 1000
 
-                    // Load suggested price
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val latestPrice = sdk.productPriceRepository.getLatestPrice(selectedProduct!!.id)
-                        withContext(Dispatchers.Main) {
-                            if (latestPrice != null) {
-                                editPrice.setText(String.format("%.2f", latestPrice.sellingPrice))
-                            }
+        fun updateLevelUI(product: Product) {
+            val packagingType = packagingTypes[product.packagingTypeId]
+            if (packagingType != null && packagingType.hasTwoLevels()) {
+                radioGroupLevel.visibility = View.VISIBLE
+                radioLevel1.text = packagingType.level1Name
+                radioLevel2.text = packagingType.level2Name
+            } else {
+                radioGroupLevel.visibility = View.GONE
+                selectedLevel = 1
+            }
+        }
+
+        fun getConversionFactor(product: Product): Double? {
+            return product.conversionFactor
+        }
+
+        fun updateStockDisplay(product: Product) {
+            val availableQty = currentStock[product.id] ?: 0.0
+            val packagingType = packagingTypes[product.packagingTypeId]
+            val levelName = if (selectedLevel == 2 && packagingType?.hasTwoLevels() == true) {
+                val cf = getConversionFactor(product)
+                if (cf != null && cf > 0) {
+                    val level2Qty = availableQty / cf
+                    textAvailableStock.text = "${strings.availableStock}: ${String.format("%.1f", level2Qty)} ${packagingType.level2Name} (${"%.0f".format(availableQty)} ${packagingType.level1Name})"
+                    return
+                }
+                packagingType.getLevelName(selectedLevel) ?: ""
+            } else {
+                packagingType?.getLevelName(selectedLevel) ?: ""
+            }
+            textAvailableStock.text = "${strings.availableStock}: $availableQty $levelName"
+        }
+
+        fun isBatchExpiringSoon(batch: PurchaseBatch): Boolean {
+            val expiryDate = batch.expiryDate ?: return false
+            return expiryDate < System.currentTimeMillis() + thirtyDaysMs
+        }
+
+        fun updateBatchExpiryWarning(batch: PurchaseBatch?) {
+            if (batch != null && isBatchExpiringSoon(batch)) {
+                val expiryStr = batch.expiryDate?.let { dateFormat.format(Date(it)) } ?: ""
+                textBatchExpiryWarning.text = "Lot proche de l'expiration (expire le $expiryStr)"
+                textBatchExpiryWarning.visibility = View.VISIBLE
+            } else {
+                textBatchExpiryWarning.visibility = View.GONE
+            }
+        }
+
+        fun updatePurchasePriceDisplay(product: Product) {
+            val pp = latestPurchasePrice
+            if (pp != null && pp > 0) {
+                val packagingType = packagingTypes[product.packagingTypeId]
+                val displayPrice = if (selectedLevel == 2 && packagingType?.hasTwoLevels() == true) {
+                    val cf = getConversionFactor(product) ?: 1.0
+                    pp * cf
+                } else {
+                    pp
+                }
+                textPurchasePrice.text = "${strings.purchasePrice}: ${String.format("%.2f", displayPrice)}"
+                textPurchasePrice.visibility = View.VISIBLE
+            } else {
+                textPurchasePrice.visibility = View.GONE
+            }
+        }
+
+        fun updateMarginDisplay(product: Product) {
+            val pp = latestPurchasePrice
+            val sellingPrice = editPrice.text.toString().toDoubleOrNull()
+            if (pp != null && pp > 0 && sellingPrice != null && sellingPrice > 0) {
+                val effectivePurchasePrice = if (selectedLevel == 2) {
+                    val cf = getConversionFactor(product) ?: 1.0
+                    pp * cf
+                } else {
+                    pp
+                }
+                val marginAmount = sellingPrice - effectivePurchasePrice
+                val marginPercent = if (effectivePurchasePrice > 0) (marginAmount / effectivePurchasePrice) * 100 else 0.0
+                textMarginInfo.text = "${strings.margin}: ${String.format("%.2f", marginAmount)} (${String.format("%.1f", marginPercent)}%)"
+                textMarginInfo.visibility = View.VISIBLE
+            } else {
+                textMarginInfo.visibility = View.GONE
+            }
+        }
+
+        fun calculateSuggestedPrice(product: Product): Double? {
+            val pp = latestPurchasePrice ?: return null
+            if (pp <= 0) return null
+            val effectivePurchasePrice = if (selectedLevel == 2) {
+                val cf = getConversionFactor(product) ?: 1.0
+                pp * cf
+            } else {
+                pp
+            }
+            val marginValue = product.marginValue ?: 0.0
+            return when (product.marginType) {
+                "fixed" -> {
+                    if (selectedLevel == 2) {
+                        val cf = getConversionFactor(product) ?: 1.0
+                        effectivePurchasePrice + marginValue * cf
+                    } else {
+                        effectivePurchasePrice + marginValue
+                    }
+                }
+                "percentage" -> effectivePurchasePrice * (1 + marginValue / 100)
+                else -> null
+            }
+        }
+
+        fun updatePriceFromBatch(product: Product, batch: PurchaseBatch?) {
+            if (batch != null) {
+                latestPurchasePrice = batch.purchasePrice
+            }
+            val suggestedPrice = calculateSuggestedPrice(product)
+            if (suggestedPrice != null) {
+                editPrice.setText(String.format("%.2f", suggestedPrice))
+            }
+            updatePurchasePriceDisplay(product)
+            updateMarginDisplay(product)
+        }
+
+        fun loadBatchesAndPrice(product: Product) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val latestPrice = sdk.productPriceRepository.getLatestPrice(product.id)
+                val batches = sdk.purchaseBatchRepository.getByProductAndSite(
+                    product.id, selectedSiteId ?: ""
+                ).filter { !it.isExhausted && it.remainingQuantity > 0 }
+
+                // Smart batch suggestion: expiring soon first (by expiryDate ASC), then FIFO (purchaseDate ASC)
+                val now = System.currentTimeMillis()
+                val threshold = now + thirtyDaysMs
+                val expiringSoon = batches
+                    .filter { batch -> val exp = batch.expiryDate; exp != null && exp < threshold }
+                    .sortedBy { it.expiryDate ?: Long.MAX_VALUE }
+                val remaining = batches
+                    .filter { batch -> val exp = batch.expiryDate; exp == null || exp >= threshold }
+                    .sortedBy { it.purchaseDate }
+                val sorted = expiringSoon + remaining
+
+                withContext(Dispatchers.Main) {
+                    sortedBatches = sorted
+
+                    if (sorted.isNotEmpty()) {
+                        labelBatchSelection.visibility = View.VISIBLE
+                        spinnerBatchDialog.visibility = View.VISIBLE
+
+                        val batchLabels = sorted.map { batch ->
+                            val batchNum = batch.batchNumber ?: "N/A"
+                            val remaining = String.format("%.0f", batch.remainingQuantity)
+                            "Lot: $batchNum - ${String.format("%.0f", batch.purchasePrice)} FCFA (reste: $remaining)"
                         }
+                        val batchAdapter = ArrayAdapter(
+                            this@SaleActivity,
+                            android.R.layout.simple_spinner_item,
+                            batchLabels
+                        )
+                        batchAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                        spinnerBatchDialog.adapter = batchAdapter
+
+                        // Pre-select first batch (the suggested one)
+                        spinnerBatchDialog.setSelection(0)
+                        val firstBatch = sorted.first()
+                        selectedBatchId = firstBatch.id
+                        latestPurchasePrice = firstBatch.purchasePrice
+                        updateBatchExpiryWarning(firstBatch)
+                    } else {
+                        labelBatchSelection.visibility = View.GONE
+                        spinnerBatchDialog.visibility = View.GONE
+                        textBatchExpiryWarning.visibility = View.GONE
+                        selectedBatchId = null
+                        // Fallback to product price if no batches
+                        latestPurchasePrice = latestPrice?.purchasePrice
+                    }
+
+                    val suggestedPrice = calculateSuggestedPrice(product)
+                    if (suggestedPrice != null) {
+                        editPrice.setText(String.format("%.2f", suggestedPrice))
+                    } else if (latestPrice != null) {
+                        editPrice.setText(String.format("%.2f", latestPrice.sellingPrice))
+                    }
+
+                    updatePurchasePriceDisplay(product)
+                    updateMarginDisplay(product)
+                }
+            }
+        }
+
+        spinnerBatchDialog.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                if (position >= 0 && position < sortedBatches.size) {
+                    val batch = sortedBatches[position]
+                    selectedBatchId = batch.id
+                    updateBatchExpiryWarning(batch)
+                    selectedProduct?.let { product ->
+                        updatePriceFromBatch(product, batch)
                     }
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
+
+        spinnerProduct.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
+                if (position >= 0 && position < products.size) {
+                    selectedProduct = products[position]
+                    selectedLevel = 1
+                    radioLevel1.isChecked = true
+                    updateLevelUI(selectedProduct!!)
+                    updateStockDisplay(selectedProduct!!)
+                    loadBatchesAndPrice(selectedProduct!!)
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
+        radioGroupLevel.setOnCheckedChangeListener { _, checkedId ->
+            selectedLevel = if (checkedId == R.id.radioLevel2) 2 else 1
+            selectedProduct?.let { product ->
+                updateStockDisplay(product)
+                updatePurchasePriceDisplay(product)
+                val suggestedPrice = calculateSuggestedPrice(product)
+                if (suggestedPrice != null) {
+                    editPrice.setText(String.format("%.2f", suggestedPrice))
+                }
+                updateMarginDisplay(product)
+            }
+        }
+
+        // Update margin display when price changes
+        editPrice.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                selectedProduct?.let { updateMarginDisplay(it) }
+            }
+        })
 
         AlertDialog.Builder(this)
             .setTitle(strings.addProduct)
@@ -247,10 +491,32 @@ class SaleActivity : LocalizedActivity() {
                     return@setPositiveButton
                 }
 
-                // Check stock availability
+                // Level 2 validation: quantity must not exceed conversionFactor
+                val conversionFactor = getConversionFactor(product)
+                if (selectedLevel == 2 && conversionFactor != null && quantity > conversionFactor) {
+                    val packagingType = packagingTypes[product.packagingTypeId]
+                    Toast.makeText(
+                        this,
+                        "Quantite max: ${conversionFactor.toInt()} ${packagingType?.level2Name ?: ""}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@setPositiveButton
+                }
+
+                // Compute baseQuantity (level 1 equivalent)
+                val baseQuantity: Double? = if (selectedLevel == 2 && conversionFactor != null) {
+                    quantity * conversionFactor
+                } else {
+                    null
+                }
+
+                // Check stock availability (non-blocking: warning only)
                 val availableQty = currentStock[product.id] ?: 0.0
-                val alreadyInCart = saleItemAdapter.getTotalQuantityForProduct(product.id)
-                val totalNeeded = alreadyInCart + quantity
+                val alreadyInCart = saleItemAdapter.getItems()
+                    .filter { it.productId == product.id }
+                    .sumOf { it.baseQuantity ?: it.quantity }
+                val quantityInBaseUnits = baseQuantity ?: quantity
+                val totalNeeded = alreadyInCart + quantityInBaseUnits
 
                 if (totalNeeded > availableQty) {
                     Toast.makeText(
@@ -258,19 +524,25 @@ class SaleActivity : LocalizedActivity() {
                         strings.insufficientStock,
                         Toast.LENGTH_LONG
                     ).show()
-                    return@setPositiveButton
+                    // Non-blocking: continue adding the item (warning only)
                 }
 
-                // Add item to the list
+                // Derive unit name from the selected level
+                val packagingType = packagingTypes[product.packagingTypeId]
+                val unit = packagingType?.getLevelName(selectedLevel) ?: getUnit(product)
+
+                // Add item to the list with batchId
                 val saleItem = SaleItem(
                     id = UUID.randomUUID().toString(),
                     saleId = editingSaleId ?: "",
                     productId = product.id,
                     productName = product.name,
-                    unit = product.unit,
+                    unit = unit,
                     quantity = quantity,
+                    baseQuantity = baseQuantity,
                     unitPrice = price,
-                    totalPrice = quantity * price
+                    totalPrice = quantity * price,
+                    batchId = selectedBatchId
                 )
                 saleItemAdapter.addItem(saleItem)
                 updateTotal()
@@ -425,11 +697,22 @@ class SaleActivity : LocalizedActivity() {
         productId: String,
         siteId: String,
         quantityNeeded: Double,
-        currentUser: String
+        currentUser: String,
+        preferredBatchId: String? = null
     ): Pair<List<SaleBatchAllocation>, Double> {
-        // Get available batches ordered by purchase date (FIFO) - already filtered by is_exhausted=0
-        val batches = sdk.purchaseBatchRepository.getByProductAndSite(productId, siteId)
+        // Get available batches ordered by purchase date (FIFO)
+        val allBatches = sdk.purchaseBatchRepository.getByProductAndSite(productId, siteId)
             .sortedBy { it.purchaseDate }
+
+        // If a preferred batch is specified, put it first, then FIFO for the rest
+        val batches = if (preferredBatchId != null) {
+            val preferred = allBatches.filter { it.id == preferredBatchId }
+            val rest = allBatches.filter { it.id != preferredBatchId }
+            preferred + rest
+        } else {
+            allBatches
+        }
+
         val allocations = mutableListOf<SaleBatchAllocation>()
         var remainingQty = quantityNeeded
         var totalCost = 0.0
@@ -464,8 +747,9 @@ class SaleActivity : LocalizedActivity() {
             remainingQty -= qtyToTake
         }
 
+        // Insufficient stock is a warning, not a blocking error (allow negative stock)
         if (remainingQty > 0) {
-            throw Exception(strings.remainingQuantityNeeded.replace("{quantity}", remainingQty.toString()))
+            android.util.Log.w("SaleActivity", "Insufficient stock: ${remainingQty} remaining needed for product $productId")
         }
 
         val avgPurchasePrice = if (quantityNeeded > 0) totalCost / quantityNeeded else 0.0
@@ -533,12 +817,13 @@ class SaleActivity : LocalizedActivity() {
                         // Reverse batch allocations
                         reverseBatchAllocations(oldItem.id, currentUser)
 
-                        // Reverse stock movement
+                        // Reverse stock movement using base quantity (level 1 units)
+                        val reverseQuantity = oldItem.baseQuantity ?: oldItem.quantity
                         val movement = StockMovement(
                             id = UUID.randomUUID().toString(),
                             productId = oldItem.productId,
                             siteId = selectedSiteId ?: "",
-                            quantity = oldItem.quantity,
+                            quantity = reverseQuantity,
                             type = "in",
                             date = currentTime,
                             purchasePriceAtMovement = 0.0,
@@ -547,6 +832,14 @@ class SaleActivity : LocalizedActivity() {
                             createdBy = currentUser
                         )
                         sdk.stockMovementRepository.insert(movement)
+
+                        // Update current_stock (add back the reversed quantity)
+                        sdk.stockRepository.updateStockDelta(
+                            productId = oldItem.productId,
+                            siteId = selectedSiteId ?: "",
+                            delta = reverseQuantity,
+                            lastMovementId = movement.id
+                        )
                     }
 
                     // Delete old sale items AFTER reversing
@@ -554,15 +847,19 @@ class SaleActivity : LocalizedActivity() {
 
                     // Insert new sale items with FIFO batch allocation
                     saleItemAdapter.getItems().forEach { item ->
-                        // Allocate batches using FIFO
+                        // Use baseQuantity (level 1 units) for stock operations
+                        val stockQuantity = item.baseQuantity ?: item.quantity
+
+                        // Allocate batches using FIFO with base quantity
                         val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
                             item.productId,
                             selectedSiteId ?: "",
-                            item.quantity,
-                            currentUser
+                            stockQuantity,
+                            currentUser,
+                            preferredBatchId = item.batchId
                         )
 
-                        // Insert sale item
+                        // Insert sale item (preserves display quantity, baseQuantity, and batchId)
                         val newItem = SaleItem(
                             id = item.id,
                             saleId = editingSaleId!!,
@@ -570,8 +867,10 @@ class SaleActivity : LocalizedActivity() {
                             productName = item.productName,
                             unit = item.unit,
                             quantity = item.quantity,
+                            baseQuantity = item.baseQuantity,
                             unitPrice = item.unitPrice,
                             totalPrice = item.totalPrice,
+                            batchId = item.batchId,
                             createdAt = currentTime,
                             createdBy = currentUser
                         )
@@ -584,12 +883,12 @@ class SaleActivity : LocalizedActivity() {
                             )
                         }
 
-                        // Create stock movement with actual purchase price
+                        // Create stock movement with base quantity (level 1 units)
                         val movement = StockMovement(
                             id = UUID.randomUUID().toString(),
                             productId = item.productId,
                             siteId = selectedSiteId ?: "",
-                            quantity = item.quantity,
+                            quantity = stockQuantity,
                             type = "out",
                             date = currentTime,
                             purchasePriceAtMovement = avgPurchasePrice,
@@ -598,6 +897,14 @@ class SaleActivity : LocalizedActivity() {
                             createdBy = currentUser
                         )
                         sdk.stockMovementRepository.insert(movement)
+
+                        // Update current_stock (deduct base quantity)
+                        sdk.stockRepository.updateStockDelta(
+                            productId = item.productId,
+                            siteId = selectedSiteId ?: "",
+                            delta = -stockQuantity,
+                            lastMovementId = movement.id
+                        )
                     }
 
                     withContext(Dispatchers.Main) {
@@ -622,15 +929,22 @@ class SaleActivity : LocalizedActivity() {
 
                     // Insert sale items with FIFO batch allocation
                     saleItemAdapter.getItems().forEach { item ->
-                        // Allocate batches using FIFO
+                        // Use baseQuantity (level 1 units) for stock operations
+                        val stockQuantity = item.baseQuantity ?: item.quantity
+
+                        // Allocate batches using FIFO with base quantity
                         val (allocations, avgPurchasePrice) = allocateBatchesFIFO(
                             item.productId,
                             selectedSiteId ?: "",
-                            item.quantity,
-                            currentUser
+                            stockQuantity,
+                            currentUser,
+                            preferredBatchId = item.batchId
                         )
 
-                        // Insert sale item
+                        // Get the product to derive the unit
+                        val product = products.find { it.id == item.productId }
+
+                        // Insert sale item (preserves display quantity and baseQuantity)
                         val newItem = sdk.createSaleItem(
                             saleId = saleId,
                             productId = item.productId,
@@ -640,21 +954,26 @@ class SaleActivity : LocalizedActivity() {
                             unitPrice = item.unitPrice,
                             userId = currentUser
                         )
-                        sdk.saleRepository.insertSaleItem(newItem)
+                        // Copy baseQuantity and batchId to the created item
+                        val newItemWithBase = newItem.copy(
+                            baseQuantity = item.baseQuantity,
+                            batchId = item.batchId
+                        )
+                        sdk.saleRepository.insertSaleItem(newItemWithBase)
 
                         // Insert batch allocations with correct saleItemId
                         allocations.forEach { allocation ->
                             sdk.saleBatchAllocationRepository.insert(
-                                allocation.copy(saleItemId = newItem.id)
+                                allocation.copy(saleItemId = newItemWithBase.id)
                             )
                         }
 
-                        // Create stock movement with actual purchase price
+                        // Create stock movement with base quantity (level 1 units)
                         val movement = StockMovement(
                             id = UUID.randomUUID().toString(),
                             productId = item.productId,
                             siteId = selectedSiteId ?: "",
-                            quantity = item.quantity,
+                            quantity = stockQuantity,
                             type = "out",
                             date = currentTime,
                             purchasePriceAtMovement = avgPurchasePrice,
@@ -663,6 +982,14 @@ class SaleActivity : LocalizedActivity() {
                             createdBy = currentUser
                         )
                         sdk.stockMovementRepository.insert(movement)
+
+                        // Update current_stock (deduct base quantity)
+                        sdk.stockRepository.updateStockDelta(
+                            productId = item.productId,
+                            siteId = selectedSiteId ?: "",
+                            delta = -stockQuantity,
+                            lastMovementId = movement.id
+                        )
                     }
 
                     withContext(Dispatchers.Main) {

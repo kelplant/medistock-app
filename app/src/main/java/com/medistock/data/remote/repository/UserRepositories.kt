@@ -12,6 +12,7 @@ class UserSupabaseRepository : BaseSupabaseRepository("app_users") {
     suspend fun getUserById(id: String): AppUserDto? = getById(id)
     suspend fun createUser(user: AppUserDto): AppUserDto = create(user)
     suspend fun updateUser(id: String, user: AppUserDto): AppUserDto = update(id, user)
+    suspend fun upsertUser(user: AppUserDto): AppUserDto = upsert(user)
     suspend fun deleteUser(id: String) = delete(id)
 
     suspend fun getUserByUsername(username: String): AppUserDto? {
@@ -45,6 +46,7 @@ class UserPermissionSupabaseRepository : BaseSupabaseRepository("user_permission
     suspend fun getPermissionById(id: String): UserPermissionDto? = getById(id)
     suspend fun createPermission(permission: UserPermissionDto): UserPermissionDto = create(permission)
     suspend fun updatePermission(id: String, permission: UserPermissionDto): UserPermissionDto = update(id, permission)
+    suspend fun upsertPermission(permission: UserPermissionDto): UserPermissionDto = upsert(permission)
     suspend fun deletePermission(id: String) = delete(id)
 
     suspend fun getPermissionsByUser(userId: String): List<UserPermissionDto> {

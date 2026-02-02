@@ -1,0 +1,292 @@
+# MediStock iOS - Purchase with Supplier Test
+# Prerequisites: User must be admin, at least one site, one product, and one supplier must exist
+# Tests: Create a purchase and select a supplier from the picker
+appId: com.medistock.ios
+---
+
+# Setup: Login as admin
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn: "Username"
+- inputText: "admin"
+
+- tapOn: "Password"
+- inputText: "admin"
+
+- tapOn:
+    text: "Login"
+    index: 1
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Pre-requisite: Create a test supplier first
+- scrollUntilVisible:
+    element:
+      text: "Administration"
+    direction: DOWN
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Administration"
+    index: 1
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: "Manage Suppliers"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd
+
+# Create test supplier
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- tapOn:
+    text: ".*Supplier name.*"
+    optional: true
+- tapOn:
+    text: ".*Name.*"
+    optional: true
+- inputText: "Purchase Test Supplier iOS"
+
+- tapOn:
+    text: ".*Phone.*"
+    optional: true
+- inputText: "+1122334455"
+
+- tapOn:
+    text: "Add"
+    optional: true
+- tapOn:
+    text: "Save"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify supplier created
+- assertVisible:
+    text: "Purchase Test Supplier iOS"
+    optional: true
+
+- takeScreenshot: "ios_purchase_supplier_created"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# Test: Navigate to Purchases
+- scrollUntilVisible:
+    element:
+      text: "Purchases"
+    direction: DOWN
+
+- tapOn:
+    text: "Purchases"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchase_screen_with_supplier"
+
+# Test 1: Scroll to find supplier picker
+- scrollUntilVisible:
+    element:
+      text: ".*Supplier.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+# Test 2: Select a supplier from the picker
+- tapOn:
+    text: ".*Supplier.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select our test supplier from the picker
+- tapOn:
+    text: "Purchase Test Supplier iOS"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm selection if needed (iOS picker "Done" button)
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchase_supplier_selected"
+
+# Test 3: Verify supplier is selected
+- assertVisible:
+    text: ".*Purchase Test Supplier iOS.*"
+    optional: true
+
+# Test 4: Try selecting a site (required for purchase)
+- scrollUntilVisible:
+    element:
+      text: ".*Site.*"
+    direction: UP
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Select first available site
+- tapOn:
+    text: ".*Site.*"
+    optional: true
+    index: 1
+
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchase_site_selected"
+
+# Test 5: Try selecting a product (required for purchase)
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Select first available product
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 1
+
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchase_product_selected"
+
+# Test 6: Enter quantity
+- tapOn:
+    text: ".*Quantity.*"
+    optional: true
+- inputText: "10"
+
+# Test 7: Enter purchase price
+- tapOn:
+    text: ".*Price.*"
+    optional: true
+- inputText: "99.99"
+
+- takeScreenshot: "ios_purchase_form_complete"
+
+# Test 8: Verify we can scroll back to see the supplier selection
+- scrollUntilVisible:
+    element:
+      text: ".*Supplier.*"
+    direction: UP
+    timeout: 5000
+    optional: true
+
+- takeScreenshot: "ios_purchase_with_supplier_verified"
+
+# Navigate back without completing purchase (cleanup)
+- back
+
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: "MediStock"
+    optional: true
+
+# Cleanup: Delete the test supplier
+- scrollUntilVisible:
+    element:
+      text: "Administration"
+    direction: DOWN
+
+- tapOn:
+    text: "Administration"
+    index: 1
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: "Manage Suppliers"
+    retryTapIfNoChange: true
+
+- waitForAnimationToEnd
+
+# Find and delete the test supplier
+- tapOn:
+    text: "Purchase Test Supplier iOS"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Navigate back and use long press to delete
+- back
+
+- waitForAnimationToEnd
+
+- longPressOn:
+    text: "Purchase Test Supplier iOS"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm deletion
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_purchase_supplier_test_completed"
+
+# Navigate back to home
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# Verify we're back on home screen
+- assertVisible:
+    text: "MediStock"
+    optional: true

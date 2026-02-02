@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
 import com.medistock.R
 import com.medistock.shared.MedistockSDK
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
@@ -23,6 +24,13 @@ class StockMovementActivity : AppCompatActivity() {
     private lateinit var sdk: MedistockSDK
     private lateinit var authManager: AuthManager
     private var products: List<Product> = emptyList()
+    private var packagingTypes: Map<String, PackagingType> = emptyMap()
+
+    private fun getUnit(product: Product?): String {
+        if (product == null) return ""
+        val packagingType = packagingTypes[product.packagingTypeId]
+        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,10 +52,13 @@ class StockMovementActivity : AppCompatActivity() {
             products = withContext(Dispatchers.IO) {
                 sdk.productRepository.getAll()
             }
+            packagingTypes = withContext(Dispatchers.IO) {
+                sdk.packagingTypeRepository.getAll().associateBy { it.id }
+            }
             productSpinner.adapter = ArrayAdapter(
                 this@StockMovementActivity,
                 android.R.layout.simple_spinner_item,
-                products.map { it.name + " (" + it.unit + ")" }
+                products.map { it.name + " (" + getUnit(it) + ")" }
             )
         }
 

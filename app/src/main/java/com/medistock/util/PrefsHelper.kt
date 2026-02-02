@@ -5,6 +5,7 @@ import android.content.Context
 object PrefsHelper {
     private const val PREF_NAME = "medistock_prefs"
     private const val KEY_ACTIVE_SITE_ID = "active_site_id"
+    private const val KEY_DEBUG_MODE = "debug_mode"
 
     fun saveActiveSiteId(context: Context, siteId: String) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -23,5 +24,17 @@ object PrefsHelper {
             .edit()
             .remove(KEY_ACTIVE_SITE_ID)
             .apply()
+    }
+
+    fun saveDebugMode(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_DEBUG_MODE, enabled)
+            .apply()
+    }
+
+    fun isDebugModeEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_DEBUG_MODE, false)
     }
 }

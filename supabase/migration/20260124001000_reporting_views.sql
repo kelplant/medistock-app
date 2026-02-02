@@ -157,7 +157,7 @@ CREATE OR REPLACE VIEW v_stock_current AS
 SELECT
     p.id AS product_id,
     p.name AS product_name,
-    p.unit,
+    CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END AS unit,
     p.category_id,
     c.name AS category_name,
     pb.site_id,
@@ -176,6 +176,7 @@ SELECT
 FROM products p
 JOIN sites st ON p.site_id = st.id
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 LEFT JOIN purchase_batches pb ON p.id = pb.product_id AND pb.is_exhausted = false AND pb.site_id = p.site_id
 LEFT JOIN LATERAL (
     SELECT selling_price
@@ -188,7 +189,9 @@ WHERE p.is_active = true
 GROUP BY
     p.id,
     p.name,
-    p.unit,
+    p.selected_level,
+    pt.level1_name,
+    pt.level2_name,
     p.category_id,
     c.name,
     pb.site_id,
@@ -299,7 +302,7 @@ SELECT
     pb.batch_number,
     pb.product_id,
     p.name AS product_name,
-    p.unit,
+    CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END AS unit,
     pb.site_id,
     st.name AS site_name,
     pb.supplier_name,
@@ -317,6 +320,7 @@ SELECT
 FROM purchase_batches pb
 JOIN products p ON pb.product_id = p.id
 JOIN sites st ON pb.site_id = st.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 WHERE pb.is_exhausted = false;
 
 -- ============================================
@@ -475,7 +479,7 @@ SELECT
     st.name AS site_name,
     inv.product_id,
     p.name AS product_name,
-    p.unit,
+    CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END AS unit,
     inv.theoretical_quantity,
     inv.counted_quantity,
     inv.discrepancy,
@@ -490,6 +494,7 @@ SELECT
 FROM inventories inv
 JOIN sites st ON inv.site_id = st.id
 LEFT JOIN products p ON inv.product_id = p.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 WHERE inv.discrepancy != 0;
 
 -- v_inventory_summary: Summary per site and date
@@ -516,23 +521,24 @@ GROUP BY
 -- v_transfers_summary: Transfer analytics
 CREATE OR REPLACE VIEW v_transfers_summary AS
 SELECT
-    pt.id AS transfer_id,
-    DATE(TO_TIMESTAMP(pt.date / 1000)) AS transfer_date,
-    EXTRACT(YEAR FROM TO_TIMESTAMP(pt.date / 1000))::INTEGER AS transfer_year,
-    EXTRACT(MONTH FROM TO_TIMESTAMP(pt.date / 1000))::INTEGER AS transfer_month,
-    pt.from_site_id,
+    ptr.id AS transfer_id,
+    DATE(TO_TIMESTAMP(ptr.date / 1000)) AS transfer_date,
+    EXTRACT(YEAR FROM TO_TIMESTAMP(ptr.date / 1000))::INTEGER AS transfer_year,
+    EXTRACT(MONTH FROM TO_TIMESTAMP(ptr.date / 1000))::INTEGER AS transfer_month,
+    ptr.from_site_id,
     fs.name AS from_site_name,
-    pt.to_site_id,
+    ptr.to_site_id,
     ts.name AS to_site_name,
-    pt.product_id,
+    ptr.product_id,
     p.name AS product_name,
-    p.unit,
-    pt.quantity,
-    pt.notes
-FROM product_transfers pt
-JOIN sites fs ON pt.from_site_id = fs.id
-JOIN sites ts ON pt.to_site_id = ts.id
-JOIN products p ON pt.product_id = p.id;
+    CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END AS unit,
+    ptr.quantity,
+    ptr.notes
+FROM product_transfers ptr
+JOIN sites fs ON ptr.from_site_id = fs.id
+JOIN sites ts ON ptr.to_site_id = ts.id
+JOIN products p ON ptr.product_id = p.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id;
 
 -- ============================================
 -- 8. STOCK MOVEMENTS VIEW

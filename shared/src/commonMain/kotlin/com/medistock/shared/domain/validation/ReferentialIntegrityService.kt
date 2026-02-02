@@ -12,6 +12,7 @@ enum class EntityType {
     PACKAGING_TYPE,
     PRODUCT,
     CUSTOMER,
+    SUPPLIER,
     USER
 }
 
@@ -121,6 +122,7 @@ class ReferentialIntegrityService(private val database: MedistockDatabase) {
             EntityType.PACKAGING_TYPE -> getPackagingTypeUsageDetails(entityId)
             EntityType.PRODUCT -> getProductUsageDetails(entityId)
             EntityType.CUSTOMER -> getCustomerUsageDetails(entityId)
+            EntityType.SUPPLIER -> getSupplierUsageDetails(entityId)
             EntityType.USER -> getUserUsageDetails(entityId)
         }
     }
@@ -157,6 +159,7 @@ class ReferentialIntegrityService(private val database: MedistockDatabase) {
                 EntityType.PACKAGING_TYPE -> queries.setPackagingTypeActive(0L, now, updatedBy, entityId)
                 EntityType.PRODUCT -> queries.deactivateProduct(now, updatedBy, entityId)
                 EntityType.CUSTOMER -> queries.deactivateCustomer(now, updatedBy, entityId)
+                EntityType.SUPPLIER -> queries.deactivateSupplier(now, updatedBy, entityId)
                 EntityType.USER -> queries.deactivateUser(now, updatedBy, entityId)
             }
             EntityOperationResult.Success
@@ -186,6 +189,7 @@ class ReferentialIntegrityService(private val database: MedistockDatabase) {
                 EntityType.PACKAGING_TYPE -> queries.setPackagingTypeActive(1L, now, updatedBy, entityId)
                 EntityType.PRODUCT -> queries.activateProduct(now, updatedBy, entityId)
                 EntityType.CUSTOMER -> queries.activateCustomer(now, updatedBy, entityId)
+                EntityType.SUPPLIER -> queries.activateSupplier(now, updatedBy, entityId)
                 EntityType.USER -> queries.activateUser(now, updatedBy, entityId)
             }
             EntityOperationResult.Success
@@ -267,6 +271,20 @@ class ReferentialIntegrityService(private val database: MedistockDatabase) {
 
         val usages = mutableListOf<UsageReference>()
         if (salesCount > 0) usages.add(UsageReference("sales", salesCount))
+
+        val total = usages.sumOf { it.count }
+        return UsageDetails(
+            isUsed = total > 0,
+            totalUsageCount = total,
+            usedIn = usages
+        )
+    }
+
+    private fun getSupplierUsageDetails(supplierId: String): UsageDetails {
+        val batchesCount = queries.isSupplierUsedInPurchaseBatches(supplierId).executeAsOne()
+
+        val usages = mutableListOf<UsageReference>()
+        if (batchesCount > 0) usages.add(UsageReference("purchase_batches", batchesCount))
 
         val total = usages.sumOf { it.count }
         return UsageDetails(

@@ -116,6 +116,21 @@
             android:text="Supplier"
             android:paddingTop="12dp"/>
 
+        <Spinner
+            android:id="@+id/spinnerSupplier"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown"/>
+
+        <TextView
+            android:id="@+id/labelSupplierOrEnter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="or enter manually:"
+            android:paddingTop="4dp"
+            android:textSize="12sp"
+            android:textColor="#666666"/>
+
         <EditText
             android:id="@+id/editSupplierName"
             android:layout_width="match_parent"

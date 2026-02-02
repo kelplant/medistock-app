@@ -421,7 +421,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             // Restore Supabase Auth session before syncing
             val authManager = AuthManager.getInstance(this@SupabaseConfigActivity)
-            SupabaseAuthService().restoreSessionIfNeeded(authManager)
+            val sessionRestored = SupabaseAuthService().restoreSessionIfNeeded(authManager)
+            if (!sessionRestored) {
+                Log.w(TAG, "No Supabase Auth session - sync may fail due to RLS policies")
+            }
 
             syncManager.syncLocalToRemote(
                 onProgress = { progress ->
@@ -430,6 +433,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
                     }
                 },
                 onError = { entity, error ->
+                    Log.e(TAG, "Sync error on $entity: ${error.message}", error)
                     CoroutineScope(Dispatchers.Main).launch {
                         showSyncStatus("Erreur sur $entity: ${error.message}", false)
                     }
@@ -454,7 +458,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             // Restore Supabase Auth session before syncing
             val authManager = AuthManager.getInstance(this@SupabaseConfigActivity)
-            SupabaseAuthService().restoreSessionIfNeeded(authManager)
+            val sessionRestored = SupabaseAuthService().restoreSessionIfNeeded(authManager)
+            if (!sessionRestored) {
+                Log.w(TAG, "No Supabase Auth session - sync may fail due to RLS policies")
+            }
 
             syncManager.syncRemoteToLocal(
                 onProgress = { progress ->
@@ -463,6 +470,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
                     }
                 },
                 onError = { entity, error ->
+                    Log.e(TAG, "Sync error on $entity: ${error.message}", error)
                     CoroutineScope(Dispatchers.Main).launch {
                         showSyncStatus("Erreur sur $entity: ${error.message}", false)
                     }
@@ -487,7 +495,10 @@ class SupabaseConfigActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             // Restore Supabase Auth session before syncing
             val authManager = AuthManager.getInstance(this@SupabaseConfigActivity)
-            SupabaseAuthService().restoreSessionIfNeeded(authManager)
+            val sessionRestored = SupabaseAuthService().restoreSessionIfNeeded(authManager)
+            if (!sessionRestored) {
+                Log.w(TAG, "No Supabase Auth session - sync may fail due to RLS policies")
+            }
 
             syncManager.fullSync(
                 onProgress = { progress ->
@@ -496,6 +507,7 @@ class SupabaseConfigActivity : AppCompatActivity() {
                     }
                 },
                 onError = { entity, error ->
+                    Log.e(TAG, "Sync error on $entity: ${error.message}", error)
                     CoroutineScope(Dispatchers.Main).launch {
                         showSyncStatus("Erreur sur $entity: ${error.message}", false)
                     }

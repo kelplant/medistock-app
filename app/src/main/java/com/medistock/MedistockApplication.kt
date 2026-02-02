@@ -20,7 +20,9 @@ import com.medistock.ui.auth.LoginActivity
 import com.medistock.ui.common.UserProfileMenu
 import com.medistock.ui.profile.ProfileActivity
 import com.medistock.util.AppUpdateManager
+import com.medistock.util.PrefsHelper
 import com.medistock.util.UpdateCheckResult
+import com.medistock.data.remote.repository.BaseSupabaseRepository
 import io.github.jan.supabase.realtime.realtime
 import org.conscrypt.Conscrypt
 import java.security.Security
@@ -62,6 +64,15 @@ class MedistockApplication : Application() {
         var compatibilityResult: CompatibilityResult? = null
             private set
 
+        @Volatile
+        var latestUpdateResult: UpdateCheckResult.UpdateAvailable? = null
+            private set
+
+        /** True once the initial startup flow (GitHub check + migrations + compat check) is done */
+        @Volatile
+        var startupFlowCompleted: Boolean = false
+            private set
+
         /**
          * Shared MedistockSDK instance for accessing UseCases and repositories
          */
@@ -98,24 +109,15 @@ class MedistockApplication : Application() {
 
                 val migrationManager = MigrationManager(context)
 
-                // 1. Vérifier la compatibilité app/DB
+                // Vérifier si l'app est trop ancienne (skip migrations dans ce cas)
                 val compat = migrationManager.checkCompatibility()
-                updateCompatibilityResult(compat)
-
-                when (compat) {
-                    is CompatibilityResult.AppTooOld -> {
-                        println("❌ App trop ancienne - migrations ignorées")
-                        return
-                    }
-                    is CompatibilityResult.Unknown -> {
-                        println("⚠️ Compatibilité inconnue: ${compat.reason}")
-                    }
-                    is CompatibilityResult.Compatible -> {
-                        println("✅ App compatible")
-                    }
+                if (compat is CompatibilityResult.AppTooOld) {
+                    println("❌ App trop ancienne - migrations ignorées")
+                    updateCompatibilityResult(compat)
+                    return
                 }
 
-                // 2. Exécuter les migrations en attente
+                // Exécuter les migrations en attente
                 val result = migrationManager.runPendingMigrations(appliedBy = appliedBy)
 
                 when {
@@ -136,6 +138,10 @@ class MedistockApplication : Application() {
                         println("✅ Aucune nouvelle migration à appliquer")
                     }
                 }
+
+                // Re-check compatibility after migrations
+                val postMigrationCompat = migrationManager.checkCompatibility()
+                updateCompatibilityResult(postMigrationCompat)
             } catch (e: Exception) {
                 println("❌ Erreur migrations: ${e.message}")
             }
@@ -143,41 +149,38 @@ class MedistockApplication : Application() {
     }
 
     /**
-     * Vérifie la compatibilité et exécute les migrations Supabase en attente
-     * Cette fonction est appelée au démarrage de l'app après l'initialisation de Supabase
+     * Non-blocking GitHub update check at startup (informational only).
+     * The dialog will be shown when an activity is visible.
      */
-    private suspend fun checkCompatibilityAndRunMigrations() {
+    private suspend fun checkGitHubUpdateAtStartup() {
+        try {
+            val updateManager = AppUpdateManager(this@MedistockApplication)
+            val result = updateManager.checkForUpdate()
+            lastGitHubUpdateCheck = System.currentTimeMillis()
+
+            if (result is UpdateCheckResult.UpdateAvailable) {
+                println("🆕 Nouvelle version disponible: ${result.newVersion} (actuelle: ${result.currentVersion})")
+                // The dialog will be shown when an activity is visible
+                // Store the result for LoginActivity to pick up
+                latestUpdateResult = result
+            }
+        } catch (e: Exception) {
+            println("⚠️ Vérification GitHub échouée: ${e.message}")
+        }
+    }
+
+    /**
+     * Run pending Supabase migrations without checking compatibility.
+     * Called before the compatibility check so that migrations can bring the DB up to date.
+     */
+    private suspend fun runMigrationsOnly() {
         try {
             val migrationManager = MigrationManager(this@MedistockApplication)
-
-            // 1. Vérifier la compatibilité app/DB
-            val compat = migrationManager.checkCompatibility()
-            updateCompatibilityResult(compat)
-            lastCompatibilityCheck = System.currentTimeMillis()
-
-            when (compat) {
-                is CompatibilityResult.AppTooOld -> {
-                    println("❌ App trop ancienne - mise à jour requise")
-                    println("   Version app: ${compat.appVersion}, Min requise: ${compat.minRequired}")
-                    // Ne pas exécuter les migrations si l'app est trop ancienne
-                    return
-                }
-                is CompatibilityResult.Unknown -> {
-                    println("⚠️ Impossible de vérifier la compatibilité: ${compat.reason}")
-                    // Continuer quand même (peut-être offline ou système non installé)
-                }
-                is CompatibilityResult.Compatible -> {
-                    println("✅ App compatible avec la base de données")
-                }
-            }
-
-            // 2. Exécuter les migrations en attente
             val result = migrationManager.runPendingMigrations(appliedBy = "app")
 
             when {
                 result.systemNotInstalled -> {
                     println("⚠️ Système de migration non installé dans Supabase")
-                    println("⚠️ Veuillez exécuter 2026011701_migration_system.sql dans Supabase")
                 }
                 result.migrationsApplied.isNotEmpty() -> {
                     println("✅ ${result.migrationsApplied.size} migration(s) appliquée(s):")
@@ -194,8 +197,39 @@ class MedistockApplication : Application() {
                 }
             }
         } catch (e: Exception) {
-            println("❌ Erreur lors de la vérification/migrations: ${e.message}")
-            // En cas d'erreur, on considère que c'est compatible (offline, etc.)
+            println("❌ Erreur migrations: ${e.message}")
+        }
+    }
+
+    /**
+     * Bidirectional compatibility check after migrations have been applied.
+     * Checks both AppTooOld and DbTooOld scenarios.
+     */
+    private suspend fun checkCompatibilityAfterMigrations() {
+        try {
+            val migrationManager = MigrationManager(this@MedistockApplication)
+            val compat = migrationManager.checkCompatibility()
+            updateCompatibilityResult(compat)
+            lastCompatibilityCheck = System.currentTimeMillis()
+
+            when (compat) {
+                is CompatibilityResult.AppTooOld -> {
+                    println("❌ App trop ancienne - mise à jour requise")
+                    println("   Version app: ${compat.appVersion}, Min requise: ${compat.minRequired}")
+                }
+                is CompatibilityResult.DbTooOld -> {
+                    println("❌ Base de données trop ancienne - migrations requises")
+                    println("   Version schema: ${compat.dbSchemaVersion}, Min requise: ${compat.minRequired}")
+                }
+                is CompatibilityResult.Unknown -> {
+                    println("⚠️ Impossible de vérifier la compatibilité: ${compat.reason}")
+                }
+                is CompatibilityResult.Compatible -> {
+                    println("✅ App compatible avec la base de données")
+                }
+            }
+        } catch (e: Exception) {
+            println("❌ Erreur lors de la vérification: ${e.message}")
             if (compatibilityResult == null) {
                 updateCompatibilityResult(CompatibilityResult.Unknown(e.message ?: "Unknown error"))
             }
@@ -212,6 +246,10 @@ class MedistockApplication : Application() {
         // Ne pas re-vérifier si on est déjà sur l'écran de mise à jour
         if (currentActivity is AppUpdateRequiredActivity) return
 
+        // Ne pas re-vérifier tant que le flux de démarrage initial n'est pas terminé
+        // (le flux initial fait: GitHub check → migrations → compatibilité)
+        if (!startupFlowCompleted) return
+
         val now = System.currentTimeMillis()
 
         // Vérification de compatibilité app/DB
@@ -222,24 +260,38 @@ class MedistockApplication : Application() {
 
             appScope.launch {
                 try {
+                    // Run any pending migrations first, then check compatibility
+                    runMigrationsOnly()
+
                     val migrationManager = MigrationManager(this@MedistockApplication)
                     val compat = migrationManager.checkCompatibility()
                     updateCompatibilityResult(compat)
                     lastCompatibilityCheck = System.currentTimeMillis()
 
-                    if (compat is CompatibilityResult.AppTooOld) {
-                        println("❌ App devenue incompatible - redirection vers mise à jour")
-                        // Lancer l'écran de mise à jour sur le thread UI
-                        kotlinx.coroutines.withContext(Dispatchers.Main) {
-                            val intent = Intent(currentActivity, AppUpdateRequiredActivity::class.java).apply {
-                                putExtra(AppUpdateRequiredActivity.EXTRA_APP_VERSION, compat.appVersion)
-                                putExtra(AppUpdateRequiredActivity.EXTRA_MIN_REQUIRED, compat.minRequired)
-                                putExtra(AppUpdateRequiredActivity.EXTRA_DB_VERSION, compat.dbVersion)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    when (compat) {
+                        is CompatibilityResult.AppTooOld -> {
+                            println("❌ App trop ancienne - redirection vers mise à jour")
+                            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                val intent = Intent(currentActivity, AppUpdateRequiredActivity::class.java).apply {
+                                    putExtra(AppUpdateRequiredActivity.EXTRA_BLOCK_MODE, AppUpdateRequiredActivity.MODE_UPDATE)
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                }
+                                currentActivity.startActivity(intent)
+                                currentActivity.finish()
                             }
-                            currentActivity.startActivity(intent)
-                            currentActivity.finish()
                         }
+                        is CompatibilityResult.DbTooOld -> {
+                            println("❌ Base de données incompatible - redirection")
+                            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                val intent = Intent(currentActivity, AppUpdateRequiredActivity::class.java).apply {
+                                    putExtra(AppUpdateRequiredActivity.EXTRA_BLOCK_MODE, AppUpdateRequiredActivity.MODE_DB_INCOMPATIBLE)
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                }
+                                currentActivity.startActivity(intent)
+                                currentActivity.finish()
+                            }
+                        }
+                        else -> { /* Compatible or Unknown — continue */ }
                     }
                 } catch (e: Exception) {
                     println("⚠️ Erreur lors de la re-vérification: ${e.message}")
@@ -361,6 +413,11 @@ class MedistockApplication : Application() {
             e.printStackTrace()
         }
 
+        // Apply debug mode from saved preference
+        val debugEnabled = PrefsHelper.isDebugModeEnabled(this)
+        com.medistock.util.DebugConfig.isDebugEnabled = debugEnabled
+        BaseSupabaseRepository.DEBUG = debugEnabled
+
         // Initialize language from saved preference
         ProfileActivity.initializeLanguage(this)
         println("✅ Language initialized: ${com.medistock.shared.i18n.LocalizationManager.getCurrentLocaleDisplayName()}")
@@ -373,11 +430,19 @@ class MedistockApplication : Application() {
                 runCatching { SupabaseClientProvider.client.realtime.connect() }
                     .onFailure { println("⚠️ Realtime connect failed at startup: ${it.message}") }
 
-                // Vérifier la compatibilité et exécuter les migrations Supabase en attente
-                // IMPORTANT: Les migrations doivent être exécutées AVANT la sync
-                checkCompatibilityAndRunMigrations()
+                // Step 1: Non-blocking GitHub update check (informational only)
+                checkGitHubUpdateAtStartup()
 
-                // Démarrer la sync APRÈS les migrations
+                // Step 2: Run pending Supabase migrations BEFORE compatibility check
+                runMigrationsOnly()
+
+                // Step 3: Bidirectional compatibility check (blocking if mismatch)
+                checkCompatibilityAfterMigrations()
+
+                // Mark startup flow as completed before starting sync
+                startupFlowCompleted = true
+
+                // Step 4: Start sync AFTER migrations and compatibility verified
                 SyncScheduler.start(this@MedistockApplication)
                 println("✅ Application démarrée avec Supabase 2.2.2")
             }

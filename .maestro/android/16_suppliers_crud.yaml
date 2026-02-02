@@ -1,0 +1,203 @@
+# MediStock Android - Suppliers CRUD Tests
+# Prerequisites: User must be admin
+# Tests: Create, Read, Update, Delete, and Search suppliers
+appId: com.medistock
+---
+
+# Setup: Login as admin
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "com.medistock:id/editUsername"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/editPassword"
+- inputText: "admin"
+
+- tapOn:
+    id: "com.medistock:id/btnLogin"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Navigate to Administration
+- tapOn:
+    text: ".*Administration.*"
+
+- waitForAnimationToEnd
+
+# Test 0: Verify empty state or existing suppliers list
+- tapOn:
+    id: "com.medistock:id/btnManageSuppliers"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_suppliers_list_initial"
+
+# Test 1: Create a new supplier with all fields
+- tapOn:
+    id: "com.medistock:id/fabAddSupplier"
+
+- waitForAnimationToEnd
+
+# Fill supplier name (required field)
+- tapOn:
+    id: "com.medistock:id/editSupplierName"
+- inputText: "Supplier E2E Test"
+
+# Fill phone
+- tapOn:
+    id: "com.medistock:id/editSupplierPhone"
+- inputText: "+1234567890"
+
+# Fill email
+- tapOn:
+    id: "com.medistock:id/editSupplierEmail"
+- inputText: "supplier@test.com"
+
+# Fill address
+- tapOn:
+    id: "com.medistock:id/editSupplierAddress"
+- inputText: "123 Test Street, Test City"
+
+# Fill notes
+- tapOn:
+    id: "com.medistock:id/editSupplierNotes"
+- inputText: "This is a test supplier for E2E testing"
+
+# Save supplier
+- tapOn:
+    id: "com.medistock:id/btnSaveSupplier"
+
+- waitForAnimationToEnd
+
+# Verify supplier appears in list
+- assertVisible:
+    text: "Supplier E2E Test"
+
+- takeScreenshot: "android_supplier_created"
+
+# Test 2: Search for supplier
+- tapOn:
+    id: "com.medistock:id/editSearchSupplier"
+- inputText: "E2E Test"
+
+- waitForAnimationToEnd
+
+# Verify search results show our supplier
+- assertVisible:
+    text: "Supplier E2E Test"
+
+- takeScreenshot: "android_supplier_search"
+
+# Clear search
+- tapOn:
+    id: "com.medistock:id/editSearchSupplier"
+- eraseText: 20
+
+- waitForAnimationToEnd
+
+# Test 3: Edit supplier
+- tapOn:
+    text: "Supplier E2E Test"
+
+- waitForAnimationToEnd
+
+# Verify delete button is visible (edit mode)
+- assertVisible:
+    id: "com.medistock:id/btnDeleteSupplier"
+
+# Update name
+- tapOn:
+    id: "com.medistock:id/editSupplierName"
+- eraseText: 30
+- inputText: "Supplier E2E Modified"
+
+# Update phone
+- tapOn:
+    id: "com.medistock:id/editSupplierPhone"
+- eraseText: 20
+- inputText: "+9876543210"
+
+# Update email
+- tapOn:
+    id: "com.medistock:id/editSupplierEmail"
+- eraseText: 30
+- inputText: "modified@test.com"
+
+# Save changes
+- tapOn:
+    id: "com.medistock:id/btnSaveSupplier"
+
+- waitForAnimationToEnd
+
+# Verify modified name appears in list
+- assertVisible:
+    text: "Supplier E2E Modified"
+
+- takeScreenshot: "android_supplier_edited"
+
+# Test 4: Verify supplier with updated data
+- tapOn:
+    text: "Supplier E2E Modified"
+
+- waitForAnimationToEnd
+
+# Verify updated phone is displayed
+- assertVisible:
+    text: "+9876543210"
+
+# Verify updated email is displayed
+- assertVisible:
+    text: "modified@test.com"
+
+- takeScreenshot: "android_supplier_details_verified"
+
+# Navigate back to list
+- back
+
+- waitForAnimationToEnd
+
+# Test 5: Delete supplier
+- tapOn:
+    text: "Supplier E2E Modified"
+
+- waitForAnimationToEnd
+
+# Tap delete button
+- tapOn:
+    id: "com.medistock:id/btnDeleteSupplier"
+
+- waitForAnimationToEnd
+
+# Confirm deletion in dialog
+- tapOn:
+    text: ".*Delete.*"
+    optional: true
+- tapOn:
+    text: ".*Supprimer.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Verify we're back on the list and supplier is gone
+- assertVisible:
+    id: "com.medistock:id/recyclerSuppliers"
+
+- takeScreenshot: "android_supplier_deleted"
+
+# Test 6: Navigate back to verify we can exit cleanly
+- back
+
+- waitForAnimationToEnd
+
+# Verify we're back on Administration screen
+- assertVisible:
+    text: ".*Administration.*"
+    optional: true
+
+- takeScreenshot: "android_suppliers_test_completed"

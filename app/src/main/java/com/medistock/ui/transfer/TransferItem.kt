@@ -4,5 +4,6 @@ data class TransferItem(
     val productId: String,
     val productName: String,
     val unit: String,
-    var quantity: Double
+    var quantity: Double,
+    val batchId: String? = null
 )

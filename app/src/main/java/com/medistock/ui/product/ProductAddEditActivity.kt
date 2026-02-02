@@ -329,10 +329,10 @@ class ProductAddEditActivity : AppCompatActivity() {
             }
         }
 
-        // Populate unit and unitVolume from selected PackagingType
-        val effectiveUnit = packagingType?.getLevelName(selectedLevel) ?: "Units"
+        // Populate unitVolume from selected PackagingType
         val effectiveUnitVolume = enteredConversionFactor ?: packagingType?.defaultConversionFactor ?: 1.0
         val currentUser = authManager.getUsername().ifBlank { "system" }
+        val packagingTypeIdValue = selectedPackagingTypeId ?: return
 
         // Stock alert threshold (0 = disabled)
         val minStock = editMinStock.text.toString().toDoubleOrNull() ?: 0.0
@@ -344,10 +344,9 @@ class ProductAddEditActivity : AppCompatActivity() {
                 id = UUID.randomUUID().toString(),
                 name = productName,
                 categoryId = selectedCategoryId,
-                packagingTypeId = selectedPackagingTypeId,
+                packagingTypeId = packagingTypeIdValue,
                 selectedLevel = selectedLevel,
                 conversionFactor = enteredConversionFactor,
-                unit = effectiveUnit,
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,
@@ -366,10 +365,9 @@ class ProductAddEditActivity : AppCompatActivity() {
                 id = productId!!,
                 name = productName,
                 categoryId = selectedCategoryId,
-                packagingTypeId = selectedPackagingTypeId,
+                packagingTypeId = packagingTypeIdValue,
                 selectedLevel = selectedLevel,
                 conversionFactor = enteredConversionFactor,
-                unit = effectiveUnit,
                 unitVolume = effectiveUnitVolume,
                 marginType = selectedMarginType,
                 marginValue = enteredMarginValue,

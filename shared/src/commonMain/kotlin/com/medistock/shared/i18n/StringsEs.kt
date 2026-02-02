@@ -135,6 +135,21 @@ object StringsEs : Strings {
     override val walkInCustomer = "Cliente ocasional"
 
     // ============================================
+    // SUPPLIERS
+    // ============================================
+    override val suppliers = "Proveedores"
+    override val addSupplier = "Añadir proveedor"
+    override val editSupplier = "Editar proveedor"
+    override val deleteSupplier = "Eliminar proveedor"
+    override val deleteSupplierConfirm = "¿Está seguro de que desea eliminar este proveedor?"
+    override val supplierDeleted = "Proveedor eliminado"
+    override val supplierDeactivated = "Proveedor desactivado"
+    override val noSuppliers = "No se encontraron proveedores"
+    override val selectSupplier = "Seleccionar proveedor"
+    override val manageSuppliers = "Gestionar proveedores"
+    override val noSuppliersMessage = "Agregue su primer proveedor para comenzar"
+
+    // ============================================
     // PURCHASES
     // ============================================
     override val purchases = "Compras"
@@ -603,4 +618,6 @@ object StringsEs : Strings {
     override val currencySymbolDescription = "Símbolo usado para mostrar precios (ej: F, $, EUR)"
     override val settingsSavedSuccessfully = "Configuración guardada correctamente"
     override val invalidCurrencySymbol = "Por favor, ingrese un símbolo de moneda válido"
+    override val debugMode = "Modo depuración"
+    override val debugModeDescription = "Activar registro detallado para diagnóstico"
 }

@@ -258,20 +258,76 @@ struct TransferEditorView: View {
     @State private var quantityText: String = ""
     @State private var notes: String = ""
     @State private var batches: [PurchaseBatch] = []
+    @State private var selectedBatchId: String = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
 
     var filteredProducts: [Product] {
-        if fromSiteId.isEmpty {
-            return products
-        }
-        return products.filter { $0.siteId == fromSiteId }
+        // Products are global, stock is per-site -- show all products
+        return products
     }
 
     var availableStock: Double {
         batches
             .filter { $0.productId == selectedProductId && $0.siteId == fromSiteId && !$0.isExhausted }
             .reduce(0) { $0 + $1.remainingQuantity }
+    }
+
+    // Batches sorted with smart suggestion: expiring soon first, then FIFO
+    var availableBatchesSorted: [PurchaseBatch] {
+        let productBatches = batches.filter { $0.productId == selectedProductId && $0.siteId == fromSiteId && !$0.isExhausted && $0.remainingQuantity > 0 }
+        let now = Date()
+        let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: now)!
+        let thresholdMs = Int64(thirtyDaysFromNow.timeIntervalSince1970 * 1000)
+
+        let expiringSoon = productBatches
+            .filter { batch in
+                guard let expiryDate = batch.expiryDate?.int64Value else { return false }
+                return expiryDate < thresholdMs
+            }
+            .sorted { a, b in
+                (a.expiryDate?.int64Value ?? 0) < (b.expiryDate?.int64Value ?? 0)
+            }
+
+        let rest = productBatches
+            .filter { batch in
+                if let expiryDate = batch.expiryDate?.int64Value {
+                    return expiryDate >= thresholdMs
+                }
+                return true
+            }
+            .sorted { $0.purchaseDate < $1.purchaseDate }
+
+        return expiringSoon + rest
+    }
+
+    var selectedBatch: PurchaseBatch? {
+        batches.first { $0.id == selectedBatchId }
+    }
+
+    var selectedBatchExpiresSoon: Bool {
+        guard let batch = selectedBatch,
+              let expiryDate = batch.expiryDate?.int64Value else { return false }
+        let now = Date()
+        let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: now)!
+        let thresholdMs = Int64(thirtyDaysFromNow.timeIntervalSince1970 * 1000)
+        return expiryDate < thresholdMs
+    }
+
+    var selectedBatchExpiryDateFormatted: String {
+        guard let batch = selectedBatch,
+              let expiryMs = batch.expiryDate?.int64Value else { return "" }
+        let date = Date(timeIntervalSince1970: Double(expiryMs) / 1000)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: date)
+    }
+
+    var hasInsufficientStock: Bool {
+        guard let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) else {
+            return false
+        }
+        return qty > availableStock
     }
 
     var body: some View {
@@ -311,6 +367,21 @@ struct TransferEditorView: View {
                             } content: {
                                 Text(String(format: "%.1f", availableStock))
                             }
+
+                            // Batch picker
+                            if !availableBatchesSorted.isEmpty {
+                                Picker("Lot", selection: $selectedBatchId) {
+                                    ForEach(availableBatchesSorted, id: \.id) { batch in
+                                        Text("Lot: \(batch.batchNumber ?? "N/A") (reste: \(String(format: "%.1f", batch.remainingQuantity)))").tag(batch.id)
+                                    }
+                                }
+
+                                if selectedBatchExpiresSoon {
+                                    Text("Lot proche de l'expiration (expire le \(selectedBatchExpiryDateFormatted))")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
                         }
                     }
                 }
@@ -318,6 +389,13 @@ struct TransferEditorView: View {
                 Section(header: Text(Localized.quantity)) {
                     TextField(Localized.quantityToTransfer, text: $quantityText)
                         .keyboardType(.decimalPad)
+
+                    // Non-blocking stock warning
+                    if hasInsufficientStock {
+                        Text("Stock insuffisant (\(String(format: "%.1f", availableStock)) disponible)")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
                 }
 
                 Section(header: Text(Localized.notes)) {
@@ -348,6 +426,10 @@ struct TransferEditorView: View {
             }
             .onChange(of: fromSiteId) { _ in
                 selectedProductId = ""
+                selectedBatchId = ""
+            }
+            .onChange(of: selectedProductId) { _ in
+                selectedBatchId = availableBatchesSorted.first?.id ?? ""
             }
         }
     }
@@ -388,7 +470,8 @@ struct TransferEditorView: View {
                 toSiteId: toSiteId,
                 quantity: quantity,
                 notes: notes.isEmpty ? nil : notes,
-                userId: session.userId
+                userId: session.userId,
+                preferredBatchId: selectedBatchId.isEmpty ? nil : selectedBatchId
             )
 
             do {

@@ -318,6 +318,15 @@ enum Localized {
     static var notes: String { strings.notes }
     static var walkInCustomer: String { strings.walkInCustomer }
 
+    // Suppliers
+    static var suppliers: String { strings.suppliers }
+    static var addSupplier: String { strings.addSupplier }
+    static var editSupplier: String { strings.editSupplier }
+    static var deleteSupplier: String { strings.deleteSupplier }
+    static var noSuppliers: String { strings.noSuppliers }
+    static var selectSupplier: String { strings.selectSupplier }
+    static var manageSuppliers: String { strings.manageSuppliers }
+
     // Purchases
     static var purchases: String { strings.purchases }
     static var purchase: String { strings.purchase }

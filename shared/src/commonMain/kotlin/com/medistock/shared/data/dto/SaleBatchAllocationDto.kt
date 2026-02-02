@@ -14,9 +14,6 @@ data class SaleBatchAllocationDto(
     @SerialName("batch_id") val batchId: String,
     @SerialName("quantity_allocated") val quantityAllocated: Double,
     @SerialName("purchase_price_at_allocation") val purchasePriceAtAllocation: Double,
-    // Legacy fields for backward compatibility
-    val quantity: Double? = null,
-    @SerialName("unit_cost") val unitCost: Double? = null,
     @SerialName("created_at") val createdAt: Long = 0,
     @SerialName("created_by") val createdBy: String = "",
     @SerialName("client_id") val clientId: String? = null
@@ -27,8 +24,6 @@ data class SaleBatchAllocationDto(
         batchId = batchId,
         quantityAllocated = quantityAllocated,
         purchasePriceAtAllocation = purchasePriceAtAllocation,
-        quantity = quantity,
-        unitCost = unitCost,
         createdAt = createdAt,
         createdBy = createdBy
     )
@@ -40,8 +35,6 @@ data class SaleBatchAllocationDto(
             batchId = allocation.batchId,
             quantityAllocated = allocation.quantityAllocated,
             purchasePriceAtAllocation = allocation.purchasePriceAtAllocation,
-            quantity = allocation.quantity ?: allocation.quantityAllocated,
-            unitCost = allocation.unitCost ?: allocation.purchasePriceAtAllocation,
             createdAt = allocation.createdAt,
             createdBy = allocation.createdBy,
             clientId = clientId

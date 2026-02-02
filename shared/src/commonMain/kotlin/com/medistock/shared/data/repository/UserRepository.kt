@@ -44,6 +44,7 @@ class UserRepository(private val database: MedistockDatabase) {
     suspend fun update(user: User) = withContext(Dispatchers.Default) {
         queries.updateUser(
             username = user.username,
+            password = user.password,
             full_name = user.fullName,
             language = user.language,
             is_admin = if (user.isAdmin) 1L else 0L,

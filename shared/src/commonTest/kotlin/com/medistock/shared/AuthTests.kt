@@ -116,8 +116,8 @@ class ModuleTest {
     }
 
     @Test
-    fun module_count_is13() {
-        assertEquals(13, Module.entries.size)
+    fun module_count_is14() {
+        assertEquals(14, Module.entries.size)
     }
 
     @Test
@@ -146,7 +146,7 @@ class ModuleTest {
     fun allNames_returnsAllModuleNames() {
         val names = Module.allNames()
 
-        assertEquals(13, names.size)
+        assertEquals(14, names.size)
         assertTrue(names.contains("STOCK"))
         assertTrue(names.contains("SALES"))
         assertTrue(names.contains("PURCHASES"))
@@ -157,6 +157,7 @@ class ModuleTest {
         assertTrue(names.contains("SITES"))
         assertTrue(names.contains("CATEGORIES"))
         assertTrue(names.contains("USERS"))
+        assertTrue(names.contains("PACKAGING_TYPES"))
         assertTrue(names.contains("CUSTOMERS"))
         assertTrue(names.contains("AUDIT"))
         assertTrue(names.contains("PACKAGING_TYPES"))

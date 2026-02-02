@@ -25,6 +25,10 @@ xcuserdata/
 /.kotlin/
 **/build/
 
+# Generated migrations (source of truth: shared/src/commonMain/resources/migrations/)
+app/src/main/assets/migrations/
+iosApp/iosApp/Resources/migrations/
+
 # Maestro test screenshots
 android_*.png
 ios_*.png

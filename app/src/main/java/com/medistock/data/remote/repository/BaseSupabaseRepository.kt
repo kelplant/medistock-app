@@ -20,7 +20,7 @@ abstract class BaseSupabaseRepository(
 
     companion object {
         /** Set to true to enable debug logging for Supabase operations */
-        var DEBUG = true
+        var DEBUG = false
     }
 
     /**

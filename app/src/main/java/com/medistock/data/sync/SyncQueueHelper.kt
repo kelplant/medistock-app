@@ -101,6 +101,16 @@ class SyncQueueHelper private constructor() {
         syncEnqueueService.enqueueUserUpdate(user, remoteUpdatedAt, userId)
     }
 
+    // ==================== UserPermission Operations ====================
+
+    suspend fun enqueueUserPermissionInsert(permission: UserPermission, userId: String? = null) {
+        syncEnqueueService.enqueueUserPermissionInsert(permission, userId)
+    }
+
+    suspend fun enqueueUserPermissionDelete(permissionId: String, userId: String? = null) {
+        syncEnqueueService.enqueueUserPermissionDelete(permissionId, userId)
+    }
+
     // ==================== Sale Operations ====================
 
     suspend fun enqueueSaleInsert(sale: Sale, userId: String? = null) {

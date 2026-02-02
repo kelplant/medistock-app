@@ -10,6 +10,7 @@ import com.medistock.R
 import com.medistock.shared.MedistockSDK
 import com.medistock.shared.domain.model.CurrentStock
 import com.medistock.shared.domain.model.InventoryItem
+import com.medistock.shared.domain.model.PackagingType
 import com.medistock.shared.domain.model.Product
 import com.medistock.shared.domain.model.StockMovement
 import com.medistock.util.AuthManager
@@ -34,10 +35,17 @@ class InventoryActivity : AppCompatActivity() {
     private lateinit var btnSaveInventory: Button
 
     private var products: List<Product> = emptyList()
+    private var packagingTypes: Map<String, PackagingType> = emptyMap()
     private var currentStockItems: List<CurrentStock> = emptyList()
     private var selectedProductId: String? = null
     private var theoreticalQuantity: Double = 0.0
     private var currentSiteId: String? = null
+
+    private fun getUnit(product: Product?): String {
+        if (product == null) return ""
+        val packagingType = packagingTypes[product.packagingTypeId]
+        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,11 +89,12 @@ class InventoryActivity : AppCompatActivity() {
     private fun loadProducts() {
         lifecycleScope.launch(Dispatchers.IO) {
             products = sdk.productRepository.getAll()
+            packagingTypes = sdk.packagingTypeRepository.getAll().associateBy { it.id }
             val siteId = currentSiteId ?: return@launch
             currentStockItems = sdk.stockRepository.getCurrentStockForSite(siteId)
 
             withContext(Dispatchers.Main) {
-                val productNames = products.map { "${it.name} (${it.unit})" }
+                val productNames = products.map { "${it.name} (${getUnit(it)})" }
                 val adapter = ArrayAdapter(
                     this@InventoryActivity,
                     android.R.layout.simple_spinner_item,
@@ -102,7 +111,7 @@ class InventoryActivity : AppCompatActivity() {
         theoreticalQuantity = stockItem?.quantityOnHand ?: 0.0
 
         val product = products.find { it.id == selectedProductId }
-        textTheoreticalStock.text = "${L.strings.theoreticalQuantity}: $theoreticalQuantity ${product?.unit ?: ""}"
+        textTheoreticalStock.text = "${L.strings.theoreticalQuantity}: $theoreticalQuantity ${getUnit(product)}"
         calculateDiscrepancy()
     }
 

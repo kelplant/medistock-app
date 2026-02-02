@@ -135,6 +135,21 @@ object StringsRu : Strings {
     override val walkInCustomer = "Случайный клиент"
 
     // ============================================
+    // SUPPLIERS
+    // ============================================
+    override val suppliers = "Поставщики"
+    override val addSupplier = "Добавить поставщика"
+    override val editSupplier = "Редактировать поставщика"
+    override val deleteSupplier = "Удалить поставщика"
+    override val deleteSupplierConfirm = "Вы уверены, что хотите удалить этого поставщика?"
+    override val supplierDeleted = "Поставщик удалён"
+    override val supplierDeactivated = "Поставщик деактивирован"
+    override val noSuppliers = "Поставщики не найдены"
+    override val selectSupplier = "Выберите поставщика"
+    override val manageSuppliers = "Управление поставщиками"
+    override val noSuppliersMessage = "Добавьте первого поставщика, чтобы начать"
+
+    // ============================================
     // PURCHASES
     // ============================================
     override val purchases = "Закупки"
@@ -560,4 +575,6 @@ object StringsRu : Strings {
     override val currencySymbolDescription = "Символ для отображения цен (напр: F, $, EUR)"
     override val settingsSavedSuccessfully = "Настройки успешно сохранены"
     override val invalidCurrencySymbol = "Пожалуйста, введите корректный символ валюты"
+    override val debugMode = "Режим отладки"
+    override val debugModeDescription = "Включить подробное логирование для диагностики"
 }

@@ -9,9 +9,6 @@ data class SaleBatchAllocation(
     val batchId: String,
     val quantityAllocated: Double,
     val purchasePriceAtAllocation: Double,
-    // Legacy fields for backward compatibility
-    val quantity: Double? = null,
-    val unitCost: Double? = null,
     val createdAt: Long = 0,
     val createdBy: String = ""
 )

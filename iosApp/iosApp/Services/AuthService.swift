@@ -69,6 +69,14 @@ enum LocalAuthResult {
 /// Backward compatibility alias
 typealias AuthResult = LocalAuthResult
 
+/// Swift implementation of PasswordVerifier for the shared Kotlin AuthService.
+/// Bridges to the existing PasswordHasher BCrypt implementation.
+class SwiftPasswordVerifier: shared.PasswordVerifier {
+    func verify(plainPassword: String, hashedPassword: String) -> Bool {
+        return PasswordHasher.shared.verifyPassword(plainPassword, storedPassword: hashedPassword)
+    }
+}
+
 /// Authentication service that properly validates credentials
 /// Uses Supabase Auth with UUID-based emails for online authentication
 /// Falls back to local BCrypt authentication when offline
@@ -83,29 +91,59 @@ class AuthService {
 
     /// Authenticate user with username and password
     /// Flow:
-    /// 1. Check if first-time login (no local users) → require network
-    /// 2. For first login: authenticate online-first via Edge Function
-    /// 3. For subsequent logins: try Supabase Auth, fallback to local
+    /// 1. If online + Supabase configured: try Edge Function, fallback to local
+    /// 2. Otherwise: try local authentication via shared SDK AuthService
     func authenticate(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // If Supabase is configured and online, use online-first authentication
-        // This avoids calling Kotlin suspend functions which can cause crashes
+        // If Supabase is configured and online, try online-first authentication
         if statusManager.isOnline && supabase.isConfigured {
-            return await authenticateOnlineFirst(
+            let onlineResult = await authenticateOnlineFirst(
                 username: trimmedUsername,
                 password: trimmedPassword,
                 sdk: sdk
             )
+
+            switch onlineResult {
+            case .success:
+                return onlineResult
+            case .invalidCredentials, .userInactive:
+                // Definitive failures — don't retry locally
+                return onlineResult
+            case .networkError, .userNotFound, .notConfigured, .networkRequired:
+                // Edge function failed or user not in Supabase — fall back to local auth
+                debugLog("AuthService", "Online auth failed, falling back to local auth")
+                return await authenticateViaSharedSDK(
+                    username: trimmedUsername,
+                    password: trimmedPassword,
+                    sdk: sdk
+                )
+            }
         }
 
-        // Offline or not configured - require network for first login
-        if !supabase.isConfigured {
-            return .notConfigured
-        }
+        // Offline or not configured — try local authentication via shared SDK
+        return await authenticateViaSharedSDK(
+            username: trimmedUsername,
+            password: trimmedPassword,
+            sdk: sdk
+        )
+    }
 
-        return .networkRequired
+    /// Authenticate via the shared Kotlin AuthService using a callback-based approach.
+    /// This avoids the Kotlin/Native ObjCExportCoroutines crash on Xcode 26.2 where
+    /// the suspend-to-async bridge is incompatible. The coroutine runs entirely within
+    /// Kotlin; only the result callback crosses the ObjC bridge.
+    private func authenticateViaSharedSDK(username: String, password: String, sdk: MedistockSDK) async -> AuthResult {
+        return await withCheckedContinuation { continuation in
+            sdk.authenticateAsync(
+                passwordVerifier: SwiftPasswordVerifier(),
+                username: username,
+                password: password
+            ) { result in
+                continuation.resume(returning: LocalAuthResult.from(result))
+            }
+        }
     }
 
     /// Check if this is a first-time login

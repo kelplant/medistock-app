@@ -6,15 +6,15 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.medistock.R
-import com.medistock.shared.domain.model.Product
+import com.medistock.shared.domain.model.ProductWithCategory
 
 class ProductAdapter(
-    private val onClick: (Product) -> Unit
+    private val onClick: (ProductWithCategory) -> Unit
 ) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 
-    private var products = listOf<Product>()
+    private var products = listOf<ProductWithCategory>()
 
-    fun submitList(list: List<Product>) {
+    fun submitList(list: List<ProductWithCategory>) {
         products = list
         notifyDataSetChanged()
     }
@@ -33,7 +33,7 @@ class ProductAdapter(
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
         val product = products[position]
         holder.textProductName.text = product.name
-        holder.textProductCategory.text = "${product.unit} - ${product.unitVolume}"
+        holder.textProductCategory.text = "${product.unit} - ${product.unitVolume ?: 1.0}"
         holder.textProductDescription.text = product.description.orEmpty()
         holder.itemView.setOnClickListener { onClick(product) }
     }

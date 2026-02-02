@@ -12,21 +12,6 @@
 		2152FB082600AC9000CF470E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2152FB072600AC9000CF470E /* Assets.xcassets */; };
 		82938AF22F203E5A0047A524 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 82938AF12F203E5A0047A524 /* libsqlite3.tbd */; };
 		82938AF52F21675B0047A524 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 82938AF42F21675B0047A524 /* Supabase */; };
-		82938B042F21799A0047A524 /* 2026011702_schema_version.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFE2F21799A0047A524 /* 2026011702_schema_version.sql */; };
-		82938B052F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF92F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql */; };
-		82938B062F21799A0047A524 /* 2025122605_add_product_description.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFA2F21799A0047A524 /* 2025122605_add_product_description.sql */; };
-		82938B072F21799A0047A524 /* 2025122605_transaction_flat_view.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFB2F21799A0047A524 /* 2025122605_transaction_flat_view.sql */; };
-		82938B082F21799A0047A524 /* 2026010501_schema_cleanup.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFC2F21799A0047A524 /* 2026010501_schema_cleanup.sql */; };
-		82938B092F21799A0047A524 /* 2026011701_migration_system.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFD2F21799A0047A524 /* 2026011701_migration_system.sql */; };
-		82938B0A2F21799A0047A524 /* 2025122603_audit_triggers.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF82F21799A0047A524 /* 2025122603_audit_triggers.sql */; };
-		82938B0B2F21799A0047A524 /* 2026011901_remove_audit_triggers.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B002F21799A0047A524 /* 2026011901_remove_audit_triggers.sql */; };
-		82938B0C2F21799A0047A524 /* 2026011801_sync_tracking.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AFF2F21799A0047A524 /* 2026011801_sync_tracking.sql */; };
-		82938B0D2F21799A0047A524 /* 2025122602_created_updated_by.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF72F21799A0047A524 /* 2025122602_created_updated_by.sql */; };
-		82938B0E2F21799A0047A524 /* 2026012101_add_client_id.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B012F21799A0047A524 /* 2026012101_add_client_id.sql */; };
-		82938B0F2F21799A0047A524 /* 2025122601_uuid_migration.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938AF62F21799A0047A524 /* 2025122601_uuid_migration.sql */; };
-		82938B102F21799A0047A524 /* 2026012201_inventory_and_schema_updates.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */; };
-		82938B112F21799A0047A524 /* 2026012202_align_room_schema.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */; };
-		82938B122F21799A0047A524 /* 2026012203_enhance_sync_queue.sql in Resources */ = {isa = PBXBuildFile; fileRef = 82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */; };
 		A1000001AAAA000100000001 /* AuthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001AAAA000000000001 /* AuthViews.swift */; };
 		A1000002AAAA000100000002 /* HomeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002AAAA000000000002 /* HomeViews.swift */; };
 		A1000003AAAA000100000003 /* SitesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003AAAA000000000003 /* SitesViews.swift */; };
@@ -38,6 +23,7 @@
 		A1000009AAAA000100000009 /* TransfersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009AAAA000000000009 /* TransfersViews.swift */; };
 		A100000AAAAA00010000000A /* UsersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000AAAAA00000000000A /* UsersViews.swift */; };
 		A100000BAAAA00010000000B /* CustomersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000BAAAA00000000000B /* CustomersViews.swift */; };
+		A1000018AAAA000100000018 /* SuppliersViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000018AAAA000000000018 /* SuppliersViews.swift */; };
 		A100000CAAAA00010000000C /* PackagingTypesViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000CAAAA00000000000C /* PackagingTypesViews.swift */; };
 		A100000DAAAA00010000000D /* InventoryCountViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000DAAAA00000000000D /* InventoryCountViews.swift */; };
 		A100000EAAAA00010000000E /* AuditViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000EAAAA00000000000E /* AuditViews.swift */; };
@@ -81,18 +67,6 @@ A1SVC011BBBB000100000011 /* DebugConfig.swift in Sources */ = {isa = PBXBuildFil
 		2152FB072600AC9000CF470E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2152FB0C2600AC9000CF470E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		82938AF12F203E5A0047A524 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
-		82938AF62F21799A0047A524 /* 2025122601_uuid_migration.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122601_uuid_migration.sql; sourceTree = "<group>"; };
-		82938AF72F21799A0047A524 /* 2025122602_created_updated_by.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122602_created_updated_by.sql; sourceTree = "<group>"; };
-		82938AF82F21799A0047A524 /* 2025122603_audit_triggers.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122603_audit_triggers.sql; sourceTree = "<group>"; };
-		82938AF92F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122604_audit_trigger_null_site.sql; sourceTree = "<group>"; };
-		82938AFA2F21799A0047A524 /* 2025122605_add_product_description.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122605_add_product_description.sql; sourceTree = "<group>"; };
-		82938AFB2F21799A0047A524 /* 2025122605_transaction_flat_view.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2025122605_transaction_flat_view.sql; sourceTree = "<group>"; };
-		82938AFC2F21799A0047A524 /* 2026010501_schema_cleanup.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026010501_schema_cleanup.sql; sourceTree = "<group>"; };
-		82938AFD2F21799A0047A524 /* 2026011701_migration_system.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011701_migration_system.sql; sourceTree = "<group>"; };
-		82938AFE2F21799A0047A524 /* 2026011702_schema_version.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011702_schema_version.sql; sourceTree = "<group>"; };
-		82938AFF2F21799A0047A524 /* 2026011801_sync_tracking.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011801_sync_tracking.sql; sourceTree = "<group>"; };
-		82938B002F21799A0047A524 /* 2026011901_remove_audit_triggers.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026011901_remove_audit_triggers.sql; sourceTree = "<group>"; };
-		82938B012F21799A0047A524 /* 2026012101_add_client_id.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012101_add_client_id.sql; sourceTree = "<group>"; };
 		A1000001AAAA000000000001 /* AuthViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViews.swift; sourceTree = "<group>"; };
 		A1000002AAAA000000000002 /* HomeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViews.swift; sourceTree = "<group>"; };
 		A1000003AAAA000000000003 /* SitesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitesViews.swift; sourceTree = "<group>"; };
@@ -104,6 +78,7 @@ A1SVC011BBBB000100000011 /* DebugConfig.swift in Sources */ = {isa = PBXBuildFil
 		A1000009AAAA000000000009 /* TransfersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransfersViews.swift; sourceTree = "<group>"; };
 		A100000AAAAA00000000000A /* UsersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersViews.swift; sourceTree = "<group>"; };
 		A100000BAAAA00000000000B /* CustomersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersViews.swift; sourceTree = "<group>"; };
+		A1000018AAAA000000000018 /* SuppliersViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuppliersViews.swift; sourceTree = "<group>"; };
 		A100000CAAAA00000000000C /* PackagingTypesViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackagingTypesViews.swift; sourceTree = "<group>"; };
 		A100000DAAAA00000000000D /* InventoryCountViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryCountViews.swift; sourceTree = "<group>"; };
 		A100000EAAAA00000000000E /* AuditViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditViews.swift; sourceTree = "<group>"; };
@@ -138,9 +113,6 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 		A1000015AAAA000000000015 /* NotificationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViews.swift; sourceTree = "<group>"; };
 		A1000016AAAA000000000016 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
 		A1000017AAAA000000000017 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
-		82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012201_inventory_and_schema_updates.sql; sourceTree = "<group>"; };
-		82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012202_align_room_schema.sql; sourceTree = "<group>"; };
-		82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 2026012203_enhance_sync_queue.sql; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -183,7 +155,6 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 		2152FB022600AC8F00CF470E /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				82938B032F21799A0047A524 /* Resources */,
 				2152FB032600AC8F00CF470E /* MedistockApp.swift */,
 				2152FB052600AC8F00CF470E /* ContentView.swift */,
 				A1000011AAAA000000000011 /* TimestampConvertible.swift */,
@@ -204,36 +175,6 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 				82938AF12F203E5A0047A524 /* libsqlite3.tbd */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		82938B022F21799A0047A524 /* migrations */ = {
-			isa = PBXGroup;
-			children = (
-				82938AF62F21799A0047A524 /* 2025122601_uuid_migration.sql */,
-				82938AF72F21799A0047A524 /* 2025122602_created_updated_by.sql */,
-				82938AF82F21799A0047A524 /* 2025122603_audit_triggers.sql */,
-				82938AF92F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql */,
-				82938AFA2F21799A0047A524 /* 2025122605_add_product_description.sql */,
-				82938AFB2F21799A0047A524 /* 2025122605_transaction_flat_view.sql */,
-				82938AFC2F21799A0047A524 /* 2026010501_schema_cleanup.sql */,
-				82938AFD2F21799A0047A524 /* 2026011701_migration_system.sql */,
-				82938AFE2F21799A0047A524 /* 2026011702_schema_version.sql */,
-				82938AFF2F21799A0047A524 /* 2026011801_sync_tracking.sql */,
-				82938B002F21799A0047A524 /* 2026011901_remove_audit_triggers.sql */,
-				82938B012F21799A0047A524 /* 2026012101_add_client_id.sql */,
-				82938B0A2F21799A0047A525 /* 2026012201_inventory_and_schema_updates.sql */,
-				82938B0B2F21799A0047A525 /* 2026012202_align_room_schema.sql */,
-				82938B0C2F21799A0047A525 /* 2026012203_enhance_sync_queue.sql */,
-			);
-			path = migrations;
-			sourceTree = "<group>";
-		};
-		82938B032F21799A0047A524 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				82938B022F21799A0047A524 /* migrations */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 		A1SVC000BBBB000000000000 /* Services */ = {
@@ -286,6 +227,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 				A1000009AAAA000000000009 /* TransfersViews.swift */,
 				A100000AAAAA00000000000A /* UsersViews.swift */,
 				A100000BAAAA00000000000B /* CustomersViews.swift */,
+				A1000018AAAA000000000018 /* SuppliersViews.swift */,
 				A100000CAAAA00000000000C /* PackagingTypesViews.swift */,
 				A100000DAAAA00000000000D /* InventoryCountViews.swift */,
 				A100000EAAAA00000000000E /* AuditViews.swift */,
@@ -308,6 +250,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 			buildConfigurationList = 2152FB0F2600AC9000CF470E /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
 				7555FFB5242A651A00829871 /* Run Shared Build Script */,
+				A1MIGR01DDDD000000000001 /* Copy Shared Migrations */,
 				2152FAFC2600AC8F00CF470E /* Sources */,
 				2152FAFD2600AC8F00CF470E /* Frameworks */,
 				2152FAFE2600AC8F00CF470E /* Resources */,
@@ -364,27 +307,32 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 			buildActionMask = 2147483647;
 			files = (
 				2152FB082600AC9000CF470E /* Assets.xcassets in Resources */,
-				82938B042F21799A0047A524 /* 2026011702_schema_version.sql in Resources */,
-				82938B052F21799A0047A524 /* 2025122604_audit_trigger_null_site.sql in Resources */,
-				82938B062F21799A0047A524 /* 2025122605_add_product_description.sql in Resources */,
-				82938B072F21799A0047A524 /* 2025122605_transaction_flat_view.sql in Resources */,
-				82938B082F21799A0047A524 /* 2026010501_schema_cleanup.sql in Resources */,
-				82938B092F21799A0047A524 /* 2026011701_migration_system.sql in Resources */,
-				82938B0A2F21799A0047A524 /* 2025122603_audit_triggers.sql in Resources */,
-				82938B0B2F21799A0047A524 /* 2026011901_remove_audit_triggers.sql in Resources */,
-				82938B0C2F21799A0047A524 /* 2026011801_sync_tracking.sql in Resources */,
-				82938B0D2F21799A0047A524 /* 2025122602_created_updated_by.sql in Resources */,
-				82938B0E2F21799A0047A524 /* 2026012101_add_client_id.sql in Resources */,
-				82938B0F2F21799A0047A524 /* 2025122601_uuid_migration.sql in Resources */,
-				82938B102F21799A0047A524 /* 2026012201_inventory_and_schema_updates.sql in Resources */,
-				82938B112F21799A0047A524 /* 2026012202_align_room_schema.sql in Resources */,
-				82938B122F21799A0047A524 /* 2026012203_enhance_sync_queue.sql in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A1MIGR01DDDD000000000001 /* Copy Shared Migrations */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../shared/src/commonMain/resources/migrations",
+			);
+			name = "Copy Shared Migrations";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/migrations",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "MIGRATIONS_SRC=\"$SRCROOT/../shared/src/commonMain/resources/migrations\"\nMIGRATIONS_DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/migrations\"\n\nif [ -d \"$MIGRATIONS_SRC\" ]; then\n    mkdir -p \"$MIGRATIONS_DST\"\n    cp \"$MIGRATIONS_SRC\"/*.sql \"$MIGRATIONS_DST/\"\n    echo \"Copied $(ls \"$MIGRATIONS_SRC\"/*.sql | wc -l) migrations to app bundle\"\nelse\n    echo \"warning: Migrations source not found: $MIGRATIONS_SRC\"\nfi\n";
+		};
 		7555FFB5242A651A00829871 /* Run Shared Build Script */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -443,6 +391,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 				A1000009AAAA000100000009 /* TransfersViews.swift in Sources */,
 				A100000AAAAA00010000000A /* UsersViews.swift in Sources */,
 				A100000BAAAA00010000000B /* CustomersViews.swift in Sources */,
+				A1000018AAAA000100000018 /* SuppliersViews.swift in Sources */,
 				A100000CAAAA00010000000C /* PackagingTypesViews.swift in Sources */,
 				A100000DAAAA00010000000D /* InventoryCountViews.swift in Sources */,
 				A100000EAAAA00010000000E /* AuditViews.swift in Sources */,

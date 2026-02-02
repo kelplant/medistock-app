@@ -135,6 +135,21 @@ object StringsEn : Strings {
     override val walkInCustomer = "Walk-in Customer"
 
     // ============================================
+    // SUPPLIERS
+    // ============================================
+    override val suppliers = "Suppliers"
+    override val addSupplier = "Add Supplier"
+    override val editSupplier = "Edit Supplier"
+    override val deleteSupplier = "Delete Supplier"
+    override val deleteSupplierConfirm = "Are you sure you want to delete this supplier?"
+    override val supplierDeleted = "Supplier deleted"
+    override val supplierDeactivated = "Supplier deactivated"
+    override val noSuppliers = "No suppliers found"
+    override val selectSupplier = "Select a supplier"
+    override val manageSuppliers = "Manage Suppliers"
+    override val noSuppliersMessage = "Add your first supplier to get started"
+
+    // ============================================
     // PURCHASES
     // ============================================
     override val purchases = "Purchases"
@@ -603,4 +618,6 @@ object StringsEn : Strings {
     override val currencySymbolDescription = "Symbol used to display prices (e.g., F, $, EUR)"
     override val settingsSavedSuccessfully = "Settings saved successfully"
     override val invalidCurrencySymbol = "Please enter a valid currency symbol"
+    override val debugMode = "Debug Mode"
+    override val debugModeDescription = "Enable verbose logging for troubleshooting"
 }

@@ -82,6 +82,7 @@ struct HomeView: View {
                 permissions.canView(.categories) ||
                 permissions.canView(.packagingTypes) ||
                 permissions.canView(.customers) ||
+                permissions.canView(.suppliers) ||
                 permissions.canView(.users) ||
                 permissions.canView(.audit)
 
@@ -368,6 +369,14 @@ struct AdminMenuView: View {
                         HomeMenuRow(icon: "person.2.fill", title: Localized.manageCustomers, color: .purple)
                     }
                     .accessibilityIdentifier("customers-link")
+                }
+
+                // 6. Manage Suppliers
+                if permissions.canView(.suppliers) {
+                    NavigationLink(destination: SuppliersListView(sdk: sdk, session: session)) {
+                        HomeMenuRow(icon: "building.2.fill", title: Localized.manageSuppliers, color: .orange)
+                    }
+                    .accessibilityIdentifier("suppliers-link")
                 }
             }
 

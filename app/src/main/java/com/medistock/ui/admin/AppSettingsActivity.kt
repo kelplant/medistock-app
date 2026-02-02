@@ -9,6 +9,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.lifecycleScope
 import com.medistock.MedistockApplication
 import com.medistock.R
@@ -18,6 +19,8 @@ import com.medistock.shared.data.dto.AppConfigDto
 import com.medistock.shared.domain.model.AppConfig
 import com.medistock.shared.i18n.L
 import com.medistock.util.AuthManager
+import com.medistock.util.PrefsHelper
+import com.medistock.data.remote.repository.BaseSupabaseRepository
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,6 +35,9 @@ class AppSettingsActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var labelCurrencySymbol: TextView
     private lateinit var labelCurrencyDescription: TextView
+    private lateinit var switchDebugMode: SwitchCompat
+    private lateinit var labelDebugMode: TextView
+    private lateinit var labelDebugDescription: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +73,17 @@ class AppSettingsActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         labelCurrencySymbol = findViewById(R.id.labelCurrencySymbol)
         labelCurrencyDescription = findViewById(R.id.labelCurrencyDescription)
+        switchDebugMode = findViewById(R.id.switchDebugMode)
+        labelDebugMode = findViewById(R.id.labelDebugMode)
+        labelDebugDescription = findViewById(R.id.labelDebugDescription)
+
+        // Initialize debug toggle from saved preference
+        switchDebugMode.isChecked = PrefsHelper.isDebugModeEnabled(this)
+        switchDebugMode.setOnCheckedChangeListener { _, isChecked ->
+            PrefsHelper.saveDebugMode(this, isChecked)
+            com.medistock.util.DebugConfig.isDebugEnabled = isChecked
+            BaseSupabaseRepository.DEBUG = isChecked
+        }
     }
 
     private fun applyLocalizedStrings() {
@@ -74,6 +91,8 @@ class AppSettingsActivity : AppCompatActivity() {
         labelCurrencySymbol.text = strings.currencySymbolSetting
         labelCurrencyDescription.text = strings.currencySymbolDescription
         btnSaveSettings.text = strings.save
+        labelDebugMode.text = strings.debugMode
+        labelDebugDescription.text = strings.debugModeDescription
     }
 
     private fun loadSettings() {

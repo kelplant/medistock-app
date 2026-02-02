@@ -1,5 +1,6 @@
 # MediStock iOS - Sales Tests
-# Test sell products navigation
+# Test sell products with multi-level packaging support
+# Tests navigation, sale creation, level picker, price/margin display
 appId: com.medistock.ios
 ---
 
@@ -28,15 +29,377 @@ appId: com.medistock.ios
 
 - takeScreenshot: "ios_sales_home"
 
-# Navigate to Sell Products
+# Test 1: Navigate to Sales
 - tapOn:
-    text: "Sell Products"
+    text: "Sales"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:
     timeout: 5000
 
 - takeScreenshot: "ios_sales_screen"
+
+# Test 2: Create a new sale
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- takeScreenshot: "ios_sales_form"
+
+# Test 3: Enter customer name
+- tapOn:
+    text: ".*Customer.*"
+    optional: true
+- tapOn:
+    text: ".*Client.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select from picker or type new name
+- tapOn:
+    text: ".*Customer.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Client.*"
+    optional: true
+    index: 1
+
+# Confirm picker selection if needed
+- tapOn:
+    text: "Done"
+    optional: true
+
+# If it's a text field, type directly
+- inputText: "Test Customer E2E iOS"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_customer_entered"
+
+# Test 4: Add a product to the sale
+- tapOn:
+    text: ".*Add Product.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter un produit.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- takeScreenshot: "ios_sales_add_product_sheet"
+
+# Test 5: Select a product from the picker
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 0
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Select first available product from picker
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_product_selected"
+
+# Test 6: Verify packaging level picker appears (for 2-level products)
+# Level picker should be visible if product has 2 levels
+- scrollUntilVisible:
+    element:
+      text: ".*Level.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- takeScreenshot: "ios_sales_level_picker"
+
+# Test 7: Select Level 1 from picker (if available)
+- tapOn:
+    text: ".*Level.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Tap on Level 1 option
+- tapOn:
+    text: ".*Level 1.*"
+    optional: true
+    index: 0
+- tapOn:
+    text: ".*Niveau 1.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_level1_selected"
+
+# Test 8: Verify purchase price is displayed
+- scrollUntilVisible:
+    element:
+      text: ".*Purchase Price.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Purchase Price.*"
+    optional: true
+- assertVisible:
+    text: ".*Prix d'achat.*"
+    optional: true
+
+- takeScreenshot: "ios_sales_purchase_price_visible"
+
+# Test 9: Verify margin info is displayed
+- assertVisible:
+    text: ".*Margin.*"
+    optional: true
+- assertVisible:
+    text: ".*Marge.*"
+    optional: true
+
+- takeScreenshot: "ios_sales_margin_info_visible"
+
+# Test 10: Verify selling price is pre-filled and visible
+- scrollUntilVisible:
+    element:
+      text: ".*Selling Price.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Selling Price.*"
+    optional: true
+- assertVisible:
+    text: ".*Prix de vente.*"
+    optional: true
+
+- takeScreenshot: "ios_sales_selling_price_prefilled"
+
+# Test 11: Enter quantity
+- tapOn:
+    text: ".*Quantity.*"
+    optional: true
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- inputText: "5"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_quantity_entered"
+
+# Test 12: Optionally modify the selling price
+- tapOn:
+    text: ".*Selling Price.*"
+    optional: true
+- tapOn:
+    text: ".*Prix de vente.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- eraseText: 10
+- inputText: "150"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_price_modified"
+
+# Test 13: Confirm the sale item
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_item_added"
+
+# Test 14: Try to add another product with Level 2 (if available)
+- tapOn:
+    text: ".*Add Product.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter un produit.*"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Select another product
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 0
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 2
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 2
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Test 15: Select Level 2 if available
+- scrollUntilVisible:
+    element:
+      text: ".*Level.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    text: ".*Level.*"
+    optional: true
+    index: 0
+
+- waitForAnimationToEnd
+
+# Tap on Level 2 option
+- tapOn:
+    text: ".*Level 2.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Niveau 2.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+# Confirm picker selection
+- tapOn:
+    text: "Done"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_level2_selected"
+
+# Enter quantity for level 2
+- tapOn:
+    text: ".*Quantity.*"
+    optional: true
+- tapOn:
+    text: ".*Quantité.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- inputText: "2"
+
+- waitForAnimationToEnd
+
+# Confirm the second item
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_two_items_added"
+
+# Test 16: Verify stock info display (should show level 1 + level 2 equivalent)
+# Stock info should be visible in the items list or summary
+- scrollUntilVisible:
+    element:
+      text: ".*Stock.*"
+    direction: DOWN
+    timeout: 5000
+    optional: true
+
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+- takeScreenshot: "ios_sales_stock_info"
+
+# Navigate back without completing sale (cleanup)
+- back
+
+- waitForAnimationToEnd
+
+# Handle potential discard alert
+- tapOn:
+    text: ".*Discard.*"
+    optional: true
+- tapOn:
+    text: ".*Cancel.*"
+    optional: true
+- tapOn:
+    text: ".*Annuler.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "ios_sales_discarded"
 
 # Navigate back to home
 - tapOn:

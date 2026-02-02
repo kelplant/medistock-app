@@ -16,3 +16,4 @@ env:
   TEST_PRODUCT: "Produit Test"
   TEST_CATEGORY: "Catégorie Test"
   TEST_CUSTOMER: "Client Test"
+  TEST_SUPPLIER: "Fournisseur Test"
