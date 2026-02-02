@@ -10,7 +10,7 @@ import kotlin.test.*
 
 /**
  * Unit tests for SupplierRepository.
- * Tests cover CRUD operations, active/inactive filtering, site filtering,
+ * Tests cover CRUD operations, active/inactive filtering,
  * search functionality, and soft delete operations (activate/deactivate).
  */
 class SupplierRepositoryTest {
@@ -35,24 +35,6 @@ class SupplierRepositoryTest {
 
     // ===== Helper Functions =====
 
-    /**
-     * Create test site for supplier operations.
-     */
-    private fun createTestSite(
-        id: String = "site-1",
-        name: String = "Main Warehouse"
-    ) {
-        database.medistockQueries.insertSite(
-            id = id,
-            name = name,
-            is_active = 1,
-            created_at = 0,
-            updated_at = 0,
-            created_by = "test",
-            updated_by = "test"
-        )
-    }
-
     private fun createTestSupplier(
         id: String = "supplier-1",
         name: String = "Acme Pharmaceuticals",
@@ -60,7 +42,6 @@ class SupplierRepositoryTest {
         email: String? = "contact@acme.com",
         address: String? = "123 Main St",
         notes: String? = "Reliable supplier",
-        siteId: String? = "site-1",
         isActive: Boolean = true,
         createdAt: Long = 1705680000000L,
         updatedAt: Long = 1705680000000L,
@@ -74,7 +55,6 @@ class SupplierRepositoryTest {
             email = email,
             address = address,
             notes = notes,
-            siteId = siteId,
             isActive = isActive,
             createdAt = createdAt,
             updatedAt = updatedAt,
@@ -88,7 +68,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_insertSupplier_when_validDataProvided`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier()
 
         // Act
@@ -103,7 +82,6 @@ class SupplierRepositoryTest {
         assertEquals(supplier.email, result.email)
         assertEquals(supplier.address, result.address)
         assertEquals(supplier.notes, result.notes)
-        assertEquals(supplier.siteId, result.siteId)
         assertEquals(supplier.isActive, result.isActive)
         assertEquals(supplier.createdAt, result.createdAt)
         assertEquals(supplier.updatedAt, result.updatedAt)
@@ -114,7 +92,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_insertMultipleSuppliers_when_differentIds`() = runTest {
         // Arrange
-        createTestSite()
         val supplier1 = createTestSupplier(id = "supplier-1", name = "Acme Corp")
         val supplier2 = createTestSupplier(id = "supplier-2", name = "Beta Ltd")
 
@@ -136,8 +113,7 @@ class SupplierRepositoryTest {
             phone = null,
             email = null,
             address = null,
-            notes = null,
-            siteId = null
+            notes = null
         )
 
         // Act
@@ -150,13 +126,11 @@ class SupplierRepositoryTest {
         assertNull(result.email)
         assertNull(result.address)
         assertNull(result.notes)
-        assertNull(result.siteId)
     }
 
     @Test
     fun `should_insertInactiveSupplier_when_isActiveFalse`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(isActive = false)
 
         // Act
@@ -173,7 +147,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_insertNewSupplier_when_upsertingNonExistingId`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier()
 
         // Act
@@ -189,7 +162,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_replaceSupplier_when_upsertingExistingId`() = runTest {
         // Arrange
-        createTestSite()
         val original = createTestSupplier(name = "Original Name", phone = "111111")
         repository.insert(original)
 
@@ -207,7 +179,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_replaceAllFields_when_upsertingExistingSupplier`() = runTest {
         // Arrange
-        createTestSite()
         val original = createTestSupplier(
             name = "Original",
             phone = "111",
@@ -263,7 +234,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnAllSuppliers_when_multipleExist`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Alpha Corp"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Beta Ltd"))
         repository.insert(createTestSupplier(id = "supplier-3", name = "Gamma Inc"))
@@ -282,7 +252,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnSuppliersInAlphabeticalOrder_when_getAll`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Zebra Supplies"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Alpha Medical"))
         repository.insert(createTestSupplier(id = "supplier-3", name = "Mega Pharma"))
@@ -302,7 +271,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnOnlyActiveSuppliers_when_getActive`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Active 1", isActive = true))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Inactive", isActive = false))
         repository.insert(createTestSupplier(id = "supplier-3", name = "Active 2", isActive = true))
@@ -320,7 +288,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnEmptyList_when_getActiveWithNoActiveSuppliers`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", isActive = false))
         repository.insert(createTestSupplier(id = "supplier-2", isActive = false))
 
@@ -334,7 +301,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnAllSuppliers_when_getActiveWithAllActive`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", isActive = true))
         repository.insert(createTestSupplier(id = "supplier-2", isActive = true))
 
@@ -345,129 +311,11 @@ class SupplierRepositoryTest {
         assertEquals(2, result.size)
     }
 
-    // ===== Active Suppliers by Site Tests =====
-
-    @Test
-    fun `should_returnActiveSuppliersBySite_when_getActiveBySite`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        createTestSite(id = "site-2")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1", isActive = true))
-        repository.insert(createTestSupplier(id = "supplier-2", siteId = "site-1", isActive = false))
-        repository.insert(createTestSupplier(id = "supplier-3", siteId = "site-2", isActive = true))
-
-        // Act
-        val result = repository.getActiveBySite("site-1")
-
-        // Assert
-        assertEquals(1, result.size)
-        assertEquals("supplier-1", result[0].id)
-        assertTrue(result[0].isActive)
-        assertEquals("site-1", result[0].siteId)
-    }
-
-    @Test
-    fun `should_returnEmptyList_when_getActiveBySiteWithNoMatches`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        createTestSite(id = "site-2")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1", isActive = false))
-
-        // Act
-        val result = repository.getActiveBySite("site-2")
-
-        // Assert
-        assertTrue(result.isEmpty())
-    }
-
-    @Test
-    fun `should_excludeInactive_when_getActiveBySite`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1", isActive = true))
-        repository.insert(createTestSupplier(id = "supplier-2", siteId = "site-1", isActive = false))
-        repository.insert(createTestSupplier(id = "supplier-3", siteId = "site-1", isActive = false))
-
-        // Act
-        val result = repository.getActiveBySite("site-1")
-
-        // Assert
-        assertEquals(1, result.size)
-        assertEquals("supplier-1", result[0].id)
-    }
-
-    // ===== Get by Site Tests =====
-
-    @Test
-    fun `should_returnSuppliersBySite_when_getBySite`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        createTestSite(id = "site-2")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1"))
-        repository.insert(createTestSupplier(id = "supplier-2", siteId = "site-2"))
-        repository.insert(createTestSupplier(id = "supplier-3", siteId = "site-1"))
-
-        // Act
-        val result = repository.getBySite("site-1")
-
-        // Assert
-        assertEquals(2, result.size)
-        assertTrue(result.all { it.siteId == "site-1" })
-        assertTrue(result.any { it.id == "supplier-1" })
-        assertTrue(result.any { it.id == "supplier-3" })
-    }
-
-    @Test
-    fun `should_returnEmptyList_when_getBySiteWithNoMatches`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        createTestSite(id = "site-2")
-        repository.insert(createTestSupplier(siteId = "site-1"))
-
-        // Act
-        val result = repository.getBySite("site-2")
-
-        // Assert
-        assertTrue(result.isEmpty())
-    }
-
-    @Test
-    fun `should_includeBothActiveAndInactive_when_getBySite`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1", isActive = true))
-        repository.insert(createTestSupplier(id = "supplier-2", siteId = "site-1", isActive = false))
-
-        // Act
-        val result = repository.getBySite("site-1")
-
-        // Assert
-        assertEquals(2, result.size)
-        assertTrue(result.any { it.id == "supplier-1" && it.isActive })
-        assertTrue(result.any { it.id == "supplier-2" && !it.isActive })
-    }
-
-    @Test
-    fun `should_handleNullSiteId_when_getBySite`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = null))
-        repository.insert(createTestSupplier(id = "supplier-2", siteId = "site-1"))
-
-        // Act
-        val result = repository.getBySite("site-1")
-
-        // Assert
-        assertEquals(1, result.size)
-        assertEquals("supplier-2", result[0].id)
-    }
-
     // ===== Search Tests =====
 
     @Test
     fun `should_returnMatchingSuppliers_when_searchByName`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Acme Pharmaceuticals", phone = "111"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Beta Medical", phone = "222"))
         repository.insert(createTestSupplier(id = "supplier-3", name = "Acme Supplies", phone = "333"))
@@ -483,7 +331,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnMatchingSuppliers_when_searchByPhone`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Acme Corp", phone = "+1-555-1234"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Beta Ltd", phone = "+1-555-5678"))
         repository.insert(createTestSupplier(id = "supplier-3", name = "Gamma Inc", phone = "+1-999-1234"))
@@ -499,7 +346,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_beCaseInsensitive_when_searching`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Acme Pharmaceuticals"))
 
         // Act
@@ -516,7 +362,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnEmptyList_when_searchWithNoMatches`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(name = "Acme Corp"))
 
         // Act
@@ -529,7 +374,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_returnAllSuppliers_when_searchWithEmptyQuery`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Acme Corp"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Beta Ltd"))
 
@@ -543,7 +387,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_searchPartialMatches_when_queryIsSubstring`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "Medical Supplies Inc"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Surgical Equipment"))
         repository.insert(createTestSupplier(id = "supplier-3", name = "Dental Supplies"))
@@ -562,7 +405,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_updateSupplier_when_validDataProvided`() = runTest {
         // Arrange
-        createTestSite()
         val original = createTestSupplier(name = "Original Name", phone = "111")
         repository.insert(original)
 
@@ -581,15 +423,12 @@ class SupplierRepositoryTest {
     @Test
     fun `should_updateAllFields_when_updating`() = runTest {
         // Arrange
-        createTestSite()
-        createTestSite(id = "site-2")
         val original = createTestSupplier(
             name = "Original",
             phone = "111",
             email = "old@example.com",
             address = "Old Address",
             notes = "Old notes",
-            siteId = "site-1",
             isActive = true
         )
         repository.insert(original)
@@ -601,7 +440,6 @@ class SupplierRepositoryTest {
             email = "new@example.com",
             address = "New Address",
             notes = "New notes",
-            siteId = "site-2",
             isActive = false,
             updatedAt = 1705690000000L,
             updatedBy = "user-2"
@@ -616,7 +454,6 @@ class SupplierRepositoryTest {
         assertEquals("new@example.com", result.email)
         assertEquals("New Address", result.address)
         assertEquals("New notes", result.notes)
-        assertEquals("site-2", result.siteId)
         assertFalse(result.isActive)
         assertEquals(1705690000000L, result.updatedAt)
         assertEquals("user-2", result.updatedBy)
@@ -625,7 +462,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_notAffectOtherSuppliers_when_updating`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", name = "First"))
         repository.insert(createTestSupplier(id = "supplier-2", name = "Second"))
 
@@ -646,7 +482,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_preserveCreatedFields_when_updating`() = runTest {
         // Arrange
-        createTestSite()
         val original = createTestSupplier(
             createdAt = 1705680000000L,
             createdBy = "user-1"
@@ -676,7 +511,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_deleteSupplier_when_idExists`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier()
         repository.insert(supplier)
 
@@ -691,7 +525,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_notAffectOthers_when_deleteOneSupplier`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1"))
         repository.insert(createTestSupplier(id = "supplier-2"))
 
@@ -707,7 +540,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_doNothing_when_deleteNonExistingId`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1"))
 
         // Act
@@ -723,7 +555,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_deactivateSupplier_when_idExists`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(isActive = true)
         repository.insert(supplier)
 
@@ -741,7 +572,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_notAffectOtherFields_when_deactivate`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(
             name = "Test Supplier",
             phone = "123456",
@@ -762,13 +592,11 @@ class SupplierRepositoryTest {
         assertEquals(supplier.email, result.email)
         assertEquals(supplier.address, result.address)
         assertEquals(supplier.notes, result.notes)
-        assertEquals(supplier.siteId, result.siteId)
     }
 
     @Test
     fun `should_deactivateAlreadyInactive_when_deactivateCalledTwice`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(isActive = true)
         repository.insert(supplier)
 
@@ -786,7 +614,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_excludeFromActive_when_supplierDeactivated`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", isActive = true))
         repository.insert(createTestSupplier(id = "supplier-2", isActive = true))
 
@@ -804,7 +631,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_activateSupplier_when_idExists`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(isActive = false)
         repository.insert(supplier)
 
@@ -822,7 +648,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_notAffectOtherFields_when_activate`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(
             name = "Test Supplier",
             phone = "123456",
@@ -843,13 +668,11 @@ class SupplierRepositoryTest {
         assertEquals(supplier.email, result.email)
         assertEquals(supplier.address, result.address)
         assertEquals(supplier.notes, result.notes)
-        assertEquals(supplier.siteId, result.siteId)
     }
 
     @Test
     fun `should_activateAlreadyActive_when_activateCalledTwice`() = runTest {
         // Arrange
-        createTestSite()
         val supplier = createTestSupplier(isActive = false)
         repository.insert(supplier)
 
@@ -867,7 +690,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_includeInActive_when_supplierActivated`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", isActive = false))
         repository.insert(createTestSupplier(id = "supplier-2", isActive = true))
 
@@ -886,7 +708,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_emitAllSuppliers_when_observeAll`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1"))
         repository.insert(createTestSupplier(id = "supplier-2"))
 
@@ -902,7 +723,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_emitUpdates_when_observeAllAndDataChanges`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1"))
 
         // Act
@@ -927,7 +747,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_emitOnlyActiveSuppliers_when_observeActive`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", isActive = true))
         repository.insert(createTestSupplier(id = "supplier-2", isActive = false))
         repository.insert(createTestSupplier(id = "supplier-3", isActive = true))
@@ -945,7 +764,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_emitUpdates_when_observeActiveAndSupplierDeactivated`() = runTest {
         // Arrange
-        createTestSite()
         repository.insert(createTestSupplier(id = "supplier-1", isActive = true))
 
         // Act
@@ -956,41 +774,6 @@ class SupplierRepositoryTest {
         // Assert
         assertEquals(1, initial.size)
         assertEquals(0, updated.size)
-    }
-
-    @Test
-    fun `should_emitActiveBySite_when_observeActiveBySite`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        createTestSite(id = "site-2")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1", isActive = true))
-        repository.insert(createTestSupplier(id = "supplier-2", siteId = "site-1", isActive = false))
-        repository.insert(createTestSupplier(id = "supplier-3", siteId = "site-2", isActive = true))
-
-        // Act
-        val result = repository.observeActiveBySite("site-1").first()
-
-        // Assert
-        assertEquals(1, result.size)
-        assertEquals("supplier-1", result[0].id)
-        assertTrue(result[0].isActive)
-        assertEquals("site-1", result[0].siteId)
-    }
-
-    @Test
-    fun `should_emitUpdates_when_observeActiveBySiteAndDataChanges`() = runTest {
-        // Arrange
-        createTestSite(id = "site-1")
-        repository.insert(createTestSupplier(id = "supplier-1", siteId = "site-1", isActive = false))
-
-        // Act
-        val initial = repository.observeActiveBySite("site-1").first()
-        repository.activate("supplier-1", "user-2")
-        val updated = repository.observeActiveBySite("site-1").first()
-
-        // Assert
-        assertEquals(0, initial.size)
-        assertEquals(1, updated.size)
     }
 
     // ===== Edge Cases =====
@@ -1099,7 +882,6 @@ class SupplierRepositoryTest {
     @Test
     fun `should_workCorrectly_when_completeSupplierLifecycle`() = runTest {
         // Arrange - Create new supplier
-        createTestSite()
         val supplier = createTestSupplier(isActive = true)
         repository.insert(supplier)
 
@@ -1139,42 +921,33 @@ class SupplierRepositoryTest {
     }
 
     @Test
-    fun `should_maintainIntegrity_when_multiSupplierMultiSiteOperations`() = runTest {
-        // Arrange - Create complex scenario
-        createTestSite(id = "site-1", name = "Main Warehouse")
-        createTestSite(id = "site-2", name = "Branch Store")
+    fun `should_maintainIntegrity_when_multiSupplierOperations`() = runTest {
+        // Arrange - Create multiple suppliers with different active states
+        repository.insert(createTestSupplier(id = "supplier-1", name = "Supplier A", isActive = true))
+        repository.insert(createTestSupplier(id = "supplier-2", name = "Supplier B", isActive = true))
+        repository.insert(createTestSupplier(id = "supplier-3", name = "Supplier C", isActive = false))
+        repository.insert(createTestSupplier(id = "supplier-4", name = "Supplier D", isActive = false))
 
-        // Act - Initialize suppliers at different sites
-        repository.insert(createTestSupplier(id = "supplier-1", name = "Supplier A", siteId = "site-1", isActive = true))
-        repository.insert(createTestSupplier(id = "supplier-2", name = "Supplier B", siteId = "site-2", isActive = true))
-        repository.insert(createTestSupplier(id = "supplier-3", name = "Supplier C", siteId = "site-1", isActive = false))
-        repository.insert(createTestSupplier(id = "supplier-4", name = "Supplier D", siteId = "site-2", isActive = false))
-
-        // Assert - Verify site-specific queries
-        val site1All = repository.getBySite("site-1")
-        val site2All = repository.getBySite("site-2")
-        assertEquals(2, site1All.size)
-        assertEquals(2, site2All.size)
-
-        // Assert - Verify active by site
-        val site1Active = repository.getActiveBySite("site-1")
-        val site2Active = repository.getActiveBySite("site-2")
-        assertEquals(1, site1Active.size)
-        assertEquals(1, site2Active.size)
-
-        // Assert - Verify overall active
+        // Assert - Verify active filtering
         val allActive = repository.getActive()
         assertEquals(2, allActive.size)
+        assertTrue(allActive.any { it.id == "supplier-1" })
+        assertTrue(allActive.any { it.id == "supplier-2" })
 
         // Assert - Verify all suppliers
         val all = repository.getAll()
         assertEquals(4, all.size)
+
+        // Assert - Verify alphabetical order
+        assertEquals("Supplier A", all[0].name)
+        assertEquals("Supplier B", all[1].name)
+        assertEquals("Supplier C", all[2].name)
+        assertEquals("Supplier D", all[3].name)
     }
 
     @Test
     fun `should_workCorrectly_when_upsertingForSyncOperations`() = runTest {
         // Arrange - Simulate first sync from server
-        createTestSite()
         val supplier = createTestSupplier(
             name = "Acme Pharmaceuticals",
             phone = "111111",

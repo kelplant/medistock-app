@@ -28,6 +28,29 @@
         android:textStyle="bold"/>
 
     <TextView
+        android:id="@+id/labelBatchSelection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Lot"
+        android:paddingTop="8dp"
+        android:visibility="gone"/>
+
+    <Spinner
+        android:id="@+id/spinnerBatchDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:spinnerMode="dropdown"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/textBatchExpiryWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_orange_dark"
+        android:textSize="12sp"
+        android:visibility="gone"/>
+
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Quantity"

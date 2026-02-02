@@ -15,7 +15,7 @@ import kotlin.uuid.Uuid
 /**
  * Repository for accessing and managing stock data.
  *
- * Uses the materialized current_stock_table for O(1) lookups instead of
+ * Uses the materialized current_stock for O(1) lookups instead of
  * computing stock from stock_movements aggregation.
  */
 @OptIn(ExperimentalUuidApi::class)
@@ -24,12 +24,12 @@ class StockRepository(private val database: MedistockDatabase) {
     private val queries = database.medistockQueries
 
     // ============================================
-    // READ OPERATIONS - O(1) lookups from current_stock_table
+    // READ OPERATIONS - O(1) lookups from current_stock
     // ============================================
 
     /**
      * Get the stock quantity for a specific product at a specific site.
-     * O(1) lookup from the materialized current_stock_table.
+     * O(1) lookup from the materialized current_stock.
      */
     suspend fun getStockQuantity(productId: String, siteId: String): Double = withContext(Dispatchers.Default) {
         queries.getStockQuantity(productId, siteId).executeAsOneOrNull() ?: 0.0
@@ -37,65 +37,10 @@ class StockRepository(private val database: MedistockDatabase) {
 
     /**
      * Get current stock with full product details for a product at a site.
-     * Uses the materialized current_stock_table joined with products, categories, and packaging_types.
+     * Uses a single JOIN query — no N+1.
      */
     suspend fun getCurrentStockByProductAndSite(productId: String, siteId: String): CurrentStock? = withContext(Dispatchers.Default) {
-        // First check if the stock entry exists
-        val stockEntry = queries.getStockEntry(productId, siteId).executeAsOneOrNull()
-        if (stockEntry == null) return@withContext null
-
-        // Get full details via getStockForSite and filter
-        queries.getStockForSite(siteId).executeAsList()
-            .find { it.product_id == productId }
-            ?.let { row ->
-                // Need to get site name separately since getStockForSite doesn't include it
-                val site = queries.getSiteById(siteId).executeAsOneOrNull()
-                val product = queries.getProductById(productId).executeAsOneOrNull()
-                CurrentStock(
-                    productId = row.product_id,
-                    productName = row.product_name ?: "",
-                    unit = row.unit ?: "",
-                    categoryName = row.category_name ?: "",
-                    siteId = row.site_id,
-                    siteName = site?.name ?: "",
-                    quantityOnHand = row.quantity,
-                    minStock = product?.min_stock ?: 0.0,
-                    maxStock = product?.max_stock ?: 0.0
-                )
-            }
-    }
-
-    /**
-     * Get all current stock entries for a site.
-     * Uses the materialized current_stock_table for O(1) lookup per entry.
-     */
-    suspend fun getCurrentStockForSite(siteId: String): List<CurrentStock> = withContext(Dispatchers.Default) {
-        val site = queries.getSiteById(siteId).executeAsOneOrNull()
-        val siteName = site?.name ?: ""
-
-        queries.getStockForSite(siteId).executeAsList().map { row ->
-            val product = queries.getProductById(row.product_id).executeAsOneOrNull()
-            CurrentStock(
-                productId = row.product_id,
-                productName = row.product_name ?: "",
-                unit = row.unit ?: "",
-                categoryName = row.category_name ?: "",
-                siteId = row.site_id,
-                siteName = siteName,
-                quantityOnHand = row.quantity,
-                minStock = product?.min_stock ?: 0.0,
-                maxStock = product?.max_stock ?: 0.0
-            )
-        }
-    }
-
-    /**
-     * Get all current stock entries across all sites.
-     * Uses the materialized current_stock_table.
-     */
-    suspend fun getAllCurrentStock(): List<CurrentStock> = withContext(Dispatchers.Default) {
-        queries.getAllStock().executeAsList().map { row ->
-            val product = queries.getProductById(row.product_id).executeAsOneOrNull()
+        queries.getStockForProductAndSite(productId, siteId).executeAsOneOrNull()?.let { row ->
             CurrentStock(
                 productId = row.product_id,
                 productName = row.product_name ?: "",
@@ -104,15 +49,58 @@ class StockRepository(private val database: MedistockDatabase) {
                 siteId = row.site_id,
                 siteName = row.site_name ?: "",
                 quantityOnHand = row.quantity,
-                minStock = product?.min_stock ?: 0.0,
-                maxStock = product?.max_stock ?: 0.0
+                minStock = row.min_stock ?: 0.0,
+                maxStock = row.max_stock ?: 0.0
+            )
+        }
+    }
+
+    /**
+     * Get all current stock entries for a site.
+     * Uses a single JOIN query that includes min_stock/max_stock — no N+1.
+     */
+    suspend fun getCurrentStockForSite(siteId: String): List<CurrentStock> = withContext(Dispatchers.Default) {
+        val site = queries.getSiteById(siteId).executeAsOneOrNull()
+        val siteName = site?.name ?: ""
+
+        queries.getStockForSite(siteId).executeAsList().map { row ->
+            CurrentStock(
+                productId = row.product_id,
+                productName = row.product_name ?: "",
+                unit = row.unit ?: "",
+                categoryName = row.category_name ?: "",
+                siteId = row.site_id,
+                siteName = siteName,
+                quantityOnHand = row.quantity,
+                minStock = row.min_stock ?: 0.0,
+                maxStock = row.max_stock ?: 0.0
+            )
+        }
+    }
+
+    /**
+     * Get all current stock entries across all sites.
+     * Uses a single JOIN query that includes min_stock/max_stock — no N+1.
+     */
+    suspend fun getAllCurrentStock(): List<CurrentStock> = withContext(Dispatchers.Default) {
+        queries.getAllStock().executeAsList().map { row ->
+            CurrentStock(
+                productId = row.product_id,
+                productName = row.product_name ?: "",
+                unit = row.unit ?: "",
+                categoryName = row.category_name ?: "",
+                siteId = row.site_id,
+                siteName = row.site_name ?: "",
+                quantityOnHand = row.quantity,
+                minStock = row.min_stock ?: 0.0,
+                maxStock = row.max_stock ?: 0.0
             )
         }
     }
 
     /**
      * Observe current stock for a site as a Flow.
-     * Uses the materialized current_stock_table.
+     * Uses the materialized current_stock with min_stock/max_stock in the JOIN.
      */
     fun observeCurrentStockForSite(siteId: String): Flow<List<CurrentStock>> {
         return queries.getStockForSite(siteId)
@@ -122,7 +110,6 @@ class StockRepository(private val database: MedistockDatabase) {
                 val site = queries.getSiteById(siteId).executeAsOneOrNull()
                 val siteName = site?.name ?: ""
                 list.map { row ->
-                    val product = queries.getProductById(row.product_id).executeAsOneOrNull()
                     CurrentStock(
                         productId = row.product_id,
                         productName = row.product_name ?: "",
@@ -131,8 +118,8 @@ class StockRepository(private val database: MedistockDatabase) {
                         siteId = row.site_id,
                         siteName = siteName,
                         quantityOnHand = row.quantity,
-                        minStock = product?.min_stock ?: 0.0,
-                        maxStock = product?.max_stock ?: 0.0
+                        minStock = row.min_stock ?: 0.0,
+                        maxStock = row.max_stock ?: 0.0
                     )
                 }
             }
@@ -140,7 +127,7 @@ class StockRepository(private val database: MedistockDatabase) {
 
     /**
      * Observe all current stock across all sites as a Flow.
-     * Uses the materialized current_stock_table.
+     * Uses the materialized current_stock with min_stock/max_stock in the JOIN.
      */
     fun observeAllCurrentStock(): Flow<List<CurrentStock>> {
         return queries.getAllStock()
@@ -148,7 +135,6 @@ class StockRepository(private val database: MedistockDatabase) {
             .mapToList(Dispatchers.Default)
             .map { list ->
                 list.map { row ->
-                    val product = queries.getProductById(row.product_id).executeAsOneOrNull()
                     CurrentStock(
                         productId = row.product_id,
                         productName = row.product_name ?: "",
@@ -157,15 +143,15 @@ class StockRepository(private val database: MedistockDatabase) {
                         siteId = row.site_id,
                         siteName = row.site_name ?: "",
                         quantityOnHand = row.quantity,
-                        minStock = product?.min_stock ?: 0.0,
-                        maxStock = product?.max_stock ?: 0.0
+                        minStock = row.min_stock ?: 0.0,
+                        maxStock = row.max_stock ?: 0.0
                     )
                 }
             }
     }
 
     // ============================================
-    // WRITE OPERATIONS - Update current_stock_table
+    // WRITE OPERATIONS - Update current_stock
     // ============================================
 
     /**
@@ -201,13 +187,13 @@ class StockRepository(private val database: MedistockDatabase) {
 
     /**
      * Update stock by adding a delta (positive or negative).
-     * Use this after recording a stock movement.
+     * Uses a transaction for atomicity — no race condition between check and write.
      *
      * @param productId The product ID
      * @param siteId The site ID
      * @param delta The quantity to add (positive) or subtract (negative)
      * @param lastMovementId Optional reference to the movement that caused this update
-     * @return true if the update succeeded (entry existed or was created), false otherwise
+     * @return true always (entry is created if it doesn't exist)
      */
     suspend fun updateStockDelta(
         productId: String,
@@ -216,43 +202,27 @@ class StockRepository(private val database: MedistockDatabase) {
         lastMovementId: String? = null
     ): Boolean = withContext(Dispatchers.Default) {
         val now = Clock.System.now().toEpochMilliseconds()
-
-        // Check if entry exists first
-        val exists = queries.getStockEntry(productId, siteId).executeAsOneOrNull() != null
-
-        if (exists) {
-            queries.updateStockDelta(
-                delta,
-                lastMovementId,
-                now,
-                productId,
-                siteId
-            )
-            true
-        } else {
-            // Entry doesn't exist, create it with the delta as initial quantity
-            val id = Uuid.random().toString()
-            queries.insertStock(
-                id,
-                productId,
-                siteId,
-                delta,
-                lastMovementId,
-                now
-            )
-            true
+        database.transaction {
+            val existing = queries.getStockEntry(productId, siteId).executeAsOneOrNull()
+            if (existing != null) {
+                queries.updateStockDelta(delta, lastMovementId, now, productId, siteId)
+            } else {
+                val id = Uuid.random().toString()
+                queries.insertStock(id, productId, siteId, delta, lastMovementId, now)
+            }
         }
+        true
     }
 
     /**
      * Set absolute stock quantity (for inventory adjustments).
-     * Only updates if entry exists.
+     * Uses a transaction for atomicity — creates the entry if it doesn't exist.
      *
      * @param productId The product ID
      * @param siteId The site ID
      * @param quantity The absolute quantity to set
      * @param lastMovementId Optional reference to the movement that caused this update
-     * @return true if the update succeeded (entry existed), false otherwise
+     * @return true always (entry is created if it doesn't exist)
      */
     suspend fun setStockQuantity(
         productId: String,
@@ -261,22 +231,16 @@ class StockRepository(private val database: MedistockDatabase) {
         lastMovementId: String? = null
     ): Boolean = withContext(Dispatchers.Default) {
         val now = Clock.System.now().toEpochMilliseconds()
-
-        // Check if entry exists
-        val exists = queries.getStockEntry(productId, siteId).executeAsOneOrNull() != null
-
-        if (exists) {
-            queries.setStockQuantity(
-                quantity,
-                lastMovementId,
-                now,
-                productId,
-                siteId
-            )
-            true
-        } else {
-            false
+        database.transaction {
+            val existing = queries.getStockEntry(productId, siteId).executeAsOneOrNull()
+            if (existing != null) {
+                queries.setStockQuantity(quantity, lastMovementId, now, productId, siteId)
+            } else {
+                val id = Uuid.random().toString()
+                queries.insertStock(id, productId, siteId, quantity, lastMovementId, now)
+            }
         }
+        true
     }
 
     /**
@@ -323,10 +287,16 @@ class StockRepository(private val database: MedistockDatabase) {
     /**
      * Ensure a stock entry exists for a product at a site.
      * Creates one with quantity 0 if it doesn't exist.
+     * Uses a transaction for atomicity.
      */
     suspend fun ensureStockEntry(productId: String, siteId: String) = withContext(Dispatchers.Default) {
-        if (!hasStockEntry(productId, siteId)) {
-            insertStock(productId, siteId, 0.0, null)
+        database.transaction {
+            val existing = queries.getStockEntry(productId, siteId).executeAsOneOrNull()
+            if (existing == null) {
+                val id = Uuid.random().toString()
+                val now = Clock.System.now().toEpochMilliseconds()
+                queries.insertStock(id, productId, siteId, 0.0, null, now)
+            }
         }
     }
 }

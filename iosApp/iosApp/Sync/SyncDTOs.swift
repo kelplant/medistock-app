@@ -620,8 +620,10 @@ struct SaleItemDTO: Codable {
     let productName: String?
     let unit: String?
     let quantity: Double
+    let baseQuantity: Double?
     let unitPrice: Double
     let totalPrice: Double
+    let batchId: String?
     let createdAt: Int64
     let createdBy: String
     var clientId: String?
@@ -633,8 +635,10 @@ struct SaleItemDTO: Codable {
         case productName = "product_name"
         case unit
         case quantity
+        case baseQuantity = "base_quantity"
         case unitPrice = "unit_price"
         case totalPrice = "total_price"
+        case batchId = "batch_id"
         case createdAt = "created_at"
         case createdBy = "created_by"
         case clientId = "client_id"
@@ -647,8 +651,10 @@ struct SaleItemDTO: Codable {
         self.productName = item.productName
         self.unit = item.unit
         self.quantity = item.quantity
+        self.baseQuantity = item.baseQuantity?.doubleValue
         self.unitPrice = item.unitPrice
         self.totalPrice = item.totalPrice
+        self.batchId = item.batchId
         self.createdAt = item.createdAt
         self.createdBy = item.createdBy
         self.clientId = SyncClientId.current
@@ -662,8 +668,10 @@ struct SaleItemDTO: Codable {
             productName: productName ?? "",
             unit: unit ?? "",
             quantity: quantity,
+            baseQuantity: baseQuantity.map { KotlinDouble(double: $0) },
             unitPrice: unitPrice,
             totalPrice: totalPrice,
+            batchId: batchId,
             createdAt: createdAt,
             createdBy: createdBy
         )

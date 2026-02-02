@@ -38,6 +38,18 @@ sealed class CompatibilityResult {
     ) : CompatibilityResult()
 
     /**
+     * Database is too old for this app - migrations need to be applied.
+     * @param dbSchemaVersion Current database schema version
+     * @param minRequired Minimum schema version required by this app
+     * @param appVersion Current app schema version
+     */
+    data class DbTooOld(
+        val dbSchemaVersion: Int,
+        val minRequired: Int,
+        val appVersion: Int
+    ) : CompatibilityResult()
+
+    /**
      * Cannot verify compatibility (system not installed or network error).
      * @param reason Description of why verification failed
      */
@@ -53,7 +65,7 @@ sealed class CompatibilityResult {
      * Returns true if the app is too old and needs update.
      */
     val requiresUpdate: Boolean
-        get() = this is AppTooOld
+        get() = this is AppTooOld || this is DbTooOld
 }
 
 /**
@@ -70,11 +82,28 @@ object CompatibilityChecker {
      * History:
      * - Version 1: Initial schema
      * - Version 2: Migration system and versioning
+     * - Version 3: Remove product unit, add packaging types, suppliers, app_config
      */
-    const val APP_SCHEMA_VERSION = 2
+    const val APP_SCHEMA_VERSION = 3
+
+    /**
+     * Minimum Supabase schema_version required by this app.
+     *
+     * IMPORTANT: Increment this value when you add a Supabase migration
+     * that the app depends on. This ensures the app blocks usage if the
+     * database hasn't been migrated yet.
+     *
+     * This is the reverse check: the DB checks if the app is new enough
+     * (via min_app_version), and the app checks if the DB is new enough
+     * (via this constant).
+     */
+    const val MIN_SCHEMA_VERSION = 29
 
     /**
      * Checks if the current app version is compatible with the database.
+     * Performs a bidirectional check:
+     * 1. Is the app new enough for this database? (DB.min_app_version <= APP_SCHEMA_VERSION)
+     * 2. Is the database new enough for this app? (DB.schema_version >= MIN_SCHEMA_VERSION)
      *
      * @param schemaVersion The schema version from the database, or null if not available
      * @return CompatibilityResult indicating if the app can be used
@@ -88,15 +117,25 @@ object CompatibilityChecker {
         val dbVersion = schemaVersion.schemaVersion
         val minAppVersion = schemaVersion.minAppVersion
 
-        return if (APP_SCHEMA_VERSION < minAppVersion) {
-            CompatibilityResult.AppTooOld(
+        // Check 1: Is the app too old for this database?
+        if (APP_SCHEMA_VERSION < minAppVersion) {
+            return CompatibilityResult.AppTooOld(
                 appVersion = APP_SCHEMA_VERSION,
                 minRequired = minAppVersion,
                 dbVersion = dbVersion
             )
-        } else {
-            CompatibilityResult.Compatible
         }
+
+        // Check 2: Is the database too old for this app?
+        if (dbVersion < MIN_SCHEMA_VERSION) {
+            return CompatibilityResult.DbTooOld(
+                dbSchemaVersion = dbVersion,
+                minRequired = MIN_SCHEMA_VERSION,
+                appVersion = APP_SCHEMA_VERSION
+            )
+        }
+
+        return CompatibilityResult.Compatible
     }
 
     /**
@@ -105,9 +144,11 @@ object CompatibilityChecker {
     fun formatCompatibilityInfo(result: CompatibilityResult): String {
         return when (result) {
             is CompatibilityResult.Compatible ->
-                "App compatible (version $APP_SCHEMA_VERSION)"
+                "App compatible (version $APP_SCHEMA_VERSION, min schema $MIN_SCHEMA_VERSION)"
             is CompatibilityResult.AppTooOld ->
                 "App too old: version ${result.appVersion}, minimum required: ${result.minRequired}, database version: ${result.dbVersion}"
+            is CompatibilityResult.DbTooOld ->
+                "Database too old: schema version ${result.dbSchemaVersion}, minimum required: ${result.minRequired}, app version: ${result.appVersion}"
             is CompatibilityResult.Unknown ->
                 "Cannot verify compatibility: ${result.reason}"
         }

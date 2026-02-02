@@ -14,7 +14,10 @@ import kotlin.random.Random
 data class SaleItemInput(
     val productId: String,
     val quantity: Double,
-    val unitPrice: Double
+    val unitPrice: Double,
+    val selectedLevel: Int = 1,
+    val conversionFactor: Double? = null,
+    val batchId: String? = null
 )
 
 /**
@@ -143,7 +146,14 @@ class SaleUseCase(
         for (itemInput in input.items) {
             val product = products[itemInput.productId]!!
             val packagingType = packagingTypes[product.packagingTypeId]
-            val unit = packagingType?.getLevelName(product.selectedLevel) ?: "unit"
+            val unit = packagingType?.getLevelName(itemInput.selectedLevel) ?: "unit"
+
+            // Compute base_quantity: level 1 equivalent of the display quantity
+            val baseQuantity: Double? = if (itemInput.selectedLevel == 2 && itemInput.conversionFactor != null) {
+                itemInput.quantity * itemInput.conversionFactor
+            } else {
+                null
+            }
 
             // Create SaleItem with productName and unit for historical accuracy
             val saleItem = SaleItem(
@@ -153,18 +163,25 @@ class SaleUseCase(
                 productName = product.name,
                 unit = unit,
                 quantity = itemInput.quantity,
+                baseQuantity = baseQuantity,
                 unitPrice = itemInput.unitPrice,
-                totalPrice = itemInput.quantity * itemInput.unitPrice
+                totalPrice = itemInput.quantity * itemInput.unitPrice,
+                batchId = itemInput.batchId
             )
 
-            // FIFO batch allocation
+            // Effective quantity in level 1 (base) units for stock operations
+            val effectiveQuantity = baseQuantity ?: itemInput.quantity
+
+            // Batch allocation (always in base units)
+            // If a preferred batch is specified, allocate from it first, then FIFO for remainder
             val allocationResult = allocateBatchesFIFO(
                 productId = itemInput.productId,
                 siteId = input.siteId,
-                quantityNeeded = itemInput.quantity,
+                quantityNeeded = effectiveQuantity,
                 saleItemId = saleItem.id,
                 userId = input.userId,
-                timestamp = now
+                timestamp = now,
+                preferredBatchId = itemInput.batchId
             )
 
             // Add warning if insufficient stock (but continue - negative stock allowed)
@@ -174,7 +191,7 @@ class SaleUseCase(
                         productId = itemInput.productId,
                         productName = product.name,
                         siteId = input.siteId,
-                        requested = itemInput.quantity,
+                        requested = effectiveQuantity,
                         available = allocationResult.totalAvailable
                     )
                 )
@@ -185,7 +202,7 @@ class SaleUseCase(
                 id = generateId("movement"),
                 productId = itemInput.productId,
                 siteId = input.siteId,
-                quantity = -itemInput.quantity, // Negative for sale (out)
+                quantity = -effectiveQuantity, // Negative for sale (out), always in base units
                 type = MovementType.SALE,
                 date = now,
                 purchasePriceAtMovement = if (allocationResult.totalAllocated > 0) allocationResult.totalCost / allocationResult.totalAllocated else 0.0,
@@ -241,7 +258,7 @@ class SaleUseCase(
                 // Insert stock movement
                 stockMovementRepository.insert(processed.stockMovement)
 
-                // Update current_stock_table (delta is negative for sales)
+                // Update current_stock (delta is negative for sales)
                 stockRepository.updateStockDelta(
                     productId = processed.stockMovement.productId,
                     siteId = processed.stockMovement.siteId,
@@ -296,7 +313,8 @@ class SaleUseCase(
 
     /**
      * Allocate batches using FIFO (First In First Out)
-     * Oldest batches (by purchase_date) are consumed first
+     * If preferredBatchId is provided, allocate from that batch first, then FIFO for remainder.
+     * Otherwise, oldest batches (by purchase_date) are consumed first.
      */
     private suspend fun allocateBatchesFIFO(
         productId: String,
@@ -304,11 +322,21 @@ class SaleUseCase(
         quantityNeeded: Double,
         saleItemId: String,
         userId: String,
-        timestamp: Long
+        timestamp: Long,
+        preferredBatchId: String? = null
     ): FIFOAllocationResult {
         // Get available batches ordered by purchase_date ASC (oldest first)
-        val batches = purchaseBatchRepository.getByProductAndSite(productId, siteId)
+        val allBatches = purchaseBatchRepository.getByProductAndSite(productId, siteId)
             .filter { !it.isExhausted && it.remainingQuantity > 0 }
+
+        // If a preferred batch is specified, put it first, then the rest in FIFO order
+        val batches = if (preferredBatchId != null) {
+            val preferred = allBatches.filter { it.id == preferredBatchId }
+            val rest = allBatches.filter { it.id != preferredBatchId }
+            preferred + rest
+        } else {
+            allBatches
+        }
 
         val totalAvailable = batches.sumOf { it.remainingQuantity }
         val allocations = mutableListOf<BatchAllocationDetail>()
@@ -381,6 +409,15 @@ class SaleUseCase(
             }
             if (item.unitPrice < 0) {
                 return BusinessError.ValidationError("items[$index].unitPrice", "Unit price cannot be negative")
+            }
+            // Level 2 quantity cannot exceed one level 1 unit's capacity
+            if (item.selectedLevel == 2 && item.conversionFactor != null) {
+                if (item.quantity > item.conversionFactor) {
+                    return BusinessError.ValidationError(
+                        "items[$index].quantity",
+                        "Level 2 quantity (${item.quantity}) exceeds capacity of one level 1 unit (${item.conversionFactor})"
+                    )
+                }
             }
         }
 

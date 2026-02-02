@@ -1,5 +1,5 @@
 # MediStock Android - Transfer Tests
-# Simplified test for transfer functionality
+# Tests for transfer functionality including batch picker, stock display, and non-blocking stock
 appId: com.medistock
 ---
 
@@ -72,7 +72,7 @@ appId: com.medistock
 - back
 - waitForAnimationToEnd
 
-# ========== TEST: Navigate to Transfer screen ==========
+# ========== TEST 1: Navigate to Transfer screen ==========
 - tapOn:
     text: ".*Transfer.*"
 
@@ -80,14 +80,86 @@ appId: com.medistock
 
 - takeScreenshot: "android_transfer_screen"
 
-# Try to create a transfer
+# ========== TEST 2: Open transfer form and verify elements ==========
 - tapOn:
     id: ".*fab.*"
     optional: true
 
 - waitForAnimationToEnd
 
+# Verify from/to site spinners are visible
+- assertVisible:
+    id: "com.medistock:id/spinnerFromSite"
+
+- assertVisible:
+    id: "com.medistock:id/spinnerToSite"
+
+# Verify add product button is visible
+- assertVisible:
+    id: "com.medistock:id/btnAddProduct"
+
 - takeScreenshot: "android_transfer_form"
+
+# ========== TEST 3: Open add product dialog and verify batch picker ==========
+- tapOn:
+    id: "com.medistock:id/btnAddProduct"
+
+- waitForAnimationToEnd
+
+# Verify product spinner is visible
+- assertVisible:
+    id: "com.medistock:id/spinnerProductDialog"
+
+# Verify stock display is visible
+- assertVisible:
+    id: "com.medistock:id/textAvailableStock"
+
+# Verify quantity field is visible
+- assertVisible:
+    id: "com.medistock:id/editQuantityDialog"
+
+# Batch spinner should appear when product has batches (initially may be hidden if no batches)
+- takeScreenshot: "android_transfer_add_product_dialog"
+
+# ========== TEST 4: Verify batch picker visibility (hidden when no batches) ==========
+# The batch label and spinner should be gone when product has no batches
+- assertNotVisible:
+    id: "com.medistock:id/labelBatchSelection"
+    optional: true
+
+- assertNotVisible:
+    id: "com.medistock:id/spinnerBatchDialog"
+    optional: true
+
+# Expiry warning should not be visible initially
+- assertNotVisible:
+    id: "com.medistock:id/textBatchExpiryWarning"
+    optional: true
+
+- takeScreenshot: "android_transfer_batch_picker_hidden"
+
+# ========== TEST 5: Non-blocking stock - add item with insufficient stock ==========
+# Enter a quantity (even if stock is 0, it should still add the item with a warning)
+- tapOn:
+    id: "com.medistock:id/editQuantityDialog"
+- inputText: "100"
+
+# Tap Add button
+- tapOn:
+    text: ".*Add.*"
+
+- waitForAnimationToEnd
+
+# The item should be added even with insufficient stock (non-blocking behavior)
+# A toast warning may appear but the dialog should close and item should be in the list
+- takeScreenshot: "android_transfer_non_blocking_stock"
+
+# ========== TEST 6: Verify item was added to the transfer list ==========
+# Check if the recycler view has items (the item should appear in the list)
+- assertVisible:
+    id: "com.medistock:id/recyclerTransferItems"
+
+- takeScreenshot: "android_transfer_item_added"
 
 # Navigate back
 - back

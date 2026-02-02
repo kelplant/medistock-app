@@ -207,7 +207,15 @@ maestro test .maestro/ --format junit --output report.xml
 
 #### 9. Sales (09_sales.yaml)
 - Navigation vers l'écran de ventes
-- Vérification d'accès à l'interface
+- Création d'une nouvelle vente avec saisie du nom du client
+- Ajout de produits à la vente avec support multi-niveaux d'emballage
+- Sélection du niveau d'emballage (Level 1 / Level 2) pour les produits à 2 niveaux
+- Vérification de l'affichage du prix d'achat
+- Vérification de l'affichage des informations de marge
+- Vérification du prix de vente pré-calculé (modifiable)
+- Saisie de la quantité et modification du prix de vente
+- Ajout de plusieurs articles avec différents niveaux d'emballage
+- Vérification de l'affichage des informations de stock (niveau 1 + équivalent niveau 2)
 
 #### 10. Transfers (10_transfers.yaml)
 - Navigation vers l'écran de transferts

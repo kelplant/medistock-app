@@ -104,7 +104,6 @@ class ProductDtoTest {
         val dto = ProductDto(
             id = "prod-1",
             name = "Test Product",
-            unit = "kg",
             unitVolume = 1.5,
             packagingTypeId = "pkg-1",
             selectedLevel = 2,
@@ -126,7 +125,6 @@ class ProductDtoTest {
 
         assertEquals("prod-1", model.id)
         assertEquals("Test Product", model.name)
-        assertEquals("kg", model.unit)
         assertEquals(1.5, model.unitVolume)
         assertEquals("pkg-1", model.packagingTypeId)
         assertEquals(2, model.selectedLevel)
@@ -142,8 +140,8 @@ class ProductDtoTest {
         val model = Product(
             id = "prod-1",
             name = "Test Product",
-            unit = "kg",
             unitVolume = 1.5,
+            packagingTypeId = "pkg-1",
             siteId = "site-1",
             createdAt = 1000L,
             updatedAt = 2000L,
@@ -164,8 +162,8 @@ class ProductDtoTest {
         val dto = ProductDto(
             id = "prod-1",
             name = "Test",
-            unit = "kg",
             unitVolume = 1.0,
+            packagingTypeId = "pkg-1",
             siteId = "site-1",
             createdAt = 1000L,
             updatedAt = 2000L,
@@ -694,6 +692,144 @@ class SaleItemDtoTest {
         assertTrue(jsonString.contains("unit_price"))
         assertTrue(jsonString.contains("total_price"))
     }
+
+    @Test
+    fun `should_serializeBaseQuantity_when_present`() {
+        val dto = SaleItemDto(
+            id = "item-1",
+            saleId = "sale-1",
+            productId = "prod-1",
+            quantity = 2.0,
+            baseQuantity = 20.0,
+            unitPrice = 100.0,
+            totalPrice = 200.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val jsonString = json.encodeToString(dto)
+
+        assertTrue(jsonString.contains("base_quantity"))
+        assertTrue(jsonString.contains("20.0"))
+    }
+
+    @Test
+    fun `should_deserializeBaseQuantity_when_presentInJson`() {
+        val jsonString = """
+            {
+                "id": "item-1",
+                "sale_id": "sale-1",
+                "product_id": "prod-1",
+                "quantity": 2.0,
+                "base_quantity": 20.0,
+                "unit_price": 100.0,
+                "total_price": 200.0,
+                "created_at": 1000,
+                "created_by": "user"
+            }
+        """.trimIndent()
+
+        val dto = json.decodeFromString<SaleItemDto>(jsonString)
+
+        assertEquals(2.0, dto.quantity)
+        assertEquals(20.0, dto.baseQuantity)
+    }
+
+    @Test
+    fun `should_mapBaseQuantityToModel_when_toModelIsCalled`() {
+        val dto = SaleItemDto(
+            id = "item-1",
+            saleId = "sale-1",
+            productId = "prod-1",
+            productName = "Test Product",
+            unit = "boite",
+            quantity = 3.0,
+            baseQuantity = 30.0,
+            unitPrice = 150.0,
+            totalPrice = 450.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        assertEquals(3.0, model.quantity)
+        assertEquals(30.0, model.baseQuantity)
+        assertEquals("Test Product", model.productName)
+        assertEquals("boite", model.unit)
+    }
+
+    @Test
+    fun `should_passBaseQuantityInFromModel_when_present`() {
+        val model = SaleItem(
+            id = "item-1",
+            saleId = "sale-1",
+            productId = "prod-1",
+            productName = "Test Product",
+            unit = "boite",
+            quantity = 2.0,
+            baseQuantity = 20.0,
+            unitPrice = 120.0,
+            totalPrice = 240.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val dto = SaleItemDto.fromModel(
+            model,
+            productName = "Test Product",
+            unit = "boite",
+            clientId = "client-1"
+        )
+
+        assertEquals(2.0, dto.quantity)
+        assertEquals(20.0, dto.baseQuantity)
+        assertEquals("Test Product", dto.productName)
+        assertEquals("boite", dto.unit)
+    }
+
+    @Test
+    fun `should_defaultToNull_when_baseQuantityNotPresentInJson`() {
+        val jsonString = """
+            {
+                "id": "item-1",
+                "sale_id": "sale-1",
+                "product_id": "prod-1",
+                "quantity": 5.0,
+                "unit_price": 10.0,
+                "total_price": 50.0,
+                "created_at": 1000,
+                "created_by": "user"
+            }
+        """.trimIndent()
+
+        val dto = json.decodeFromString<SaleItemDto>(jsonString)
+
+        assertEquals(5.0, dto.quantity)
+        assertNull(dto.baseQuantity)
+    }
+
+    @Test
+    fun `should_handleNullBaseQuantity_when_level1Sale`() {
+        val dto = SaleItemDto(
+            id = "item-1",
+            saleId = "sale-1",
+            productId = "prod-1",
+            productName = "Test Product",
+            unit = "unite",
+            quantity = 10.0,
+            baseQuantity = null,
+            unitPrice = 15.0,
+            totalPrice = 150.0,
+            createdAt = 1000L,
+            createdBy = "user"
+        )
+
+        val model = dto.toModel()
+
+        assertEquals(10.0, model.quantity)
+        assertNull(model.baseQuantity)
+    }
 }
 
 class InventoryDtoTest {
@@ -740,8 +876,6 @@ class SaleBatchAllocationDtoTest {
             batchId = "batch-1",
             quantityAllocated = 5.0,
             purchasePriceAtAllocation = 10.0,
-            quantity = 5.0,
-            unitCost = 10.0,
             createdAt = 1000L,
             createdBy = "user"
         )
@@ -855,81 +989,6 @@ class ProductPriceDtoTest {
         assertTrue(jsonString.contains("selling_price"))
         assertTrue(jsonString.contains("created_at"))
         assertTrue(jsonString.contains("updated_at"))
-    }
-}
-
-class CurrentStockDtoTest {
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-
-    @Test
-    fun testJsonSerializationWithSnakeCase() {
-        val dto = CurrentStockDto(
-            productId = "prod-1",
-            productName = "Test Product",
-            description = "A test product",
-            siteId = "site-1",
-            siteName = "Test Site",
-            currentStock = 100.0,
-            minStock = 10.0,
-            maxStock = 200.0,
-            stockStatus = "OK"
-        )
-
-        val jsonString = json.encodeToString(dto)
-
-        assertTrue(jsonString.contains("product_id"))
-        assertTrue(jsonString.contains("product_name"))
-        assertTrue(jsonString.contains("site_id"))
-        assertTrue(jsonString.contains("site_name"))
-        assertTrue(jsonString.contains("current_stock"))
-        assertTrue(jsonString.contains("min_stock"))
-        assertTrue(jsonString.contains("max_stock"))
-        assertTrue(jsonString.contains("stock_status"))
-    }
-
-    @Test
-    fun testJsonDeserializationWithSnakeCase() {
-        val jsonString = """
-            {
-                "product_id": "prod-1",
-                "product_name": "Test Product",
-                "description": "A test product",
-                "site_id": "site-1",
-                "site_name": "Test Site",
-                "current_stock": 100.0,
-                "min_stock": 10.0,
-                "max_stock": 200.0,
-                "stock_status": "OK"
-            }
-        """.trimIndent()
-
-        val dto = json.decodeFromString<CurrentStockDto>(jsonString)
-
-        assertEquals("prod-1", dto.productId)
-        assertEquals("Test Product", dto.productName)
-        assertEquals("A test product", dto.description)
-        assertEquals("site-1", dto.siteId)
-        assertEquals("Test Site", dto.siteName)
-        assertEquals(100.0, dto.currentStock)
-        assertEquals(10.0, dto.minStock)
-        assertEquals(200.0, dto.maxStock)
-        assertEquals("OK", dto.stockStatus)
-    }
-
-    @Test
-    fun testOptionalFields() {
-        val dto = CurrentStockDto(
-            productId = "prod-1",
-            productName = "Test Product",
-            siteId = "site-1",
-            siteName = "Test Site",
-            currentStock = 50.0,
-            stockStatus = "LOW"
-        )
-
-        assertNull(dto.description)
-        assertNull(dto.minStock)
-        assertNull(dto.maxStock)
     }
 }
 

@@ -260,6 +260,7 @@ struct SaleEditorView: View {
     @State private var products: [Product] = []
     @State private var customers: [Customer] = []
     @State private var batches: [PurchaseBatch] = []
+    @State private var packagingTypes: [PackagingType] = []
 
     @State private var selectedSiteId: String = ""
     @State private var customerName: String = ""
@@ -369,7 +370,7 @@ struct SaleEditorView: View {
                 }
             }
             .sheet(isPresented: $showAddItem) {
-                SaleItemEditorView(products: filteredProducts, batches: batches.filter { $0.siteId == selectedSiteId }) { item in
+                SaleItemEditorView(products: filteredProducts, batches: batches.filter { $0.siteId == selectedSiteId }, packagingTypes: packagingTypes) { item in
                     saleItems.append(item)
                 }
             }
@@ -395,11 +396,13 @@ struct SaleEditorView: View {
             async let productsResult = sdk.productRepository.getAll()
             async let customersResult = sdk.customerRepository.getAll()
             async let batchesResult = sdk.purchaseBatchRepository.getAll()
+            async let packagingTypesResult = sdk.packagingTypeRepository.getAll()
 
             sites = try await sitesResult
             products = try await productsResult
             customers = try await customersResult
             batches = try await batchesResult
+            packagingTypes = try await packagingTypesResult
 
             selectedSiteId = defaultSiteId ?? sites.first?.id ?? ""
         } catch {
@@ -421,7 +424,10 @@ struct SaleEditorView: View {
                 SaleItemInput(
                     productId: draft.productId,
                     quantity: draft.quantity,
-                    unitPrice: draft.unitPrice
+                    unitPrice: draft.unitPrice,
+                    selectedLevel: draft.selectedLevel,
+                    conversionFactor: draft.conversionFactor.map { KotlinDouble(double: $0) },
+                    batchId: draft.batchId
                 )
             }
 
@@ -507,17 +513,29 @@ struct SaleItemDraft {
     let productName: String
     let quantity: Double
     let unitPrice: Double
+    let selectedLevel: Int32
+    let conversionFactor: Double?
+    let batchId: String?
     var totalPrice: Double { quantity * unitPrice }
+    var baseQuantity: Double? {
+        if selectedLevel == 2, let cf = conversionFactor {
+            return quantity * cf
+        }
+        return nil
+    }
 }
 
 // MARK: - Sale Item Editor View
 struct SaleItemEditorView: View {
     let products: [Product]
     let batches: [PurchaseBatch]
+    let packagingTypes: [PackagingType]
     let onAdd: (SaleItemDraft) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedProductId: String = ""
+    @State private var selectedLevel: Int32 = 1
+    @State private var selectedBatchId: String = ""
     @State private var quantityText: String = ""
     @State private var priceText: String = ""
 
@@ -525,18 +543,136 @@ struct SaleItemEditorView: View {
         products.first { $0.id == selectedProductId }
     }
 
-    var availableStock: Double {
+    var selectedPackagingType: PackagingType? {
+        guard let product = selectedProduct else { return nil }
+        return packagingTypes.first { $0.id == product.packagingTypeId }
+    }
+
+    var productHasTwoLevels: Bool {
+        selectedPackagingType?.level2Name != nil
+    }
+
+    var currentLevelName: String {
+        guard let pt = selectedPackagingType else { return Localized.unit }
+        if selectedLevel == 2, let l2 = pt.level2Name {
+            return l2
+        }
+        return pt.level1Name
+    }
+
+    var productConversionFactor: Double? {
+        selectedProduct?.conversionFactor?.doubleValue
+    }
+
+    // Batches sorted with smart suggestion: expiring soon first, then FIFO
+    var availableBatchesSorted: [PurchaseBatch] {
+        let productBatches = batches.filter { $0.productId == selectedProductId && !$0.isExhausted && $0.remainingQuantity > 0 }
+        let now = Date()
+        let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: now)!
+        let thresholdMs = Int64(thirtyDaysFromNow.timeIntervalSince1970 * 1000)
+
+        let expiringSoon = productBatches
+            .filter { batch in
+                guard let expiryDate = batch.expiryDate?.int64Value else { return false }
+                return expiryDate < thresholdMs
+            }
+            .sorted { a, b in
+                (a.expiryDate?.int64Value ?? 0) < (b.expiryDate?.int64Value ?? 0)
+            }
+
+        let rest = productBatches
+            .filter { batch in
+                if let expiryDate = batch.expiryDate?.int64Value {
+                    return expiryDate >= thresholdMs
+                }
+                return true
+            }
+            .sorted { $0.purchaseDate < $1.purchaseDate }
+
+        return expiringSoon + rest
+    }
+
+    var selectedBatch: PurchaseBatch? {
+        batches.first { $0.id == selectedBatchId }
+    }
+
+    var selectedBatchExpiresSoon: Bool {
+        guard let batch = selectedBatch,
+              let expiryDate = batch.expiryDate?.int64Value else { return false }
+        let now = Date()
+        let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: now)!
+        let thresholdMs = Int64(thirtyDaysFromNow.timeIntervalSince1970 * 1000)
+        return expiryDate < thresholdMs
+    }
+
+    var selectedBatchExpiryDateFormatted: String {
+        guard let batch = selectedBatch,
+              let expiryMs = batch.expiryDate?.int64Value else { return "" }
+        let date = Date(timeIntervalSince1970: Double(expiryMs) / 1000)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: date)
+    }
+
+    // Stock is always in level 1 units
+    var availableStockBase: Double {
         batches
             .filter { $0.productId == selectedProductId && !$0.isExhausted }
             .reduce(0) { $0 + $1.remainingQuantity }
     }
 
-    var suggestedPrice: Double {
+    // Available stock displayed in the selected level's unit
+    var availableStockDisplay: Double {
+        if selectedLevel == 2, let cf = productConversionFactor, cf > 0 {
+            return availableStockBase / cf
+        }
+        return availableStockBase
+    }
+
+    // Purchase price per base unit (level 1) from the selected batch, or oldest non-exhausted
+    var purchasePricePerBaseUnit: Double {
+        if !selectedBatchId.isEmpty, let batch = selectedBatch {
+            return batch.purchasePrice
+        }
         guard let batch = batches.first(where: { $0.productId == selectedProductId && !$0.isExhausted }) else {
             return 0
         }
-        // Simple margin of 30%
-        return batch.purchasePrice * 1.3
+        return batch.purchasePrice
+    }
+
+    // Purchase price adjusted for the selected level
+    var purchasePriceForLevel: Double {
+        if selectedLevel == 2, let cf = productConversionFactor {
+            return purchasePricePerBaseUnit * cf
+        }
+        return purchasePricePerBaseUnit
+    }
+
+    // Suggested selling price based on product's margin settings
+    var suggestedPrice: Double {
+        let cost = purchasePriceForLevel
+        guard cost > 0 else { return 0 }
+
+        guard let product = selectedProduct else { return cost }
+
+        let marginType = product.marginType ?? "PERCENTAGE"
+        let marginValue = product.marginValue?.doubleValue ?? 0.0
+
+        switch marginType.lowercased() {
+        case "fixed":
+            // Fixed margin is per base unit; scale by conversionFactor for level 2
+            if selectedLevel == 2, let cf = productConversionFactor {
+                return cost + marginValue * cf
+            }
+            return cost + marginValue
+        case "percentage":
+            if marginValue > 0 {
+                return cost * (1.0 + marginValue / 100.0)
+            }
+            return cost
+        default:
+            return cost
+        }
     }
 
     var body: some View {
@@ -550,25 +686,126 @@ struct SaleItemEditorView: View {
                         }
                     }
                     .onChange(of: selectedProductId) { _ in
-                        if suggestedPrice > 0 {
-                            priceText = String(format: "%.2f", suggestedPrice)
+                        // Reset level to product's default
+                        if let product = selectedProduct {
+                            selectedLevel = product.selectedLevel
+                        } else {
+                            selectedLevel = 1
                         }
+                        // Auto-select first batch from smart-sorted list
+                        selectedBatchId = availableBatchesSorted.first?.id ?? ""
+                        updateSuggestedPrice()
                     }
 
                     if !selectedProductId.isEmpty {
+                        // Level picker (only shown for products with two packaging levels)
+                        if productHasTwoLevels, let pt = selectedPackagingType {
+                            Picker(Localized.unit, selection: $selectedLevel) {
+                                Text(pt.level1Name).tag(Int32(1))
+                                if let l2 = pt.level2Name {
+                                    Text(l2).tag(Int32(2))
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .onChange(of: selectedLevel) { _ in
+                                updateSuggestedPrice()
+                            }
+
+                            if selectedLevel == 2, let cf = productConversionFactor {
+                                LabeledContentCompat {
+                                    Text("1 \(pt.level2Name ?? "") =")
+                                } content: {
+                                    Text("\(String(format: "%.0f", cf)) \(pt.level1Name)")
+                                }
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            }
+                        }
+
                         LabeledContentCompat {
                             Text(Localized.availableStock)
                         } content: {
-                            Text(String(format: "%.1f", availableStock))
+                            Text("\(String(format: "%.1f", availableStockDisplay)) \(currentLevelName)")
+                        }
+
+                        // Batch picker
+                        if !availableBatchesSorted.isEmpty {
+                            Picker("Lot", selection: $selectedBatchId) {
+                                ForEach(availableBatchesSorted, id: \.id) { batch in
+                                    Text("Lot: \(batch.batchNumber ?? "N/A") - \(String(format: "%.0f", batch.purchasePrice)) FCFA (reste: \(String(format: "%.1f", batch.remainingQuantity)))").tag(batch.id)
+                                }
+                            }
+                            .onChange(of: selectedBatchId) { _ in
+                                updateSuggestedPrice()
+                            }
+
+                            if selectedBatchExpiresSoon {
+                                Text("Lot proche de l'expiration (expire le \(selectedBatchExpiryDateFormatted))")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+                        }
+
+                        // Show purchase price info
+                        if purchasePriceForLevel > 0 {
+                            LabeledContentCompat {
+                                Text(Localized.purchasePrice)
+                            } content: {
+                                Text("\(String(format: "%.2f", purchasePriceForLevel)) EUR/\(currentLevelName)")
+                            }
+                            .foregroundColor(.secondary)
+
+                            if let product = selectedProduct {
+                                let marginType = product.marginType ?? "PERCENTAGE"
+                                let marginValue = product.marginValue?.doubleValue ?? 0.0
+                                if marginValue > 0 {
+                                    LabeledContentCompat {
+                                        Text("Marge")
+                                    } content: {
+                                        if marginType.lowercased() == "fixed" {
+                                            Text("+\(String(format: "%.2f", marginValue)) EUR")
+                                        } else {
+                                            Text("+\(String(format: "%.0f", marginValue))%")
+                                        }
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                }
+                            }
                         }
                     }
                 }
 
                 Section(header: Text("\(Localized.quantity) & \(Localized.price)")) {
-                    TextField(Localized.quantity, text: $quantityText)
-                        .keyboardType(.decimalPad)
-                    TextField(Localized.unitPrice, text: $priceText)
-                        .keyboardType(.decimalPad)
+                    HStack {
+                        TextField(Localized.quantity, text: $quantityText)
+                            .keyboardType(.decimalPad)
+                        Text(currentLevelName)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Level 2 validation: quantity must not exceed conversionFactor
+                    if selectedLevel == 2, let cf = productConversionFactor,
+                       let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")),
+                       qty > cf {
+                        Text("Quantite max: \(String(format: "%.0f", cf)) \(selectedPackagingType?.level2Name ?? "")")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+
+                    // Non-blocking stock warning
+                    if hasInsufficientStock {
+                        Text("Stock insuffisant (disponible: \(String(format: "%.1f", availableStockDisplay)) \(currentLevelName))")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+
+                    HStack {
+                        TextField(Localized.unitPrice, text: $priceText)
+                            .keyboardType(.decimalPad)
+                        Text("EUR/\(currentLevelName)")
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 if let product = selectedProduct {
@@ -584,6 +821,16 @@ struct SaleItemEditorView: View {
                             Text(Localized.total)
                         } content: {
                             Text(String(format: "%.2f EUR", qty * price))
+                        }
+                        // Show base quantity equivalent for level 2 sales
+                        if selectedLevel == 2, let cf = productConversionFactor, let pt = selectedPackagingType {
+                            LabeledContentCompat {
+                                Text("= \(String(format: "%.0f", qty * cf)) \(pt.level1Name)")
+                            } content: {
+                                Text("")
+                            }
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                         }
                     }
                 }
@@ -603,6 +850,12 @@ struct SaleItemEditorView: View {
         }
     }
 
+    private func updateSuggestedPrice() {
+        if suggestedPrice > 0 {
+            priceText = String(format: "%.2f", suggestedPrice)
+        }
+    }
+
     private var canAdd: Bool {
         guard !selectedProductId.isEmpty,
               let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")),
@@ -610,8 +863,10 @@ struct SaleItemEditorView: View {
               qty > 0, price > 0 else {
             return false
         }
-        // Note: We allow sales even with insufficient stock (negative stock allowed per business rules)
-        // The UseCase will generate a warning but not block the sale
+        // Level 2 validation: quantity must not exceed conversionFactor
+        if selectedLevel == 2, let cf = productConversionFactor, qty > cf {
+            return false
+        }
         return true
     }
 
@@ -619,7 +874,7 @@ struct SaleItemEditorView: View {
         guard let qty = Double(quantityText.replacingOccurrences(of: ",", with: ".")) else {
             return false
         }
-        return qty > availableStock
+        return qty > availableStockDisplay
     }
 
     private func addItem() {
@@ -633,7 +888,10 @@ struct SaleItemEditorView: View {
             productId: product.id,
             productName: product.name,
             quantity: qty,
-            unitPrice: price
+            unitPrice: price,
+            selectedLevel: selectedLevel,
+            conversionFactor: productConversionFactor,
+            batchId: selectedBatchId.isEmpty ? nil : selectedBatchId
         )
         onAdd(draft)
         dismiss()

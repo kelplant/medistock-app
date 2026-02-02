@@ -8,6 +8,8 @@ import com.medistock.shared.data.dto.CategoryDto
 import com.medistock.shared.data.dto.SiteDto
 import com.medistock.shared.data.dto.CustomerDto
 import com.medistock.shared.data.dto.PackagingTypeDto
+import com.medistock.shared.data.dto.UserDto
+import com.medistock.shared.data.dto.UserPermissionDto
 import com.medistock.shared.data.repository.SyncQueueRepository
 import com.medistock.data.remote.repository.*
 import com.medistock.shared.domain.model.SyncOperation
@@ -53,6 +55,8 @@ class SyncQueueProcessor(
     private val siteRepo by lazy { SiteSupabaseRepository() }
     private val customerRepo by lazy { CustomerSupabaseRepository() }
     private val packagingTypeRepo by lazy { PackagingTypeSupabaseRepository() }
+    private val userRepo by lazy { UserSupabaseRepository() }
+    private val userPermissionRepo by lazy { UserPermissionSupabaseRepository() }
 
     // État de la synchronisation
     private val _syncState = MutableStateFlow(SyncProcessorState())
@@ -293,6 +297,14 @@ class SyncQueueProcessor(
                 val packagingType = json.decodeFromString<PackagingTypeDto>(item.payload)
                 packagingTypeRepo.upsertPackagingType(packagingType)
             }
+            "User" -> {
+                val user = json.decodeFromString<UserDto>(item.payload)
+                userRepo.upsertUser(user)
+            }
+            "UserPermission" -> {
+                val permission = json.decodeFromString<UserPermissionDto>(item.payload)
+                userPermissionRepo.upsertPermission(permission)
+            }
             else -> throw IllegalArgumentException("Type d'entité non supporté: ${item.entityType}")
         }
     }
@@ -308,6 +320,8 @@ class SyncQueueProcessor(
             "Site" -> siteRepo.deleteSite(item.entityId)
             "Customer" -> customerRepo.deleteCustomer(item.entityId)
             "PackagingType" -> packagingTypeRepo.deletePackagingType(item.entityId)
+            "User" -> userRepo.deleteUser(item.entityId)
+            "UserPermission" -> userPermissionRepo.deletePermission(item.entityId)
             else -> throw IllegalArgumentException("Type d'entité non supporté: ${item.entityType}")
         }
     }
@@ -338,6 +352,8 @@ class SyncQueueProcessor(
                 "Site" -> siteRepo.getSiteById(entityId)?.let { json.encodeToString(SiteDto.serializer(), it) }
                 "Customer" -> customerRepo.getCustomerById(entityId)?.let { json.encodeToString(CustomerDto.serializer(), it) }
                 "PackagingType" -> packagingTypeRepo.getPackagingTypeById(entityId)?.let { json.encodeToString(PackagingTypeDto.serializer(), it) }
+                "User" -> userRepo.getUserById(entityId)?.let { json.encodeToString(UserDto.serializer(), it) }
+                "UserPermission" -> userPermissionRepo.getPermissionById(entityId)?.let { json.encodeToString(UserPermissionDto.serializer(), it) }
                 else -> null
             }
         } catch (e: Exception) {
@@ -370,6 +386,14 @@ class SyncQueueProcessor(
             "PackagingType" -> {
                 val dto = json.decodeFromString<PackagingTypeDto>(remoteData)
                 sdk.packagingTypeRepository.upsert(dto.toModel())
+            }
+            "User" -> {
+                val dto = json.decodeFromString<UserDto>(remoteData)
+                sdk.userRepository.upsert(dto.toModel())
+            }
+            "UserPermission" -> {
+                val dto = json.decodeFromString<UserPermissionDto>(remoteData)
+                sdk.userPermissionRepository.upsert(dto.toModel())
             }
         }
     }

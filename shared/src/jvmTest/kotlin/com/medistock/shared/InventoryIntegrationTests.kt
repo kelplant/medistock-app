@@ -22,10 +22,16 @@ import kotlin.test.assertTrue
 class InventoryIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     /**
@@ -43,7 +49,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product A", site.id, userId = "admin")
+        val product = sdk.createProduct("Product A", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Initial stock from batches: 0 (theoretical from stock view will also be 0)
@@ -86,7 +92,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product B", site.id, userId = "admin")
+        val product = sdk.createProduct("Product B", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Add batches: 40 units + 60 units = 100 total
@@ -148,7 +154,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product C", site.id, userId = "admin")
+        val product = sdk.createProduct("Product C", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // No initial batches - stock is 0
@@ -193,8 +199,8 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val productA = sdk.createProduct("Product A", site.id, userId = "admin")
-        val productB = sdk.createProduct("Product B", site.id, userId = "admin")
+        val productA = sdk.createProduct("Product A", site.id, packagingTypeId = packagingTypeId, userId = "admin")
+        val productB = sdk.createProduct("Product B", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(productA)
         sdk.productRepository.insert(productB)
 
@@ -235,7 +241,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product", site.id, userId = "admin")
+        val product = sdk.createProduct("Product", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Execute inventory
@@ -264,7 +270,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product", site.id, userId = "admin")
+        val product = sdk.createProduct("Product", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // No batches - stock is 0
@@ -304,7 +310,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product", site.id, userId = "admin")
+        val product = sdk.createProduct("Product", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // No initial stock
@@ -335,7 +341,7 @@ class InventoryIntegrationTests {
         val site = sdk.createSite("Warehouse", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product", site.id, userId = "admin")
+        val product = sdk.createProduct("Product", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Execute inventory with notes

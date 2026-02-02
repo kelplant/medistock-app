@@ -315,7 +315,7 @@ BEGIN
                         v_sale_item_id := gen_random_uuid();
 
                         -- Insert sale item (unit is denormalized from packaging_types)
-                        INSERT INTO sale_items (id, sale_id, product_id, product_name, unit, quantity, price_per_unit, subtotal, created_at, created_by)
+                        INSERT INTO sale_items (id, sale_id, product_id, product_name, unit, quantity, unit_price, total_price, created_at, created_by)
                         VALUES (v_sale_item_id, v_sale_id, v_product.id, v_product.name, v_product.derived_unit, v_qty, v_selling_price, v_qty * v_selling_price, v_now, 'seed');
 
                         -- Insert batch allocation
@@ -332,7 +332,7 @@ BEGIN
 
                 -- Update sale total
                 UPDATE sales
-                SET total_amount = (SELECT COALESCE(SUM(subtotal), 0) FROM sale_items WHERE sale_id = v_sale_id)
+                SET total_amount = (SELECT COALESCE(SUM(total_price), 0) FROM sale_items WHERE sale_id = v_sale_id)
                 WHERE id = v_sale_id;
             END IF;
         END LOOP;
@@ -352,7 +352,7 @@ SELECT
     'OUT',
     s.date,
     sba.purchase_price_at_allocation,
-    si.price_per_unit,
+    si.unit_price,
     EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     'seed'
 FROM sale_items si

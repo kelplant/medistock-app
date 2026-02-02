@@ -495,17 +495,17 @@ class StockRepositoryTest {
     }
 
     @Test
-    fun `should_returnFalse_when_setStockQuantityWithNoExistingEntry`() = runTest {
+    fun `should_createEntryAndReturnTrue_when_setStockQuantityWithNoExistingEntry`() = runTest {
         // Arrange
         setupBasicTestData()
 
-        // Act
+        // Act — setStockQuantity now uses atomic upsert, so it creates the entry
         val success = repository.setStockQuantity("product-1", "site-1", 100.0)
         val quantity = repository.getStockQuantity("product-1", "site-1")
 
         // Assert
-        assertFalse(success)
-        assertEquals(0.0, quantity)
+        assertTrue(success)
+        assertEquals(100.0, quantity)
     }
 
     @Test

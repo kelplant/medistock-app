@@ -125,6 +125,62 @@ class SaleInputValidationTest {
         assertEquals(3, input.items.size)
         assertEquals(null, input.customerId)
     }
+
+    @Test
+    fun `should_haveDefaultValues_when_saleItemInputCreated`() {
+        val item = SaleItemInput(
+            productId = "prod-1",
+            quantity = 5.0,
+            unitPrice = 15.0
+        )
+
+        assertEquals(1, item.selectedLevel)
+        assertEquals(null, item.conversionFactor)
+    }
+
+    @Test
+    fun `should_acceptLevel2WithConversionFactor_when_multiLevelSale`() {
+        val item = SaleItemInput(
+            productId = "prod-1",
+            quantity = 2.0,
+            unitPrice = 100.0,
+            selectedLevel = 2,
+            conversionFactor = 10.0
+        )
+
+        assertEquals(2, item.selectedLevel)
+        assertEquals(10.0, item.conversionFactor)
+        assertEquals(2.0, item.quantity)
+    }
+
+    @Test
+    fun `should_allowLevel1WithNullConversionFactor_when_standardSale`() {
+        val item = SaleItemInput(
+            productId = "prod-1",
+            quantity = 10.0,
+            unitPrice = 15.0,
+            selectedLevel = 1,
+            conversionFactor = null
+        )
+
+        assertEquals(1, item.selectedLevel)
+        assertEquals(null, item.conversionFactor)
+    }
+
+    @Test
+    fun `should_acceptExplicitLevel2_when_sellingInSecondaryPackaging`() {
+        val item = SaleItemInput(
+            productId = "prod-1",
+            quantity = 3.0,
+            unitPrice = 150.0,
+            selectedLevel = 2,
+            conversionFactor = 12.0
+        )
+
+        assertTrue(item.selectedLevel == 2)
+        assertNotNull(item.conversionFactor)
+        assertEquals(12.0, item.conversionFactor)
+    }
 }
 
 class TransferInputValidationTest {

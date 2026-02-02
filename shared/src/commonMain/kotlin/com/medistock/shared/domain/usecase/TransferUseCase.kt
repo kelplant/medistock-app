@@ -17,7 +17,8 @@ data class TransferInput(
     val toSiteId: String,
     val quantity: Double,
     val notes: String? = null,
-    val userId: String
+    val userId: String,
+    val preferredBatchId: String? = null
 )
 
 /**
@@ -57,7 +58,8 @@ class TransferUseCase(
     private val stockMovementRepository: StockMovementRepository,
     private val productRepository: ProductRepository,
     private val siteRepository: SiteRepository,
-    private val auditRepository: AuditRepository
+    private val auditRepository: AuditRepository,
+    private val stockRepository: StockRepository
 ) {
     private val json = Json { prettyPrint = false; encodeDefaults = true }
 
@@ -108,7 +110,8 @@ class TransferUseCase(
             toSiteId = input.toSiteId,
             quantityNeeded = input.quantity,
             userId = input.userId,
-            timestamp = now
+            timestamp = now,
+            preferredBatchId = input.preferredBatchId
         )
 
         // Add warning if insufficient stock (but continue - negative stock allowed)
@@ -178,6 +181,22 @@ class TransferUseCase(
             stockMovementRepository.insert(sourceMovement)
             stockMovementRepository.insert(destinationMovement)
 
+            // Update current_stock (negative delta on source site)
+            stockRepository.updateStockDelta(
+                productId = sourceMovement.productId,
+                siteId = sourceMovement.siteId,
+                delta = sourceMovement.quantity, // Already negative for TRANSFER_OUT
+                lastMovementId = sourceMovement.id
+            )
+
+            // Update current_stock (positive delta on destination site)
+            stockRepository.updateStockDelta(
+                productId = destinationMovement.productId,
+                siteId = destinationMovement.siteId,
+                delta = destinationMovement.quantity, // Positive for TRANSFER_IN
+                lastMovementId = destinationMovement.id
+            )
+
             // 9. Create audit entry
             val auditEntry = AuditEntry(
                 id = generateId("audit"),
@@ -228,7 +247,9 @@ class TransferUseCase(
 
     /**
      * Transfer batches using FIFO (First In First Out)
-     * Creates new batches on destination site preserving original purchase date
+     * If preferredBatchId is provided, allocate from that batch first, then FIFO for remainder.
+     * Otherwise, oldest batches (by purchase_date) are consumed first.
+     * Creates new batches on destination site preserving original purchase date.
      */
     private suspend fun transferBatchesFIFO(
         productId: String,
@@ -236,11 +257,21 @@ class TransferUseCase(
         toSiteId: String,
         quantityNeeded: Double,
         userId: String,
-        timestamp: Long
+        timestamp: Long,
+        preferredBatchId: String? = null
     ): FIFOTransferResult {
         // Get available batches from source site ordered by purchase_date ASC
-        val sourceBatches = purchaseBatchRepository.getByProductAndSite(productId, fromSiteId)
+        val allBatches = purchaseBatchRepository.getByProductAndSite(productId, fromSiteId)
             .filter { !it.isExhausted && it.remainingQuantity > 0 }
+
+        // If a preferred batch is specified, put it first, then the rest in FIFO order
+        val sourceBatches = if (preferredBatchId != null) {
+            val preferred = allBatches.filter { it.id == preferredBatchId }
+            val rest = allBatches.filter { it.id != preferredBatchId }
+            preferred + rest
+        } else {
+            allBatches
+        }
 
         val totalAvailable = sourceBatches.sumOf { it.remainingQuantity }
         val transferredBatches = mutableListOf<TransferredBatch>()

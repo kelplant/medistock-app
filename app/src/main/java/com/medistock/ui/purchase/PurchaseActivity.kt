@@ -56,7 +56,8 @@ class PurchaseActivity : LocalizedActivity() {
     private fun getUnit(product: Product?): String {
         if (product == null) return ""
         val packagingType = packagingTypes[product.packagingTypeId]
-        return packagingType?.getLevelName(product.selectedLevel) ?: ""
+        // Purchases always use level 1 (base unit) since stock is tracked in base units
+        return packagingType?.level1Name ?: ""
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -112,6 +112,9 @@ class BidirectionalSyncManager: ObservableObject {
             await updateProgress("Récupération des clients...")
             try await syncCustomersFromRemote(sdk: sdk)
 
+            await updateProgress("Récupération des fournisseurs...")
+            try await syncSuppliersFromRemote(sdk: sdk)
+
             await updateProgress("Récupération des achats...")
             try await syncPurchaseBatchesFromRemote(sdk: sdk)
 
@@ -206,6 +209,16 @@ class BidirectionalSyncManager: ObservableObject {
 
             // Use upsert (INSERT OR REPLACE) to handle both new and existing records
             try? await sdk.customerRepository.upsert(customer: dto.toEntity())
+        }
+    }
+
+    private func syncSuppliersFromRemote(sdk: MedistockSDK) async throws {
+        let remoteSuppliers: [SupplierDTO] = try await supabase.fetchAll(from: "suppliers")
+
+        for dto in remoteSuppliers {
+            if dto.clientId == SyncClientId.current { continue }
+
+            try? await sdk.supplierRepository.upsert(supplier: dto.toEntity())
         }
     }
 

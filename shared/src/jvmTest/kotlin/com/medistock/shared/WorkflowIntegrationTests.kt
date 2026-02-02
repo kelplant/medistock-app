@@ -18,10 +18,16 @@ import kotlin.test.assertTrue
 class WorkflowIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     // ========== PURCHASE WORKFLOW TESTS ==========
@@ -32,7 +38,7 @@ class WorkflowIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Execute purchase
@@ -73,7 +79,7 @@ class WorkflowIntegrationTests {
         sdk.siteRepository.insert(site)
 
         // Product with 20% margin
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
             .copy(marginType = "percentage", marginValue = 20.0)
         sdk.productRepository.insert(product)
 
@@ -104,7 +110,7 @@ class WorkflowIntegrationTests {
         val site = sdk.createSite("Pharmacy", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Paracetamol", site.id, userId = "admin")
+        val product = sdk.createProduct("Paracetamol", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Step 1: Purchase 100 units at 5€ each
@@ -156,7 +162,7 @@ class WorkflowIntegrationTests {
         val site = sdk.createSite("Pharmacy", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Ibuprofen", site.id, userId = "admin")
+        val product = sdk.createProduct("Ibuprofen", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Purchase 1: 50 units at 8€
@@ -218,7 +224,7 @@ class WorkflowIntegrationTests {
         sdk.siteRepository.insert(siteA)
         sdk.siteRepository.insert(siteB)
 
-        val product = sdk.createProduct("Product X", siteA.id, userId = "admin")
+        val product = sdk.createProduct("Product X", siteA.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Create batches on Site A
@@ -288,7 +294,7 @@ class WorkflowIntegrationTests {
         val site = sdk.createSite("Site", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product", site.id, userId = "admin")
+        val product = sdk.createProduct("Product", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Try to transfer to same site
@@ -317,7 +323,7 @@ class WorkflowIntegrationTests {
         sdk.siteRepository.insert(warehouse)
         sdk.siteRepository.insert(store)
 
-        val product = sdk.createProduct("Medicine A", warehouse.id, userId = "admin")
+        val product = sdk.createProduct("Medicine A", warehouse.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Step 1: Purchase at warehouse (100 units at 20€)
@@ -384,7 +390,7 @@ class WorkflowIntegrationTests {
         val site = sdk.createSite("Site", "admin")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Product", site.id, userId = "admin")
+        val product = sdk.createProduct("Product", site.id, packagingTypeId = packagingTypeId, userId = "admin")
         sdk.productRepository.insert(product)
 
         // Purchase

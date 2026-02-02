@@ -27,6 +27,52 @@
         android:textColor="#1976D2"
         android:textStyle="bold"/>
 
+    <RadioGroup
+        android:id="@+id/radioGroupLevel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="8dp"
+        android:visibility="gone">
+
+        <RadioButton
+            android:id="@+id/radioLevel1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Level 1"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/radioLevel2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Level 2"
+            android:layout_marginStart="16dp"/>
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/labelBatchSelection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Lot"
+        android:paddingTop="8dp"
+        android:visibility="gone"/>
+
+    <Spinner
+        android:id="@+id/spinnerBatchDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:spinnerMode="dropdown"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/textBatchExpiryWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_orange_dark"
+        android:textSize="12sp"
+        android:visibility="gone"/>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,6 +87,15 @@
         android:inputType="numberDecimal"/>
 
     <TextView
+        android:id="@+id/textPurchasePrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:textSize="13sp"
+        android:textColor="#757575"
+        android:visibility="gone"/>
+
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Unit Price"
@@ -52,5 +107,14 @@
         android:layout_height="wrap_content"
         android:hint="Price per unit"
         android:inputType="numberDecimal"/>
+
+    <TextView
+        android:id="@+id/textMarginInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="4dp"
+        android:textSize="12sp"
+        android:textColor="#388E3C"
+        android:visibility="gone"/>
 
 </LinearLayout>

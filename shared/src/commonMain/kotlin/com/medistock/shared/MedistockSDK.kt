@@ -3,6 +3,7 @@ package com.medistock.shared
 import com.medistock.shared.data.repository.*
 import com.medistock.shared.db.MedistockDatabase
 import com.medistock.shared.domain.audit.AuditService
+import com.medistock.shared.domain.auth.AuthResult
 import com.medistock.shared.domain.auth.AuthService
 import com.medistock.shared.domain.auth.DefaultAdminService
 import com.medistock.shared.domain.auth.PasswordVerifier
@@ -14,6 +15,8 @@ import com.medistock.shared.domain.sync.SyncEnqueueService
 import com.medistock.shared.domain.sync.SyncOrchestrator
 import com.medistock.shared.domain.usecase.*
 import com.medistock.shared.domain.validation.ReferentialIntegrityService
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.random.Random
 
@@ -77,6 +80,30 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         return AuthService(userRepository, passwordVerifier)
     }
 
+    /**
+     * Non-suspend authentication that uses a callback instead of coroutine bridging.
+     * This avoids the ObjCExportCoroutines crash on newer Xcode versions where
+     * the Kotlin/Native suspend-to-async bridge is incompatible.
+     *
+     * The coroutine runs entirely within Kotlin; only the callback crosses the ObjC bridge.
+     */
+    fun authenticateAsync(
+        passwordVerifier: PasswordVerifier,
+        username: String,
+        password: String,
+        onResult: (AuthResult) -> Unit
+    ) {
+        MainScope().launch {
+            try {
+                val authService = AuthService(userRepository, passwordVerifier)
+                val result = authService.authenticate(username, password)
+                onResult(result)
+            } catch (e: Exception) {
+                onResult(AuthResult.Error(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
     // UseCases - Business logic layer
     val purchaseUseCase: PurchaseUseCase by lazy {
         PurchaseUseCase(
@@ -84,7 +111,8 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             stockMovementRepository = stockMovementRepository,
             productRepository = productRepository,
             siteRepository = siteRepository,
-            auditRepository = auditRepository
+            auditRepository = auditRepository,
+            stockRepository = stockRepository
         )
     }
 
@@ -109,7 +137,8 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             stockMovementRepository = stockMovementRepository,
             productRepository = productRepository,
             siteRepository = siteRepository,
-            auditRepository = auditRepository
+            auditRepository = auditRepository,
+            stockRepository = stockRepository
         )
     }
 
@@ -311,6 +340,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
         unit: String = "",
         quantity: Double,
         unitPrice: Double,
+        batchId: String? = null,
         userId: String = "ios"
     ): SaleItem {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -323,6 +353,7 @@ class MedistockSDK(driverFactory: DatabaseDriverFactory) {
             quantity = quantity,
             unitPrice = unitPrice,
             totalPrice = quantity * unitPrice,
+            batchId = batchId,
             createdAt = now,
             createdBy = userId
         )

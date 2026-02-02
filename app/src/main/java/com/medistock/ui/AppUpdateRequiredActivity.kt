@@ -37,6 +37,15 @@ class AppUpdateRequiredActivity : AppCompatActivity() {
         const val EXTRA_APP_VERSION = "app_version"
         const val EXTRA_MIN_REQUIRED = "min_required"
         const val EXTRA_DB_VERSION = "db_version"
+
+        /** Blocking mode: "update" (default) = app update available, "db_incompatible" = DB schema mismatch */
+        const val EXTRA_BLOCK_MODE = "block_mode"
+        const val MODE_UPDATE = "update"
+        const val MODE_DB_INCOMPATIBLE = "db_incompatible"
+
+        /** Real app version strings for display (e.g. "0.8.0", "0.9.0") */
+        const val EXTRA_CURRENT_VERSION = "current_version"
+        const val EXTRA_NEW_VERSION = "new_version"
     }
 
     private lateinit var updateManager: AppUpdateManager
@@ -73,12 +82,10 @@ class AppUpdateRequiredActivity : AppCompatActivity() {
 
         updateManager = AppUpdateManager(this)
 
-        // Récupérer les informations de version
-        val appVersion = intent.getIntExtra(EXTRA_APP_VERSION, MigrationManager.APP_SCHEMA_VERSION)
-        val minRequired = intent.getIntExtra(EXTRA_MIN_REQUIRED, 0)
-        val dbVersion = intent.getIntExtra(EXTRA_DB_VERSION, 0)
+        val blockMode = intent.getStringExtra(EXTRA_BLOCK_MODE) ?: MODE_UPDATE
 
         // Initialiser les vues
+        val tvTitle = findViewById<TextView>(R.id.tvTitle)
         val tvMessage = findViewById<TextView>(R.id.tvUpdateMessage)
         val tvVersionInfo = findViewById<TextView>(R.id.tvVersionInfo)
         btnDownloadGithub = findViewById(R.id.btnDownloadGithub)
@@ -88,14 +95,24 @@ class AppUpdateRequiredActivity : AppCompatActivity() {
         progressDownload = findViewById(R.id.progressDownload)
         tvDownloadStatus = findViewById(R.id.tvDownloadStatus)
 
-        // Configurer les textes
-        tvMessage.text = getString(R.string.update_required_message)
-        tvVersionInfo.text = getString(
-            R.string.update_version_info,
-            appVersion,
-            minRequired,
-            dbVersion
-        )
+        if (blockMode == MODE_DB_INCOMPATIBLE) {
+            // DB incompatible mode: no download buttons, just close
+            tvTitle.text = getString(R.string.db_incompatible_title)
+            tvMessage.text = getString(R.string.db_incompatible_message)
+            tvVersionInfo.visibility = View.GONE
+            btnDownloadGithub.visibility = View.GONE
+            btnUpdate.visibility = View.GONE
+        } else {
+            // App update mode: show version info and download buttons
+            tvMessage.text = getString(R.string.update_required_message)
+            val currentVersion = intent.getStringExtra(EXTRA_CURRENT_VERSION)
+            val newVersion = intent.getStringExtra(EXTRA_NEW_VERSION)
+            if (currentVersion != null && newVersion != null) {
+                tvVersionInfo.text = getString(R.string.update_version_info, currentVersion, newVersion)
+            } else {
+                tvVersionInfo.visibility = View.GONE
+            }
+        }
 
         // Bouton GitHub
         btnDownloadGithub.setOnClickListener {

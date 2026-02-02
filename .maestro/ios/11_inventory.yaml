@@ -30,7 +30,7 @@ appId: com.medistock.ios
 
 # ========== TEST: Navigate to Inventory screen ==========
 - tapOn:
-    text: "Inventory Stock"
+    text: "Inventory"
     retryTapIfNoChange: true
 
 - waitForAnimationToEnd:

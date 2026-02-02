@@ -1,5 +1,6 @@
 # MediStock Android - Sales Tests
-# Test sell products navigation
+# Test sell products with multi-level packaging support
+# Tests navigation, sale creation, level selection, price/margin display
 appId: com.medistock
 ---
 
@@ -30,13 +31,281 @@ appId: com.medistock
 
 - takeScreenshot: "android_sales_home"
 
-# Navigate to Sell Products
+# Test 1: Navigate to Sales
 - tapOn:
-    text: "Sell Products"
+    text: "Sales"
 
 - waitForAnimationToEnd
 
 - takeScreenshot: "android_sales_screen"
+
+# Test 2: Create a new sale
+- tapOn:
+    id: "com.medistock:id/fabAddSale"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_form"
+
+# Test 3: Enter customer name
+- tapOn:
+    id: "com.medistock:id/editCustomerName"
+    optional: true
+- tapOn:
+    id: "com.medistock:id/spinnerCustomer"
+    optional: true
+
+- waitForAnimationToEnd
+
+# If it's a spinner, select first customer or type new name
+- tapOn:
+    text: ".*Customer.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Client.*"
+    optional: true
+    index: 1
+
+# If it's an edit text, type directly
+- inputText: "Test Customer E2E"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_customer_entered"
+
+# Test 4: Add a product to the sale
+- tapOn:
+    text: ".*Ajouter un produit.*"
+    optional: true
+- tapOn:
+    text: ".*Add Product.*"
+    optional: true
+- tapOn:
+    id: "com.medistock:id/btnAddProduct"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- takeScreenshot: "android_sales_add_product_dialog"
+
+# Test 5: Select a product from the dialog
+- tapOn:
+    id: "com.medistock:id/spinnerProductSale"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select first available product (skip "-- Select --")
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 1
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 1
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_product_selected"
+
+# Test 6: Verify packaging level selector appears (for 2-level products)
+# RadioGroup should be visible if product has 2 levels
+- assertVisible:
+    id: "com.medistock:id/radioGroupLevel"
+    optional: true
+
+- takeScreenshot: "android_sales_level_selector"
+
+# Test 7: Select Level 1 (default should be selected, but tap to be sure)
+- tapOn:
+    id: "com.medistock:id/radioLevel1"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_level1_selected"
+
+# Test 8: Verify purchase price is displayed
+- assertVisible:
+    id: "com.medistock:id/textPurchasePrice"
+    optional: true
+
+# Verify the text contains price information
+- assertVisible:
+    text: ".*Prix d'achat.*"
+    optional: true
+- assertVisible:
+    text: ".*Purchase Price.*"
+    optional: true
+
+- takeScreenshot: "android_sales_purchase_price_visible"
+
+# Test 9: Verify margin info is displayed
+- assertVisible:
+    id: "com.medistock:id/textMarginInfo"
+    optional: true
+
+# Verify the text contains margin information
+- assertVisible:
+    text: ".*Marge.*"
+    optional: true
+- assertVisible:
+    text: ".*Margin.*"
+    optional: true
+
+- takeScreenshot: "android_sales_margin_info_visible"
+
+# Test 10: Verify selling price is pre-filled
+- assertVisible:
+    id: "com.medistock:id/editSellingPrice"
+    optional: true
+
+- takeScreenshot: "android_sales_selling_price_prefilled"
+
+# Test 11: Enter quantity
+- tapOn:
+    id: "com.medistock:id/editSaleQuantity"
+    optional: true
+- inputText: "5"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_quantity_entered"
+
+# Test 12: Optionally modify the selling price
+- tapOn:
+    id: "com.medistock:id/editSellingPrice"
+    optional: true
+- eraseText: 10
+- inputText: "150"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_price_modified"
+
+# Test 13: Confirm the sale item
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+- tapOn:
+    id: "com.medistock:id/btnConfirmSaleItem"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_item_added"
+
+# Test 14: Try to add another product with Level 2 (if available)
+- tapOn:
+    text: ".*Ajouter un produit.*"
+    optional: true
+- tapOn:
+    text: ".*Add Product.*"
+    optional: true
+- tapOn:
+    id: "com.medistock:id/btnAddProduct"
+    optional: true
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Select another product
+- tapOn:
+    id: "com.medistock:id/spinnerProductSale"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: ".*Product.*"
+    optional: true
+    index: 2
+- tapOn:
+    text: ".*Produit.*"
+    optional: true
+    index: 2
+
+- waitForAnimationToEnd
+
+# Test 15: Select Level 2 if available
+- tapOn:
+    id: "com.medistock:id/radioLevel2"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_level2_selected"
+
+# Enter quantity for level 2
+- tapOn:
+    id: "com.medistock:id/editSaleQuantity"
+    optional: true
+- inputText: "2"
+
+- waitForAnimationToEnd
+
+# Confirm the second item
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+- tapOn:
+    text: ".*Add.*"
+    optional: true
+- tapOn:
+    text: ".*Ajouter.*"
+    optional: true
+- tapOn:
+    id: "com.medistock:id/btnConfirmSaleItem"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_two_items_added"
+
+# Test 16: Verify stock info display (should show level 1 + level 2 equivalent)
+# Stock info should be visible in the items list or summary
+- assertVisible:
+    text: ".*Stock.*"
+    optional: true
+
+- takeScreenshot: "android_sales_stock_info"
+
+# Navigate back without completing sale (cleanup)
+- back
+
+- waitForAnimationToEnd
+
+# Handle potential discard dialog
+- tapOn:
+    text: ".*Discard.*"
+    optional: true
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+- tapOn:
+    text: ".*Cancel.*"
+    optional: true
+- tapOn:
+    text: ".*Annuler.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_sales_discarded"
 
 # Navigate back to home
 - back

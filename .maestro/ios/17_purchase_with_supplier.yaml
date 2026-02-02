@@ -88,14 +88,14 @@ appId: com.medistock.ios
 - back
 - waitForAnimationToEnd
 
-# Test: Navigate to Purchase Products
+# Test: Navigate to Purchases
 - scrollUntilVisible:
     element:
-      text: "Purchase Products"
+      text: "Purchases"
     direction: DOWN
 
 - tapOn:
-    text: "Purchase Products"
+    text: "Purchases"
 
 - waitForAnimationToEnd
 

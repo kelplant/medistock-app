@@ -31,6 +31,7 @@ import com.medistock.shared.domain.model.Module
 import com.medistock.shared.domain.validation.PasswordPolicy
 import com.medistock.shared.domain.validation.PasswordPolicy.PasswordError
 import com.medistock.shared.i18n.L
+import com.medistock.data.sync.SyncQueueHelper
 import com.medistock.util.AuthManager
 import com.medistock.util.PasswordHasher
 import kotlinx.coroutines.Dispatchers
@@ -446,6 +447,9 @@ class UserAddEditActivity : AppCompatActivity() {
                             )
                             sdk.userRepository.update(updatedUser)
 
+                            // Enqueue sync to Supabase
+                            SyncQueueHelper.getInstance().enqueueUserUpdate(updatedUser, userId = currentUser)
+
                             // Update permissions
                             savePermissions(existingUser.id, currentUser, timestamp)
 
@@ -479,6 +483,9 @@ class UserAddEditActivity : AppCompatActivity() {
                         )
                         sdk.userRepository.insert(newUser)
 
+                        // Enqueue sync to Supabase
+                        SyncQueueHelper.getInstance().enqueueUserInsert(newUser, userId = currentUser)
+
                         // Save permissions
                         savePermissions(newUserId, currentUser, timestamp)
 
@@ -496,8 +503,18 @@ class UserAddEditActivity : AppCompatActivity() {
     }
 
     private suspend fun savePermissions(userId: String, createdBy: String, timestamp: Long) {
-        // Delete existing permissions
+        val syncHelper = SyncQueueHelper.getInstance()
+
+        // Fetch existing permission IDs before deleting (for sync queue)
+        val existingPermissions = sdk.userPermissionRepository.getPermissionsForUser(userId)
+
+        // Delete existing permissions locally
         sdk.userPermissionRepository.deletePermissionsForUser(userId)
+
+        // Enqueue deletions for remote sync
+        existingPermissions.forEach { permission ->
+            syncHelper.enqueueUserPermissionDelete(permission.id, userId = createdBy)
+        }
 
         // Insert new permissions
         permissionViews.forEach { (moduleKey, checkboxes) ->
@@ -515,6 +532,9 @@ class UserAddEditActivity : AppCompatActivity() {
                 updatedBy = createdBy
             )
             sdk.userPermissionRepository.insert(permission)
+
+            // Enqueue insert for remote sync
+            syncHelper.enqueueUserPermissionInsert(permission, userId = createdBy)
         }
     }
 
@@ -563,6 +583,7 @@ class UserAddEditActivity : AppCompatActivity() {
 
                             withContext(Dispatchers.IO) {
                                 sdk.userRepository.update(updatedUser)
+                                SyncQueueHelper.getInstance().enqueueUserUpdate(updatedUser, userId = authManager.getUsername())
                             }
 
                             currentUserIsActive = newStatus

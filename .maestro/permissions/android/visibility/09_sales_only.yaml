@@ -30,23 +30,23 @@ appId: com.medistock
 
 # Verify ONLY Sales is visible
 - assertVisible:
-    text: ".*Sell Products.*"
+    text: ".*Sales.*"
 
 # Verify other operations are NOT visible
 - assertNotVisible:
-    text: ".*Purchase Products.*"
+    text: ".*Purchases.*"
     optional: true
 
 - assertNotVisible:
-    text: ".*Transfer Products.*"
+    text: ".*Transfers.*"
     optional: true
 
 - assertNotVisible:
-    text: ".*View Stock.*"
+    text: ".*Stock.*"
     optional: true
 
 - assertNotVisible:
-    text: ".*Inventory Stock.*"
+    text: ".*Inventory.*"
     optional: true
 
 - assertNotVisible:

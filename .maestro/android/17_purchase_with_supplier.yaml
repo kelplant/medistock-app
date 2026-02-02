@@ -66,9 +66,17 @@ appId: com.medistock
 - back
 - waitForAnimationToEnd
 
-# Test: Navigate to Purchase Products
+# Test: Navigate to Purchases
 - tapOn:
-    text: "Purchase Products"
+    text: "Purchases"
+
+- waitForAnimationToEnd
+
+- takeScreenshot: "android_purchase_history_screen"
+
+# Tap FAB to create new purchase
+- tapOn:
+    id: "com.medistock:id/fabAddPurchase"
 
 - waitForAnimationToEnd
 
@@ -162,8 +170,30 @@ appId: com.medistock
 - takeScreenshot: "android_purchase_with_supplier_verified"
 
 # Navigate back without completing purchase (cleanup)
+# Back from purchase form → may show discard dialog or go to Purchase History
 - back
+- waitForAnimationToEnd
 
+# Handle potential discard dialog
+- tapOn:
+    text: ".*Discard.*"
+    optional: true
+- tapOn:
+    text: ".*Yes.*"
+    optional: true
+- tapOn:
+    text: ".*OK.*"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Back from Purchase History → Home
+- back
+- waitForAnimationToEnd
+
+# Extra back in case of intermediate screens
+- back:
+    optional: true
 - waitForAnimationToEnd
 
 # Verify we're back on home screen

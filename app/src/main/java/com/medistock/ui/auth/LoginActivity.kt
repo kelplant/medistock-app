@@ -408,34 +408,67 @@ class LoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Vérifie la compatibilité app/DB.
-     * Attend que la vérification soit terminée (max 5 secondes).
-     * Si l'app est trop ancienne, redirige vers l'écran de mise à jour.
+     * Vérifie les mises à jour et la compatibilité app/DB.
+     * Ordre:
+     *   1. Attendre le flux de démarrage (GitHub check + migrations + compat check)
+     *   2. Si mise à jour GitHub disponible → bloquer (écran de téléchargement)
+     *   3. Si AppTooOld → bloquer (écran de téléchargement)
+     *   4. Si DbTooOld après migrations → bloquer (écran DB incompatible)
      */
     private suspend fun checkAppCompatibility() {
-        // Attendre que la vérification soit terminée (l'Application la fait en background)
+        // Attendre que le flux de démarrage soit terminé (max 15 secondes)
         var waited = 0
-        while (MedistockApplication.compatibilityResult == null && waited < 5000) {
+        while (!MedistockApplication.startupFlowCompleted && waited < 15000) {
             delay(100)
             waited += 100
         }
 
-        val result = MedistockApplication.compatibilityResult
-
-        if (result is CompatibilityResult.AppTooOld) {
-            // Rediriger vers l'écran de mise à jour requise
+        // 1. Vérifier si une mise à jour GitHub est disponible → BLOQUER
+        val updateResult = MedistockApplication.latestUpdateResult
+        if (updateResult != null) {
             withContext(Dispatchers.Main) {
                 val intent = Intent(this@LoginActivity, AppUpdateRequiredActivity::class.java).apply {
-                    putExtra(AppUpdateRequiredActivity.EXTRA_APP_VERSION, result.appVersion)
-                    putExtra(AppUpdateRequiredActivity.EXTRA_MIN_REQUIRED, result.minRequired)
-                    putExtra(AppUpdateRequiredActivity.EXTRA_DB_VERSION, result.dbVersion)
+                    putExtra(AppUpdateRequiredActivity.EXTRA_BLOCK_MODE, AppUpdateRequiredActivity.MODE_UPDATE)
+                    putExtra(AppUpdateRequiredActivity.EXTRA_CURRENT_VERSION, updateResult.currentVersion)
+                    putExtra(AppUpdateRequiredActivity.EXTRA_NEW_VERSION, updateResult.newVersion)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
                 startActivity(intent)
                 finish()
             }
+            return
         }
-        // Si Compatible ou Unknown, on continue normalement
+
+        // 2. Vérifier la compatibilité schema (après migrations)
+        val result = MedistockApplication.compatibilityResult
+
+        when (result) {
+            is CompatibilityResult.AppTooOld -> {
+                // App trop ancienne → écran de mise à jour
+                withContext(Dispatchers.Main) {
+                    val intent = Intent(this@LoginActivity, AppUpdateRequiredActivity::class.java).apply {
+                        putExtra(AppUpdateRequiredActivity.EXTRA_BLOCK_MODE, AppUpdateRequiredActivity.MODE_UPDATE)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    startActivity(intent)
+                    finish()
+                }
+            }
+            is CompatibilityResult.DbTooOld -> {
+                // DB incompatible après migrations → écran DB incompatible
+                withContext(Dispatchers.Main) {
+                    val intent = Intent(this@LoginActivity, AppUpdateRequiredActivity::class.java).apply {
+                        putExtra(AppUpdateRequiredActivity.EXTRA_BLOCK_MODE, AppUpdateRequiredActivity.MODE_DB_INCOMPATIBLE)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    startActivity(intent)
+                    finish()
+                }
+            }
+            else -> {
+                // Compatible ou Unknown → on continue normalement
+            }
+        }
     }
 
     private fun observeRealtimeStatus() {

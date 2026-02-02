@@ -26,7 +26,9 @@ android {
         minSdk 26
         targetSdk 34
         versionCode 15
-        versionName "0.8.0"
+        versionName "0.8.1"
+        buildConfigField "int", "APP_SCHEMA_VERSION", "3"
+        buildConfigField "int", "MIN_SCHEMA_VERSION", "29"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -49,6 +51,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     testOptions {

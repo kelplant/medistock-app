@@ -96,13 +96,13 @@ CREATE TABLE purchase_batches (
     remaining_quantity REAL NOT NULL,
     purchase_price REAL NOT NULL,
     supplier_name TEXT NOT NULL DEFAULT '',
-    supplier_id TEXT,
     expiry_date INTEGER,
     is_exhausted INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
     updated_by TEXT NOT NULL DEFAULT '',
+    supplier_id TEXT,
     FOREIGN KEY (product_id) REFERENCES products(id),
     FOREIGN KEY (site_id) REFERENCES sites(id),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
@@ -128,7 +128,7 @@ CREATE TABLE stock_movements (
 );
 
 -- Materialized current stock per product per site (updated by app on movements)
-CREATE TABLE current_stock_table (
+CREATE TABLE current_stock (
     id TEXT NOT NULL PRIMARY KEY,
     product_id TEXT NOT NULL,
     site_id TEXT NOT NULL,
@@ -140,8 +140,8 @@ CREATE TABLE current_stock_table (
     FOREIGN KEY (last_movement_id) REFERENCES stock_movements(id)
 );
 
-CREATE UNIQUE INDEX idx_current_stock_product_site ON current_stock_table(product_id, site_id);
-CREATE INDEX idx_current_stock_quantity ON current_stock_table(quantity);
+CREATE UNIQUE INDEX idx_current_stock_product_site ON current_stock(product_id, site_id);
+CREATE INDEX idx_current_stock_quantity ON current_stock(quantity);
 
 CREATE TABLE product_transfers (
     id TEXT NOT NULL PRIMARY KEY,
@@ -249,12 +249,15 @@ CREATE TABLE sale_items (
     product_name TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
     quantity REAL NOT NULL,
+    base_quantity REAL,
     unit_price REAL NOT NULL,
     total_price REAL NOT NULL,
+    batch_id TEXT,
     created_at INTEGER NOT NULL DEFAULT 0,
     created_by TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (sale_id) REFERENCES sales(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (batch_id) REFERENCES purchase_batches(id)
 );
 
 CREATE TABLE sale_batch_allocations (
@@ -399,13 +402,13 @@ DELETE FROM categories WHERE id = ?;
 -- ============================================
 
 getAllProducts:
-SELECT * FROM products ORDER BY name;
+SELECT id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by FROM products ORDER BY name;
 
 getProductsBySite:
-SELECT * FROM products WHERE site_id = ? ORDER BY name;
+SELECT id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by FROM products WHERE site_id = ? ORDER BY name;
 
 getProductById:
-SELECT * FROM products WHERE id = ?;
+SELECT id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by FROM products WHERE id = ?;
 
 insertProduct:
 INSERT INTO products(id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by)
@@ -435,7 +438,7 @@ getBatchById:
 SELECT * FROM purchase_batches WHERE id = ?;
 
 insertBatch:
-INSERT INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, supplier_id, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
+INSERT INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by, supplier_id)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateBatchQuantity:
@@ -466,8 +469,8 @@ getSaleItemsBySale:
 SELECT * FROM sale_items WHERE sale_id = ?;
 
 insertSaleItem:
-INSERT INTO sale_items(id, sale_id, product_id, product_name, unit, quantity, unit_price, total_price, created_at, created_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO sale_items(id, sale_id, product_id, product_name, unit, quantity, base_quantity, unit_price, total_price, batch_id, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- ============================================
 -- QUERIES - Users
@@ -483,14 +486,14 @@ FROM app_users WHERE id = ?;
 
 getUserByUsername:
 SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
-FROM app_users WHERE username = ?;
+FROM app_users WHERE LOWER(username) = LOWER(?);
 
 insertUser:
 INSERT INTO app_users(id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateUser:
-UPDATE app_users SET username = ?, full_name = ?, language = ?, is_admin = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
+UPDATE app_users SET username = ?, password = ?, full_name = ?, language = ?, is_admin = ?, is_active = ?, updated_at = ?, updated_by = ? WHERE id = ?;
 
 updateUserLanguage:
 UPDATE app_users SET language = ?, updated_at = ?, updated_by = ? WHERE id = ?;
@@ -538,15 +541,17 @@ DELETE FROM user_permissions WHERE user_id = ?;
 -- Get stock from materialized table (O(1) lookup)
 getStockQuantity:
 SELECT COALESCE(quantity, 0.0) AS quantity
-FROM current_stock_table
+FROM current_stock
 WHERE product_id = ? AND site_id = ?;
 
 -- Get all stock for a site
 getStockForSite:
 SELECT cst.*, p.name AS product_name,
     COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
-    COALESCE(c.name, '') AS category_name
-FROM current_stock_table cst
+    COALESCE(c.name, '') AS category_name,
+    COALESCE(p.min_stock, 0.0) AS min_stock,
+    COALESCE(p.max_stock, 0.0) AS max_stock
+FROM current_stock cst
 JOIN products p ON cst.product_id = p.id
 LEFT JOIN categories c ON p.category_id = c.id
 LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
@@ -557,19 +562,35 @@ ORDER BY p.name;
 getAllStock:
 SELECT cst.*, p.name AS product_name, s.name AS site_name,
     COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
-    COALESCE(c.name, '') AS category_name
-FROM current_stock_table cst
+    COALESCE(c.name, '') AS category_name,
+    COALESCE(p.min_stock, 0.0) AS min_stock,
+    COALESCE(p.max_stock, 0.0) AS max_stock
+FROM current_stock cst
 JOIN products p ON cst.product_id = p.id
 JOIN sites s ON cst.site_id = s.id
 LEFT JOIN categories c ON p.category_id = c.id
 LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
 ORDER BY s.name, p.name;
 
+-- Get stock for a specific product at a specific site with full details
+getStockForProductAndSite:
+SELECT cst.*, p.name AS product_name, s.name AS site_name,
+    COALESCE(CASE WHEN p.selected_level = 2 THEN pt.level2_name ELSE pt.level1_name END, 'unit') AS unit,
+    COALESCE(c.name, '') AS category_name,
+    COALESCE(p.min_stock, 0.0) AS min_stock,
+    COALESCE(p.max_stock, 0.0) AS max_stock
+FROM current_stock cst
+JOIN products p ON cst.product_id = p.id
+JOIN sites s ON cst.site_id = s.id
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN packaging_types pt ON p.packaging_type_id = pt.id
+WHERE cst.product_id = ? AND cst.site_id = ?;
+
 -- Upsert stock (insert or replace)
 upsertStock:
-INSERT OR REPLACE INTO current_stock_table(id, product_id, site_id, quantity, last_movement_id, last_updated_at)
+INSERT OR REPLACE INTO current_stock(id, product_id, site_id, quantity, last_movement_id, last_updated_at)
 VALUES (
-    COALESCE((SELECT id FROM current_stock_table WHERE product_id = ? AND site_id = ?), ?),
+    COALESCE((SELECT id FROM current_stock WHERE product_id = ? AND site_id = ?), ?),
     ?,
     ?,
     ?,
@@ -579,7 +600,7 @@ VALUES (
 
 -- Update stock quantity (add delta)
 updateStockDelta:
-UPDATE current_stock_table
+UPDATE current_stock
 SET quantity = quantity + ?,
     last_movement_id = ?,
     last_updated_at = ?
@@ -587,7 +608,7 @@ WHERE product_id = ? AND site_id = ?;
 
 -- Set absolute stock quantity (for inventory adjustments)
 setStockQuantity:
-UPDATE current_stock_table
+UPDATE current_stock
 SET quantity = ?,
     last_movement_id = ?,
     last_updated_at = ?
@@ -595,19 +616,19 @@ WHERE product_id = ? AND site_id = ?;
 
 -- Insert initial stock entry
 insertStock:
-INSERT INTO current_stock_table(id, product_id, site_id, quantity, last_movement_id, last_updated_at)
+INSERT INTO current_stock(id, product_id, site_id, quantity, last_movement_id, last_updated_at)
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- Delete stock entry
 deleteStock:
-DELETE FROM current_stock_table WHERE product_id = ? AND site_id = ?;
+DELETE FROM current_stock WHERE product_id = ? AND site_id = ?;
 
 -- Get stock entry by product and site
 getStockEntry:
-SELECT * FROM current_stock_table WHERE product_id = ? AND site_id = ?;
+SELECT * FROM current_stock WHERE product_id = ? AND site_id = ?;
 
 -- ============================================
--- QUERIES - Current Stock (computed - LEGACY, use current_stock_table instead)
+-- QUERIES - Current Stock (computed - LEGACY, use current_stock instead)
 -- ============================================
 
 getCurrentStockByProductAndSite:
@@ -878,7 +899,7 @@ UPDATE inventories SET status = ?, completed_at = ? WHERE id = ?;
 -- ============================================
 
 getSaleBatchAllocationsBySaleItem:
-SELECT * FROM sale_batch_allocations WHERE sale_item_id = ?;
+SELECT id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, created_at, created_by FROM sale_batch_allocations WHERE sale_item_id = ?;
 
 insertSaleBatchAllocation:
 INSERT INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, created_at, created_by)
@@ -942,7 +963,7 @@ FROM app_users WHERE is_active = 1 ORDER BY full_name;
 
 getUserForAuth:
 SELECT id, username, password, full_name, language, is_admin, is_active, created_at, updated_at, created_by, updated_by
-FROM app_users WHERE username = ? AND is_active = 1 LIMIT 1;
+FROM app_users WHERE LOWER(username) = LOWER(?) AND is_active = 1 LIMIT 1;
 
 deactivateUser:
 UPDATE app_users SET is_active = 0, updated_at = ?, updated_by = ? WHERE id = ?;
@@ -981,7 +1002,7 @@ deleteSaleBatchAllocationsBySaleItem:
 DELETE FROM sale_batch_allocations WHERE sale_item_id = ?;
 
 getAllSaleBatchAllocations:
-SELECT * FROM sale_batch_allocations;
+SELECT id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, created_at, created_by FROM sale_batch_allocations;
 
 -- ============================================
 -- ADDITIONAL QUERIES - Purchase Batches
@@ -1182,7 +1203,7 @@ INSERT OR REPLACE INTO app_users(id, username, password, full_name, language, is
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertPurchaseBatch:
-INSERT OR REPLACE INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, supplier_id, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by)
+INSERT OR REPLACE INTO purchase_batches(id, product_id, site_id, batch_number, purchase_date, initial_quantity, remaining_quantity, purchase_price, supplier_name, expiry_date, is_exhausted, created_at, updated_at, created_by, updated_by, supplier_id)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertSale:
@@ -1190,8 +1211,8 @@ INSERT OR REPLACE INTO sales(id, customer_name, customer_id, date, total_amount,
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertSaleItem:
-INSERT OR REPLACE INTO sale_items(id, sale_id, product_id, product_name, unit, quantity, unit_price, total_price, created_at, created_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO sale_items(id, sale_id, product_id, product_name, unit, quantity, base_quantity, unit_price, total_price, batch_id, created_at, created_by)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 upsertSaleBatchAllocation:
 INSERT OR REPLACE INTO sale_batch_allocations(id, sale_item_id, batch_id, quantity_allocated, purchase_price_at_allocation, created_at, created_by)
@@ -1231,11 +1252,11 @@ SELECT * FROM categories WHERE is_active = 1 ORDER BY name;
 
 -- Get active products only
 getActiveProducts:
-SELECT * FROM products WHERE is_active = 1 ORDER BY name;
+SELECT id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by FROM products WHERE is_active = 1 ORDER BY name;
 
 -- Get active products by site
 getActiveProductsBySite:
-SELECT * FROM products WHERE site_id = ? AND is_active = 1 ORDER BY name;
+SELECT id, name, unit_volume, packaging_type_id, selected_level, conversion_factor, category_id, margin_type, margin_value, description, site_id, min_stock, max_stock, is_active, created_at, updated_at, created_by, updated_by FROM products WHERE site_id = ? AND is_active = 1 ORDER BY name;
 
 -- Get active customers only
 getActiveCustomers:

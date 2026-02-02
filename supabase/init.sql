@@ -1,8 +1,8 @@
 -- ============================================================================
 -- MEDISTOCK DATABASE SCHEMA FOR SUPABASE (PostgreSQL)
 -- Migration from Android Room to Supabase PostgreSQL
--- Includes ALL migrations up to 2026-01-25
--- Schema version: 7
+-- Includes ALL migrations up to 2026-01-30
+-- Schema version: 32
 -- ============================================================================
 
 -- Enable required extensions
@@ -136,6 +136,28 @@ CREATE INDEX idx_customers_name ON customers(name);
 CREATE INDEX idx_customers_is_active ON customers(is_active);
 
 -- ============================================================================
+-- 3b. FOURNISSEURS
+-- ============================================================================
+
+-- Suppliers (global, not site-specific)
+CREATE TABLE suppliers (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at BIGINT NOT NULL DEFAULT 0,
+    updated_at BIGINT NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    client_id TEXT
+);
+
+CREATE INDEX idx_suppliers_is_active ON suppliers(is_active);
+
+-- ============================================================================
 -- 4. PRODUITS
 -- ============================================================================
 
@@ -178,7 +200,6 @@ CREATE TABLE products (
 CREATE INDEX idx_products_site ON products(site_id);
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_packaging_type ON products(packaging_type_id);
-CREATE INDEX idx_products_packaging ON products(packaging_type_id);
 CREATE INDEX idx_products_name ON products(name);
 CREATE INDEX idx_products_client_id ON products(client_id);
 CREATE INDEX idx_products_is_active ON products(is_active);
@@ -216,6 +237,7 @@ CREATE TABLE purchase_batches (
     remaining_quantity DOUBLE PRECISION NOT NULL,
     purchase_price DOUBLE PRECISION NOT NULL,
     supplier_name TEXT NOT NULL DEFAULT '',
+    supplier_id TEXT REFERENCES suppliers(id),
     expiry_date BIGINT,
     is_exhausted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
@@ -230,6 +252,7 @@ CREATE INDEX idx_purchase_batches_site ON purchase_batches(site_id);
 CREATE INDEX idx_purchase_batches_exhausted ON purchase_batches(is_exhausted);
 CREATE INDEX idx_purchase_batches_date ON purchase_batches(purchase_date);
 CREATE INDEX idx_purchase_batches_client_id ON purchase_batches(client_id);
+CREATE INDEX idx_purchase_batches_supplier ON purchase_batches(supplier_id);
 
 -- Mouvements de stock
 CREATE TABLE stock_movements (
@@ -260,7 +283,7 @@ CREATE INDEX idx_stock_movements_client_id ON stock_movements(client_id);
 -- CURRENT STOCK TABLE (materialized for O(1) lookups)
 -- ============================================================================
 
-CREATE TABLE current_stock_table (
+CREATE TABLE current_stock (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
@@ -271,12 +294,12 @@ CREATE TABLE current_stock_table (
     UNIQUE(product_id, site_id)
 );
 
-CREATE INDEX idx_current_stock_product ON current_stock_table(product_id);
-CREATE INDEX idx_current_stock_site ON current_stock_table(site_id);
-CREATE INDEX idx_current_stock_quantity ON current_stock_table(quantity);
-CREATE INDEX idx_current_stock_client_id ON current_stock_table(client_id);
+CREATE INDEX idx_current_stock_product ON current_stock(product_id);
+CREATE INDEX idx_current_stock_site ON current_stock(site_id);
+CREATE INDEX idx_current_stock_quantity ON current_stock(quantity);
+CREATE INDEX idx_current_stock_client_id ON current_stock(client_id);
 
-COMMENT ON TABLE current_stock_table IS 'Materialized current stock per product per site. Updated by triggers on stock_movements.';
+COMMENT ON TABLE current_stock IS 'Materialized current stock per product per site. Updated by triggers on stock_movements.';
 
 -- Function to update current stock on movement changes
 CREATE OR REPLACE FUNCTION update_current_stock()
@@ -295,14 +318,14 @@ BEGIN
             v_quantity_delta := -NEW.quantity;
         END IF;
 
-        -- Upsert into current_stock_table
-        INSERT INTO current_stock_table (product_id, site_id, quantity, last_movement_id, last_updated_at, client_id)
+        -- Upsert into current_stock
+        INSERT INTO current_stock (product_id, site_id, quantity, last_movement_id, last_updated_at, client_id)
         VALUES (NEW.product_id, NEW.site_id, v_quantity_delta, NEW.id, v_now, NEW.client_id)
         ON CONFLICT (product_id, site_id) DO UPDATE SET
-            quantity = current_stock_table.quantity + v_quantity_delta,
+            quantity = current_stock.quantity + v_quantity_delta,
             last_movement_id = NEW.id,
             last_updated_at = v_now,
-            client_id = COALESCE(NEW.client_id, current_stock_table.client_id);
+            client_id = COALESCE(NEW.client_id, current_stock.client_id);
 
         RETURN NEW;
 
@@ -314,7 +337,7 @@ BEGIN
             v_quantity_delta := OLD.quantity;
         END IF;
 
-        UPDATE current_stock_table
+        UPDATE current_stock
         SET quantity = quantity + v_quantity_delta,
             last_updated_at = v_now
         WHERE product_id = OLD.product_id AND site_id = OLD.site_id;
@@ -336,7 +359,7 @@ BEGIN
             v_quantity_delta := v_quantity_delta - NEW.quantity;
         END IF;
 
-        UPDATE current_stock_table
+        UPDATE current_stock
         SET quantity = quantity + v_quantity_delta,
             last_movement_id = NEW.id,
             last_updated_at = v_now
@@ -360,7 +383,7 @@ CREATE OR REPLACE FUNCTION get_current_stock(p_product_id UUID, p_site_id UUID)
 RETURNS DOUBLE PRECISION AS $$
 BEGIN
     RETURN COALESCE(
-        (SELECT quantity FROM current_stock_table
+        (SELECT quantity FROM current_stock
          WHERE product_id = p_product_id AND site_id = p_site_id),
         0
     );
@@ -462,8 +485,10 @@ CREATE TABLE sale_items (
     product_name TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
     quantity DOUBLE PRECISION NOT NULL,
+    base_quantity DOUBLE PRECISION,
     unit_price DOUBLE PRECISION NOT NULL,
     total_price DOUBLE PRECISION NOT NULL,
+    batch_id UUID REFERENCES purchase_batches(id) ON DELETE SET NULL,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT * 1000,
     created_by TEXT NOT NULL DEFAULT 'system',
     client_id TEXT
@@ -471,6 +496,7 @@ CREATE TABLE sale_items (
 
 CREATE INDEX idx_sale_items_sale ON sale_items(sale_id);
 CREATE INDEX idx_sale_items_product ON sale_items(product_id);
+CREATE INDEX idx_sale_items_batch ON sale_items(batch_id);
 
 -- Allocations FIFO des lots aux ventes
 CREATE TABLE sale_batch_allocations (
@@ -663,6 +689,9 @@ CREATE TRIGGER update_product_transfers_updated_at BEFORE UPDATE ON product_tran
 CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Appliquer le trigger pour created_by/updated_by
 CREATE TRIGGER set_sites_audit_defaults BEFORE INSERT OR UPDATE ON sites
     FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
@@ -692,6 +721,9 @@ CREATE TRIGGER set_product_transfers_audit_defaults BEFORE INSERT OR UPDATE ON p
     FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
 
 CREATE TRIGGER set_customers_audit_defaults BEFORE INSERT OR UPDATE ON customers
+    FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
+
+CREATE TRIGGER set_suppliers_audit_defaults BEFORE INSERT OR UPDATE ON suppliers
     FOR EACH ROW EXECUTE FUNCTION set_audit_user_defaults();
 
 CREATE TRIGGER set_stock_movements_created_by BEFORE INSERT ON stock_movements
@@ -861,27 +893,6 @@ IMPORTANT: Change the password immediately after login!';
 -- ============================================================================
 -- VUES UTILES
 -- ============================================================================
-
--- Vue pour obtenir le stock actuel par produit et site (uses materialized current_stock_table)
-CREATE OR REPLACE VIEW current_stock AS
-SELECT
-    p.id as product_id,
-    p.name as product_name,
-    p.description,
-    cst.site_id,
-    s.name as site_name,
-    COALESCE(cst.quantity, 0) as current_stock,
-    p.min_stock,
-    p.max_stock,
-    CASE
-        WHEN COALESCE(cst.quantity, 0) <= p.min_stock THEN 'LOW'
-        WHEN p.max_stock > 0 AND COALESCE(cst.quantity, 0) >= p.max_stock THEN 'HIGH'
-        ELSE 'NORMAL'
-    END as stock_status
-FROM products p
-LEFT JOIN current_stock_table cst ON p.id = cst.product_id
-LEFT JOIN sites s ON cst.site_id = s.id
-WHERE p.is_active = true;
 
 -- Vue plate pour le reporting Looker Studio (achats, ventes, transferts, corrections)
 CREATE OR REPLACE VIEW transaction_flat_view AS
@@ -1964,7 +1975,7 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_prices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_batches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
-ALTER TABLE current_stock_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE current_stock ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_transfers ENABLE ROW LEVEL SECURITY;
@@ -1972,6 +1983,7 @@ ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sale_batch_allocations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_queue ENABLE ROW LEVEL SECURITY;
 
@@ -2043,11 +2055,11 @@ CREATE POLICY "stock_movements_insert" ON stock_movements FOR INSERT TO authenti
 CREATE POLICY "stock_movements_update" ON stock_movements FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "stock_movements_delete" ON stock_movements FOR DELETE TO authenticated USING (true);
 
--- CURRENT_STOCK_TABLE
-CREATE POLICY "current_stock_table_select" ON current_stock_table FOR SELECT TO authenticated USING (true);
-CREATE POLICY "current_stock_table_insert" ON current_stock_table FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "current_stock_table_update" ON current_stock_table FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "current_stock_table_delete" ON current_stock_table FOR DELETE TO authenticated USING (true);
+-- CURRENT_STOCK
+CREATE POLICY "current_stock_select" ON current_stock FOR SELECT TO authenticated USING (true);
+CREATE POLICY "current_stock_insert" ON current_stock FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "current_stock_update" ON current_stock FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "current_stock_delete" ON current_stock FOR DELETE TO authenticated USING (true);
 
 -- INVENTORIES
 CREATE POLICY "inventories_select" ON inventories FOR SELECT TO authenticated USING (true);
@@ -2082,6 +2094,10 @@ CREATE POLICY "sale_batch_allocations_insert" ON sale_batch_allocations FOR INSE
 CREATE POLICY "sale_batch_allocations_update" ON sale_batch_allocations FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "sale_batch_allocations_delete" ON sale_batch_allocations FOR DELETE TO authenticated USING (true);
 
+-- SUPPLIERS
+CREATE POLICY "suppliers_all" ON suppliers FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "suppliers_anon_select" ON suppliers FOR SELECT TO anon USING (true);
+
 -- AUDIT_HISTORY
 CREATE POLICY "audit_history_select" ON audit_history FOR SELECT TO authenticated USING (true);
 CREATE POLICY "audit_history_insert" ON audit_history FOR INSERT TO authenticated WITH CHECK (true);
@@ -2096,7 +2112,6 @@ CREATE POLICY "sync_queue_all" ON sync_queue FOR ALL TO authenticated USING (tru
 -- ============================================================================
 -- GRANT SELECT ON ALL VIEWS TO authenticated
 -- ============================================================================
-GRANT SELECT ON current_stock TO authenticated;
 GRANT SELECT ON transaction_flat_view TO authenticated;
 GRANT SELECT ON v_sales_detail TO authenticated;
 GRANT SELECT ON v_sales_daily TO authenticated;
@@ -2193,12 +2208,19 @@ VALUES
     ('20260124001000_reporting_views', NULL, 'init', TRUE, NULL),
     ('20260125000100_record_reporting_views', NULL, 'init', TRUE, NULL),
     ('20260125001000_reporting_readonly_user', NULL, 'init', TRUE, NULL),
-    ('20260125002000_seed_demo_data', NULL, 'init', TRUE, NULL)
+    ('20260125002000_seed_demo_data', NULL, 'init', TRUE, NULL),
+    ('2026012507_add_suppliers_table', NULL, 'init', TRUE, NULL),
+    ('2026012507_fix_schema_consistency', NULL, 'init', TRUE, NULL),
+    ('2026012508_complete_unit_removal', NULL, 'init', TRUE, NULL),
+    ('2026012901_version_catchup', NULL, 'init', TRUE, NULL),
+    ('2026013001_rename_current_stock', NULL, 'init', TRUE, NULL),
+    ('2026013002_sale_items_base_quantity', NULL, 'init', TRUE, NULL),
+    ('2026020101_sale_items_batch_id', NULL, 'init', TRUE, NULL)
 ON CONFLICT (name) DO NOTHING;
 
--- Initialiser la version du schema (version 8 = all migrations applied including current_stock_table)
+-- Initialiser la version du schema (version 32 = all 32 migrations applied, min app version 3)
 INSERT INTO schema_version (schema_version, min_app_version, updated_by)
-VALUES (8, 2, 'init')
+VALUES (32, 3, 'init')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -2209,13 +2231,13 @@ ON CONFLICT (id) DO NOTHING;
 DO $$
 BEGIN
     RAISE NOTICE 'Medistock database schema created successfully!';
-    RAISE NOTICE 'Total tables: 23 (including current_stock_table, schema_migrations, schema_version, sync_queue, notification_events_local, inventory_items, app_config)';
-    RAISE NOTICE 'Total views: 24 (current_stock, transaction_flat_view, plus 22 reporting views)';
+    RAISE NOTICE 'Total tables: 24 (including suppliers, current_stock, schema_migrations, schema_version, sync_queue, notification_events_local, inventory_items, app_config)';
+    RAISE NOTICE 'Total views: 23 (transaction_flat_view, plus 22 reporting views)';
     RAISE NOTICE 'Default admin user: admin / admin123';
-    RAISE NOTICE 'Migration system initialized with 33 migrations marked as applied';
-    RAISE NOTICE 'Schema version: 8, Min app version: 2';
+    RAISE NOTICE 'Migration system initialized with 40 migrations marked as applied';
+    RAISE NOTICE 'Schema version: 32, Min app version: 3';
     RAISE NOTICE 'All tables include client_id column for Realtime support';
     RAISE NOTICE 'RLS enabled on all tables with permissive policies for authenticated users';
     RAISE NOTICE 'app_config table has RLS with NO policies (service_role only)';
-    RAISE NOTICE 'current_stock_table is auto-updated via trigger on stock_movements';
+    RAISE NOTICE 'current_stock is auto-updated via trigger on stock_movements';
 END $$;

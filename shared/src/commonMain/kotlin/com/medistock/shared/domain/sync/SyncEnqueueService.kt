@@ -318,6 +318,29 @@ class SyncEnqueueService(
         )
     }
 
+    // ==================== UserPermission Operations ====================
+
+    suspend fun enqueueUserPermissionInsert(permission: UserPermission, userId: String? = null) {
+        val dto = UserPermissionDto.fromModel(permission)
+        val payload = json.encodeToString(dto)
+        enqueueInsert(
+            entityType = "UserPermission",
+            entityId = permission.id,
+            payload = payload,
+            userId = userId,
+            siteId = null
+        )
+    }
+
+    suspend fun enqueueUserPermissionDelete(permissionId: String, userId: String? = null) {
+        enqueueDelete(
+            entityType = "UserPermission",
+            entityId = permissionId,
+            userId = userId,
+            siteId = null
+        )
+    }
+
     // ==================== Sale Operations ====================
 
     suspend fun enqueueSaleInsert(sale: Sale, userId: String? = null) {

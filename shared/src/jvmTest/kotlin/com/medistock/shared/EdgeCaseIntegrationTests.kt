@@ -25,10 +25,16 @@ import kotlin.test.*
 class EdgeCaseIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     @Test
@@ -37,7 +43,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
             .copy(marginType = "percentage", marginValue = 17.5)
         sdk.productRepository.insert(product)
 
@@ -66,7 +72,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -94,7 +100,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -122,7 +128,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -149,7 +155,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -191,7 +197,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -237,7 +243,7 @@ class EdgeCaseIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -274,7 +280,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
             .copy(marginType = "percentage", marginValue = 50.0)
         sdk.productRepository.insert(product)
 
@@ -303,7 +309,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Purchase at high price
@@ -351,7 +357,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -394,7 +400,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -421,7 +427,7 @@ class EdgeCaseIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(

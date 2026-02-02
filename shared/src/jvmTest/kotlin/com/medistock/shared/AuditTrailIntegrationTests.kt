@@ -26,10 +26,16 @@ import kotlin.test.*
 class AuditTrailIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     @Test
@@ -38,7 +44,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -70,7 +76,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -119,7 +125,7 @@ class AuditTrailIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(
@@ -160,7 +166,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -191,7 +197,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -222,7 +228,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val beforeTime = Clock.System.now().toEpochMilliseconds()
@@ -258,7 +264,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Execute multiple purchases
@@ -288,7 +294,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val input = PurchaseInput(
@@ -321,7 +327,7 @@ class AuditTrailIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val recordIds = mutableSetOf<String>()
@@ -354,7 +360,7 @@ class AuditTrailIntegrationTests {
         val destSite = sdk.createSite("Destination Site", "test-user")
         sdk.siteRepository.insert(destSite)
 
-        val product = sdk.createProduct("Test Product", sourceSite.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", sourceSite.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         val batch = sdk.createPurchaseBatch(

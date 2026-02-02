@@ -4,6 +4,7 @@ import com.medistock.shared.data.dto.SiteDto
 import com.medistock.shared.data.dto.CategoryDto
 import com.medistock.shared.data.dto.PackagingTypeDto
 import com.medistock.shared.data.dto.CustomerDto
+import com.medistock.shared.data.dto.SupplierDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 
@@ -83,4 +84,11 @@ class CustomerSupabaseRepository : BaseSupabaseRepository("customers") {
             filter { ilike("phone", "%$phone%") }
         }.decodeList()
     }
+}
+
+class SupplierSupabaseRepository : BaseSupabaseRepository("suppliers") {
+    suspend fun getAllSuppliers(): List<SupplierDto> = getAll()
+    suspend fun getSupplierById(id: String): SupplierDto? = getById(id)
+    suspend fun upsertSupplier(supplier: SupplierDto): SupplierDto = upsert(supplier)
+    suspend fun deleteSupplier(id: String) = delete(id)
 }

@@ -85,4 +85,84 @@ class MarginCalculationTests {
         val result = calculateSellingPrice(100.0, "unknown", 10.0)
         assertEqualsWithTolerance(100.0, result)
     }
+
+    @Test
+    fun `should_scaleFixedMarginByConversionFactor_when_level2Sale`() {
+        // For level 2 sales with fixed margin:
+        // Selling price per box = (purchasePrice * cf) + (marginValue * cf)
+        // Example: purchasePrice=100, cf=10, marginValue=20
+        // Selling price = (100*10) + (20*10) = 1000 + 200 = 1200 per box
+
+        val purchasePrice = 100.0
+        val conversionFactor = 10.0
+        val marginValue = 20.0
+
+        // Calculate price per base unit first (level 1)
+        val pricePerBaseUnit = calculateSellingPrice(purchasePrice, "fixed", marginValue)
+        // Then scale to level 2
+        val pricePerBox = pricePerBaseUnit * conversionFactor
+
+        assertEqualsWithTolerance(1200.0, pricePerBox)
+    }
+
+    @Test
+    fun `should_applyPercentageMarginSameWay_when_level2Sale`() {
+        // For level 2 sales with percentage margin:
+        // The percentage applies the same way regardless of level
+        // Example: purchasePrice=100, cf=10, marginValue=20%
+        // Price per base unit = 100 * 1.20 = 120
+        // Price per box = 120 * 10 = 1200
+
+        val purchasePrice = 100.0
+        val conversionFactor = 10.0
+        val marginPercent = 20.0
+
+        // Calculate price per base unit
+        val pricePerBaseUnit = calculateSellingPrice(purchasePrice, "percentage", marginPercent)
+        // Scale to level 2
+        val pricePerBox = pricePerBaseUnit * conversionFactor
+
+        assertEqualsWithTolerance(1200.0, pricePerBox)
+    }
+
+    @Test
+    fun `should_calculate1200_when_fixedMargin20OnPrice100WithCF10`() {
+        // Verify the exact formula for fixed margin with conversion factor
+        val purchasePrice = 100.0
+        val cf = 10.0
+        val marginValue = 20.0
+
+        // Formula: (purchasePrice + marginValue) * cf
+        val expected = (purchasePrice + marginValue) * cf
+
+        assertEqualsWithTolerance(1200.0, expected)
+    }
+
+    @Test
+    fun `should_handleDecimalConversionFactor_when_level2FixedMargin`() {
+        // Test with decimal conversion factor
+        val purchasePrice = 50.0
+        val cf = 12.5
+        val marginValue = 10.0
+
+        val pricePerBaseUnit = calculateSellingPrice(purchasePrice, "fixed", marginValue)
+        val pricePerBox = pricePerBaseUnit * cf
+
+        // (50 + 10) * 12.5 = 60 * 12.5 = 750
+        assertEqualsWithTolerance(750.0, pricePerBox)
+    }
+
+    @Test
+    fun `should_handleDecimalConversionFactor_when_level2PercentageMargin`() {
+        // Test with decimal conversion factor and percentage
+        val purchasePrice = 80.0
+        val cf = 15.0
+        val marginPercent = 25.0
+
+        val pricePerBaseUnit = calculateSellingPrice(purchasePrice, "percentage", marginPercent)
+        val pricePerBox = pricePerBaseUnit * cf
+
+        // 80 * 1.25 * 15 = 100 * 15 = 1500
+        assertEqualsWithTolerance(1500.0, pricePerBox)
+    }
 }

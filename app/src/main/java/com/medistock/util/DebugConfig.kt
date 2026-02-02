@@ -11,6 +11,7 @@ object DebugConfig {
      * Enable or disable debug logging throughout the application.
      * Defaults to BuildConfig.DEBUG, can be overridden at runtime via admin settings.
      */
+    @Volatile
     var isDebugEnabled: Boolean = try {
         val buildConfigClass = Class.forName("com.medistock.BuildConfig")
         val debugField = buildConfigClass.getField("DEBUG")

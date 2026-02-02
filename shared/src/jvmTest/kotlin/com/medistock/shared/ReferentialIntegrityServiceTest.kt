@@ -52,11 +52,11 @@ class ReferentialIntegrityServiceTest {
 
         // Insert products
         queries.insertProduct(
-            "prod-1", "Product 1", "unit", 1.0, "pack-1", null, null,
+            "prod-1", "Product 1", 1.0, "pack-1", 1L, null,
             "cat-1", null, null, null, "site-1", null, null, 1L, now, now, "admin", "admin"
         )
         queries.insertProduct(
-            "prod-2", "Product 2", "unit", 1.0, "pack-2", null, null,
+            "prod-2", "Product 2", 1.0, "pack-2", 1L, null,
             "cat-2", null, null, null, "site-1", null, null, 1L, now, now, "admin", "admin"
         )
 
@@ -65,7 +65,7 @@ class ReferentialIntegrityServiceTest {
         queries.insertCustomer("cust-2", "Customer 2", null, null, null, null, "site-2", 1L, now, now, "admin", "admin")
 
         // Insert users
-        queries.insertUser("user-1", "testuser", "password", "Test User", 0L, 1L, now, now, "admin", "admin")
+        queries.insertUser("user-1", "testuser", "password", "Test User", null, 0L, 1L, now, now, "admin", "admin")
     }
 
     // region checkDeletion
@@ -165,7 +165,7 @@ class ReferentialIntegrityServiceTest {
         // Arrange - add batch for prod-1
         val now = Clock.System.now().toEpochMilliseconds()
         database.medistockQueries.insertBatch(
-            "batch-1", "prod-1", "site-1", null, now, 100.0, 100.0, 10.0, "", null, 0L, now, now, "admin", "admin"
+            "batch-1", "prod-1", "site-1", null, now, 100.0, 100.0, 10.0, "", null, 0L, now, now, "admin", "admin", null
         )
 
         // Act
@@ -212,7 +212,7 @@ class ReferentialIntegrityServiceTest {
         // Arrange - create user without permissions or audit history
         val now = Clock.System.now().toEpochMilliseconds()
         database.medistockQueries.insertUser(
-            "user-unused", "unuseduser", "password", "Unused User", 0L, 1L, now, now, "admin", "admin"
+            "user-unused", "unuseduser", "password", "Unused User", null, 0L, 1L, now, now, "admin", "admin"
         )
 
         // Act
@@ -263,7 +263,7 @@ class ReferentialIntegrityServiceTest {
         // Arrange - site-1 already has products, add more references
         val now = Clock.System.now().toEpochMilliseconds()
         database.medistockQueries.insertBatch(
-            "batch-2", "prod-1", "site-1", null, now, 50.0, 50.0, 5.0, "", null, 0L, now, now, "admin", "admin"
+            "batch-2", "prod-1", "site-1", null, now, 50.0, 50.0, 5.0, "", null, 0L, now, now, "admin", "admin", null
         )
 
         // Act
@@ -569,7 +569,7 @@ class ReferentialIntegrityServiceTest {
         // Arrange - create product with batch, then deactivate the product
         val now = Clock.System.now().toEpochMilliseconds()
         database.medistockQueries.insertBatch(
-            "batch-3", "prod-1", "site-1", null, now, 100.0, 100.0, 10.0, "", null, 0L, now, now, "admin", "admin"
+            "batch-3", "prod-1", "site-1", null, now, 100.0, 100.0, 10.0, "", null, 0L, now, now, "admin", "admin", null
         )
         service.deactivate(EntityType.PRODUCT, "prod-1", "admin")
 

@@ -17,11 +17,17 @@ import kotlin.test.assertTrue
 class FifoIntegrationTests {
 
     private lateinit var sdk: MedistockSDK
+    private lateinit var packagingTypeId: String
 
     @BeforeEach
     fun setup() {
         // Create a fresh in-memory database for each test
         sdk = MedistockSDK(DatabaseDriverFactory())
+        val packagingType = sdk.createPackagingType(name = "Box", level1Name = "Unit")
+        kotlinx.coroutines.runBlocking {
+            sdk.packagingTypeRepository.insert(packagingType)
+        }
+        packagingTypeId = packagingType.id
     }
 
     @Test
@@ -30,7 +36,7 @@ class FifoIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Create 3 batches with different dates (simulated by insertion order)
@@ -110,7 +116,7 @@ class FifoIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Create 3 batches
@@ -183,7 +189,7 @@ class FifoIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Batch 1: 50 units at 10€
@@ -243,7 +249,7 @@ class FifoIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Only 30 units available
@@ -293,7 +299,7 @@ class FifoIntegrationTests {
         val site = sdk.createSite("Test Site", "test-user")
         sdk.siteRepository.insert(site)
 
-        val product = sdk.createProduct("Test Product", site.id, userId = "test-user")
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingTypeId, userId = "test-user")
         sdk.productRepository.insert(product)
 
         // Batch 1: already exhausted
@@ -343,5 +349,100 @@ class FifoIntegrationTests {
         // Batch 2 should have 70 remaining (100 - 30)
         val updatedBatch2 = sdk.purchaseBatchRepository.getById(batch2.id)
         assertEquals(70.0, updatedBatch2?.remainingQuantity)
+    }
+
+    @Test
+    fun `should_spanMultipleBatchesWithBaseQuantity_when_level2SaleExceedsFirstBatch`() = runTest {
+        // Setup
+        val site = sdk.createSite("Test Site", "test-user")
+        sdk.siteRepository.insert(site)
+
+        val packagingType = sdk.createPackagingType(
+            name = "Box",
+            level1Name = "unite",
+            level2Name = "boite",
+            level2Quantity = 10,
+            defaultConversionFactor = 10.0
+        )
+        sdk.packagingTypeRepository.insert(packagingType)
+
+        val product = sdk.createProduct("Test Product", site.id, packagingTypeId = packagingType.id, userId = "test-user")
+        sdk.productRepository.insert(product)
+
+        // Create two batches
+        // Batch 1: 20 units (oldest)
+        val batch1 = sdk.createPurchaseBatch(
+            productId = product.id,
+            siteId = site.id,
+            quantity = 20.0,
+            purchasePrice = 10.0,
+            userId = "test-user"
+        )
+        sdk.purchaseBatchRepository.insert(batch1)
+        kotlinx.coroutines.delay(10)
+
+        // Batch 2: 15 units
+        val batch2 = sdk.createPurchaseBatch(
+            productId = product.id,
+            siteId = site.id,
+            quantity = 15.0,
+            purchasePrice = 12.0,
+            userId = "test-user"
+        )
+        sdk.purchaseBatchRepository.insert(batch2)
+
+        // Execute: Sell 3 boxes (cf=10, so 30 base units needed)
+        // Should take all 20 from batch1, then 10 from batch2
+        val saleInput = SaleInput(
+            siteId = site.id,
+            customerName = "Test Customer",
+            items = listOf(
+                SaleItemInput(
+                    productId = product.id,
+                    quantity = 3.0,
+                    unitPrice = 150.0,
+                    selectedLevel = 2,
+                    conversionFactor = 10.0
+                )
+            ),
+            userId = "test-user"
+        )
+
+        val result = sdk.saleUseCase.execute(saleInput)
+
+        // Verify
+        assertIs<UseCaseResult.Success<*>>(result)
+        val saleResult = (result as UseCaseResult.Success).data as com.medistock.shared.domain.usecase.SaleResult
+
+        // Batch 1 should be exhausted (20 - 20 = 0)
+        val updatedBatch1 = sdk.purchaseBatchRepository.getById(batch1.id)
+        assertEquals(0.0, updatedBatch1?.remainingQuantity)
+        assertTrue(updatedBatch1?.isExhausted == true)
+
+        // Batch 2 should have 5 remaining (15 - 10 = 5)
+        val updatedBatch2 = sdk.purchaseBatchRepository.getById(batch2.id)
+        assertEquals(5.0, updatedBatch2?.remainingQuantity)
+
+        // Verify allocations
+        val processedItem = saleResult.items.first()
+        assertEquals(2, processedItem.allocations.size)
+
+        // First allocation: 20 units from batch1 at 10€
+        val allocation1 = processedItem.allocations[0]
+        assertEquals(batch1.id, allocation1.batchId)
+        assertEquals(20.0, allocation1.quantity)
+        assertEquals(10.0, allocation1.unitCost)
+
+        // Second allocation: 10 units from batch2 at 12€
+        val allocation2 = processedItem.allocations[1]
+        assertEquals(batch2.id, allocation2.batchId)
+        assertEquals(10.0, allocation2.quantity)
+        assertEquals(12.0, allocation2.unitCost)
+
+        // Verify cost calculation: 20*10 + 10*12 = 200 + 120 = 320
+        assertEquals(320.0, saleResult.totalCost)
+
+        // Verify stock movement uses baseQuantity (30 units)
+        assertEquals(-30.0, processedItem.stockMovement.quantity)
     }
 }

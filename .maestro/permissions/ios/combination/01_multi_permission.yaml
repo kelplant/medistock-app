@@ -32,7 +32,7 @@ appId: com.medistock.ios
 
 # Stock should NOT be visible (no STOCK permission)
 - assertNotVisible:
-    text: ".*View Stock.*"
+    text: ".*Stock.*"
     optional: true
 
 # Purchases should NOT be visible (no PURCHASES permission)

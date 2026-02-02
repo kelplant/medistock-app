@@ -30,9 +30,9 @@ appId: com.medistock
 
 - takeScreenshot: "android_inventory_home"
 
-# ========== TEST: Navigate to Inventory Stock screen ==========
+# ========== TEST: Navigate to Inventory screen ==========
 - tapOn:
-    text: "Inventory Stock"
+    text: "Inventory"
 
 - waitForAnimationToEnd:
     timeout: 5000

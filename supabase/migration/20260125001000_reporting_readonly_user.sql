@@ -6,6 +6,8 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'reporting_user') THEN
+        -- SECURITY: Change this password before deploying to production.
+        -- Use: ALTER ROLE reporting_user WITH PASSWORD '<secure-password>';
         CREATE ROLE reporting_user WITH LOGIN PASSWORD 'CHANGE_ME_SECURE_PASSWORD';
     END IF;
 END
