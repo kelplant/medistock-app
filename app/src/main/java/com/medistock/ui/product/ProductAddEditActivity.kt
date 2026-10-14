@@ -1,5 +1,6 @@
 package com.medistock.ui.product
 
+import com.medistock.data.sync.SyncQueueHelper
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -419,7 +420,9 @@ class ProductAddEditActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    sdk.productRepository.delete(productId!!)
+                    SyncQueueHelper.getInstance().deleteOnlineFirst(this@ProductAddEditActivity, "products", "Product", productId!!, authManager.getUsername()) {
+                        sdk.productRepository.delete(productId!!)
+                    }
                 }
                 Toast.makeText(this@ProductAddEditActivity, L.strings.productDeleted, Toast.LENGTH_SHORT).show()
                 finish()

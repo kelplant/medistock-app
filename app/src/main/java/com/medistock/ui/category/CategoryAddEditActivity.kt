@@ -1,5 +1,6 @@
 package com.medistock.ui.category
 
+import com.medistock.data.sync.SyncQueueHelper
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -98,7 +99,9 @@ class CategoryAddEditActivity : AppCompatActivity() {
         if (categoryId == null) return
 
         CoroutineScope(Dispatchers.IO).launch {
-            sdk.categoryRepository.delete(categoryId!!)
+            SyncQueueHelper.getInstance().deleteOnlineFirst(this@CategoryAddEditActivity, "categories", "Category", categoryId!!, authManager.getUsername()) {
+                sdk.categoryRepository.delete(categoryId!!)
+            }
             runOnUiThread {
                 Toast.makeText(this@CategoryAddEditActivity, L.strings.categoryDeleted, Toast.LENGTH_SHORT).show()
                 finish()

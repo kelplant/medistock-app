@@ -1,5 +1,6 @@
 package com.medistock.ui.site
 
+import com.medistock.data.sync.SyncQueueHelper
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -112,7 +113,9 @@ class SiteAddEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                sdk.siteRepository.delete(siteId!!)
+                SyncQueueHelper.getInstance().deleteOnlineFirst(this@SiteAddEditActivity, "sites", "Site", siteId!!, authManager.getUsername()) {
+                    sdk.siteRepository.delete(siteId!!)
+                }
             }
             Toast.makeText(this@SiteAddEditActivity, L.strings.siteDeleted, Toast.LENGTH_SHORT).show()
             finish()

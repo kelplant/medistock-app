@@ -1,6 +1,10 @@
 package com.medistock.data.sync
 
 import com.medistock.MedistockApplication
+import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.util.DebugConfig
+import com.medistock.util.NetworkStatus
+import io.github.jan.supabase.postgrest.from
 import com.medistock.shared.domain.model.*
 import com.medistock.shared.domain.sync.SyncEnqueueService
 
@@ -34,6 +38,39 @@ class SyncQueueHelper private constructor() {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: SyncQueueHelper().also { INSTANCE = it }
             }
+        }
+    }
+
+    /**
+     * Online-first delete, same flow as iOS OnlineFirstHelper.delete:
+     * 1. delete on Supabase when online, 2. delete locally, 3. queue the DELETE
+     * if the remote delete did not happen. Without this, a local delete is never
+     * propagated and the next pull from Supabase brings the row back.
+     */
+    suspend fun deleteOnlineFirst(
+        context: android.content.Context,
+        table: String,
+        entityType: String,
+        entityId: String,
+        userId: String? = null,
+        localDelete: suspend () -> Unit
+    ) {
+        var deletedOnline = false
+        if (NetworkStatus.isOnline(context) && SupabaseClientProvider.isConfigured(context)) {
+            try {
+                SupabaseClientProvider.client.from(table).delete {
+                    filter { eq("id", entityId) }
+                }
+                deletedOnline = true
+            } catch (e: Exception) {
+                DebugConfig.w("SyncQueueHelper", "Remote delete failed for $table/$entityId: ${e.message}")
+            }
+        }
+
+        localDelete()
+
+        if (!deletedOnline) {
+            syncEnqueueService.enqueueDelete(entityType = entityType, entityId = entityId, userId = userId)
         }
     }
 
