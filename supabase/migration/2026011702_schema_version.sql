@@ -1,9 +1,8 @@
 -- ============================================================================
 -- MEDISTOCK SCHEMA VERSION TRACKING
 -- Adds version tracking for app/database compatibility checking
+-- NOTE: No BEGIN/COMMIT - apply_migration() handles the transaction
 -- ============================================================================
-
-BEGIN;
 
 -- ============================================================================
 -- 1. TABLE DE VERSION DU SCHÉMA
@@ -125,16 +124,3 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO schema_migrations (name, checksum, applied_by, success)
 VALUES ('2026011702_schema_version', NULL, 'manual', TRUE)
 ON CONFLICT (name) DO NOTHING;
-
-COMMIT;
-
--- ============================================================================
--- FIN DE LA MIGRATION
--- ============================================================================
-
-DO $$
-BEGIN
-    RAISE NOTICE 'Schema version tracking installed!';
-    RAISE NOTICE 'Current schema_version: 2';
-    RAISE NOTICE 'Minimum app version required: 2';
-END $$;

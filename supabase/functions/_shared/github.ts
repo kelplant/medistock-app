@@ -2,7 +2,7 @@ import { crypto } from 'https://deno.land/std@0.208.0/crypto/mod.ts'
 import { encodeHex } from 'https://deno.land/std@0.208.0/encoding/hex.ts'
 
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com'
-const MIGRATIONS_PATH = 'app/src/main/assets/migrations'
+const MIGRATIONS_PATH = 'supabase/migration'
 
 /**
  * Get GitHub configuration from environment

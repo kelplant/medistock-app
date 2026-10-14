@@ -5,18 +5,36 @@
 -- Schema version: 30
 -- ============================================================================
 
--- 1. Drop the VIEW that depends on current_stock_table
---    (the VIEW was named "current_stock", which is the name we want for the table)
-DROP VIEW IF EXISTS current_stock;
+-- Steps 1-3 are guarded so the migration also runs on databases where
+-- current_stock_table was created without RLS policies, or where the rename
+-- was already done.
+DO $$
+BEGIN
+    -- 1. Drop the VIEW named current_stock (the name we want for the table)
+    IF EXISTS (SELECT 1 FROM information_schema.views
+               WHERE table_schema = 'public' AND table_name = 'current_stock') THEN
+        DROP VIEW public.current_stock;
+    END IF;
 
--- 2. Rename the table
-ALTER TABLE current_stock_table RENAME TO current_stock;
+    -- 2. Rename the table
+    IF to_regclass('public.current_stock_table') IS NOT NULL THEN
+        ALTER TABLE public.current_stock_table RENAME TO current_stock;
+    END IF;
 
--- 3. Rename RLS policies to match the new table name
-ALTER POLICY "current_stock_table_select" ON current_stock RENAME TO "current_stock_select";
-ALTER POLICY "current_stock_table_insert" ON current_stock RENAME TO "current_stock_insert";
-ALTER POLICY "current_stock_table_update" ON current_stock RENAME TO "current_stock_update";
-ALTER POLICY "current_stock_table_delete" ON current_stock RENAME TO "current_stock_delete";
+    -- 3. Rename RLS policies to match the new table name (only those that exist)
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'current_stock' AND policyname = 'current_stock_table_select') THEN
+        ALTER POLICY "current_stock_table_select" ON public.current_stock RENAME TO "current_stock_select";
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'current_stock' AND policyname = 'current_stock_table_insert') THEN
+        ALTER POLICY "current_stock_table_insert" ON public.current_stock RENAME TO "current_stock_insert";
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'current_stock' AND policyname = 'current_stock_table_update') THEN
+        ALTER POLICY "current_stock_table_update" ON public.current_stock RENAME TO "current_stock_update";
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'current_stock' AND policyname = 'current_stock_table_delete') THEN
+        ALTER POLICY "current_stock_table_delete" ON public.current_stock RENAME TO "current_stock_delete";
+    END IF;
+END $$;
 
 -- 4. Recreate the trigger function to reference the new table name
 CREATE OR REPLACE FUNCTION update_current_stock()
