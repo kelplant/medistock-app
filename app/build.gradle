@@ -4,9 +4,9 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
-// Copy shared migrations to Android assets before build
-tasks.register('copySharedMigrations', Copy) {
-    from "${rootProject.projectDir}/shared/src/commonMain/resources/migrations"
+// Copy migrations (single source: supabase/migration) to Android assets before build
+tasks.register('copySharedMigrations', Sync) {
+    from "${rootProject.projectDir}/supabase/migration"
     into "${projectDir}/src/main/assets/migrations"
     include '*.sql'
 }

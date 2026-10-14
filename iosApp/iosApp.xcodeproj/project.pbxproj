@@ -321,7 +321,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../shared/src/commonMain/resources/migrations",
+				"$(SRCROOT)/../supabase/migration",
 			);
 			name = "Copy Shared Migrations";
 			outputFileListPaths = (
@@ -331,7 +331,7 @@ A1SVC011BBBB000000000011 /* DebugConfig.swift */ = {isa = PBXFileReference; last
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "MIGRATIONS_SRC=\"$SRCROOT/../shared/src/commonMain/resources/migrations\"\nMIGRATIONS_DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/migrations\"\n\nif [ -d \"$MIGRATIONS_SRC\" ]; then\n    mkdir -p \"$MIGRATIONS_DST\"\n    cp \"$MIGRATIONS_SRC\"/*.sql \"$MIGRATIONS_DST/\"\n    echo \"Copied $(ls \"$MIGRATIONS_SRC\"/*.sql | wc -l) migrations to app bundle\"\nelse\n    echo \"warning: Migrations source not found: $MIGRATIONS_SRC\"\nfi\n";
+			shellScript = "MIGRATIONS_SRC=\"$SRCROOT/../supabase/migration\"\nMIGRATIONS_DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/migrations\"\n\nif [ -d \"$MIGRATIONS_SRC\" ]; then\n    mkdir -p \"$MIGRATIONS_DST\"\n    cp \"$MIGRATIONS_SRC\"/*.sql \"$MIGRATIONS_DST/\"\n    echo \"Copied $(ls \"$MIGRATIONS_SRC\"/*.sql | wc -l) migrations to app bundle\"\nelse\n    echo \"warning: Migrations source not found: $MIGRATIONS_SRC\"\nfi\n";
 		};
 		7555FFB5242A651A00829871 /* Run Shared Build Script */ = {
 			isa = PBXShellScriptBuildPhase;

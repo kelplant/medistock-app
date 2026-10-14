@@ -3,7 +3,5 @@
 -- Purpose: Store user's preferred language on their profile for sync across devices
 
 -- Add language column (nullable for backward compatibility)
+-- Note: This will be skipped if column already exists (handled by MigrationManager)
 ALTER TABLE app_users ADD COLUMN IF NOT EXISTS language TEXT;
-
--- Comment for documentation
-COMMENT ON COLUMN app_users.language IS 'User preferred language code (e.g., en, fr, de)';

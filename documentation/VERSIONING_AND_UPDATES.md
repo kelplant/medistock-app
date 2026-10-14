@@ -80,12 +80,15 @@ Sinon                                    -->  Compatible
 
 ### Architecture
 
-Les migrations SQL sont stockees dans deux emplacements :
-- `supabase/migration/` : fichiers source des migrations
-- `shared/src/commonMain/resources/migrations/` : copies pour le bundle app
+Les migrations SQL sont stockees dans un seul dossier : `supabase/migration/`.
 
-Un script Gradle (`copySharedMigrations`) copie les migrations dans `app/src/main/assets/migrations/`
-au moment du build Android.
+- Android : la tache Gradle `copySharedMigrations` synchronise ce dossier dans
+  `app/src/main/assets/migrations/` (non versionne) au moment du build.
+- iOS : la phase de build Xcode copie ce dossier dans le bundle (`migrations/`).
+- La fonction Edge `apply-migration` verifie le contenu contre ce meme chemin sur GitHub.
+
+Les scripts SQL qui ne doivent PAS etre appliques automatiquement par l'app
+(donnees de demo, role de reporting, enregistrements manuels) sont dans `supabase/manual/`.
 
 ### Table de suivi
 
@@ -124,13 +127,12 @@ Exemples :
 
 **IMPORTANT : A chaque nouvelle migration, vous DEVEZ :**
 
-1. Creer le fichier `.sql` dans `supabase/migration/`
-2. Copier le fichier dans `shared/src/commonMain/resources/migrations/`
-3. Ajouter `SELECT update_schema_version(N, M, 'migration_XXXX');` a la fin du fichier
+1. Creer le fichier `.sql` dans `supabase/migration/` (et nulle part ailleurs)
+2. Ajouter `SELECT update_schema_version(N, M, 'migration_XXXX');` a la fin du fichier
    - `N` = `schema_version` actuel + 1
    - `M` = `min_app_version` (incrementer UNIQUEMENT si la migration est incompatible
      avec les anciennes versions de l'app)
-4. Mettre a jour `init.sql` :
+3. Mettre a jour `init.sql` :
    - Ajouter l'entree dans `schema_migrations` INSERT
    - Mettre a jour le `VALUES` de `schema_version`
    - Mettre a jour les `RAISE NOTICE` finaux
