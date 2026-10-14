@@ -357,6 +357,13 @@ class SyncManager(
         try {
             val localUsers = sdk.userRepository.getAll()
             localUsers.forEach { user ->
+                // Never push a blank password: it would overwrite the BCrypt hash stored in Supabase.
+                // Users created from an online login have password = "" locally (the Edge Function
+                // does not return the hash), so they must not be sent back.
+                if (user.password.isBlank()) {
+                    Log.w(TAG, "Skipping push of user ${user.username}: blank password")
+                    return@forEach
+                }
                 try {
                     val dto = UserDto.fromModel(user)
                     userRepo.upsert(dto)
@@ -376,8 +383,16 @@ class SyncManager(
             val remoteUsers = userRepo.getAllUsers()
             remoteUsers.forEach { dto ->
                 try {
-                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records
-                    sdk.userRepository.upsert(dto.toModel())
+                    // Use upsert (INSERT OR REPLACE) to handle both new and existing records.
+                    // If the remote password is blank, keep the local hash instead of overwriting it.
+                    val remoteModel = dto.toModel()
+                    val toSave = if (remoteModel.password.isBlank()) {
+                        val localHash = sdk.userRepository.getById(remoteModel.id)?.password.orEmpty()
+                        if (localHash.isNotBlank()) remoteModel.copy(password = localHash) else remoteModel
+                    } else {
+                        remoteModel
+                    }
+                    sdk.userRepository.upsert(toSave)
                 } catch (e: Exception) {
                     onError?.invoke("User: ${dto.username}", e)
                 }
