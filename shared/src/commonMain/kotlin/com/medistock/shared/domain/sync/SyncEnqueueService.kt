@@ -293,6 +293,8 @@ class SyncEnqueueService(
     // ==================== User Operations ====================
 
     suspend fun enqueueUserInsert(user: User, userId: String? = null) {
+        // A blank password would overwrite the hash stored in Supabase
+        if (user.password.isBlank()) return
         val dto = UserDto.fromModel(user)
         val payload = json.encodeToString(dto)
         enqueueInsert(
@@ -305,6 +307,8 @@ class SyncEnqueueService(
     }
 
     suspend fun enqueueUserUpdate(user: User, remoteUpdatedAt: Long? = null, userId: String? = null) {
+        // A blank password would overwrite the hash stored in Supabase
+        if (user.password.isBlank()) return
         val dto = UserDto.fromModel(user)
         val payload = json.encodeToString(dto)
         enqueueUpdate(

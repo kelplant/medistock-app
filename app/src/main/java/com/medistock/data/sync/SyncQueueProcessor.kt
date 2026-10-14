@@ -299,7 +299,12 @@ class SyncQueueProcessor(
             }
             "User" -> {
                 val user = json.decodeFromString<UserDto>(item.payload)
-                userRepo.upsertUser(user)
+                // Never push a blank password (would erase the hash stored in Supabase)
+                if (user.password.isNotBlank()) {
+                    userRepo.upsertUser(user)
+                } else {
+                    println("$TAG: Skip push user ${user.username}: blank password")
+                }
             }
             "UserPermission" -> {
                 val permission = json.decodeFromString<UserPermissionDto>(item.payload)
