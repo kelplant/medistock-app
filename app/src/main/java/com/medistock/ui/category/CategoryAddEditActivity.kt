@@ -99,8 +99,9 @@ class CategoryAddEditActivity : AppCompatActivity() {
         if (categoryId == null) return
 
         CoroutineScope(Dispatchers.IO).launch {
-            sdk.categoryRepository.delete(categoryId!!)
-            SyncQueueHelper.getInstance().enqueueDeleteAndSync(this@CategoryAddEditActivity, "Category", categoryId!!, authManager.getUsername())
+            SyncQueueHelper.getInstance().deleteOnlineFirst(this@CategoryAddEditActivity, "categories", "Category", categoryId!!, authManager.getUsername()) {
+                sdk.categoryRepository.delete(categoryId!!)
+            }
             runOnUiThread {
                 Toast.makeText(this@CategoryAddEditActivity, L.strings.categoryDeleted, Toast.LENGTH_SHORT).show()
                 finish()

@@ -137,8 +137,9 @@ class CustomerAddEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                sdk.customerRepository.delete(customerId!!)
-                SyncQueueHelper.getInstance().enqueueDeleteAndSync(this@CustomerAddEditActivity, "Customer", customerId!!, authManager.getUsername())
+                SyncQueueHelper.getInstance().deleteOnlineFirst(this@CustomerAddEditActivity, "customers", "Customer", customerId!!, authManager.getUsername()) {
+                    sdk.customerRepository.delete(customerId!!)
+                }
             }
             Toast.makeText(this@CustomerAddEditActivity, L.strings.customerDeleted, Toast.LENGTH_SHORT).show()
             finish()

@@ -420,8 +420,9 @@ class ProductAddEditActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    sdk.productRepository.delete(productId!!)
-                    SyncQueueHelper.getInstance().enqueueDeleteAndSync(this@ProductAddEditActivity, "Product", productId!!, authManager.getUsername())
+                    SyncQueueHelper.getInstance().deleteOnlineFirst(this@ProductAddEditActivity, "products", "Product", productId!!, authManager.getUsername()) {
+                        sdk.productRepository.delete(productId!!)
+                    }
                 }
                 Toast.makeText(this@ProductAddEditActivity, L.strings.productDeleted, Toast.LENGTH_SHORT).show()
                 finish()

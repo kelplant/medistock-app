@@ -144,8 +144,9 @@ class SupplierAddEditActivity : AppCompatActivity() {
             when (check) {
                 is DeletionCheck.CanDelete -> {
                     withContext(Dispatchers.IO) {
-                        sdk.supplierRepository.delete(supplierId!!)
-                        SyncQueueHelper.getInstance().enqueueDeleteAndSync(this@SupplierAddEditActivity, "Supplier", supplierId!!, authManager.getUsername())
+                        SyncQueueHelper.getInstance().deleteOnlineFirst(this@SupplierAddEditActivity, "suppliers", "Supplier", supplierId!!, authManager.getUsername()) {
+                            sdk.supplierRepository.delete(supplierId!!)
+                        }
                     }
                     Toast.makeText(this@SupplierAddEditActivity, L.strings.supplierDeleted, Toast.LENGTH_SHORT).show()
                     finish()

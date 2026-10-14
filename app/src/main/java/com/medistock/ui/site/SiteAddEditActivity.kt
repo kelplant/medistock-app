@@ -113,8 +113,9 @@ class SiteAddEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                sdk.siteRepository.delete(siteId!!)
-                SyncQueueHelper.getInstance().enqueueDeleteAndSync(this@SiteAddEditActivity, "Site", siteId!!, authManager.getUsername())
+                SyncQueueHelper.getInstance().deleteOnlineFirst(this@SiteAddEditActivity, "sites", "Site", siteId!!, authManager.getUsername()) {
+                    sdk.siteRepository.delete(siteId!!)
+                }
             }
             Toast.makeText(this@SiteAddEditActivity, L.strings.siteDeleted, Toast.LENGTH_SHORT).show()
             finish()

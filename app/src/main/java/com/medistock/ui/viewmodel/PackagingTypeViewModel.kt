@@ -67,7 +67,11 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
 
     fun delete(packagingType: PackagingType, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeRepo.delete(packagingType.id)
+            com.medistock.data.sync.SyncQueueHelper.getInstance().deleteOnlineFirst(
+                getApplication(), "packaging_types", "PackagingType", packagingType.id
+            ) {
+                packagingTypeRepo.delete(packagingType.id)
+            }
             callback()
         }
     }
