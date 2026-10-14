@@ -1,5 +1,6 @@
 package com.medistock.ui.customer
 
+import com.medistock.data.sync.SyncQueueHelper
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -137,6 +138,7 @@ class CustomerAddEditActivity : AppCompatActivity() {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 sdk.customerRepository.delete(customerId!!)
+                SyncQueueHelper.getInstance().enqueueDeleteAndSync(this@CustomerAddEditActivity, "Customer", customerId!!, authManager.getUsername())
             }
             Toast.makeText(this@CustomerAddEditActivity, L.strings.customerDeleted, Toast.LENGTH_SHORT).show()
             finish()

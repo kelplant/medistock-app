@@ -37,6 +37,16 @@ class SyncQueueHelper private constructor() {
         }
     }
 
+    /**
+     * Queues the deletion of an entity on Supabase and triggers a sync right away.
+     * Without this, a local delete is never propagated, and the next pull from
+     * Supabase brings the row back.
+     */
+    suspend fun enqueueDeleteAndSync(context: android.content.Context, entityType: String, entityId: String, userId: String? = null) {
+        syncEnqueueService.enqueueDelete(entityType = entityType, entityId = entityId, userId = userId)
+        SyncScheduler.triggerImmediate(context, "delete:$entityType")
+    }
+
     // ==================== Product Operations ====================
 
     suspend fun enqueueProductInsert(product: Product, userId: String? = null) {

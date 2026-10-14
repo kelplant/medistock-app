@@ -57,6 +57,7 @@ class SyncQueueProcessor(
     private val packagingTypeRepo by lazy { PackagingTypeSupabaseRepository() }
     private val userRepo by lazy { UserSupabaseRepository() }
     private val userPermissionRepo by lazy { UserPermissionSupabaseRepository() }
+    private val supplierRepo by lazy { SupplierSupabaseRepository() }
 
     // État de la synchronisation
     private val _syncState = MutableStateFlow(SyncProcessorState())
@@ -322,6 +323,7 @@ class SyncQueueProcessor(
             "PackagingType" -> packagingTypeRepo.deletePackagingType(item.entityId)
             "User" -> userRepo.deleteUser(item.entityId)
             "UserPermission" -> userPermissionRepo.deletePermission(item.entityId)
+            "Supplier" -> supplierRepo.deleteSupplier(item.entityId)
             else -> throw IllegalArgumentException("Type d'entité non supporté: ${item.entityType}")
         }
     }
