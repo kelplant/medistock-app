@@ -188,8 +188,27 @@ class BidirectionalSyncManager: ObservableObject {
         let remoteUsers: [UserDTO] = try await supabase.fetchAll(from: "app_users")
 
         for dto in remoteUsers {
-            // Use upsert (INSERT OR REPLACE) to handle both new and existing records
-            try? await sdk.userRepository.upsert(user: dto.toEntity())
+            // Use upsert (INSERT OR REPLACE) to handle both new and existing records.
+            // If the remote password is blank, keep the local hash instead of overwriting it.
+            var user = dto.toEntity()
+            if dto.password.isEmpty,
+               let local = try? await sdk.userRepository.getById(id: dto.id),
+               !local.password.isEmpty {
+                user = User(
+                    id: user.id,
+                    username: user.username,
+                    password: local.password,
+                    fullName: user.fullName,
+                    language: user.language,
+                    isAdmin: user.isAdmin,
+                    isActive: user.isActive,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt,
+                    createdBy: user.createdBy,
+                    updatedBy: user.updatedBy
+                )
+            }
+            try? await sdk.userRepository.upsert(user: user)
         }
 
         // Remove local system admin if real users were synced

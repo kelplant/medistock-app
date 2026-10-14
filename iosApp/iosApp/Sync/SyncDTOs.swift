@@ -449,6 +449,44 @@ struct UserDTO: Codable {
         self.clientId = SyncClientId.current
     }
 
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        username = try c.decode(String.self, forKey: .username)
+        // Absent from queued payloads that were encoded without a password
+        password = try c.decodeIfPresent(String.self, forKey: .password) ?? ""
+        fullName = try c.decode(String.self, forKey: .fullName)
+        language = try c.decodeIfPresent(String.self, forKey: .language)
+        isAdmin = try c.decode(Bool.self, forKey: .isAdmin)
+        isActive = try c.decode(Bool.self, forKey: .isActive)
+        createdAt = try c.decode(Int64.self, forKey: .createdAt)
+        updatedAt = try c.decode(Int64.self, forKey: .updatedAt)
+        createdBy = try c.decode(String.self, forKey: .createdBy)
+        updatedBy = try c.decode(String.self, forKey: .updatedBy)
+        clientId = try c.decodeIfPresent(String.self, forKey: .clientId)
+    }
+
+    /// Never sends a blank password: Supabase upserts only update the columns present,
+    /// so omitting it keeps the BCrypt hash stored in app_users. Users created from an
+    /// online login have password = "" locally (the Edge Function does not return the hash).
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(username, forKey: .username)
+        if !password.trimmingCharacters(in: .whitespaces).isEmpty {
+            try c.encode(password, forKey: .password)
+        }
+        try c.encode(fullName, forKey: .fullName)
+        try c.encodeIfPresent(language, forKey: .language)
+        try c.encode(isAdmin, forKey: .isAdmin)
+        try c.encode(isActive, forKey: .isActive)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(updatedAt, forKey: .updatedAt)
+        try c.encode(createdBy, forKey: .createdBy)
+        try c.encode(updatedBy, forKey: .updatedBy)
+        try c.encodeIfPresent(clientId, forKey: .clientId)
+    }
+
     func toEntity() -> User {
         User(
             id: id,
