@@ -14,12 +14,23 @@ class AutoSyncWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        // Always chain the next run, whatever happens below. Before, an early return
+        // (no session yet, not configured) skipped scheduleNext() and the periodic
+        // sync stopped until the next app start or network change.
+        try {
+            return runSync()
+        } finally {
+            SyncScheduler.scheduleNext(applicationContext)
+        }
+    }
+
+    private suspend fun runSync(): Result {
         if (!SupabaseClientProvider.isConfigured(applicationContext)) {
             return Result.success()
         }
 
         if (!NetworkStatus.isOnline(applicationContext)) {
-            return Result.retry()
+            return Result.success()
         }
 
         // Initialize client if not already (don't reinitialize - that would lose the session)
@@ -46,8 +57,6 @@ class AutoSyncWorker(
                 hasError = true
             }
         )
-
-        SyncScheduler.scheduleNext(applicationContext)
 
         return if (hasError) Result.retry() else Result.success()
     }
