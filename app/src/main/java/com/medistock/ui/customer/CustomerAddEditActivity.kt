@@ -93,7 +93,9 @@ class CustomerAddEditActivity : AppCompatActivity() {
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                        sdk.customerRepository.insert(newCustomer)
+                        SyncQueueHelper.getInstance().saveCustomer(this@CustomerAddEditActivity, newCustomer, true, authManager.getUsername()) {
+                            sdk.customerRepository.insert(newCustomer)
+                        }
                     } else {
                         val createdAt = existingCustomer?.createdAt ?: System.currentTimeMillis()
                         val createdBy = existingCustomer?.createdBy?.ifBlank { currentUser } ?: currentUser
@@ -109,7 +111,9 @@ class CustomerAddEditActivity : AppCompatActivity() {
                             createdBy = createdBy,
                             updatedBy = currentUser
                         )
-                        sdk.customerRepository.update(updatedCustomer)
+                        SyncQueueHelper.getInstance().saveCustomer(this@CustomerAddEditActivity, updatedCustomer, false, authManager.getUsername()) {
+                            sdk.customerRepository.update(updatedCustomer)
+                        }
                     }
                 }
                 finish()

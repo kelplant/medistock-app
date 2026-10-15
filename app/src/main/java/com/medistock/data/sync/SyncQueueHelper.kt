@@ -2,6 +2,8 @@ package com.medistock.data.sync
 
 import com.medistock.MedistockApplication
 import com.medistock.data.remote.SupabaseClientProvider
+import com.medistock.data.remote.repository.*
+import com.medistock.shared.data.dto.*
 import com.medistock.util.DebugConfig
 import com.medistock.util.NetworkStatus
 import io.github.jan.supabase.postgrest.from
@@ -73,6 +75,63 @@ class SyncQueueHelper private constructor() {
             syncEnqueueService.enqueueDelete(entityType = entityType, entityId = entityId, userId = userId)
         }
     }
+
+    /**
+     * Online-first save, same flow as iOS OnlineFirstHelper.save:
+     * 1. upsert on Supabase when online, 2. save locally, 3. queue the change
+     * if the remote upsert did not happen. Without this, a local create/edit only
+     * reaches Supabase at the next full sync.
+     */
+    private suspend fun saveOnlineFirst(
+        context: android.content.Context,
+        table: String,
+        remoteUpsert: suspend () -> Unit,
+        localSave: suspend () -> Unit,
+        enqueue: suspend () -> Unit
+    ) {
+        var savedOnline = false
+        if (NetworkStatus.isOnline(context) && SupabaseClientProvider.isConfigured(context)) {
+            try {
+                remoteUpsert()
+                savedOnline = true
+            } catch (e: Exception) {
+                DebugConfig.w("SyncQueueHelper", "Remote save failed for $table: ${e.message}")
+            }
+        }
+
+        localSave()
+
+        if (!savedOnline) enqueue()
+    }
+
+    suspend fun saveSite(context: android.content.Context, site: Site, isNew: Boolean, userId: String?, localSave: suspend () -> Unit) =
+        saveOnlineFirst(context, "sites", { SiteSupabaseRepository().upsertSite(SiteDto.fromModel(site)) }, localSave) {
+            if (isNew) enqueueSiteInsert(site, userId) else enqueueSiteUpdate(site, userId = userId)
+        }
+
+    suspend fun saveCategory(context: android.content.Context, category: Category, isNew: Boolean, userId: String?, localSave: suspend () -> Unit) =
+        saveOnlineFirst(context, "categories", { CategorySupabaseRepository().upsertCategory(CategoryDto.fromModel(category)) }, localSave) {
+            if (isNew) enqueueCategoryInsert(category, userId) else enqueueCategoryUpdate(category, userId = userId)
+        }
+
+    suspend fun saveCustomer(context: android.content.Context, customer: Customer, isNew: Boolean, userId: String?, localSave: suspend () -> Unit) =
+        saveOnlineFirst(context, "customers", { CustomerSupabaseRepository().upsertCustomer(CustomerDto.fromModel(customer)) }, localSave) {
+            if (isNew) enqueueCustomerInsert(customer, userId) else enqueueCustomerUpdate(customer, userId = userId)
+        }
+
+    suspend fun saveProduct(context: android.content.Context, product: Product, isNew: Boolean, userId: String?, localSave: suspend () -> Unit) =
+        saveOnlineFirst(context, "products", { ProductSupabaseRepository().upsertProduct(ProductDto.fromModel(product)) }, localSave) {
+            if (isNew) enqueueProductInsert(product, userId) else enqueueProductUpdate(product, userId = userId)
+        }
+
+    suspend fun savePackagingType(context: android.content.Context, packagingType: PackagingType, isNew: Boolean, userId: String?, localSave: suspend () -> Unit) =
+        saveOnlineFirst(context, "packaging_types", { PackagingTypeSupabaseRepository().upsertPackagingType(PackagingTypeDto.fromModel(packagingType)) }, localSave) {
+            if (isNew) enqueuePackagingTypeInsert(packagingType, userId) else enqueuePackagingTypeUpdate(packagingType, userId = userId)
+        }
+
+    /** The sync queue has no supplier support: offline edits are pushed by the next full sync. */
+    suspend fun saveSupplier(context: android.content.Context, supplier: Supplier, localSave: suspend () -> Unit) =
+        saveOnlineFirst(context, "suppliers", { SupplierSupabaseRepository().upsertSupplier(SupplierDto.fromModel(supplier)) }, localSave) {}
 
     // ==================== Product Operations ====================
 

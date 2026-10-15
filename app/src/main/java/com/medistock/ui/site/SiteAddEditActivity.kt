@@ -73,7 +73,9 @@ class SiteAddEditActivity : AppCompatActivity() {
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                        sdk.siteRepository.insert(newSite)
+                        SyncQueueHelper.getInstance().saveSite(this@SiteAddEditActivity, newSite, true, currentUser) {
+                            sdk.siteRepository.insert(newSite)
+                        }
                     } else {
                         val createdAt = existingSite?.createdAt ?: System.currentTimeMillis()
                         val createdBy = existingSite?.createdBy?.ifBlank { currentUser } ?: currentUser
@@ -85,7 +87,9 @@ class SiteAddEditActivity : AppCompatActivity() {
                             createdBy = createdBy,
                             updatedBy = currentUser
                         )
-                        sdk.siteRepository.update(updatedSite)
+                        SyncQueueHelper.getInstance().saveSite(this@SiteAddEditActivity, updatedSite, false, currentUser) {
+                            sdk.siteRepository.update(updatedSite)
+                        }
                     }
                 }
                 finish()

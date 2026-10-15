@@ -207,7 +207,9 @@ class ProductAddActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
-                        sdk.productRepository.insert(product)
+                        com.medistock.data.sync.SyncQueueHelper.getInstance().saveProduct(this@ProductAddActivity, product, true, currentUser) {
+                            sdk.productRepository.insert(product)
+                        }
                     }
                     Toast.makeText(this@ProductAddActivity, L.strings.success, Toast.LENGTH_SHORT).show()
                     finish()

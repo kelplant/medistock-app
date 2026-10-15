@@ -385,10 +385,9 @@ class ProductAddEditActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    if (productId == null) {
-                        sdk.productRepository.insert(product)
-                    } else {
-                        sdk.productRepository.update(product)
+                    val isNew = productId == null
+                    SyncQueueHelper.getInstance().saveProduct(this@ProductAddEditActivity, product, isNew, authManager.getUsername()) {
+                        if (isNew) sdk.productRepository.insert(product) else sdk.productRepository.update(product)
                     }
                 }
                 Toast.makeText(this@ProductAddEditActivity, L.strings.success, Toast.LENGTH_SHORT).show()
