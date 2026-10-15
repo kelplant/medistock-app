@@ -63,7 +63,9 @@ class CategoryAddEditActivity : AppCompatActivity() {
                 val currentUser = authManager.getUsername().ifBlank { "system" }
                 if (categoryId == null) {
                     val newCategory = sdk.createCategory(name = name, userId = currentUser)
-                    sdk.categoryRepository.insert(newCategory)
+                    SyncQueueHelper.getInstance().saveCategory(this@CategoryAddEditActivity, newCategory, true, currentUser) {
+                        sdk.categoryRepository.insert(newCategory)
+                    }
                 } else {
                     val updatedCategory = Category(
                         id = categoryId!!,
@@ -73,7 +75,9 @@ class CategoryAddEditActivity : AppCompatActivity() {
                         createdBy = existingCategory?.createdBy?.ifBlank { currentUser } ?: currentUser,
                         updatedBy = currentUser
                     )
-                    sdk.categoryRepository.update(updatedCategory)
+                    SyncQueueHelper.getInstance().saveCategory(this@CategoryAddEditActivity, updatedCategory, false, currentUser) {
+                        sdk.categoryRepository.update(updatedCategory)
+                    }
                 }
                 finish()
             }

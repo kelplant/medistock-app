@@ -94,7 +94,9 @@ class SupplierAddEditActivity : AppCompatActivity() {
                             createdBy = currentUser,
                             updatedBy = currentUser
                         )
-                        sdk.supplierRepository.insert(newSupplier)
+                        SyncQueueHelper.getInstance().saveSupplier(this@SupplierAddEditActivity, newSupplier) {
+                            sdk.supplierRepository.insert(newSupplier)
+                        }
                     } else {
                         val createdAt = existingSupplier?.createdAt ?: System.currentTimeMillis()
                         val createdBy = existingSupplier?.createdBy?.ifBlank { currentUser } ?: currentUser
@@ -111,7 +113,9 @@ class SupplierAddEditActivity : AppCompatActivity() {
                             createdBy = createdBy,
                             updatedBy = currentUser
                         )
-                        sdk.supplierRepository.update(updatedSupplier)
+                        SyncQueueHelper.getInstance().saveSupplier(this@SupplierAddEditActivity, updatedSupplier) {
+                            sdk.supplierRepository.update(updatedSupplier)
+                        }
                     }
                 }
                 finish()
@@ -163,6 +167,9 @@ class SupplierAddEditActivity : AppCompatActivity() {
                                 withContext(Dispatchers.IO) {
                                     val currentUser = authManager.getUsername().ifBlank { "system" }
                                     sdk.supplierRepository.deactivate(supplierId!!, currentUser)
+                                    sdk.supplierRepository.getById(supplierId!!)?.let { deactivated ->
+                                        SyncQueueHelper.getInstance().saveSupplier(this@SupplierAddEditActivity, deactivated) {}
+                                    }
                                 }
                                 Toast.makeText(this@SupplierAddEditActivity, L.strings.supplierDeactivated, Toast.LENGTH_SHORT).show()
                                 finish()

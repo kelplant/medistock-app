@@ -53,14 +53,18 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
 
     fun insert(packagingType: PackagingType, callback: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeRepo.insert(packagingType)
+            com.medistock.data.sync.SyncQueueHelper.getInstance().savePackagingType(getApplication(), packagingType, true, packagingType.createdBy) {
+                packagingTypeRepo.insert(packagingType)
+            }
             callback(packagingType.id)
         }
     }
 
     fun update(packagingType: PackagingType, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            packagingTypeRepo.update(packagingType)
+            com.medistock.data.sync.SyncQueueHelper.getInstance().savePackagingType(getApplication(), packagingType, false, packagingType.updatedBy) {
+                packagingTypeRepo.update(packagingType)
+            }
             callback()
         }
     }
@@ -80,6 +84,9 @@ class PackagingTypeViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch(Dispatchers.IO) {
             val now = Clock.System.now().toEpochMilliseconds()
             packagingTypeRepo.setActive(id, false, now, "android")
+            packagingTypeRepo.getById(id)?.let { deactivated ->
+                com.medistock.data.sync.SyncQueueHelper.getInstance().savePackagingType(getApplication(), deactivated, false, "android") {}
+            }
             callback()
         }
     }

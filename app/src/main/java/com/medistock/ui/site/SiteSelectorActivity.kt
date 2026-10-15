@@ -65,7 +65,9 @@ class SiteSelectorActivity : AppCompatActivity() {
                         updatedBy = currentUser
                     )
                     withContext(Dispatchers.IO) {
-                        sdk.siteRepository.insert(newSite)
+                        com.medistock.data.sync.SyncQueueHelper.getInstance().saveSite(this@SiteSelectorActivity, newSite, true, currentUser) {
+                            sdk.siteRepository.insert(newSite)
+                        }
                     }
                     val refreshedSites = withContext(Dispatchers.IO) {
                         sdk.siteRepository.getAll()
